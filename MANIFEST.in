@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include kms *.css
+recursive-include kms *.csv
+recursive-include kms *.html
+recursive-include kms *.ico
+recursive-include kms *.js
+recursive-include kms *.json
+recursive-include kms *.md
+recursive-include kms *.png
+recursive-include kms *.py
+recursive-include kms *.svg
+recursive-include kms *.txt
+recursive-exclude kms *.pyc
