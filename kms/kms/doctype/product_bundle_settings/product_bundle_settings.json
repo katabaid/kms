@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "creation": "2023-11-15 13:16:59.148233",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "default_margin",
+  "default_cogs",
+  "column_break_gzwxu",
+  "default_item_group",
+  "default_price_list",
+  "section_break_tvjcx",
+  "item_group"
+ ],
+ "fields": [
+  {
+   "fieldname": "default_margin",
+   "fieldtype": "Percent",
+   "label": "Default Margin"
+  },
+  {
+   "fieldname": "item_group",
+   "fieldtype": "Table",
+   "label": "Item Group",
+   "options": "Product Bundle Settings Table"
+  },
+  {
+   "fieldname": "default_item_group",
+   "fieldtype": "Link",
+   "label": "Default Item Group",
+   "options": "Item Group"
+  },
+  {
+   "fieldname": "column_break_gzwxu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_tvjcx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "default_cogs",
+   "fieldtype": "Link",
+   "label": "Default COGS",
+   "options": "Price List"
+  },
+  {
+   "fieldname": "default_price_list",
+   "fieldtype": "Link",
+   "label": "Default Price List",
+   "options": "Price List"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2023-12-01 13:55:24.594166",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Product Bundle Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
