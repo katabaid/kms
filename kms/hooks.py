@@ -215,3 +215,4 @@ app_license = "MIT"
 # auth_hooks = [
 #	"kms.auth.validate"
 # ]
+fixtures = ['Server Script', 'Client Script', 'Custom Field', 'Property Setter', 'DocType']

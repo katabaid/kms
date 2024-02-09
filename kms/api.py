@@ -192,3 +192,16 @@ def get_stock_qty(item_code, warehouse):
 		).get("qty_after_transaction")
 		or 0
 	)
+
+@frappe.whitelist()
+def get_items_to_create_bundle():
+  items = frappe.db.sql(f"""
+    select
+      (select SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 1) from `tabItem Group` tig where name = ti.item_group) as lv1,
+      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
+      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
+      name, item_name
+    from tabItem as ti
+    where ti.custom_product_bundle = 1 and ti.disabled = 0
+    order by 1, 2, 3, 4""", as_dict=True)
+  return items
