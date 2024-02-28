@@ -62,6 +62,8 @@ def create_product_bundle_from_quotation(items, name, price_list, party_name, qu
     pb_doc.custom_lead = party_name
   elif quotation_to == "Customer":
     pb_doc.custom_customer = party_name
+  if price_list=='':
+    price_list = 'Standard Selling'
   pb_doc.custom_price_list = price_list
 # Calculate rate from items
   total_rate = 0
@@ -71,12 +73,14 @@ def create_product_bundle_from_quotation(items, name, price_list, party_name, qu
   for i in items:
     rate = frappe.db.get_value("Item Price", {"item_code": i["item_code"], "price_list": price_list}, "price_list_rate")
     uom = frappe.db.get_value("Item", i["item_code"], "stock_uom")
-    msg = i["description"]
+    description = frappe.db.get_value("Item", i["item_code"], "description")
+    i["description"] = description
     i["uom"] = uom
     if rate is None:
       rate = 0
     i["rate"] = rate
     i["parent"] = item_doc.name
+    
     total_rate = total_rate + rate
     pb_doc.append("items", i)
   pb_doc.custom_rate = total_rate
@@ -204,4 +208,107 @@ def get_items_to_create_bundle():
     from tabItem as ti
     where ti.custom_product_bundle = 1 and ti.disabled = 0
     order by 1, 2, 3, 4""", as_dict=True)
+  return items
+
+@frappe.whitelist()
+def get_items_to_create_bundles():
+  items = frappe.db.sql(f"""
+    (
+    select
+      3 as idx,
+      parent_item_group,
+      name,
+      is_group
+    from
+      `tabItem Group` tig
+    where
+      parent_item_group in (
+      select
+        name
+      from `tabItem Group` tig
+      where
+        parent_item_group in (
+        select
+          name
+        from
+          `tabItem Group` tig
+        where
+          parent_item_group = 'Examination')))
+    union
+    (select
+    2 as idx,
+      parent_item_group,
+      name,
+      is_group
+    from
+      `tabItem Group` tig
+    where
+      parent_item_group in (
+      select
+        name
+      from
+        `tabItem Group` tig
+      where
+        parent_item_group = 'Examination'))
+    union
+    (select
+    1 as idx,
+      parent_item_group,
+      name,
+      is_group
+    from
+      `tabItem Group` tig
+    where
+      parent_item_group = 'Examination')
+    UNION 
+    (select 0, '', 'Examination', 1 from dual)
+    order by 1, 2, 4""", as_dict=True)
+  return items
+
+@frappe.whitelist()
+def create_sample_and_test_from_encounter(values):
+  samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in (select lab_test_code from `tabLab Prescription` where parent = '{encounter}' and parenttype = 'Patient Encounter') group by 1""", as_dict=True)
+  enc_doc = frappe.get_doc({
+    'doctype': 'Patient Encounter',
+    'name': encounter
+  })
+  sample_doc = frappe.get_doc({
+    'doctype': 'Sample Collection',
+    'custom_appointment': enc_doc.appointment,
+    'patient': enc_doc.patient,
+    'patient_name': enc_doc.patient_name,
+    'patient_age': enc_doc.patient_age,
+    'patient_sex': enc_doc.patient_sex,
+    'company': enc_doc.company,
+    'custom_branch': enc_doc.custom_branch,
+    'custom_service_unit': '',
+
+  })
+  for smpl in samples:
+    sample_doc.append('custom_sample_table', {'sample': smpl.sample, 'quantity': smpl.qty})
+  sample_doc.insert()
+
+  """lab_doc = frappe.get_doc({
+    'doctitle': 'Lab Test'
+  })
+  lab_doc.insert()
+
+  message = {'sample': sample_doc.name, 'lab': lab_doc.name}"""
+  message = {'sample': sample_doc.name}
+  return message
+
+@frappe.whitelist()
+def get_items_to_create_lab():
+  items = frappe.db.sql(f"""
+    select lv2, lv3, name, item_name from (
+    select
+      (select SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 1) from `tabItem Group` tig where name = ti.item_group) as lv1,
+      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
+      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
+      ti.name, ltt.name item_name
+    from tabItem as ti, `tabLab Test Template` as ltt
+    where ti.custom_product_bundle = 1 and ti.disabled = 0
+    and ltt.item = ti.name
+    and ltt.disabled = 0
+    order by 1, 2, 3, 4) a WHERE a.lv1 = 'Laboratory'""", as_dict=True)
   return items
