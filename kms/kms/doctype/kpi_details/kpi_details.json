@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-03-20 09:20:36.134228",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "key_result_area",
+  "kpi",
+  "weightage",
+  "target",
+  "unit_of_kpi",
+  "actual",
+  "score_",
+  "final_score",
+  "lower_is_better"
+ ],
+ "fields": [
+  {
+   "fieldname": "key_result_area",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Key Result Area",
+   "options": "KRA"
+  },
+  {
+   "fieldname": "kpi",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "KPI"
+  },
+  {
+   "fieldname": "weightage",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Weightage"
+  },
+  {
+   "fieldname": "target",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Target"
+  },
+  {
+   "fieldname": "unit_of_kpi",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Unit of KPI",
+   "options": "Unit of KPI"
+  },
+  {
+   "fieldname": "score_",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Score (%)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "final_score",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Final Score",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "lower_is_better",
+   "fieldtype": "Check",
+   "label": "Lower is Better"
+  },
+  {
+   "fieldname": "actual",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Actual"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-03-20 13:41:23.137005",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "KPI Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

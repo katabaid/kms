@@ -12,6 +12,7 @@
   "queue_pooling",
   "patient",
   "patient_name",
+  "patient_encounter",
   "column_break_ydxak",
   "appointment",
   "service_unit",
@@ -145,12 +146,18 @@
    "fieldtype": "Link",
    "label": "Queue Pooling",
    "options": "Queue Pooling"
+  },
+  {
+   "fieldname": "patient_encounter",
+   "fieldtype": "Link",
+   "label": "Patient Encounter",
+   "options": "Patient Encounter"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-01-30 09:46:10.084579",
+ "modified": "2024-03-17 16:37:44.414880",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

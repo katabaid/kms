@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "sample",
-  "quantity"
+  "quantity",
+  "uom"
  ],
  "fields": [
   {
@@ -25,12 +26,19 @@
    "label": "Quantity",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fetch_from": "sample.sample_uom",
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "UOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-02-17 11:30:28.464467",
+ "modified": "2024-03-16 17:51:13.231794",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Sample Collection Bulk",
