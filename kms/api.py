@@ -41,6 +41,7 @@ def create_product_bundle_from_quotation(items, name, price_list, party_name, qu
   item_name = ''
 # Create Item from selected checkboxes
   item_doc = frappe.new_doc("Item")
+  item_doc.naming_series = "Q.{custom_abbreviation}..{custom_product_bundle_customer}..{custom_product_bundle_lead}.-.###"
   item_doc.item_name = name
   item_doc.item_group = "Exam Course"
   item_doc.stock_uom = "Unit"
@@ -386,12 +387,12 @@ def create_mr_from_encounter(enc):
   mr_internal_items = frappe.db.sql(f"""
   select drug_code, drug_name, dosage, period, dosage_form, custom_compound_qty
   from `tabDrug Prescription`
-  where parent = '{encdoc.name}' and parentfield = 'drug_prescription' and parenttype = 'Patient Encounter' and custom_material_request is null and custom_is_internal = 1 and docstatus = 0
+  where parent = '{encdoc.name}' and parenttype = 'Patient Encounter' and custom_material_request is null and custom_is_internal = 1 and docstatus = 0
   """, as_dict=True)
   mr_external_items = frappe.db.sql(f"""
   select drug_code, drug_name, dosage, period, dosage_form, custom_compound_qty
   from `tabDrug Prescription`
-  where parent = '{encdoc.name}' and parentfield = 'drug_prescription' and parenttype = 'Patient Encounter' and custom_material_request is null and custom_is_internal = 0 and docstatus = 0
+  where parent = '{encdoc.name}' and parenttype = 'Patient Encounter' and custom_material_request is null and custom_is_internal = 0 and docstatus = 0
   """, as_dict=True)
   pharmacy_warehouse, front_office = frappe.db.get_value('Branch', encdoc.custom_branch, ['custom_default_pharmacy_warehouse', 'custom_default_front_office'])
   message =[pharmacy_warehouse, front_office]

@@ -215,4 +215,9 @@ app_license = "MIT"
 # auth_hooks = [
 #	"kms.auth.validate"
 # ]
-fixtures = ['Server Script', 'Client Script', 'Custom Field', 'Property Setter', 'DocType']
+fixtures = [
+  {'dt':'Server Script', 'filters': [['module', '=', 'KMS']]}, 
+  {'dt':'Client Script', 'filters': [['module', '=', 'KMS']]}, 
+  {'dt':'Custom Field', 'filters': [['module', '=', 'KMS']]}, 
+  {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
+  {'dt':'DocType', 'filters': [['module', '=', 'KMS']]}]
