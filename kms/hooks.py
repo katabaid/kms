@@ -221,5 +221,6 @@ fixtures = [
   {'dt':'Custom Field', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'DocType', 'filters': [['module', '=', 'KMS']]},
+  {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Healthcare Service Unit'},
   {'dt':'Healthcare Service Unit Type'}]

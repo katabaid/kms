@@ -1,0 +1,51 @@
+[
+ {
+  "add_total_row": 1,
+  "columns": [],
+  "disable_prepared_report": 0,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "No",
+  "javascript": "frappe.query_reports[\"Daily Attendance\"] = {\n    filters: [{\n        fieldname: \"employee\",\n        label: \"Employee\",\n        fieldtype: \"Link\",\n        options: \"Employee\",\n    }]\n}",
+  "json": null,
+  "letter_head": "Kop Resmi",
+  "modified": "2024-04-18 20:42:28.337346",
+  "module": "KMS",
+  "name": "Daily Attendance",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Attendance",
+  "reference_report": null,
+  "report_name": "Daily Attendance",
+  "report_script": "subtitle = \"Daily Attendance per Employee\"\ncolumns = [{'fieldname':'day', 'label':'Day'}, {'fieldname':'date', 'label':'Date'}, {'fieldname':'shift_in', 'label':'Shift In'}, {'fieldname':'shift_out', 'label':'Shift Out'}, {'fieldname':'fs_in', 'label':'FS In'}, {'fieldname':'fs_out', 'label':'FS Out'}, {'fieldname':'dt', 'label':'DT'}, {'fieldname':'pc', 'label':'PC'}, {'fieldname':'jam', 'label':'JAM'}, {'fieldname':'ist', 'label':'IST'}, {'fieldname':'ot', 'label':'OT'}, {'fieldname':'cost', 'label':'COST'}, {'fieldname':'uml', 'label':'UML'}, {'fieldname':'alasan', 'label':'Alasan'}, {'fieldname':'status', 'label':'Status'}]\nrows = frappe.db.sql(\"select date_format(dt, '%W', 'id_ID') day, dt date, '' shift_in, '' shift_in, time_format(in_time, '%H:%i') fs_in, time_format(out_time, '%H:%i') fs_out, 0 dt, 0 pc, 0 jam, 0 ist, 0 ot, 0 cost, 0 uml, '' alasan, '' status from (WITH RECURSIVE dates AS (SELECT DATE('2024-03-01') AS dt UNION ALL SELECT DATE_ADD(dt, INTERVAL 1 DAY) FROM dates WHERE DATE_ADD(dt, INTERVAL 1 DAY) <= LAST_DAY('2024-03-01')) SELECT dt FROM dates) a left join tabAttendance b on a.dt = b.attendance_date and b.employee like '%\"+filters.employee+\"%'\", as_dict=True)\n\nmydataset = {\"values\": [3000, 6500, 4250, 1000]}\nmydataset2 = {\"values\": [2000, 5500, 500, 100]}\nchart = {\n    'data':{\n        'labels':['Saudi','Qatar','UAE','Oman'],\n        'datasets':[mydataset,mydataset2]},\n    'type':'bar'}\nchart = {}\n\nwidget = [{\"value\": 0, \"label\": \"Datang Terlambat\", \"datatype\": \"Int\"}, {\"value\": 0, \"label\": \"Pulang Cepat\", \"datatype\": \"Int\"}]\n\ndata = columns, rows, subtitle, chart, widget",
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "Daily Attendance",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "System Manager"
+   },
+   {
+    "parent": "Daily Attendance",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HR Manager"
+   },
+   {
+    "parent": "Daily Attendance",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HR User"
+   },
+   {
+    "parent": "Daily Attendance",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Employee Self Service"
+   }
+  ]
+ }
+]
