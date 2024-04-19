@@ -14,25 +14,29 @@
   {
    "fieldname": "start_date_of_week",
    "fieldtype": "Date",
-   "label": "start_date_of_week"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Start Date of Week"
   },
   {
    "fieldname": "end_date_of_week",
    "fieldtype": "Date",
-   "label": "end_date_of_week"
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "End Date of Week"
   },
   {
    "default": "0",
    "fieldname": "is_current_week",
    "fieldtype": "Check",
-   "label": "is_current_week",
+   "label": "Is Current Week",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2024-04-19 14:26:04.554220",
+ "modified": "2024-04-19 20:20:56.229264",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Week Number",

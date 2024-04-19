@@ -10,11 +10,16 @@ class WeekNumber(Document):
 		pass
 
 	def load_from_db(self):
-		data = frappe.db.sql(f"""SELECT 
-    DATE_FORMAT(DATE_SUB(STR_TO_DATE(CONCAT(SUBSTRING('{self.name}', 1, 4), ' ', SUBSTRING('{self.name}', 5, 2), ' Monday'), '%X %V %W'), INTERVAL 7 DAY), "%d-%m-%Y") AS start_date_of_week,
-    DATE_FORMAT(STR_TO_DATE(CONCAT(SUBSTRING('{self.name}', 1, 4), ' ', SUBSTRING('{self.name}', 5, 2), ' Sunday'), '%X %V %W'), "%d-%m-%Y") AS end_date_of_week""", as_dict=True)
+		sql = get_week_number_info(self.name)
+
+		data = frappe._dict({
+			"name": self.name,
+			"start_date_of_week": sql[0].start_date_of_week,
+			"end_date_of_week": sql[0].end_date_of_week,
+			"is_current_week": sql[0].is_current_week
+		})
 		
-		super(Document, self).__init__(frappe._dict(data))
+		super(Document, self).__init__(data)
 
 	def db_update(self, *args, **kwargs):
 		pass
@@ -52,3 +57,17 @@ ORDER BY
 	@staticmethod
 	def get_stats(args):
 		pass
+
+@frappe.whitelist()
+def get_week_number_info(week_number):
+	return frappe.db.sql(f"""SELECT 
+    DATE_SUB(STR_TO_DATE(CONCAT(SUBSTRING('{week_number}', 1, 4), ' ', SUBSTRING('{week_number}', 5, 2), ' Monday'), '%X %V %W'), INTERVAL 7 DAY) AS start_date_of_week,
+    STR_TO_DATE(CONCAT(SUBSTRING('{week_number}', 1, 4), ' ', SUBSTRING('{week_number}', 5, 2), ' Sunday'), '%X %V %W') AS end_date_of_week,
+    IF('{week_number}' = CONCAT(YEAR(CURDATE()), LPAD(WEEK(CURDATE(), 1), 2, '0')), 1, 0) AS is_current_week""", as_dict=True)
+
+@frappe.whitelist()
+def get_current_week_number():
+	return frappe.db.sql("""SELECT 
+    CONCAT(YEAR(CURDATE()), LPAD(WEEK(CURDATE(), 1), 2, '0')) AS current_week_number,
+    DATE_SUB(STR_TO_DATE(CONCAT(YEAR(CURDATE()), ' ', WEEK(CURDATE(), 1), ' Monday'), '%X %V %W'), INTERVAL 7 DAY) AS start_date_of_week,
+    STR_TO_DATE(CONCAT(YEAR(CURDATE()), ' ', WEEK(CURDATE(), 1), ' Sunday'), '%X %V %W') AS end_date_of_week;""", as_dict=True)

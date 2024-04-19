@@ -7,7 +7,22 @@
  "engine": "InnoDB",
  "field_order": [
   "week_number",
-  "from_date"
+  "column_break_ibbse",
+  "from_date",
+  "column_break_yin1c",
+  "to_date",
+  "filters_section",
+  "company",
+  "column_break_mefol",
+  "department",
+  "column_break_s4es9",
+  "branch",
+  "select_employees_section",
+  "employees_html",
+  "shift_assignment_section",
+  "shift",
+  "assigned_employees_section",
+  "employee_shift_html"
  ],
  "fields": [
   {
@@ -23,11 +38,87 @@
    "fieldname": "from_date",
    "fieldtype": "Date",
    "label": "From Date"
+  },
+  {
+   "fieldname": "column_break_ibbse",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_yin1c",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "week_number.end_date_of_week",
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date"
+  },
+  {
+   "fieldname": "filters_section",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_mefol",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "column_break_s4es9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "select_employees_section",
+   "fieldtype": "Section Break",
+   "label": "Select Employees"
+  },
+  {
+   "fieldname": "employees_html",
+   "fieldtype": "HTML",
+   "label": "Employees HTML"
+  },
+  {
+   "fieldname": "shift_assignment_section",
+   "fieldtype": "Section Break",
+   "label": "Shift Assignment"
+  },
+  {
+   "fieldname": "shift",
+   "fieldtype": "Link",
+   "label": "Shift",
+   "options": "Shift Type"
+  },
+  {
+   "fieldname": "assigned_employees_section",
+   "fieldtype": "Section Break",
+   "label": "Assigned Employees"
+  },
+  {
+   "fieldname": "employee_shift_html",
+   "fieldtype": "HTML",
+   "label": "Employee Shift HTML"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-04-19 16:00:38.006217",
+ "modified": "2024-04-19 21:32:39.350354",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Shift Assignment Tool",
