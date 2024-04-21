@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "creation": "2024-04-19 09:17:20.913920",
  "default_view": "List",
  "doctype": "DocType",
@@ -116,9 +117,10 @@
    "label": "Employee Shift HTML"
   }
  ],
+ "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-19 21:32:39.350354",
+ "modified": "2024-04-20 21:04:30.779674",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Shift Assignment Tool",
