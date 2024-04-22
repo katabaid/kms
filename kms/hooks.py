@@ -110,9 +110,9 @@ app_license = "MIT"
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-#	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+"Shift Request": "kms.override.shift_request.KmsShiftRequest"
+}
 
 # Document Events
 # ---------------
