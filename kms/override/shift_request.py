@@ -19,15 +19,21 @@ class KmsShiftRequest(Document):
         shift_2 = frappe.db.get_value("Shift Assignment", {"employee": self.custom_swap_with_employee, "status": "Active", "docstatus": 1, 'start_date': date}, "shift_type")
         self.create_shift_assignment(self.custom_swap_with_employee, date, date, shift_1)
         self.create_shift_assignment(self.employee, date, date, shift_2)
+        if date.weekday() == 5:
+          to_cancel1 = frappe.db.exists("Shift Assignment", {"employee": self.employee, "status": "Active", "docstatus": 1, 'start_date': date+timedelta(days=7)})
+          to_cancel2 = frappe.db.exists("Shift Assignment", {"employee": self.custom_swap_with_employee, "status": "Active", "docstatus": 1, 'start_date': date+timedelta(days=7)})
+          self.create_shift_assignment(self.custom_swap_with_employee, date+timedelta(days=7), date+timedelta(days=7), shift_2, to_cancel2)
+          self.create_shift_assignment(self.employee, date+timedelta(days=7), date+timedelta(days=7), shift_1, to_cancel1)
     else:
       for date in iterate_dates(datetime.strptime(self.from_date, '%Y-%m-%d'), datetime.strptime(self.to_date, '%Y-%m-%d')):
         if not frappe.db.exists("Shift Assignment", {"employee": self.employee, "status": "Active", "docstatus": 1, 'start_date': date}):
           frappe.throw(_("Shift Assignment not found for Employee: {0} and Date: {1}").format(frappe.bold(self.employee), frappe.bold(date)))
         self.create_shift_assignment(self.employee, date, date, self.shift_type)
       
-  def create_shift_assignment(self, employee, from_date, to_date, shift_type):
-    to_cancel = frappe.get_doc("Shift Assignment", {"employee": employee, "start_date": from_date, "end_date": to_date, "status": "Active", "docstatus": 1})
-    to_cancel.cancel()
+  def create_shift_assignment(self, employee, from_date, to_date, shift_type, to_cancel=True):
+    if to_cancel:
+      to_cancel = frappe.get_doc("Shift Assignment", {"employee": employee, "start_date": from_date, "end_date": to_date, "status": "Active", "docstatus": 1})
+      to_cancel.cancel()
     assignment_doc = frappe.new_doc("Shift Assignment")
     assignment_doc.company = self.company
     assignment_doc.shift_type = shift_type

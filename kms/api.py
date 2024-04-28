@@ -300,42 +300,52 @@ def create_sample_and_test_from_encounter(enc, selected):
     'practitioner': enc_doc.practitioner
   })
   for test in params.replace("'", "").split(','):
+    normal = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabNormal Test Template` WHERE parent = '{test}')""")[0][0]
+    selective = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabLab Test Select Template` WHERE parent = '{test}')""")[0][0]
+    print(test)
+    print(normal)
+    print(selective)
     age = extract_age_from_string(enc_doc.patient_age)
-    minmax = frappe.db.sql(f"""
-      WITH cte AS (
+    if normal:
+      minmax = frappe.db.sql(f"""
+        WITH cte AS (
+          SELECT
+            parent,
+            lab_test_event,
+            custom_age,
+            custom_sex,
+            custom_min_value,
+            custom_max_value,
+            MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
+          FROM
+            `tabNormal Test Template`
+        )
         SELECT
-          parent,
           lab_test_event,
-          custom_age,
-          custom_sex,
-          custom_min_value,
-          custom_max_value,
-          MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
+          COALESCE(
+            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age < {age}))
+          ) AS custom_min_value,
+          COALESCE(
+            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age < {age}))
+          ) AS custom_max_value
         FROM
-          `tabNormal Test Template`
-      )
-      SELECT
-        lab_test_event,
-        COALESCE(
-          (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-          (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age < {age}))
-        ) AS custom_min_value,
-        COALESCE(
-          (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-          (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age < {age}))
-        ) AS custom_max_value
-      FROM
-        cte c
-      WHERE
-        parent = '{test}'
-        AND custom_sex = '{enc_doc.patient_sex}'
-      GROUP BY
-        lab_test_event;
-    """, as_dict=True)
-    min_val = 0
-    max_val = 0
-    for mm in minmax:
-      lab_doc.append('normal_test_items', {'lab_test_name': test, 'custom_min_value': mm.custom_min_value, 'custom_max_value': mm.custom_max_value, 'lab_test_event': mm.lab_test_event})
+          cte c
+        WHERE
+          parent = '{test}'
+          AND custom_sex = '{enc_doc.patient_sex}'
+        GROUP BY
+          lab_test_event;
+      """, as_dict=True)
+      min_val = 0
+      max_val = 0
+      for mm in minmax:
+        lab_doc.append('normal_test_items', {'lab_test_name': test, 'custom_min_value': mm.custom_min_value, 'custom_max_value': mm.custom_max_value, 'lab_test_event': mm.lab_test_event})
+    if selective:
+      sel_test = frappe.db.sql(f"""SELECT result_select FROM `tabLab Test Select Template` WHERE parent = '{test}'""", as_dict=True)
+      for sel in sel_test:
+        lab_doc.append('custom_selective_test_result', {'event': test, 'result_set': sel.result_select, 'result': sel.result_select.splitlines()[0]})
   lab_doc.insert()
 
   sample_doc = frappe.get_doc({

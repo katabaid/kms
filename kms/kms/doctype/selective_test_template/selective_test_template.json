@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "creation": "2024-04-28 21:15:40.949728",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "event",
+  "result",
+  "result_set"
+ ],
+ "fields": [
+  {
+   "fieldname": "event",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Event",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Result",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_set",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Result Set"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-04-28 21:15:40.949728",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Selective Test Template",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
