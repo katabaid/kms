@@ -65,6 +65,7 @@ def create_product_bundle_from_quotation(items, name, price_list, party_name, qu
     pb_doc.custom_customer = party_name
   if price_list=='':
     price_list = 'Standard Selling'
+  hpp_price_list = frappe.db.get_single_value("Selling Settings", "custom_hpp_price_list")
   pb_doc.custom_price_list = price_list
 # Calculate rate from items
   total_rate = 0
@@ -72,7 +73,7 @@ def create_product_bundle_from_quotation(items, name, price_list, party_name, qu
   uom=""
   pb_doc.items = []
   for i in items:
-    rate = frappe.db.get_value("Item Price", {"item_code": i["item_code"], "price_list": price_list}, "price_list_rate")
+    rate = frappe.db.get_value("Item Price", {"item_code": i["item_code"], "price_list": hpp_price_list}, "price_list_rate")
     uom = frappe.db.get_value("Item", i["item_code"], "stock_uom")
     description = frappe.db.get_value("Item", i["item_code"], "description")
     i["description"] = description
@@ -88,6 +89,40 @@ def create_product_bundle_from_quotation(items, name, price_list, party_name, qu
   pb_doc.custom_margin = margin
   pb_doc.custom_enable = 0
   pb_doc.insert();
+  selling_item_price_name = frappe.db.get_value("Item Price", {"item_code": item_doc.name, "price_list": 'Standard Selling'}, "name")
+  hpp_item_price_name = frappe.db.get_value("Item Price", {"item_code": item_doc.name, "price_list": hpp_price_list}, "name")
+  if selling_item_price_name:
+    sip_doc = frappe.get_doc("Item Price", selling_item_price_name)
+    sip_doc.price_list_rate = price
+    sip_doc.save()
+  else:
+    sip_doc = frappe.get_doc(
+      {
+        "doctype": "Item Price",
+        "price_list": 'Standard Selling',
+        "item_code": item_doc.name,
+        "currency": 'IDR',
+        "price_list_rate": price,
+        "uom": "Unit",
+      }
+    )
+    sip_doc.insert()
+  if hpp_item_price_name:
+    sip_doc = frappe.get_doc("Item Price", hpp_item_price_name)
+    sip_doc.price_list_rate = total_rate
+    sip_doc.save()
+  else:
+    sip_doc = frappe.get_doc(
+      {
+        "doctype": "Item Price",
+        "price_list": hpp_price_list,
+        "item_code": item_doc.name,
+        "currency": 'IDR',
+        "price_list_rate": total_rate,
+        "uom": "Unit",
+      }
+    )
+    sip_doc.insert()
   message = frappe.get_doc('Product Bundle', pb_doc.name)
   return message
 
@@ -206,7 +241,7 @@ def get_items_to_create_bundle():
       (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
       (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
       name, item_name,
-      (select price_list_rate from `tabItem Price` tip where tip.price_list = 'Standard Selling' and tip.item_code = ti.item_code and tip.valid_from < curdate() order by tip.valid_from desc limit 1) as rate
+      (select price_list_rate from `tabItem Price` tip where tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list') and tip.item_code = ti.item_code order by tip.valid_from desc limit 1) as rate
     from tabItem as ti
     where ti.custom_product_bundle = 1 and ti.disabled = 0
     order by 1, 2, 3, 4""", as_dict=True)
@@ -302,9 +337,6 @@ def create_sample_and_test_from_encounter(enc, selected):
   for test in params.replace("'", "").split(','):
     normal = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabNormal Test Template` WHERE parent = '{test}')""")[0][0]
     selective = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabLab Test Select Template` WHERE parent = '{test}')""")[0][0]
-    print(test)
-    print(normal)
-    print(selective)
     age = extract_age_from_string(enc_doc.patient_age)
     if normal:
       minmax = frappe.db.sql(f"""
@@ -363,7 +395,6 @@ def create_sample_and_test_from_encounter(enc, selected):
   
   for smpl in samples:
     sample_doc.append('custom_sample_table', {'sample': smpl.sample, 'quantity': smpl.qty})
-  print(str(sample_doc))
   sample_doc.insert()
 
   for item in params.replace("'", "").split(','):
@@ -391,7 +422,6 @@ def get_items_to_create_lab():
 
 @frappe.whitelist()
 def create_mr_from_encounter(enc):
-  #frappe.throw(enc_doc)
   encdoc = frappe.get_doc('Patient Encounter', enc)
   
   mr_internal_items = frappe.db.sql(f"""
@@ -484,5 +514,4 @@ def create_mr_from_encounter(enc):
 
 @frappe.whitelist()
 def create_attendance_from_checkin(from_date, to_date):
-  
   pass

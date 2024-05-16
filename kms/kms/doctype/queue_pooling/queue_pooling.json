@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-01-09 11:08:42.456785",
+ "creation": "2024-04-20 19:09:34.243115",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -88,6 +88,7 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
    "options": "Queued\nCancelled\nOngoing\nClosed",
    "reqd": 1
@@ -96,12 +97,14 @@
    "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Date",
    "reqd": 1
   },
   {
    "fieldname": "arrival_time",
    "fieldtype": "Time",
+   "in_list_view": 1,
    "label": "Arrival Time",
    "reqd": 1
   },
@@ -115,6 +118,7 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Company",
    "options": "Company",
    "reqd": 1
@@ -123,6 +127,7 @@
    "fetch_from": "appointment.service_unit",
    "fieldname": "service_unit",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Service Unit",
    "options": "Healthcare Service Unit",
    "reqd": 1
@@ -155,6 +160,7 @@
    "fetch_from": "service_unit.custom_branch",
    "fieldname": "branch",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Branch",
    "options": "Branch",
    "read_only": 1,
@@ -178,12 +184,14 @@
   {
    "fieldname": "patient",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Patient",
    "options": "Patient"
   },
   {
    "fieldname": "priority",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Priority",
    "options": "1. Emergency\n2. VIP\n3. Outpatient\n4. MCU"
   }
@@ -191,7 +199,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2024-02-09 16:50:05.116694",
+ "modified": "2024-05-02 13:13:13.880123",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Queue Pooling",
@@ -214,7 +222,24 @@
  "restrict_to_domain": "Healthcare",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Queued"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  },
+  {
+   "color": "Blue",
+   "title": "Ongoing"
+  },
+  {
+   "color": "Green",
+   "title": "Closed"
+  }
+ ],
  "track_changes": 1,
  "track_seen": 1,
  "track_views": 1
