@@ -9,6 +9,9 @@
  "field_order": [
   "patient_tab",
   "branch_patient",
+  "exam_id",
+  "patient",
+  "app",
   "room_tab",
   "branch_room"
  ],
@@ -35,12 +38,32 @@
    "fieldtype": "Link",
    "label": "Branch",
    "options": "Branch"
+  },
+  {
+   "fieldname": "exam_id",
+   "fieldtype": "Link",
+   "label": "Exam ID",
+   "options": "Patient Appointment"
+  },
+  {
+   "fetch_from": "exam_id.patient",
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient",
+   "read_only": 1
+  },
+  {
+   "fieldname": "app",
+   "fieldtype": "Table",
+   "label": "app",
+   "options": "MCU Appointment"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-03 10:02:42.414096",
+ "modified": "2024-05-21 13:30:55.738338",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher Tool",

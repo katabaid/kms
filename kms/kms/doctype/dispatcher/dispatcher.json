@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2024-05-23 19:51:03.946603",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "patient_appointment",
+  "tab_break_taqcr",
+  "patient",
+  "mcu_package",
+  "package_section",
+  "status",
+  "package",
+  "room_assignment_section",
+  "assignment_table",
+  "assign_room_button",
+  "refuse_to_test_button"
+ ],
+ "fields": [
+  {
+   "fetch_from": "patient_appointment.patient",
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient_appointment.mcu",
+   "fieldname": "mcu_package",
+   "fieldtype": "Link",
+   "label": "MCU Package",
+   "options": "Product Bundle",
+   "read_only": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "HLC-DSP-.YYYY.-"
+  },
+  {
+   "fieldname": "tab_break_taqcr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.mcu_package",
+   "fieldname": "package_section",
+   "fieldtype": "Section Break",
+   "label": "Package"
+  },
+  {
+   "fieldname": "package",
+   "fieldtype": "Table",
+   "label": "Package",
+   "options": "MCU Appointment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "In Queue\nWaiting to Finish\nFinished\nRescheduled",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.mcu_package",
+   "fieldname": "room_assignment_section",
+   "fieldtype": "Section Break",
+   "label": "Room Assignment"
+  },
+  {
+   "fieldname": "patient_appointment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Patient Appointment",
+   "options": "Patient Appointment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assign_room_button",
+   "fieldtype": "Button",
+   "label": "Assign Room"
+  },
+  {
+   "fieldname": "assignment_table",
+   "fieldtype": "Table",
+   "label": "Assignment",
+   "options": "Dispatcher Room"
+  },
+  {
+   "fieldname": "refuse_to_test_button",
+   "fieldtype": "Button",
+   "label": "Refuse to Test"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-05-24 06:23:17.611194",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Dispatcher",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

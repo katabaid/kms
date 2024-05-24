@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "creation": "2024-05-19 17:36:43.208610",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "examination_item",
+  "item_name",
+  "item_group"
+ ],
+ "fields": [
+  {
+   "fieldname": "examination_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Examination Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "examination_item.item_group",
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Group",
+   "options": "Item Group",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "examination_item.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-05-19 18:29:19.047621",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "MCU Appointment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
