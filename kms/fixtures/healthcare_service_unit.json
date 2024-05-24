@@ -422,7 +422,7 @@
  {
   "allow_appointments": 1,
   "company": "Kyoai Medical Services",
-  "custom_branch": null,
+  "custom_branch": "Jakarta Main Clinic",
   "custom_room_sequence": 0,
   "docstatus": 0,
   "doctype": "Healthcare Service Unit",
