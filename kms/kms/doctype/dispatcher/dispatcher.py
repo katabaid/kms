@@ -20,5 +20,3 @@ def get_exam_items(dispatcher_id, hcsu, hcsu_type):
 		and tma.parent = td.name 
 		and td.patient_appointment = tpa.name 
 		and tpa.custom_branch = tigsu.branch """, as_dict=True)
-	if hcsu_type == 'Radiology':
-		
