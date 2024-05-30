@@ -20,3 +20,14 @@ def get_exam_items(dispatcher_id, hcsu, hcsu_type):
 		and tma.parent = td.name 
 		and td.patient_appointment = tpa.name 
 		and tpa.custom_branch = tigsu.branch """, as_dict=True)
+
+	return items
+	
+@frappe.whitelist()
+def get_queued_branch(branch):
+	count = frappe.db.sql(f"""SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count
+			FROM `tabHealthcare Service Unit` thsu
+			LEFT JOIN `tabDispatcher Room` tdr ON thsu.name = tdr.healthcare_service_unit AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
+			WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0
+			GROUP BY thsu.name""", as_dict=True)
+	return count

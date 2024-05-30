@@ -4,13 +4,20 @@
 frappe.ui.form.on('Dispatcher', {
 	refresh: function(frm) {
 		frm.fields_dict['assign_room_button'].df.hidden = true;
+		frm.fields_dict['refuse_to_test_button'].df.hidden = true;
+		frm.fields_dict['retest_button'].df.hidden = true;
 		frm.refresh_field('assign_room_button');
+		frm.refresh_field('refuse_to_test_button');
+		frm.refresh_field('retest_button');
 
 		frm.fields_dict['assign_room_button'].input.onclick = function() {
 			assign_room(frm);
 		}
 		frm.fields_dict['refuse_to_test_button'].input.onclick = function() {
 			refuse_to_test(frm);
+		}
+		frm.fields_dict['retest_button'].input.onclick = function() {
+			retest(frm);
 		}
 	},
 
@@ -21,26 +28,58 @@ frappe.ui.form.on('Dispatcher', {
 		frm.fields_dict['assignment_table'].grid.wrapper.on('change', '.grid-row-check', function() {
 			check_button_state(frm);
 		});
+		frm.fields_dict['assignment_table'].grid.wrapper.find('.grid-add-row').hide();
+		//NOT WORKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		frm.fields_dict['assignment_table'].grid.grid_rows.forEach(row => {
+			$(row.wrapper).find('.grid-delete-row').hide();
+		});
+	},
+
+	setup: function(frm) {
+		//NOT WOPRKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		frm.set_indicator_formatter("healthcare_service_unit", function(doc){
+			return "red";
+		})
 	}
 });
 
 function check_button_state(frm) {
-	let show_button = false;
+	let show_assign_room_button = false;
+	let show_refuse_to_test_button = false;
+	let show_retest_button = false;
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
 	if (selected_rows.length > 0) {
 		for (let row of selected_rows) {
 			if(row.status === 'Wait for Room Assignment') {
-				show_button = true;
+				show_assign_room_button = true;
 			} else {
-				show_button = false;
+				show_assign_room_button = false;
 				break;
 			}
 		}
-	} else {
-		show_button = false;
+		for (let row of selected_rows) {
+			if(row.status === 'Finished Examination') {
+				show_retest_button = true;
+			} else {
+				show_retest_button = false;
+				break;
+			}
+		}
+		for (let row of selected_rows) {
+			if(row.status != 'Refused to Test') {
+				show_refuse_to_test_button = true;
+			} else {
+				show_refuse_to_test_button = false;
+				break;
+			}
+		}
 	}
-	frm.fields_dict['assign_room_button'].df.hidden = !show_button;
+	frm.fields_dict['assign_room_button'].df.hidden = !show_assign_room_button;
 	frm.refresh_field('assign_room_button');
+	frm.fields_dict['refuse_to_test_button'].df.hidden = !show_refuse_to_test_button;
+	frm.refresh_field('refuse_to_test_button');
+	frm.fields_dict['retest_button'].df.hidden = !show_retest_button;
+	frm.refresh_field('retest_button');
 }
 
 function assign_room(frm) {
@@ -64,18 +103,43 @@ function refuse_to_test(frm) {
 	}
 }
 
-function assign_to_room(frm, hcsu) {
-	frappe.db.get_value('Healthcare Service Unit', hcsu, 'service_unit_type').then(r=>{
-		frappe.call({
-			method: 'kms.kms.doctype.dispatcher.dispatcher.get_exam_items',
-			args: {
-				dispatcher_id: frm.doc.name,
-				hcsu: hcsu,
-				hcsu_type: r.message[0].service_unit_type,
-			},
-			callback: (r) => {
-				frappe.msgprint('Room Assigned')
-			}
+function retest(frm) {
+	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
+	if(selected_rows.length > 0 && selected_rows) {
+		selected_rows.forEach(row => {
+			frappe.throw('ValidationError:')
 		})
-	})
+		//frm.save()
+	}
+}
+
+function assign_to_room(frm) {
+	//define selected rooms to process
+	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
+	if(selected_rows.length > 0 && selected_rows) {
+		selected_rows.forEach(row => {
+			//for each room define what method to call
+			custom_default_doctype = frappe.get_value('Healthcare Service Unit Type', frappe.get_value('Healthcare Service Unit', row.healthcare_service_unit, 'service_unit_type'), 'custom_default_doctype')
+			// Lab
+			if (custom_default_doctype=='Sample Collection') {
+				frappe.call({
+					method: 'kms.api.create_sample_and_test',
+					args: {
+						'appt': frm.doc.patient_appointment,
+						'selected': null //////////////////////////
+					},
+					callback: function(r) {
+						if(r.message) {
+							frappe.show_alert({
+								message: 'Room assigned successfully.',
+								indicator: 'green'
+							})
+						}
+					}
+				})
+			}
+			// Radiology
+			// Nurse
+		})
+	}
 }

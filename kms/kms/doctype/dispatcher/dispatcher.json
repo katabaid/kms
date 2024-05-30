@@ -18,7 +18,8 @@
   "room_assignment_section",
   "assignment_table",
   "assign_room_button",
-  "refuse_to_test_button"
+  "refuse_to_test_button",
+  "retest_button"
  ],
  "fields": [
   {
@@ -97,11 +98,16 @@
    "fieldname": "refuse_to_test_button",
    "fieldtype": "Button",
    "label": "Refuse to Test"
+  },
+  {
+   "fieldname": "retest_button",
+   "fieldtype": "Button",
+   "label": "Retest"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-24 06:23:17.611194",
+ "modified": "2024-05-30 06:14:48.174424",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

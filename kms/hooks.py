@@ -125,6 +125,13 @@ override_doctype_class = {
 #		"on_trash": "method"
 #	}
 # }
+doc_events = {
+  "Item Price": {
+    "on_change": "kms.api.update_item_price",
+    "after_insert": "kms.api.update_item_price",
+    "before_save": "kms.api.update_item_price",
+  }
+}
 
 # Scheduled Tasks
 # ---------------

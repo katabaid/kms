@@ -7,7 +7,9 @@
  "field_order": [
   "examination_item",
   "item_name",
-  "item_group"
+  "item_group",
+  "column_break_dfowa",
+  "healthcare_service_unit"
  ],
  "fields": [
   {
@@ -34,12 +36,22 @@
    "in_list_view": 1,
    "label": "Item Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_dfowa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "healthcare_service_unit",
+   "fieldtype": "Link",
+   "label": "Healthcare Service Unit",
+   "options": "Healthcare Service Unit"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-05-19 18:29:19.047621",
+ "modified": "2024-05-30 07:57:17.161993",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Appointment",

@@ -313,31 +313,49 @@ def extract_age_from_string(age_string):
         return None
     
 @frappe.whitelist()
-def create_sample_and_test_from_encounter(enc, selected):
+def create_sample_and_test(disp, enc, selected):
   #if isinstance(selected, str):
-  trtrt = json.loads(selected)
-  params = ','.join([f"'{s}'" for s in trtrt])
-  samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in ({params}) group by 1""", as_dict=True)
-  enc_doc = frappe.get_doc('Patient Encounter', enc)
-  lab = frappe.db.get_value('Branch', enc_doc.custom_branch, 'custom_default_lab')
-
-  lab_doc = frappe.get_doc({
-    'doctype': 'Lab Test',
-    'custom_appointment': enc_doc.appointment,
-    'patient': enc_doc.patient,
-    'patient_name': enc_doc.patient_name,
-    'patient_age': enc_doc.patient_age,
-    'patient_sex': enc_doc.patient_sex,
-    'company': enc_doc.company,
-    'custom_branch': enc_doc.custom_branch,
-    'custom_service_unit': lab,
-    'normal_toggle': 1,
-    'practitioner': enc_doc.practitioner
-  })
+  if enc:
+    trtrt = json.loads(selected)
+    params = ','.join([f"'{s}'" for s in trtrt])
+    samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in ({params}) group by 1""", as_dict=True)
+    enc_doc = frappe.get_doc('Patient Encounter', enc)
+    appt_doc = frappe.get_doc('Patient Appointment', enc_doc.appointment) 
+    lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
+    lab_doc = frappe.get_doc({
+      'doctype': 'Lab Test',
+      'custom_appointment': appt_doc.name,
+      'patient': appt_doc.patient,
+      'patient_name': appt_doc.patient_name,
+      'patient_age': appt_doc.patient_age,
+      'patient_sex': appt_doc.patient_sex,
+      'company': appt_doc.company,
+      'custom_branch': appt_doc.custom_branch,
+      'custom_service_unit': lab,
+      'normal_toggle': 1,
+      'practitioner': enc_doc.practitioner
+    })
+  if disp:
+    appt = frappe.db.get_value('Dispatcher', disp, 'patient_appointment')
+    appt_doc = frappe.get_doc('Patient Appointment', appt) 
+    lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
+    lab_doc = frappe.get_doc({
+      'doctype': 'Lab Test',
+      'custom_appointment': appt_doc.name,
+      'patient': appt_doc.patient,
+      'patient_name': appt_doc.patient_name,
+      'patient_age': appt_doc.patient_age,
+      'patient_sex': appt_doc.patient_sex,
+      'company': appt_doc.company,
+      'custom_branch': appt_doc.custom_branch,
+      'custom_service_unit': lab,
+      'normal_toggle': 1
+    })
+     
   for test in params.replace("'", "").split(','):
     normal = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabNormal Test Template` WHERE parent = '{test}')""")[0][0]
     selective = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabLab Test Select Template` WHERE parent = '{test}')""")[0][0]
-    age = extract_age_from_string(enc_doc.patient_age)
+    age = extract_age_from_string(appt_doc.patient_age)
     if normal:
       minmax = frappe.db.sql(f"""
         WITH cte AS (
@@ -355,18 +373,18 @@ def create_sample_and_test_from_encounter(enc, selected):
         SELECT
           lab_test_event,
           COALESCE(
-            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age < {age}))
+            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age < {age}))
           ) AS custom_min_value,
           COALESCE(
-            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{enc_doc.patient_sex}' AND max_age < {age}))
+            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age < {age}))
           ) AS custom_max_value
         FROM
           cte c
         WHERE
           parent = '{test}'
-          AND custom_sex = '{enc_doc.patient_sex}'
+          AND custom_sex = '{appt_doc.patient_sex}'
         GROUP BY
           lab_test_event;
       """, as_dict=True)
@@ -382,13 +400,13 @@ def create_sample_and_test_from_encounter(enc, selected):
 
   sample_doc = frappe.get_doc({
     'doctype': 'Sample Collection',
-    'custom_appointment': enc_doc.appointment,
-    'patient': enc_doc.patient,
-    'patient_name': enc_doc.patient_name,
-    'patient_age': enc_doc.patient_age,
-    'patient_sex': enc_doc.patient_sex,
-    'company': enc_doc.company,
-    'custom_branch': enc_doc.custom_branch,
+    'custom_appointment': appt_doc.name,
+    'patient': appt_doc.patient,
+    'patient_name': appt_doc.patient_name,
+    'patient_age': appt_doc.patient_age,
+    'patient_sex': appt_doc.patient_sex,
+    'company': appt_doc.company,
+    'custom_branch': appt_doc.custom_branch,
     'custom_service_unit': lab,
     'custom_lab_test': lab_doc.name
   })
@@ -397,9 +415,10 @@ def create_sample_and_test_from_encounter(enc, selected):
     sample_doc.append('custom_sample_table', {'sample': smpl.sample, 'quantity': smpl.qty})
   sample_doc.insert()
 
-  for item in params.replace("'", "").split(','):
-    enc_doc.append ("lab_test_prescription", {'lab_test_code':item, 'lab_test_name': item, 'custom_sample_collection': sample_doc.name, 'custom_lab_test': lab_doc.name})
-  enc_doc.save()
+  if enc:
+    for item in params.replace("'", "").split(','):
+      enc_doc.append ("lab_test_prescription", {'lab_test_code':item, 'lab_test_name': item, 'custom_sample_collection': sample_doc.name, 'custom_lab_test': lab_doc.name})
+    enc_doc.save()
 
   message = {'sample': sample_doc.name, 'lab': lab_doc.name}
   return message
@@ -515,3 +534,114 @@ def create_mr_from_encounter(enc):
 @frappe.whitelist()
 def create_attendance_from_checkin(from_date, to_date):
   pass
+
+@frappe.whitelist()
+def update_item_price(doc, method):
+  if doc.price_list == "Standard Buying":
+      custom_hpp_price_list = frappe.db.get_single_value("Selling Settings", "custom_hpp_price_list")
+      selling_price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
+      custom_cogs_multiplying_factor = frappe.db.get_value("Item", doc.item_code, "custom_cogs_multiplying_factor", cache=True) or 1
+      custom_cogs_price_list_rate = doc.price_list_rate * custom_cogs_multiplying_factor
+      sales_item_price_name = frappe.db.get_value("Item Price", {"item_code": doc.item_code, "price_list": custom_hpp_price_list}, "name")
+      
+      #Update HPP Price List
+      if sales_item_price_name:
+          sales_item_price_doc = frappe.get_doc("Item Price", sales_item_price_name)
+          if sales_item_price_doc.price_list_rate < custom_cogs_price_list_rate:
+              sales_item_price_doc.price_list_rate = custom_cogs_price_list_rate
+              sales_item_price_doc.save()
+              frappe.msgprint(f"Item Price updated for {doc.item_code} in Price List {custom_hpp_price_list}", alert=True)
+      else:
+          sales_item_price = frappe.get_doc({
+          "doctype": "Item Price",
+          "price_list": custom_hpp_price_list,
+          "item_code": doc.item_code,
+          "currency": doc.currency,
+          "price_list_rate": custom_cogs_price_list_rate,
+          "uom": doc.stock_uom})
+          sales_item_price.insert()
+          frappe.msgprint(f"Item Price added for {doc.item_code} in Price List {custom_hpp_price_list}", alert=True)
+      
+      #Update exam items related to this raw material in its HPP price list
+      values = {'item_code': doc.item_code}
+      sales_items = frappe.db.sql("""select
+                        sum(tcpi.qty*tip.price_list_rate) harga, tltt.item item
+                      from
+                        `tabClinical Procedure Item` tcpi,
+                        `tabLab Test Template` tltt,
+                        `tabItem Price` tip
+                      where
+                        tltt.name in (select parent from `tabClinical Procedure Item` tcpi where tcpi.item_code = %(item_code)s and parenttype = 'Lab Test Template')
+                        and tcpi.parenttype = 'Lab Test Template'
+                        and tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list')
+                        and tip.item_code = tcpi.item_code
+                        and tltt.name = tcpi.parent
+                      group by 2""", values=values, as_dict=1)
+      for sales_item in sales_items:
+          exam_item_price_name = frappe.db.get_value("Item Price", {"item_code": sales_item.item, "price_list": custom_hpp_price_list}, "name")
+          if exam_item_price_name:
+              exam_item_price_doc = frappe.get_doc("Item Price", exam_item_price_name)
+              if exam_item_price_doc.price_list_rate < sales_item.harga:
+                  exam_item_price_doc.price_list_rate = sales_item.harga
+                  exam_item_price_doc.save()
+                  frappe.msgprint(f"Item Price updated for {sales_item.item} in Price List {custom_hpp_price_list}", alert=True)
+          else:
+              exam_item_price = frappe.get_doc({
+                  "doctype": "Item Price", 
+                  "price_list": custom_hpp_price_list, 
+                  "item_code": sales_item.item, 
+                  "currency": doc.currency, 
+                  "price_list_rate": sales_item.harga, 
+                  "uom": "Unit"})
+              exam_item_price.insert()
+              frappe.msgprint(f"Item Price added for {sales_item.item} in Price List {custom_hpp_price_list}", alert=True)
+          #update related product bundle to this exam item
+          values = {'item_code': sales_item.item}
+          pb_items = frappe.db.sql("""SELECT item_code, rate, parent FROM `tabProduct Bundle Item` tpbi WHERE tpbi.item_code = %(item_code)s""", values=values, as_dict=True)
+          for pb_item in pb_items:
+              pb_doc = frappe.get_doc('Product Bundle', pb_item.parent)
+              total_rate = 0
+              for pb_doc_item in pb_doc.items:
+                  if pb_doc_item.item_code == sales_item.item:
+                      total_rate = total_rate + sales_item.harga
+                      if pb_doc_item.rate < sales_item.harga:
+                          pb_doc_item.rate = sales_item.harga
+                  else:
+                      total_rate = total_rate + pb_doc_item.rate
+              pb_doc.custom_rate = total_rate + (total_rate * pb_doc.custom_margin / 100)
+              pb_doc.save()
+              #get hpp price list for product Bundle
+              pb_price_name = frappe.db.get_value("Item Price", {"item_code": pb_doc.name, "price_list": custom_hpp_price_list}, "name")
+              if pb_price_name:
+                  pb_price_doc = frappe.get_doc("Item Price", pb_price_name)
+                  if pb_price_doc.price_list_rate < total_rate:
+                      pb_price_doc.price_list_rate = total_rate
+                      pb_price_doc.save()
+                      frappe.msgprint(f"Item Price updated for {pb_doc.name} in Price List {custom_hpp_price_list}", alert=True)
+              else:
+                  pb_price_doc = frappe.get_doc({
+                      "doctype": "Item Price", 
+                      "price_list": custom_hpp_price_list, 
+                      "item_code": pb_doc.name, 
+                      "currency": doc.currency, 
+                      "price_list_rate": total_rate, 
+                      "uom": "Unit"})
+                  pb_price_doc.insert()
+                  frappe.msgprint(f"Item Price added for {pb_doc.name} in Price List {custom_hpp_price_list}", alert=True)                
+              pb_selling_price_name = frappe.db.get_value("Item Price", {"item_code": pb_doc.name, "price_list": selling_price_list}, "name")
+              if pb_selling_price_name:
+                  pbs_price_doc = frappe.get_doc("Item Price", pb_selling_price_name)
+                  if pbs_price_doc.price_list_rate < total_rate + (total_rate * pb_doc.custom_margin / 100):
+                      pbs_price_doc.price_list_rate = total_rate + (total_rate * pb_doc.custom_margin / 100)
+                      pbs_price_doc.save()
+                      frappe.msgprint(f"Item Price updated for {pb_doc.name} in Price List {selling_price_list}", alert=True)
+              else:
+                  pbs_price_doc = frappe.get_doc({
+                      "doctype": "Item Price", 
+                      "price_list": selling_price_list, 
+                      "item_code": pb_doc.name, 
+                      "currency": doc.currency, 
+                      "price_list_rate": total_rate + (total_rate * pb_doc.custom_margin / 100), 
+                      "uom": "Unit"})
+                  pbs_price_doc.insert()
+                  frappe.msgprint(f"Item Price added for {pb_doc.name} in Price List {selling_price_list}", alert=True)                
