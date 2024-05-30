@@ -313,12 +313,14 @@ def extract_age_from_string(age_string):
         return None
     
 @frappe.whitelist()
-def create_sample_and_test(disp, enc, selected):
+def create_sample_and_test(selected, disp="", enc=""):
   #if isinstance(selected, str):
   if enc:
     trtrt = json.loads(selected)
+    print(trtrt)
     params = ','.join([f"'{s}'" for s in trtrt])
-    samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in ({params}) group by 1""", as_dict=True)
+    print(params)
+    print(type(params))
     enc_doc = frappe.get_doc('Patient Encounter', enc)
     appt_doc = frappe.get_doc('Patient Appointment', enc_doc.appointment) 
     lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
@@ -331,13 +333,22 @@ def create_sample_and_test(disp, enc, selected):
       'patient_sex': appt_doc.patient_sex,
       'company': appt_doc.company,
       'custom_branch': appt_doc.custom_branch,
-      'custom_service_unit': lab,
+      'service_unit': lab,
       'normal_toggle': 1,
       'practitioner': enc_doc.practitioner
     })
   if disp:
     appt = frappe.db.get_value('Dispatcher', disp, 'patient_appointment')
     appt_doc = frappe.get_doc('Patient Appointment', appt) 
+    param = frappe.db.sql(f"""SELECT GROUP_CONCAT(quote(tma.examination_item)) params from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
+      where tma.parenttype = 'Dispatcher'
+      and tma.parentfield = 'package'
+      and tma.parent = '{disp}'
+      and tma.item_group = tigsu.parent  
+      and tigsu.service_unit = '{selected}'""")
+    params = ','.join(str(y) for x in param for y in x if len(x) > 0)
+    print(params)
+    print(type(params))
     lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
     lab_doc = frappe.get_doc({
       'doctype': 'Lab Test',
@@ -348,7 +359,7 @@ def create_sample_and_test(disp, enc, selected):
       'patient_sex': appt_doc.patient_sex,
       'company': appt_doc.company,
       'custom_branch': appt_doc.custom_branch,
-      'custom_service_unit': lab,
+      'service_unit': lab,
       'normal_toggle': 1
     })
      
@@ -398,19 +409,34 @@ def create_sample_and_test(disp, enc, selected):
         lab_doc.append('custom_selective_test_result', {'event': test, 'result_set': sel.result_select, 'result': sel.result_select.splitlines()[0]})
   lab_doc.insert()
 
-  sample_doc = frappe.get_doc({
-    'doctype': 'Sample Collection',
-    'custom_appointment': appt_doc.name,
-    'patient': appt_doc.patient,
-    'patient_name': appt_doc.patient_name,
-    'patient_age': appt_doc.patient_age,
-    'patient_sex': appt_doc.patient_sex,
-    'company': appt_doc.company,
-    'custom_branch': appt_doc.custom_branch,
-    'custom_service_unit': lab,
-    'custom_lab_test': lab_doc.name
-  })
-  
+  if disp:
+    sample_doc = frappe.get_doc({
+      'doctype': 'Sample Collection',
+      'custom_appointment': appt_doc.name,
+      'patient': appt_doc.patient,
+      'patient_name': appt_doc.patient_name,
+      'patient_age': appt_doc.patient_age,
+      'patient_sex': appt_doc.patient_sex,
+      'company': appt_doc.company,
+      'custom_branch': appt_doc.custom_branch,
+      'custom_service_unit': lab,
+      'custom_lab_test': lab_doc.name,
+      'custom_dispatcher': disp
+    })
+  if enc:
+    sample_doc = frappe.get_doc({
+      'doctype': 'Sample Collection',
+      'custom_appointment': appt_doc.name,
+      'patient': appt_doc.patient,
+      'patient_name': appt_doc.patient_name,
+      'patient_age': appt_doc.patient_age,
+      'patient_sex': appt_doc.patient_sex,
+      'company': appt_doc.company,
+      'custom_branch': appt_doc.custom_branch,
+      'custom_service_unit': lab,
+      'custom_lab_test': lab_doc.name
+    })
+  samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in ({params}) group by 1""", as_dict=True)
   for smpl in samples:
     sample_doc.append('custom_sample_table', {'sample': smpl.sample, 'quantity': smpl.qty})
   sample_doc.insert()

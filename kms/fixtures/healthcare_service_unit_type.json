@@ -2,6 +2,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": "Sample Collection",
   "description": null,
   "disabled": 0,
   "docstatus": 0,
@@ -11,7 +12,7 @@
   "item": null,
   "item_code": null,
   "item_group": null,
-  "modified": "2023-09-05 15:08:20.915449",
+  "modified": "2024-05-30 07:51:53.308282",
   "name": "Laboratory",
   "no_of_hours": 0,
   "overlap_appointments": 1,
@@ -22,6 +23,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": null,
   "description": null,
   "disabled": 0,
   "docstatus": 0,
@@ -42,6 +44,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": "Radiology",
   "description": null,
   "disabled": 0,
   "docstatus": 0,
@@ -51,7 +54,7 @@
   "item": null,
   "item_code": null,
   "item_group": null,
-  "modified": "2023-12-26 13:19:38.198858",
+  "modified": "2024-05-30 07:44:19.086902",
   "name": "Radiology",
   "no_of_hours": 0,
   "overlap_appointments": 1,
@@ -62,6 +65,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": null,
   "description": null,
   "disabled": 0,
   "docstatus": 0,
@@ -82,6 +86,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": null,
   "description": null,
   "disabled": 0,
   "docstatus": 0,
@@ -102,6 +107,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": null,
   "description": null,
   "disabled": 0,
   "docstatus": 0,
@@ -122,6 +128,7 @@
  {
   "allow_appointments": 1,
   "change_in_item": 0,
+  "custom_default_doctype": null,
   "description": null,
   "disabled": 0,
   "docstatus": 0,

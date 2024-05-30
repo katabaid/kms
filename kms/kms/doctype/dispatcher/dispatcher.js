@@ -119,27 +119,34 @@ function assign_to_room(frm) {
 	if(selected_rows.length > 0 && selected_rows) {
 		selected_rows.forEach(row => {
 			//for each room define what method to call
-			custom_default_doctype = frappe.get_value('Healthcare Service Unit Type', frappe.get_value('Healthcare Service Unit', row.healthcare_service_unit, 'service_unit_type'), 'custom_default_doctype')
-			// Lab
-			if (custom_default_doctype=='Sample Collection') {
-				frappe.call({
-					method: 'kms.api.create_sample_and_test',
-					args: {
-						'appt': frm.doc.patient_appointment,
-						'selected': null //////////////////////////
-					},
-					callback: function(r) {
-						if(r.message) {
-							frappe.show_alert({
-								message: 'Room assigned successfully.',
-								indicator: 'green'
-							})
-						}
+			frappe.db.get_value('Healthcare Service Unit', row.healthcare_service_unit, 'service_unit_type').then(hsu=>{
+				frappe.db.get_value('Healthcare Service Unit Type', hsu.message.service_unit_type, 'custom_default_doctype').then(dt=>{
+					// Lab
+					if (dt.message.custom_default_doctype=='Sample Collection') {
+						frappe.call({
+							method: 'kms.api.create_sample_and_test',
+							args: {
+								'disp': frm.doc.name,
+								'selected': row.healthcare_service_unit
+							},
+							callback: function(r) {
+								if(r.message) {
+									frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
+									frm.save()
+									frappe.show_alert({
+										message: 'Room assigned successfully.',
+										indicator: 'green'
+									})
+								}
+							}
+						})
 					}
+					// Radiology
+					// Nurse
+
 				})
-			}
-			// Radiology
-			// Nurse
+			})
+			
 		})
 	}
 }
