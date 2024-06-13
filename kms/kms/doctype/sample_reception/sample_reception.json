@@ -1,0 +1,103 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-06-14 05:00:02.135262",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "lab_test_sample",
+  "status",
+  "column_break_ntgbz",
+  "collected_by",
+  "collection_time",
+  "amended_from",
+  "section_break_gxxvg",
+  "sample_reception_detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SR-.YYYY.-.MM.-.DD.-"
+  },
+  {
+   "fieldname": "lab_test_sample",
+   "fieldtype": "Link",
+   "label": "Lab Test Sample",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Started\nSample Received"
+  },
+  {
+   "fieldname": "collected_by",
+   "fieldtype": "Link",
+   "label": "Collected By",
+   "options": "User"
+  },
+  {
+   "fieldname": "collection_time",
+   "fieldtype": "Datetime",
+   "label": "Collection Time"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Sample Reception",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_ntgbz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_gxxvg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "sample_reception_detail",
+   "fieldtype": "Table",
+   "label": "Sample Reception Detail",
+   "options": "Sample Reception Detail"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-06-14 05:27:06.521214",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Sample Reception",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

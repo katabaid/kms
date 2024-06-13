@@ -9,17 +9,24 @@
  "field_order": [
   "naming_series",
   "patient_appointment",
+  "status",
   "tab_break_taqcr",
   "patient",
   "mcu_package",
-  "package_section",
-  "status",
-  "package",
   "room_assignment_section",
   "assignment_table",
+  "section_break_xz2nq",
   "assign_room_button",
+  "column_break_yt5tk",
   "refuse_to_test_button",
-  "retest_button"
+  "column_break_tofox",
+  "retest_button",
+  "column_break_2xoot",
+  "remove_from_room_button",
+  "related_examination_section",
+  "related_examination_html",
+  "package_tab",
+  "package"
  ],
  "fields": [
   {
@@ -49,12 +56,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:doc.mcu_package",
-   "fieldname": "package_section",
-   "fieldtype": "Section Break",
-   "label": "Package"
-  },
-  {
    "fieldname": "package",
    "fieldtype": "Table",
    "label": "Package",
@@ -66,7 +67,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "In Queue\nWaiting to Finish\nFinished\nRescheduled",
+   "options": "In Queue\nIn Room\nWaiting to Finish\nFinished\nRescheduled",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -103,11 +105,48 @@
    "fieldname": "retest_button",
    "fieldtype": "Button",
    "label": "Retest"
+  },
+  {
+   "fieldname": "package_tab",
+   "fieldtype": "Tab Break",
+   "label": "Package"
+  },
+  {
+   "fieldname": "column_break_tofox",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_xz2nq",
+   "fieldtype": "Section Break",
+   "label": "Action"
+  },
+  {
+   "fieldname": "column_break_yt5tk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "related_examination_section",
+   "fieldtype": "Section Break",
+   "label": "Related Examination"
+  },
+  {
+   "fieldname": "related_examination_html",
+   "fieldtype": "HTML",
+   "label": "Related Examination HTML"
+  },
+  {
+   "fieldname": "column_break_2xoot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "remove_from_room_button",
+   "fieldtype": "Button",
+   "label": "Remove from Room"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-30 06:14:48.174424",
+ "modified": "2024-06-13 21:55:42.349709",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",
@@ -130,7 +169,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

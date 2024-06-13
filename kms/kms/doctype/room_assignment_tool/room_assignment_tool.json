@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "creation": "2024-06-12 15:33:12.639657",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "column_break_euq7t",
+  "branch",
+  "column_break_hhav4",
+  "assigned_room",
+  "room_assignment_id",
+  "select_room_section",
+  "rooms_html",
+  "assigned_rooms_section",
+  "assigned_html"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "assigned_room",
+   "fieldtype": "Link",
+   "label": "Assigned Room",
+   "options": "Healthcare Service Unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "select_room_section",
+   "fieldtype": "Section Break",
+   "label": "Select Room"
+  },
+  {
+   "fieldname": "rooms_html",
+   "fieldtype": "HTML",
+   "label": "Rooms HTML"
+  },
+  {
+   "fieldname": "assigned_rooms_section",
+   "fieldtype": "Section Break",
+   "label": "Assigned Rooms"
+  },
+  {
+   "fieldname": "assigned_html",
+   "fieldtype": "HTML",
+   "label": "Assigned HTML"
+  },
+  {
+   "fieldname": "column_break_euq7t",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_hhav4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "room_assignment_id",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Room Assignment ID",
+   "options": "Room Assignment"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-06-13 14:15:57.521554",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Room Assignment Tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

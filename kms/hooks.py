@@ -13,6 +13,7 @@ app_license = "MIT"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/kms/css/kms.css"
 # app_include_js = "/assets/kms/js/kms.js"
+# app_include_js = "/assets/kms/js/set_session_default.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kms/css/kms.css"
@@ -230,4 +231,6 @@ fixtures = [
   {'dt':'DocType', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Healthcare Service Unit'},
-  {'dt':'Healthcare Service Unit Type'}]
+  {'dt':'Healthcare Service Unit Type'},
+  {'dt':'Workspace'},]
+on_logout = ["kms.session.remove_room_assignment"]

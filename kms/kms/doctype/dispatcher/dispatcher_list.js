@@ -9,7 +9,7 @@ frappe.listview_settings['Dispatcher'] = {
           const branch_list = disp_branch.map(branch => branch.branch)
           let d = new frappe.ui.Dialog({
             title: 'Room ',
-            size: 'medium',
+            size: 'large',
             fields: [
               {
                 fieldname: 'branch',
@@ -27,13 +27,24 @@ frappe.listview_settings['Dispatcher'] = {
                       const $wrapper = d.get_field("room").$wrapper;
                       const summary_wrapper = $(`<div class="summary_wrapper">`).appendTo($wrapper);
                       const data = r.message.map((entry)=>{
-                        return [entry.name, entry.status_count]
+                        return [entry.name, entry.user, entry.status_count]
                       })
                       const columns = [
                         {
                           name: "room",
                           id: "room",
                           content: `${__("Room")}`,
+                          editable: false,
+                          sortable: false,
+                          focusable: false,
+                          dropdown: false,
+                          align: "left",
+                          width: 200,
+                        },
+                        {
+                          name: "user",
+                          id: "user",
+                          content: `${__("User")}`,
                           editable: false,
                           sortable: false,
                           focusable: false,

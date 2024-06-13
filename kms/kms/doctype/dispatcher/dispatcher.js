@@ -6,9 +6,11 @@ frappe.ui.form.on('Dispatcher', {
 		frm.fields_dict['assign_room_button'].df.hidden = true;
 		frm.fields_dict['refuse_to_test_button'].df.hidden = true;
 		frm.fields_dict['retest_button'].df.hidden = true;
+		frm.fields_dict['remove_from_room_button'].df.hidden = true;
 		frm.refresh_field('assign_room_button');
 		frm.refresh_field('refuse_to_test_button');
 		frm.refresh_field('retest_button');
+		frm.refresh_field('remove_from_room_button');
 
 		frm.fields_dict['assign_room_button'].input.onclick = function() {
 			assign_room(frm);
@@ -19,6 +21,20 @@ frappe.ui.form.on('Dispatcher', {
 		frm.fields_dict['retest_button'].input.onclick = function() {
 			retest(frm);
 		}
+		frm.fields_dict['remove_from_room_button'].input.onclick = function() {
+			remove_from_room(frm);
+		}
+
+		if(frm.doc.status === 'Waiting to Finish') {
+			frm.add_custom_button(
+				'Finish', 
+				() => {
+					frm.doc.status = 'Finished';
+					frm.dirty();
+					frm.save();
+				}, 
+				'Status')
+		}
 	},
 
 	onload_post_render: function(frm) {
@@ -28,17 +44,29 @@ frappe.ui.form.on('Dispatcher', {
 		frm.fields_dict['assignment_table'].grid.wrapper.on('change', '.grid-row-check', function() {
 			check_button_state(frm);
 		});
+		
 		frm.fields_dict['assignment_table'].grid.wrapper.find('.grid-add-row').hide();
-		//NOT WORKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		frm.fields_dict['assignment_table'].grid.grid_rows.forEach(row => {
-			$(row.wrapper).find('.grid-delete-row').hide();
+		frm.fields_dict['assignment_table'].grid.wrapper.find('.grid-remove-rows').hide();
+
+		frm.fields_dict['assignment_table'].grid.wrapper.on('click', '.grid-row-check', function() {
+			ensure_single_selection(frm);
 		});
 	},
 
 	setup: function(frm) {
-		//NOT WOPRKING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		frm.set_indicator_formatter("healthcare_service_unit", function(doc){
-			return "red";
+			if(doc.status==='Finished Examination')
+				return 'green';
+			else if(doc.status==='Refused to Test')
+				return 'red';
+			else if(doc.status==='Wait for Room Assignment')
+				return 'orange';
+			else if(doc.status==='Waiting to Enter the Room')
+				return 'yellow';
+			else if(doc.status==='Ongoing Examination')
+				return 'pink';
+			else
+				return 'orange';
 		})
 	}
 });
@@ -47,6 +75,7 @@ function check_button_state(frm) {
 	let show_assign_room_button = false;
 	let show_refuse_to_test_button = false;
 	let show_retest_button = false;
+	let show_remove_from_room = false;
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
 	if (selected_rows.length > 0) {
 		for (let row of selected_rows) {
@@ -66,7 +95,15 @@ function check_button_state(frm) {
 			}
 		}
 		for (let row of selected_rows) {
-			if(row.status != 'Refused to Test') {
+			if(row.status === 'Waiting to Enter the Room') {
+				show_remove_from_room = true;
+			} else {
+				show_remove_from_room = false;
+				break;
+			}
+		}
+		for (let row of selected_rows) {
+			if(row.status != 'Refused to Test'&&row.status != 'Finished Examination') {
 				show_refuse_to_test_button = true;
 			} else {
 				show_refuse_to_test_button = false;
@@ -80,6 +117,8 @@ function check_button_state(frm) {
 	frm.refresh_field('refuse_to_test_button');
 	frm.fields_dict['retest_button'].df.hidden = !show_retest_button;
 	frm.refresh_field('retest_button');
+	frm.fields_dict['remove_from_room_button'].df.hidden = !show_remove_from_room;
+	frm.refresh_field('remove_from_room_button');
 }
 
 function assign_room(frm) {
@@ -107,9 +146,37 @@ function retest(frm) {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
 	if(selected_rows.length > 0 && selected_rows) {
 		selected_rows.forEach(row => {
-			frappe.throw('ValidationError:')
+			frappe.model.set_value(row.doctype, row.name, 'status', 'Wait for Room Assignment');
 		})
-		//frm.save()
+		frm.save()
+	}
+}
+
+function remove_from_room(frm) {
+	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
+	if(selected_rows.length > 0 && selected_rows) {
+		selected_rows.forEach(row => {
+			frappe.model.set_value(row.doctype, row.name, 'status', 'Wait for Room Assignment');
+			frappe.model.set_value(row.doctype, row.name, 'reference_doctype', '');
+			frappe.model.set_value(row.doctype, row.name, 'reference_doc', '');
+			frappe.call({
+				method: 'frappe.client.set_value',
+				args: {
+					doctype: row.reference_doctype,
+					name: row.reference_doc,
+					fieldname: 'custom_status',
+					value: 'Removed'
+				},
+				freeze: true,
+				freeze_message: __("Removing from Room"),
+				callback: (r) => {
+					if(r.message) {
+						console.log(r.message);
+					}
+				}
+			})
+		})
+		frm.save()
 	}
 }
 
@@ -132,6 +199,8 @@ function assign_to_room(frm) {
 							callback: function(r) {
 								if(r.message) {
 									frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
+									frappe.model.set_value(row.doctype, row.name, 'reference_doctype', 'Sample Collection');
+									frappe.model.set_value(row.doctype, row.name, 'reference_doc', r.message.sample);
 									frm.save()
 									frappe.show_alert({
 										message: 'Room assigned successfully.',
@@ -149,4 +218,16 @@ function assign_to_room(frm) {
 			
 		})
 	}
+}
+function ensure_single_selection(frm) {
+	let selected_row = null;
+	frm.fields_dict['assignment_table'].grid.wrapper.find('.grid-row-check').each(function() {
+		if ($(this).is(':checked')) {
+			if (selected_row) {
+				$(this).prop('checked', false);
+			} else {
+				selected_row = $(this);
+			}
+		}
+	});
 }
