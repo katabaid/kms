@@ -36,16 +36,18 @@
    "label": "UOM"
   },
   {
+   "default": "Started",
    "fieldname": "status",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "Status",
+   "options": "Started\nChecked In\nRemoved\nFinished\nRefused",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-06-13 16:27:16.845053",
+ "modified": "2024-06-16 21:48:42.836937",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Sample Collection Bulk",

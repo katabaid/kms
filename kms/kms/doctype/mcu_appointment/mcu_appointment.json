@@ -9,7 +9,8 @@
   "item_name",
   "item_group",
   "column_break_dfowa",
-  "healthcare_service_unit"
+  "healthcare_service_unit",
+  "status"
  ],
  "fields": [
   {
@@ -46,12 +47,19 @@
    "fieldtype": "Link",
    "label": "Healthcare Service Unit",
    "options": "Healthcare Service Unit"
+  },
+  {
+   "default": "Started",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Started\nFinished\nRefused\nCancelled"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-05-30 07:57:17.161993",
+ "modified": "2024-06-16 13:46:04.717655",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Appointment",
