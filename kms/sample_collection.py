@@ -62,3 +62,59 @@ def refuse_to_test(name, selected, reason):
     })
     comment_doc.insert()
   return 'success'
+
+@frappe.whitelist()
+def remove(name, reason):
+  sample_doc = frappe.get_doc('Sample Collection', name)
+  sample_doc.custom_status = 'Removed'
+  for sample_type in sample_doc.get('custom_sample_table'):
+    sample_type.status = 'Removed'
+  sample_doc.save()
+  frappe.db.set_value('Sample Collection', name, 'docstatus', '2')
+  if sample_doc.custom_dispatcher:
+    dispatcher_doc = frappe.get_doc('Dispatcher', sample_doc.custom_dispatcher)
+    dispatcher_doc.status = 'In Queue'
+    for hsu in dispatcher_doc.get('assignment_table'):
+      if hsu.healthcare_service_unit == sample_doc.custom_service_unit:
+        hsu.status = 'Wait for Room Assignment'
+        hsu.reference_doc = None
+        hsu.reference_doctype = None
+    dispatcher_doc.save()
+    notification_doc = frappe.get_doc({
+      'doctype': 'Notification Log',
+      'for_user': frappe.db.get_value('Dispatcher Settings', {'branch': sample_doc.custom_branch, 'enable_date': today()}, 'dispatcher'),
+      'type': 'Alert',
+      'document_type': 'Sample Collection',
+      'document_name': name,
+      'from_user': frappe.session.user,
+      'subject': f"""Patient {sample_doc.patient_name} removed from room with reason: {reason}."""
+    })
+    notification_doc.insert()
+    comment_doc = frappe.get_doc({
+      'doctype': 'Comment',
+      'comment_type': 'Comment',
+      'comment_by': frappe.session.user,
+      'reference_doctype': 'Dispatcher',
+      'reference_name': sample_doc.custom_dispatcher,
+      'content': f"""Patient {sample_doc.patient_name} removed from room with reason: {reason}."""
+    })
+    comment_doc.insert()
+  return 'success'
+
+@frappe.whitelist()
+def check_in(name):
+  sample_doc = frappe.get_doc('Sample Collection', name)
+  sample_doc.custom_status = 'Checked In'
+  for sample_type in sample_doc.get('custom_sample_table'):
+    sample_type.status = 'Checked In'
+  sample_doc.save()
+
+  if sample_doc.custom_dispatcher:
+    dispatcher_doc = frappe.get_doc('Dispatcher', sample_doc.custom_dispatcher)
+    dispatcher_doc.status = 'In Room'
+    dispatcher_doc.room = sample_doc.custom_service_unit
+    for hsu in dispatcher_doc.get('assignment_table'):
+      if hsu.healthcare_service_unit == sample_doc.custom_service_unit:
+        hsu.status = 'Ongoing Examination'
+    dispatcher_doc.save()
+  return 'success'

@@ -10,7 +10,9 @@
   "naming_series",
   "patient_appointment",
   "status",
+  "room",
   "tab_break_taqcr",
+  "branch",
   "patient",
   "mcu_package",
   "room_assignment_section",
@@ -142,11 +144,26 @@
    "fieldname": "remove_from_room_button",
    "fieldtype": "Button",
    "label": "Remove from Room"
+  },
+  {
+   "fieldname": "room",
+   "fieldtype": "Link",
+   "label": "Room",
+   "options": "Healthcare Service Unit",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient_appointment.custom_branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-13 21:55:42.349709",
+ "modified": "2024-06-17 16:32:52.775388",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

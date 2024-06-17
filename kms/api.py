@@ -675,3 +675,16 @@ def update_item_price(doc, method):
               "uom": "Unit"})
           pbs_price_doc.insert()
           frappe.msgprint(f"Item Price added for {pb_doc.name} in Price List {selling_price_list}", alert=True)                
+
+'''@frappe.whitelist()
+def populate_mcu(appointment, mcu, branch):
+  mcu = frappe.get_doc('Product Bundle', mcu)
+  appointment_doc = frappe.get_doc('Patient Appointment', appointment)
+  for item in mcu.items:
+    hsu = frappe.db.sql(f"""SELECT service_unit FROM `tabItem Group Service Unit` WHERE parent = '{item.item_group}' and branch = '{branch}'""")
+    appointment_doc.append('custom_mcu_exam_items', {
+      'examination_item': item.item_code,
+      'status': 'Started',
+      'healthcare_service_unit': hsu[0][0]
+    })
+  appointment_doc.save()'''
