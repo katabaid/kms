@@ -87,7 +87,7 @@ function check_button_state(frm) {
 			}
 		}
 		for (let row of selected_rows) {
-			if(row.status === 'Finished Examination') {
+			if(row.status === 'Finished Examination'||row.status === 'Refused to Test') {
 				show_retest_button = true;
 			} else {
 				show_retest_button = false;
@@ -156,27 +156,24 @@ function remove_from_room(frm) {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
 	if(selected_rows.length > 0 && selected_rows) {
 		selected_rows.forEach(row => {
-			frappe.model.set_value(row.doctype, row.name, 'status', 'Wait for Room Assignment');
-			frappe.model.set_value(row.doctype, row.name, 'reference_doctype', '');
-			frappe.model.set_value(row.doctype, row.name, 'reference_doc', '');
-			frappe.call({
-				method: 'frappe.client.set_value',
-				args: {
-					doctype: row.reference_doctype,
-					name: row.reference_doc,
-					fieldname: 'custom_status',
-					value: 'Removed'
-				},
-				freeze: true,
-				freeze_message: __("Removing from Room"),
-				callback: (r) => {
-					if(r.message) {
-						console.log(r.message);
+			const reference_doctype = row.reference_doctype;
+			const reference_doc = row.reference_doc;
+			if(reference_doctype==='Sample Collection') {
+				frappe.call({
+					method: 'kms.sample_collection.remove',
+					args: {
+						name: reference_doc,
+						reason: 'Removed from Room'
+					},
+					callback: (r) =>{
+						if(r.message) {
+							console.log(r.message);
+							frm.reload_doc();
+						}
 					}
-				}
-			})
+				})
+			}
 		})
-		frm.save()
 	}
 }
 

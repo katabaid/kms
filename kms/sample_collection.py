@@ -25,6 +25,8 @@ def refuse_to_test(name, selected, reason):
   if refuse_all:
     sample_doc.custom_status = 'Refused'
   elif partial_finished:
+    sample_doc.collected_by = frappe.session.user
+    sample_doc.collection_time = frappe.utils.now()
     sample_doc.custom_status = 'Partially Finished'
   sample_doc.save()
   # Cancel Sample Collection
@@ -74,6 +76,7 @@ def remove(name, reason):
   if sample_doc.custom_dispatcher:
     dispatcher_doc = frappe.get_doc('Dispatcher', sample_doc.custom_dispatcher)
     dispatcher_doc.status = 'In Queue'
+    dispatcher_doc.room = ''
     for hsu in dispatcher_doc.get('assignment_table'):
       if hsu.healthcare_service_unit == sample_doc.custom_service_unit:
         hsu.status = 'Wait for Room Assignment'
