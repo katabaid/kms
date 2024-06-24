@@ -121,3 +121,31 @@ def check_in(name):
         hsu.status = 'Ongoing Examination'
     dispatcher_doc.save()
   return 'success'
+
+@frappe.whitelist()
+def get_items():
+  item_group = frappe.db.sql(f"""
+    WITH RECURSIVE ItemHierarchy AS (
+    SELECT name, parent_item_group, is_group
+    FROM `tabItem Group` tig 
+    WHERE parent_item_group = 'Laboratory'
+    UNION ALL
+    SELECT t.name, t.parent_item_group, t.is_group
+    FROM `tabItem Group` t
+    INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
+    )
+    SELECT name, parent_item_group, is_group
+    FROM ItemHierarchy""", as_dict=True)
+  item = frappe.db.sql(f"""
+    SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `_bc972485fd8ae01c`.`tabLab Test Template` tltt
+    WHERE EXISTS (SELECT 1 FROM `_bc972485fd8ae01c`.tabItem ti WHERE tltt.item = ti.name) 
+    AND EXISTS (SELECT 1 FROM (WITH RECURSIVE ItemHierarchy AS (
+        SELECT name, parent_item_group, is_group
+        FROM `_bc972485fd8ae01c`.`tabItem Group` tig 
+        WHERE parent_item_group = 'Laboratory'
+        UNION ALL
+        SELECT t.name, t.parent_item_group, t.is_group
+        FROM `_bc972485fd8ae01c`.`tabItem Group` t
+        INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
+    )  SELECT name, parent_item_group, is_group FROM ItemHierarchy) ih WHERE tltt.lab_test_group = ih.name)""", as_dict=True)
+  return {'item_group': item_group, 'item': item}
