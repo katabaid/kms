@@ -137,15 +137,44 @@ def get_items():
     SELECT name, parent_item_group, is_group
     FROM ItemHierarchy""", as_dict=True)
   item = frappe.db.sql(f"""
-    SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `_bc972485fd8ae01c`.`tabLab Test Template` tltt
-    WHERE EXISTS (SELECT 1 FROM `_bc972485fd8ae01c`.tabItem ti WHERE tltt.item = ti.name) 
+    SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `tabLab Test Template` tltt
+    WHERE EXISTS (SELECT 1 FROM tabItem ti WHERE tltt.item = ti.name) 
     AND EXISTS (SELECT 1 FROM (WITH RECURSIVE ItemHierarchy AS (
         SELECT name, parent_item_group, is_group
-        FROM `_bc972485fd8ae01c`.`tabItem Group` tig 
+        FROM `tabItem Group` tig 
         WHERE parent_item_group = 'Laboratory'
         UNION ALL
         SELECT t.name, t.parent_item_group, t.is_group
-        FROM `_bc972485fd8ae01c`.`tabItem Group` t
+        FROM `tabItem Group` t
         INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
     )  SELECT name, parent_item_group, is_group FROM ItemHierarchy) ih WHERE tltt.lab_test_group = ih.name)""", as_dict=True)
   return {'item_group': item_group, 'item': item}
+@frappe.whitelist()
+def create(doctype, name):
+  def get_appointment_doc(doctype, name):
+    if doctype == 'Patient Appointment':
+      enc_doc = frappe.get_doc('Patient Encounter', name)
+      return frappe.get_doc('Patient Appointment', enc_doc.appointment)
+    elif doctype == 'Patient Encounter':
+      appt = frappe.db.get_value('Dispatcher', name, 'patient_appointment')
+      return frappe.get_doc('Patient Encounter', appt)
+    else:
+      return None
+
+  appt_doc = get_appointment_doc(doctype, name)
+
+  #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
+
+  sample_doc = frappe.get_doc({
+    'doctype': 'Sample Collection',
+    'custom_appointment': appt_doc.name,
+    'patient': appt_doc.patient,
+    'patient_name': appt_doc.patient_name,
+    'patient_age': appt_doc.patient_age,
+    'patient_sex': appt_doc.patient_sex,
+    'company': appt_doc.company,
+    'custom_branch': appt_doc.custom_branch,
+    'custom_service_unit': lab,
+    #'custom_lab_test': lab_doc.name,
+    'custom_status': 'Started'
+  })

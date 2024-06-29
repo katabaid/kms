@@ -24,10 +24,9 @@ def upsert_item_price(item_code, price_list, customer, price_list_rate):
 
 @frappe.whitelist()
 def update_quo_status(name):
-  frappe.db.sql(
-    "update `tabQuotation` set status = 'Ordered' where name = %s",
-    (name),
-  )
+  doc = frappe.get_doc('Quotation', name)
+  doc.status = 'Ordered'
+  doc.save()
 
 @frappe.whitelist()
 def get_item_codes_for_bundle():

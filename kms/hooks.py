@@ -31,6 +31,9 @@ app_license = "MIT"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+  "Patient Encounter": "public/js/patient_encounter.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -234,3 +237,4 @@ fixtures = [
   {'dt':'Healthcare Service Unit Type'},
   {'dt':'Workspace'},]
 on_logout = ["kms.session.remove_room_assignment"]
+#on_session_creation = ["kms.session.redirect_after_login"]
