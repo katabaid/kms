@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-06-09 17:38:38.885754",
+ "creation": "2024-07-01 08:21:01.888229",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -25,6 +25,7 @@
   "result_section",
   "examination_item",
   "result",
+  "non_selective_result",
   "consumables_section",
   "items",
   "remark_section",
@@ -47,10 +48,65 @@
    "reqd": 1
   },
   {
-   "fieldname": "submitted_date",
-   "fieldtype": "Datetime",
-   "label": "Submitted Date",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "queue_pooling",
+   "fieldtype": "Link",
+   "label": "Queue Pooling",
+   "options": "Queue Pooling"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "patient_encounter",
+   "fieldtype": "Link",
+   "label": "Patient Encounter",
+   "options": "Patient Encounter"
+  },
+  {
+   "fieldname": "column_break_ydxak",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "appointment",
+   "fieldtype": "Link",
+   "label": "Appointment",
+   "options": "Patient Appointment"
+  },
+  {
+   "fieldname": "dispatcher",
+   "fieldtype": "Link",
+   "label": "Dispatcher",
+   "options": "Dispatcher"
+  },
+  {
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "created_date",
+   "fieldtype": "Date",
+   "label": "Created Date"
   },
   {
    "default": "Today",
@@ -66,45 +122,10 @@
    "label": "Expected Result Time"
   },
   {
-   "fieldname": "patient",
-   "fieldtype": "Link",
-   "label": "Patient",
-   "options": "Patient",
-   "reqd": 1
-  },
-  {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Radiology",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fetch_from": "patient.patient_name",
-   "fieldname": "patient_name",
-   "fieldtype": "Data",
-   "label": "Patient Name",
+   "fieldname": "submitted_date",
+   "fieldtype": "Datetime",
+   "label": "Submitted Date",
    "read_only": 1
-  },
-  {
-   "fieldname": "service_unit",
-   "fieldtype": "Link",
-   "label": "Service Unit",
-   "options": "Healthcare Service Unit",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_ydxak",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "appointment",
-   "fieldtype": "Link",
-   "label": "Appointment",
-   "options": "Patient Appointment"
   },
   {
    "fieldname": "result_section",
@@ -112,15 +133,16 @@
    "label": "Result"
   },
   {
-   "fieldname": "remark",
-   "fieldtype": "Text Editor",
-   "label": "Remark"
+   "fieldname": "examination_item",
+   "fieldtype": "Table",
+   "label": "Examination Item",
+   "options": "Nurse Examination Request"
   },
   {
    "fieldname": "result",
    "fieldtype": "Table",
    "label": "Result",
-   "options": "Radiology Result"
+   "options": "Nurse Examination Selective Result"
   },
   {
    "fieldname": "consumables_section",
@@ -139,49 +161,44 @@
    "label": "Remark"
   },
   {
-   "fieldname": "queue_pooling",
-   "fieldtype": "Link",
-   "label": "Queue Pooling",
-   "options": "Queue Pooling"
+   "fieldname": "remark",
+   "fieldtype": "Text Editor",
+   "label": "Remark"
   },
   {
-   "fieldname": "patient_encounter",
+   "fieldname": "amended_from",
    "fieldtype": "Link",
-   "label": "Patient Encounter",
-   "options": "Patient Encounter"
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Nurse Examination",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   },
   {
-   "fieldname": "examination_item",
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Nurse Examination",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "non_selective_result",
    "fieldtype": "Table",
-   "label": "Examination Item",
-   "options": "Radiology Request"
-  },
-  {
-   "fieldname": "dispatcher",
-   "fieldtype": "Link",
-   "label": "Dispatcher",
-   "options": "Dispatcher"
-  },
-  {
-   "fieldname": "branch",
-   "fieldtype": "Link",
-   "label": "Branch",
-   "options": "Branch"
-  },
-  {
-   "default": "Today",
-   "fieldname": "created_date",
-   "fieldtype": "Date",
-   "label": "Created Date"
+   "label": "Non Selective Result",
+   "options": "Nurse Examination Result"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-30 15:10:04.525819",
+ "modified": "2024-07-01 10:28:14.829046",
  "modified_by": "Administrator",
  "module": "KMS",
- "name": "Radiology",
+ "name": "Nurse Examination",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

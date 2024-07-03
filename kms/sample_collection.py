@@ -149,6 +149,7 @@ def get_items():
         INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
     )  SELECT name, parent_item_group, is_group FROM ItemHierarchy) ih WHERE tltt.lab_test_group = ih.name)""", as_dict=True)
   return {'item_group': item_group, 'item': item}
+
 @frappe.whitelist()
 def create(doctype, name):
   def get_appointment_doc(doctype, name):
