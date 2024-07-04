@@ -129,9 +129,22 @@ frappe.ui.form.on('Patient Encounter', {
           frappe.model.set_value(child.doctype, child.name, 'lab_test_code', item);
         });
         frm.refresh_field('lab_test_prescription');
-        frappe.throw(frm.doctype)
+        
         frm.save();
-        //call server procedure to create sample collection
+
+        frappe.call({
+          method: 'kms.sample_collection.create_sc',
+          args: {
+            'doctype': 'Patient Encounter',
+            'name': frm.doc.name
+          },
+          callback: (r => {
+            console.log(JSON.stringify(r));
+            frm.refresh_field('lab_test_prescription');
+            ////////////////////// UPDATE SAMPLE COLLECTION TABLE //////////////////////
+          }),
+          error: (r => { console.log(JSON.stringify(r)) }),
+        })
         dialog.hide();
       };
 

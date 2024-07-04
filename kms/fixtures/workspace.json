@@ -1234,7 +1234,7 @@
    {
     "chart_name": "Sales Order Trends",
     "label": "Sales Order Trends",
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "charts",
     "parenttype": "Workspace"
    }
@@ -1260,7 +1260,7 @@
     "link_type": null,
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Card Break"
@@ -1276,7 +1276,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1292,7 +1292,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1308,7 +1308,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1324,7 +1324,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1340,7 +1340,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1356,7 +1356,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1372,7 +1372,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1388,7 +1388,7 @@
     "link_type": null,
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Card Break"
@@ -1404,7 +1404,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1420,7 +1420,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1436,7 +1436,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1452,7 +1452,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1468,7 +1468,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1484,7 +1484,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1500,7 +1500,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1516,7 +1516,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1532,7 +1532,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1548,7 +1548,7 @@
     "link_type": null,
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Card Break"
@@ -1564,7 +1564,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1580,7 +1580,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1596,7 +1596,7 @@
     "link_type": "DocType",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1612,7 +1612,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1628,7 +1628,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1644,7 +1644,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1660,7 +1660,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1676,7 +1676,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1692,7 +1692,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1708,7 +1708,7 @@
     "link_type": null,
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Card Break"
@@ -1724,7 +1724,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1740,7 +1740,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1756,7 +1756,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1772,7 +1772,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1788,7 +1788,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1804,7 +1804,7 @@
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1820,7 +1820,7 @@
     "link_type": null,
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Card Break"
@@ -1836,7 +1836,7 @@
     "link_type": "Report",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1852,7 +1852,7 @@
     "link_type": "Report",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1868,7 +1868,7 @@
     "link_type": "Page",
     "onboard": 1,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1884,7 +1884,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1900,7 +1900,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1916,7 +1916,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1932,7 +1932,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1948,7 +1948,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1964,7 +1964,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -1980,7 +1980,7 @@
     "link_type": null,
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Card Break"
@@ -1996,7 +1996,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2012,7 +2012,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2028,7 +2028,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2044,7 +2044,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2060,7 +2060,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2076,7 +2076,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2092,7 +2092,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2108,7 +2108,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2124,7 +2124,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2140,7 +2140,7 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
@@ -2156,15 +2156,15 @@
     "link_type": "Report",
     "onboard": 0,
     "only_for": null,
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "links",
     "parenttype": "Workspace",
     "type": "Link"
    }
   ],
-  "modified": "2023-05-26 16:31:53.634851",
+  "modified": "2024-06-28 15:56:04.515240",
   "module": "Selling",
-  "name": "Selling",
+  "name": "Sales",
   "number_cards": [],
   "parent_page": "",
   "public": 1,
@@ -2181,7 +2181,7 @@
     "kanban_board": null,
     "label": "Point of Sale",
     "link_to": "point-of-sale",
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "restrict_to_domain": null,
@@ -2197,7 +2197,7 @@
     "kanban_board": null,
     "label": "Item",
     "link_to": "Item",
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "restrict_to_domain": null,
@@ -2213,7 +2213,7 @@
     "kanban_board": null,
     "label": "Sales Order",
     "link_to": "Sales Order",
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "restrict_to_domain": null,
@@ -2229,7 +2229,7 @@
     "kanban_board": null,
     "label": "Sales Analytics",
     "link_to": "Sales Analytics",
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "restrict_to_domain": null,
@@ -2245,7 +2245,7 @@
     "kanban_board": null,
     "label": "Dashboard",
     "link_to": "Selling",
-    "parent": "Selling",
+    "parent": "Sales",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
     "restrict_to_domain": null,
@@ -2254,7 +2254,7 @@
     "url": null
    }
   ],
-  "title": "Selling"
+  "title": "Sales"
  },
  {
   "charts": [

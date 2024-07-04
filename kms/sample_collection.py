@@ -151,31 +151,68 @@ def get_items():
   return {'item_group': item_group, 'item': item}
 
 @frappe.whitelist()
-def create(doctype, name):
+def create_sc(doctype, name):
   def get_appointment_doc(doctype, name):
-    if doctype == 'Patient Appointment':
+    if doctype == 'Patient Encounter':
       enc_doc = frappe.get_doc('Patient Encounter', name)
       return frappe.get_doc('Patient Appointment', enc_doc.appointment)
-    elif doctype == 'Patient Encounter':
+    elif doctype == 'Dispatcher':
       appt = frappe.db.get_value('Dispatcher', name, 'patient_appointment')
-      return frappe.get_doc('Patient Encounter', appt)
+      return frappe.get_doc('Patient Appointment', appt)
     else:
       return None
 
   appt_doc = get_appointment_doc(doctype, name)
 
   #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
-
-  sample_doc = frappe.get_doc({
-    'doctype': 'Sample Collection',
-    'custom_appointment': appt_doc.name,
-    'patient': appt_doc.patient,
-    'patient_name': appt_doc.patient_name,
-    'patient_age': appt_doc.patient_age,
-    'patient_sex': appt_doc.patient_sex,
-    'company': appt_doc.company,
-    'custom_branch': appt_doc.custom_branch,
-    'custom_service_unit': lab,
-    #'custom_lab_test': lab_doc.name,
-    'custom_status': 'Started'
-  })
+  sus = frappe.db.sql(f"""
+    SELECT DISTINCT tigsu.service_unit
+    FROM `tabItem Group Service Unit` tigsu, tabItem ti, `tabLab Prescription` tlp 
+    WHERE tlp.parent = '{name}' 
+    AND ti.name = tlp.custom_exam_item 
+    AND ti.item_group = tigsu.parent
+    AND branch = '{appt_doc.custom_branch}'""", as_dict=True)
+  
+  resp = []
+  
+  for su in sus:
+    sample_doc = frappe.get_doc({
+      'doctype': 'Sample Collection',
+      'custom_appointment': appt_doc.name,
+      'patient': appt_doc.patient,
+      'patient_name': appt_doc.patient_name,
+      'patient_age': appt_doc.patient_age,
+      'patient_sex': appt_doc.patient_sex,
+      'company': appt_doc.company,
+      'custom_branch': appt_doc.custom_branch,
+      'custom_service_unit': su.service_unit,
+      'custom_status': 'Started'
+    })
+    samples = frappe.db.sql(f"""
+    SELECT tltt.sample, tltt.sample_uom, sum(tltt.sample_qty) sample_qty
+    FROM `tabItem Group Service Unit` tigsu, tabItem ti, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
+    WHERE tlp.parent = '{name}' 
+    AND ti.name = tlp.custom_exam_item 
+    AND ti.item_group = tigsu.parent
+    AND branch = '{appt_doc.custom_branch}'
+    and tigsu.service_unit = '{su.service_unit}'
+    AND tltt.name = tlp.lab_test_name""", as_dict=True)
+    for sample in samples:
+      sample_doc.append('custom_sample_table', {
+        'sample': sample.sample,
+        'uom': sample.sample_uom,
+        'quantity': sample.sample_qty
+      })
+    sample_doc.insert()
+    test_per_su = frappe.db.sql(f"""
+      SELECT tlp.lab_test_name
+      FROM `tabLab Prescription` tlp, `tabItem Group Service Unit` tigsu, tabItem ti 
+      WHERE tlp.parent = '{name}' 
+      AND ti.name = tlp.custom_exam_item 
+      AND ti.item_group = tigsu.parent
+      AND branch = '{appt_doc.custom_branch}'
+      AND tlp.custom_sample_collection IS NULL 
+      AND tigsu.service_unit = '{su.service_unit}'""", as_dict=True)
+    for test in test_per_su:
+      resp.append({'lab_test_name': test.lab_test_name, 'service_unit': su.service_unit, 'sample_collection': sample_doc.name})
+  return resp
