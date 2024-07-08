@@ -12,6 +12,7 @@
   "status",
   "room",
   "tab_break_taqcr",
+  "date",
   "branch",
   "patient",
   "mcu_package",
@@ -159,11 +160,18 @@
    "label": "Branch",
    "options": "Branch",
    "read_only": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-17 16:32:52.775388",
+ "modified": "2024-07-05 18:44:52.134501",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

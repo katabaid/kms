@@ -214,124 +214,6 @@ frappe.ui.form.on('Patient Encounter', {
         console.log(checkedItems);
       };
     });
-
-    /*frappe.call({
-          method: 'kms.api.get_items_to_create_lab'
-      }).then(doc=>{
-         const uniqueLv1 = [...new Set(doc.message.map(item=> item.lv2))].join('\n');
-         const fields = [
-              {
-                 fieldname: 'sb1',
-                 fieldtype: 'Section Break'
-              },
-              {
-                 fieldname: 'select_1',
-                 fieldtype: 'Select',
-                 options: uniqueLv1
-              },
-              {
-                  fieldname: 'cb_1',
-                  fieldtype: 'Column Break'
-              },
-              {
-                  fieldname: 'select_2',
-                  fieldtype: 'Select',
-                  hidden: 1,
-                  options: '',
-              },
-              {
-                  fieldname: 'sb_3',
-                  fieldtype: 'Section Break',
-                  label: 'Select Lab Items',
-                  hidden: 0
-              },
-              {
-                  fieldname: 'html_1',
-                  fieldtype: 'HTML',
-              },
-          ];
-          
-          $.each(doc.message, (_i, e)=>{
-              fields.push({
-                  fieldtype: 'Check',
-                  label: e.item_name,
-                  fieldname: e.name,
-                  hidden: 1
-              });
-          });
-          //create dialog
-          const pb = new frappe.ui.Dialog({
-              title: 'Pick Lab Test',
-              fields: fields,
-              primary_action_label: 'Pick',
-              primary_action(values) {
-                  let filteredKeys = Object.keys(values).filter(key => values[key] === 1);
-                  // Create a new object with filtered keys
-                  let filteredData = {};
-                  filteredKeys.forEach(key => {
-                      filteredData[key] = values[key];
-                  });
-                  //filteredData.encounter = frm.doc.name;
-                  let selected = [];
-                  $.each(filteredKeys, (_i, e)=>{
-                      frappe.db.get_doc('Lab Test Template', null, {'lab_test_code': e}).then(ltt=>{
-                          selected.push(ltt.name);
-                          if(filteredKeys.length === selected.length) {
-                              console.log(selected)
-                            frappe.call({
-                                  method: 'kms.api.create_sample_and_test',
-                                  args: {'enc': frm.doc.name, 'selected': selected, 'appt': frm.doc.appointment},
-                                  freeze: true,
-                                  callback: (r) => {
-                                      console.log('r', r);
-                                  }
-                              });
-                          }
-                      });
-                  });
-                  pb.hide();
-                  frm.refresh();
-              }
-          });
-          //select and checkbox reactivity
-          pb.fields_dict.select_1.$input.on('change', ()=>{
-              pb.fields_dict.select_2.df.options = '';
-              pb.fields_dict.select_2.df.hidden = 1;
-              pb.fields_dict.select_2.refresh();
-              $.each(doc.message, (_i, e)=>{
-                  pb.fields_dict[`${e.name}`].df.hidden = 1;
-                  pb.fields_dict[`${e.name}`].refresh();
-              });
-              const uniqueLv2 = [...new Set(doc.message.filter(item => item.lv2 === pb.get_value('select_1')).map(item => item.lv3))].join('\n');
-              if(uniqueLv2){
-                  pb.fields_dict.select_2.df.options = uniqueLv2;
-                  pb.fields_dict.select_2.df.hidden = 0;
-                  pb.fields_dict.select_2.refresh();
-                  pb.fields_dict.select_2.$input.on('change', ()=>{
-                      $.each(doc.message, (_i, e)=>{
-                          pb.fields_dict[`${e.name}`].df.hidden = 1;
-                          pb.fields_dict[`${e.name}`].refresh();
-                      });
-                      let display = doc.message.filter(item => item.lv3 === pb.get_value('select_2')).map(item=>item.name);
-                      $.each(display, (_i,e)=>{
-                          pb.fields_dict[`${e}`].df.hidden=0;
-                          pb.fields_dict[`${e}`].refresh();
-                      });
-                  });
-              } else {
-                  $.each(doc.message, (_i, e)=>{
-                      pb.fields_dict[`${e.name}`].df.hidden = 1;
-                      pb.fields_dict[`${e.name}`].refresh();
-                  });
-                  let display = doc.message.filter(item => item.lv2 === pb.get_value('select_1')).map(item=>item.name);
-                  $.each(display, (_i,e)=>{
-                      pb.fields_dict[`${e}`].df.hidden=0;
-                      pb.fields_dict[`${e}`].refresh();
-                  });
-              }
-          });
-         pb.show();
-      });*/
   },
   custom_order_medication(frm) {
     frappe.call({
@@ -395,7 +277,7 @@ frappe.ui.form.on('Patient Encounter', {
   },
   /****************** Triggers ******************/
   prepareDentalSections(frm) {
-    const referenceArray = ['missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 'caries', 'fracture', 'mob', 'brigde', 'rg', 'exfolia', 'fistula'];
+    const referenceArray = ['missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 'caries', 'fracture', 'mob', 'bridge', 'rg', 'exfolia', 'fistula'];
 
     const generateOptions = item => referenceArray.reduce((acc, key) => {
       acc[key] = (item.options && item.options.split(', ').includes(key)) ? 1 : 0;
@@ -410,20 +292,22 @@ frappe.ui.form.on('Patient Encounter', {
       options: generateOptions(item)
     }));
 
-    const generateRadioHtml = (data, customType) => {
-      const gridTemplateColumns = customType === 'Permanent Teeth'
-        ? '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr'
-        : '1fr 1fr 1fr 1fr 1fr';
+    const generateRadioHtml = (data, customType, alignment) => {
+      const gridTemplateColumns = '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr';
+      const justifyContent = alignment === 'left' ? 'start' : 'end';
+      const filler = alignment.concat(customType) === 'startPrimary Teeth' ? '<div></div><div></div><div></div>' : '';
+      const labelColor = customType === 'Primary Teeth' ? 'blue' : 'inherit';
 
       return `
-                <div style="display:grid;grid-template-columns: ${gridTemplateColumns};justify-content: end;">
-                  ${data.reduce((html, item) => `${html}
-                    <label style="display: flex; flex-direction: column; align-items: center;">
-                      <input type="radio" name="custom_radio" style="margin:0 !important;" value="${item.position}">
-                      ${item.position}
-                    </label>`, '')}
-                </div>
-            `;
+        <div style="display:grid;grid-template-columns: ${gridTemplateColumns};justify-content: ${justifyContent};">
+          ${filler}
+          ${data.reduce((html, item) => `${html}
+          <label style="display: flex; flex-direction: column; align-items: center; color: ${labelColor};">
+            <input type="radio" name="custom_radio" style="margin:0 !important;" value="${item.position}">
+            ${item.position}
+          </label>`, '')}
+        </div>
+      `;
     };
 
     const filterAndMapDetails = (detail, custom_type, location) => {
@@ -438,7 +322,7 @@ frappe.ui.form.on('Patient Encounter', {
         result.push(obj);
       }
       return result;
-    }
+    };
     const pt_ul_map = filterAndMapDetails(frm.doc.custom_dental_detail, 'Permanent Teeth', 'ul');
     const pt_ur_map = filterAndMapDetails(frm.doc.custom_dental_detail, 'Permanent Teeth', 'ur');
     const pt_ll_map = filterAndMapDetails(frm.doc.custom_dental_detail, 'Permanent Teeth', 'll');
@@ -449,23 +333,23 @@ frappe.ui.form.on('Patient Encounter', {
     const pr_lr_map = filterAndMapDetails(frm.doc.custom_dental_detail, 'Primary Teeth', 'lr');
 
     let radio_html = `
-          <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
-            ${generateRadioHtml(pt_ul_map, 'Permanent Teeth')}
-            ${generateRadioHtml(pt_ur_map, 'Permanent Teeth')}
-          </div>
-          <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
-            ${generateRadioHtml(pr_ul_map, 'Primary Teeth')}
-            ${generateRadioHtml(pr_ur_map, 'Primary Teeth')}
-          </div>
-          <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
-            ${generateRadioHtml(pr_ll_map, 'Primary Teeth')}
-            ${generateRadioHtml(pr_lr_map, 'Primary Teeth')}
-          </div>
-          <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
-            ${generateRadioHtml(pt_ll_map, 'Permanent Teeth')}
-            ${generateRadioHtml(pt_lr_map, 'Permanent Teeth')}
-          </div>
-        `;
+      <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
+        ${generateRadioHtml(pt_ul_map, 'Permanent Teeth', 'end')}
+        ${generateRadioHtml(pt_ur_map, 'Permanent Teeth', 'start')}
+      </div>
+      <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
+        ${generateRadioHtml(pr_ul_map, 'Primary Teeth', 'start')}
+        ${generateRadioHtml(pr_ur_map, 'Primary Teeth', 'end')}
+      </div>
+      <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
+        ${generateRadioHtml(pr_ll_map, 'Primary Teeth', 'start')}
+        ${generateRadioHtml(pr_lr_map, 'Primary Teeth', 'end')}
+      </div>
+      <div style="display:grid;grid-gap:1rem;grid-template-columns: 1fr 1fr;margin-bottom: 2rem;">
+        ${generateRadioHtml(pt_ll_map, 'Permanent Teeth', 'end')}
+        ${generateRadioHtml(pt_lr_map, 'Permanent Teeth', 'start')}
+      </div>
+    `;
     const data = pt_ul_map.concat(pt_ur_map, pt_ll_map, pt_lr_map, pr_ul_map, pr_ur_map, pr_ll_map, pr_lr_map);
     $(frm.fields_dict.custom_permanent_teeth.wrapper).html(radio_html);
     $(frm.fields_dict.custom_permanent_teeth.wrapper).find('input[type=radio][name=custom_radio]').on('change', function () {
@@ -485,7 +369,7 @@ frappe.ui.form.on('Patient Encounter', {
           get_data: () => {
             return selected_array.map((option) => {
               return {
-                label: option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
+                label: option.key === 'rg' ? 'Regressive Gingivitis' : option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
                 value: option.key,
                 checked: option.value,
               };
@@ -496,6 +380,7 @@ frappe.ui.form.on('Patient Encounter', {
       });
       frm.options_multicheck.refresh_input();
       setTimeout(() => {
+        frm.options_multicheck.$wrapper.find('.unit-checkbox').css('margin-bottom', '30px');
         frm.options_multicheck.$wrapper.find(`input[type="checkbox"]`).each(function () {
           $(this).change(() => {
             const multicheck_field = frm.options_multicheck.$wrapper.find('input[type="checkbox"]');
@@ -514,10 +399,15 @@ frappe.ui.form.on('Patient Encounter', {
         });
       }, 100);
     });
+    $('input[type=radio][name=custom_radio]').change(function () {
+      $(frm.fields_dict.custom_permanent_teeth.wrapper).find('label').css('font-weight', 'normal');
+      if (this.checked) {
+          $(this).parent('label').css('font-weight', 'bold');
+      }
+    });
   },
   prepareStaticDental(frm) {
-    const $wrapper = frm.get_field('custom_detail_html').$wrapper;
-    const detail_wrapper = $(`<div class="detail_wrapper">`).appendTo($wrapper);
+    /***** */
     const transform = (source) => {
       const map = {};
       const locations = ['ul', 'ur', 'll', 'lr'];
@@ -575,6 +465,8 @@ frappe.ui.form.on('Patient Encounter', {
       const secondHalf = array.slice(halfIndex).reverse();
       return firstHalf.concat(secondHalf);
     };
+    const $wrapper = frm.get_field('custom_detail_html').$wrapper;
+    const detail_wrapper = $(`<div class="detail_wrapper">`).appendTo($wrapper);
     const newdata = transform(frm.doc.custom_dental_detail);
     const data = reverseLastHalf(newdata);
 
@@ -600,6 +492,7 @@ frappe.ui.form.on('Patient Encounter', {
         dropdown: false,
         align: 'left',
         width: 250,
+        format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
       },
       {
         name: 'l_prim',
@@ -622,6 +515,7 @@ frappe.ui.form.on('Patient Encounter', {
         dropdown: false,
         align: 'left',
         width: 250,
+        format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
       },
       {
         name: 'r_opt_prim',
@@ -633,6 +527,7 @@ frappe.ui.form.on('Patient Encounter', {
         dropdown: false,
         align: 'left',
         width: 250,
+        format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
       },
       {
         name: 'r_prim',
@@ -655,6 +550,7 @@ frappe.ui.form.on('Patient Encounter', {
         dropdown: false,
         align: 'left',
         width: 250,
+        format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
       },
       {
         name: 'r_perm',
@@ -674,7 +570,7 @@ frappe.ui.form.on('Patient Encounter', {
         data: data,
         dynamicRowHeight: true,
         inlineFilters: false,
-        layout: 'ratio',
+        layout: 'fixed',
         serialNoColumn: false,
         noDataMessage: __("No Data"),
         disableReorderColumn: true

@@ -1,0 +1,37 @@
+{
+ "actions": [],
+ "creation": "2024-07-08 08:22:57.454682",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "total_comment",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "total_comment",
+   "fieldtype": "Link",
+   "label": "Total Comment",
+   "options": "Total Comment"
+  },
+  {
+   "fetch_from": "total_comment.comment",
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-07-08 08:23:38.338434",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Total Comment Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
