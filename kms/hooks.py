@@ -233,8 +233,6 @@ fixtures = [
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'DocType', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
-  {'dt':'Healthcare Service Unit'},
-  {'dt':'Healthcare Service Unit Type'},
   {'dt':'Workspace'},]
 on_logout = ["kms.session.remove_room_assignment"]
 #on_session_creation = ["kms.session.redirect_after_login"]
