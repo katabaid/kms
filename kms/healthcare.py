@@ -38,13 +38,16 @@ def create_nurse_exam(source, name, room):
       for exam_item in exam_items:
         nurse_doc.append('examination_item', {'template': exam_item.name})
         net_doc = frappe.get_doc('Nurse Examination Template', exam_item.name)
+        print(exam_item.name)
 
         selectives = net_doc.get('items')
         if selectives:
+          print('1')
           for selective in selectives:
             nurse_doc.append('result', {'result_line': selective.result_text, 'normal_value': selective.normal_value, 'result_check': selective.normal_value, 'item_code': exam_item.item_code, 'result_options': selective.result_select})
         non_selectives = net_doc.get('normal_items')
         if non_selectives:
+          print('2')
           for non_selective in non_selectives:
             nurse_doc.append('non_selective_result', {'test_name': non_selective.heading_text, 'test_event': non_selective.lab_test_event, 'test_uom': non_selective.lab_test_uom, 'min_value': non_selective.min_value, 'max_value': non_selective.max_value})
     nurse_doc.insert()
