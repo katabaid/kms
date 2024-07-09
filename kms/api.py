@@ -419,7 +419,7 @@ def create_sample_and_test(selected, disp="", enc=""):
       'patient_sex': appt_doc.patient_sex,
       'company': appt_doc.company,
       'custom_branch': appt_doc.custom_branch,
-      'custom_service_unit': lab,
+      'custom_service_unit': selected,
       'custom_lab_test': lab_doc.name,
       'custom_dispatcher': disp,
       'custom_status': 'Started'
