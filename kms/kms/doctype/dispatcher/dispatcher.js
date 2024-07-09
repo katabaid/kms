@@ -206,10 +206,30 @@ function assign_to_room(frm) {
 								}
 							}
 						})
+					} else if (dt.message.custom_default_doctype=='Nurse Examination') {
+						frappe.call({
+							method: 'kms.healthcare.create_service',
+							args: {
+								'target': dt.message.custom_default_doctype,
+								'source': frm.doc.doctype,
+								'name': frm.doc.name,
+								'room': row.healthcare_service_unit,
+							},
+							callback: function(r) {
+								if(r.message) {
+									frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
+									frappe.model.set_value(row.doctype, row.name, 'reference_doctype', 'Nurse Examination');
+									frappe.model.set_value(row.doctype, row.name, 'reference_doc', r.message.nurse_examination);
+									frm.save()
+									frappe.show_alert({
+										message: 'Room assigned successfully.',
+										indicator: 'green'
+									})
+								}
+							}
+						})
 					}
 					// Radiology
-					// Nurse
-
 				})
 			})
 			

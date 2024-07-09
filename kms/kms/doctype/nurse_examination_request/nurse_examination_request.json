@@ -15,14 +15,14 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Template",
-   "options": "Radiology Result Template",
+   "options": "Nurse Examination Template",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-01 09:27:18.724832",
+ "modified": "2024-07-09 11:39:48.027734",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Request",
