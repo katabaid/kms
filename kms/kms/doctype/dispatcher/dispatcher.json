@@ -165,13 +165,14 @@
    "default": "Today",
    "fieldname": "date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Date",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-05 18:44:52.134501",
+ "modified": "2024-07-09 08:23:02.601677",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",
