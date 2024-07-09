@@ -46,6 +46,6 @@ def create_nurse_exam(source, name, room):
         non_selectives = net_doc.get('normal_items')
         if non_selectives:
           for non_selective in non_selectives:
-            nurse_doc.append('non_selective_result', {'test_name': non_selective.heading_text, 'test_event': non_selectives.lab_test_event, 'test_uom': non_selectives.lab_test_uom, 'min_value': non_selectives.min_value, 'max_value': non_selectives.max_value})
+            nurse_doc.append('non_selective_result', {'test_name': non_selective.heading_text, 'test_event': non_selective.lab_test_event, 'test_uom': non_selective.lab_test_uom, 'min_value': non_selective.min_value, 'max_value': non_selective.max_value})
     nurse_doc.insert()
     return({'nurse_examination': nurse_doc.name})
