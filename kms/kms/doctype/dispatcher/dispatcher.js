@@ -206,7 +206,7 @@ function assign_to_room(frm) {
 								}
 							}
 						})
-					} else if (dt.message.custom_default_doctype=='Nurse Examination'||dt.message.custom_default_doctype=='Radiology') {
+					} else if (dt.message.custom_default_doctype=='Doctor Examination'||dt.message.custom_default_doctype=='Nurse Examination'||dt.message.custom_default_doctype=='Radiology') {
 						frappe.call({
 							method: 'kms.healthcare.create_service',
 							args: {

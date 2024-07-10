@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "creation": "2024-07-10 09:10:57.627615",
+ "default_view": "List",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "test_name",
+  "test_event",
+  "result_value",
+  "test_uom",
+  "min_value",
+  "max_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_name",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "in_list_view": 1,
+   "label": "Test Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "test_event",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "in_list_view": 1,
+   "label": "Event",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.require_result_value",
+   "fieldname": "result_value",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "in_list_view": 1,
+   "label": "Result Value"
+  },
+  {
+   "depends_on": "eval:doc.require_result_value",
+   "fieldname": "test_uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "UOM",
+   "options": "Lab Test UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "min_value",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Min Value"
+  },
+  {
+   "fieldname": "max_value",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Max Value"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2024-07-10 09:10:57.627615",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Doctor Examination Result",
+ "owner": "Administrator",
+ "permissions": [],
+ "restrict_to_domain": "Healthcare",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
