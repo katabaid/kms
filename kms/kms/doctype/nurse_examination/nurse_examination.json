@@ -38,7 +38,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-RAD-.YYYY.-"
+   "options": "HLC-NE-.YYYY..MM..DD.-"
   },
   {
    "fieldname": "company",
@@ -203,7 +203,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-10 07:58:50.384349",
+ "modified": "2024-07-10 09:21:49.223994",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

@@ -6,6 +6,7 @@ from frappe.model.document import Document
 
 class Dispatcher(Document):
 	pass
+
 @frappe.whitelist()
 def get_exam_items(dispatcher_id, hcsu, hcsu_type):
 	items = frappe.db.sql(f"""select tma.examination_item from `tabMCU Appointment` tma, tabItem ti, `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu, `tabPatient Appointment` tpa, tabDispatcher td 

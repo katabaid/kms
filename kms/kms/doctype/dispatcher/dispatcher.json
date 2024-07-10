@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "queue_no",
   "patient_appointment",
   "status",
   "room",
@@ -54,7 +55,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-DSP-.YYYY.-"
+   "options": "HLC-DSP-.YYYY..MM..DD.-"
   },
   {
    "fieldname": "tab_break_taqcr",
@@ -175,11 +176,17 @@
    "in_standard_filter": 1,
    "label": "Date",
    "reqd": 1
+  },
+  {
+   "fieldname": "queue_no",
+   "fieldtype": "Data",
+   "label": "Queue No",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-09 08:41:11.997362",
+ "modified": "2024-07-10 09:34:22.516101",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",
