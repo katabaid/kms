@@ -206,7 +206,7 @@ function assign_to_room(frm) {
 								}
 							}
 						})
-					} else if (dt.message.custom_default_doctype=='Nurse Examination') {
+					} else if (dt.message.custom_default_doctype=='Nurse Examination'||dt.message.custom_default_doctype=='Radiology') {
 						frappe.call({
 							method: 'kms.healthcare.create_service',
 							args: {
@@ -218,8 +218,8 @@ function assign_to_room(frm) {
 							callback: function(r) {
 								if(r.message) {
 									frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
-									frappe.model.set_value(row.doctype, row.name, 'reference_doctype', 'Nurse Examination');
-									frappe.model.set_value(row.doctype, row.name, 'reference_doc', r.message.nurse_examination);
+									frappe.model.set_value(row.doctype, row.name, 'reference_doctype', dt.message.custom_default_doctype);
+									frappe.model.set_value(row.doctype, row.name, 'reference_doc', r.message.docname);
 									frm.save()
 									frappe.show_alert({
 										message: 'Room assigned successfully.',

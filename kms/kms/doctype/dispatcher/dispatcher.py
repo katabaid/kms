@@ -32,3 +32,16 @@ def get_queued_branch(branch):
 			WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0
 			GROUP BY thsu.name""", as_dict=True)
 	return count
+
+@frappe.whitelist()
+def checkin_room(dispatcher_id, hsu, doctype, docname):
+	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Ongoing Examination', reference_doctype = '{doctype}', reference_doc = '{docname}'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
+	return 'Checked In.'
+@frappe.whitelist()
+def finish_exam(dispatcher_id, hsu):
+	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Finished Examination'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
+	return 'Finished Examination.'
+@frappe.whitelist()
+def removed_from_room(dispatcher_id, hsu):
+	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Wait for Room Assignment', reference_doctype = '', reference_doc = ''  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
+	return 'Removed from examination room.'

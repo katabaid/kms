@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:template_name",
  "creation": "2024-07-01 09:59:40.220875",
@@ -60,7 +61,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-01 10:24:47.591889",
+ "modified": "2024-07-09 18:07:10.911464",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template",

@@ -2,7 +2,81 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Nurse Examination', {
-	// refresh: function(frm) {
-
-	// }
+	refresh: function(frm) {
+		if(frm.doc.checked_in) {
+			frm.remove_custom_button('Check In');
+		}
+		if(frm.doc.docstatus === 0) {
+			if(frm.doc.dispatcher) {
+				if(frm.doc.status==='Started'){
+					frm.add_custom_button('Check In', ()=>{
+						frappe.call({
+							method: 'kms.kms.doctype.dispatcher.dispatcher.checkin_room',
+							args: {
+								'dispatcher_id': frm.doc.dispatcher,
+								'hsu': frm.doc.service_unit,
+								'doctype': 'Nurse Examination',
+								'docname': frm.doc.name
+							},
+							callback: function(r) {
+								if(r.message) {
+									frappe.show_alert({
+										message: r.message,
+										indicator: 'green'
+									}, 5);
+									frm.doc.status = 'Checked In';
+									frm.dirty();
+									frm.save();
+								}
+							}
+						})
+					}, 'Status');
+					frm.add_custom_button('Remove', ()=>{
+						frappe.call({
+							method: 'kms.kms.doctype.dispatcher.dispatcher.removed_from_room',
+							args: {
+								'dispatcher_id': frm.doc.dispatcher,
+								'hsu': frm.doc.service_unit,
+							},
+							callback: function(r) {
+								if(r.message) {
+									frappe.show_alert({
+										message: r.message,
+										indicator: 'green'
+									}, 5);
+									frm.doc.status = 'Removed';
+									frm.dirty();
+									frm.save();
+								}
+							}
+						})
+					}, 'Status');
+				} else if(frm.doc.status==='Checked In'){
+					frm.remove_custom_button('Check In', 'Status');
+				} else {
+					frm.remove_custom_button('Remove', 'Status');
+					frm.remove_custom_button('Check In', 'Status');
+				}
+			}
+		}
+	},
+	before_submit: function(frm) {
+		if(frm.doc.dispatcher) {
+			frappe.call({
+				method: 'kms.kms.doctype.dispatcher.dispatcher.finish_exam',
+				args: {
+					'dispatcher_id': frm.doc.dispatcher,
+					'hsu': frm.doc.service_unit,
+				},
+				callback: function(r) {
+					if(r.message) {
+						frappe.show_alert({
+							message: r.message,
+							indicator: 'green'
+						}, 5)
+					}
+				}
+			})
+		}
+	}
 });
