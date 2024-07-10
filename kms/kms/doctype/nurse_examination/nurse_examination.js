@@ -58,6 +58,12 @@ frappe.ui.form.on('Nurse Examination', {
 					frm.remove_custom_button('Check In', 'Status');
 				}
 			}
+			if(frm.doc.result){
+				frm.refresh_field('result');
+				$.each(frm.doc.result, (key, value) => {
+					frm.fields_dict.result.grid.grid_rows[key].docfields[3].options = value.result_options;
+				});
+			}
 		}
 	},
 	before_submit: function(frm) {
