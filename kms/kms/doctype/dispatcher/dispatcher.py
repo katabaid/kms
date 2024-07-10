@@ -5,7 +5,10 @@ import frappe
 from frappe.model.document import Document
 
 class Dispatcher(Document):
-	pass
+	def after_insert(self):
+		if self.name:
+			self.queue_no = self.name.split('-')[-1].lstrip('0')
+			self.db_update()
 
 @frappe.whitelist()
 def get_exam_items(dispatcher_id, hcsu, hcsu_type):
