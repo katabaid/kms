@@ -4,11 +4,15 @@ from frappe.utils import today
 @frappe.whitelist()
 def create_service(target, source, name, room):
   if target == 'Nurse Examination':
-    create_nurse_exam(source, name, room)
+    result = create_nurse_exam(source, name, room)
   elif target == 'Radiology':
-    create_radiology_exam(source, name, room)
+    result = create_radiology_exam(source, name, room)
   else:
     frappe.throw(f"Unsupported target: {target}")
+  if result:
+    return result
+  else:
+    frappe.throw("Failed to create service.")
 
 def create_nurse_exam(source, name, room):
   if source == 'Dispatcher':
@@ -51,9 +55,12 @@ def create_nurse_exam(source, name, room):
         if non_selectives:
           for non_selective in non_selectives:
             nurse_doc.append('non_selective_result', {'test_name': non_selective.heading_text, 'test_event': non_selective.lab_test_event, 'test_uom': non_selective.lab_test_uom, 'min_value': non_selective.min_value, 'max_value': non_selective.max_value})
-    nurse_doc.insert()
-    return({'docname': nurse_doc.name})
-  
+      nurse_doc.insert()
+      return {'docname': nurse_doc.name}
+    else:
+      frappe.throw("No Template found.")
+  else:
+    frappe.throw(f"Unsupported source: {source}")
 def create_radiology_exam(source, name, room):
   if source == 'Dispatcher':
     appt = frappe.db.get_value('Dispatcher', name, 'patient_appointment')
@@ -90,5 +97,9 @@ def create_radiology_exam(source, name, room):
         if selectives:
           for selective in selectives:
             radiology_doc.append('result', {'result_line': selective.result_text, 'normal_value': selective.normal_value, 'result_check': selective.normal_value, 'item_code': exam_item.item_code, 'result_options': selective.result_select})
-    radiology_doc.insert()
-    return({'docname': radiology_doc.name})
+      radiology_doc.insert()
+      return {'docname': radiology_doc.name}
+    else:
+      frappe.throw("No Template found.")
+  else:
+    frappe.throw(f"Unsupported source: {source}")

@@ -216,6 +216,7 @@ function assign_to_room(frm) {
 								'room': row.healthcare_service_unit,
 							},
 							callback: function(r) {
+								console.log(r)
 								if(r.message) {
 									frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
 									frappe.model.set_value(row.doctype, row.name, 'reference_doctype', dt.message.custom_default_doctype);
