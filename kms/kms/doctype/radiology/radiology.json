@@ -17,6 +17,7 @@
   "patient_age",
   "patient_encounter",
   "column_break_ydxak",
+  "queue_no",
   "appointment",
   "dispatcher",
   "service_unit",
@@ -199,12 +200,20 @@
    "fieldtype": "Data",
    "label": "Patient Age",
    "read_only": 1
+  },
+  {
+   "fetch_from": "dispatcher.queue_no",
+   "fieldname": "queue_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue No",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-10 09:22:13.790351",
+ "modified": "2024-07-11 10:33:43.094242",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

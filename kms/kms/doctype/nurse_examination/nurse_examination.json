@@ -16,6 +16,7 @@
   "patient_encounter",
   "status",
   "column_break_ydxak",
+  "queue_no",
   "appointment",
   "dispatcher",
   "service_unit",
@@ -197,13 +198,22 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved"
+   "options": "Started\nChecked In\nFinished\nRemoved",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "dispatcher.queue_no",
+   "fieldname": "queue_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue No",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-10 09:21:49.223994",
+ "modified": "2024-07-11 10:32:19.544169",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

@@ -107,6 +107,10 @@ frappe.ui.form.on('Radiology', {
 				});
 			}
 		}
+		frm.fields_dict['result'].grid.wrapper.find('.grid-add-row').hide();
+		frm.fields_dict['examination_item'].grid.wrapper.find('.grid-add-row').hide();
+		frm.fields_dict['result'].grid.wrapper.find('.grid-remove-rows').hide();
+		frm.fields_dict['examination_item'].grid.wrapper.find('.grid-remove-rows').hide();
 	},
 	before_submit: function(frm) {
 		if(frm.doc.dispatcher) {

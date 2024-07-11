@@ -16,6 +16,7 @@
   "patient_encounter",
   "status",
   "column_break_ydxak",
+  "queue_no",
   "appointment",
   "dispatcher",
   "service_unit",
@@ -85,7 +86,8 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved"
+   "options": "Started\nChecked In\nFinished\nRemoved",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ydxak",
@@ -198,12 +200,20 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fetch_from": "dispatcher.queue_no",
+   "fieldname": "queue_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue No",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-10 09:21:19.726154",
+ "modified": "2024-07-11 10:32:09.214206",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

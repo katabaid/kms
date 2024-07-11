@@ -65,6 +65,12 @@ frappe.ui.form.on('Nurse Examination', {
 				});
 			}
 		}
+		frm.fields_dict['result'].grid.wrapper.find('.grid-add-row').hide();
+		frm.fields_dict['non_selective_result'].grid.wrapper.find('.grid-add-row').hide();
+		frm.fields_dict['examination_item'].grid.wrapper.find('.grid-add-row').hide();
+		frm.fields_dict['result'].grid.wrapper.find('.grid-remove-rows').hide();
+		frm.fields_dict['non_selective_result'].grid.wrapper.find('.grid-remove-rows').hide();
+		frm.fields_dict['examination_item'].grid.wrapper.find('.grid-remove-rows').hide();
 	},
 	before_submit: function(frm) {
 		if(frm.doc.dispatcher) {
