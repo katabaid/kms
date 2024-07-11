@@ -45,6 +45,27 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 @frappe.whitelist()
 def finish_exam(dispatcher_id, hsu):
 	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Finished Examination'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
+	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Finished Examination'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit IN (
+		SELECT name FROM `tabHealthcare Service Unit` thsu1
+		WHERE EXISTS (
+		SELECT 1 FROM `tabHealthcare Service Unit` thsu 
+		WHERE EXISTS 
+		(SELECT 1 FROM `tabDispatcher Room` tdr
+		WHERE tdr.parent = '{dispatcher_id}'
+		AND tdr.parenttype = 'Dispatcher'
+		AND tdr.parentfield = 'assignment_table'
+		AND tdr.healthcare_service_unit  = '{hsu}'
+		AND tdr.healthcare_service_unit = thsu.name)
+		AND thsu.service_unit_type = thsu1.service_unit_type
+		AND thsu.custom_branch = thsu1.custom_branch
+		AND thsu1.name != '{hsu}')
+		AND EXISTS (
+		SELECT 1 FROM `tabDispatcher Room` tdr
+		WHERE tdr.parent = '{dispatcher_id}'
+		AND tdr.parenttype = 'Dispatcher'
+		AND tdr.parentfield = 'assignment_table'
+		AND tdr.healthcare_service_unit  = thsu1.name
+		))""")
 	frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
 	return 'Finished Examination.'
 @frappe.whitelist()

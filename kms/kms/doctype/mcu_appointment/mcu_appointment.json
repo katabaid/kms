@@ -53,13 +53,13 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Started\nFinished\nRefused\nCancelled"
+   "options": "Started\nFinished\nRefused\nCancelled\nRescheduled"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-06-16 13:46:04.717655",
+ "modified": "2024-07-11 11:19:41.163001",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Appointment",
