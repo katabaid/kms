@@ -230,10 +230,8 @@ function assign_to_room(frm) {
 							}
 						})
 					}
-					// Radiology
 				})
 			})
-			
 		})
 	}
 }
