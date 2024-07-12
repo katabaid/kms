@@ -33,6 +33,18 @@ app_license = "MIT"
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
   "Patient Encounter": "public/js/patient_encounter.js",
+  "Blanket Order": "public/js/blanket_order.js",
+  "Customer": "public/js/customer.js",
+  "Shift Type": "public/js/shift_type.js",
+  "Leave Application": "public/js/leave_application.js",
+  "Patient": "public/js/patient.js",
+  "Sales Order": "public/js/sales_order.js",
+  "Clinical Procedure": "public/js/clinical_procedure.js",
+  "Lab Test": "public/js/lab_test.js",
+  "Patient Appointment": "public/js/patient_appointment.js",
+  "Service Package": "public/js/service_package.js",
+  "Sample Collection": "public/js/sample_collection.js",
+  "Quotation": "public/js/quotation.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
