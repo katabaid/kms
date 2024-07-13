@@ -166,23 +166,13 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-#	"all": [
-#		"kms.tasks.all"
-#	],
-#	"daily": [
-#		"kms.tasks.daily"
-#	],
-#	"hourly": [
-#		"kms.tasks.hourly"
-#	],
-#	"weekly": [
-#		"kms.tasks.weekly"
-#	],
-#	"monthly": [
-#		"kms.tasks.monthly"
-#	],
-# }
+scheduler_events = {
+  "daily": [
+    "kms.scheduled.set_cancelled_open_appointment",
+    "kms.scheduled.set_no_show_queue_pooling",
+    "kms.scheduled.set_cancelled_timeout_queue_pooling"
+  ],
+}
 
 # Testing
 # -------
