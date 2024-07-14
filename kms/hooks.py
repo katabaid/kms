@@ -160,7 +160,10 @@ doc_events = {
   },
   "Quotation": {
     "before_save": "kms.event.update_rate_amount_after_amend",
-  }
+  },
+  "Sample Collection": {
+    "after_submit": "kms.event.reset_status_after_amend",
+  },
 }
 
 # Scheduled Tasks

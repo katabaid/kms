@@ -114,7 +114,7 @@ def update_item_price(doc, method=None):
 
 @frappe.whitelist()
 def update_customer_name(doc, method=None):
-  ################
+  ################DocType: Customer################
   if doc.customer_type not in doc.customer_name and (doc.customer_type == 'PT' or doc.customer_type == 'CV'):
     doc.customer_name = doc.customer_type + ' ' + doc.customer_name
     doc.save()
@@ -288,3 +288,14 @@ def update_rate_amount_after_amend(doc, method=None):
       rate = frappe.db.get_value('Product Bundle', item.item_code, 'custom_rate')
       item.rate = rate
       item.amount = item.qty * rate
+
+@frappe.whitelist()
+def reset_status_after_amend(doc, method=None):
+  ################DocType: Sample Collection################
+  if doc.amended_from:
+    doc.custom_status = 'Started'
+    doc.collected_by = ''
+    doc.collected_time = ''
+    for item in doc.custom_sample_table:
+      item.status = 'Started'
+    doc.save()

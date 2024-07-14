@@ -69,6 +69,9 @@ frappe.ui.form.on('Sample Collection', {
 		if (frm.doc.custom_status === 'Removed') {
 			frm.remove_custom_button('Remove', 'Status');
 		}
+		// hide add and delete buttons
+		frm.fields_dict['custom_sample_table'].grid.wrapper.find('.grid-add-row').hide();
+		frm.fields_dict['custom_sample_table'].grid.wrapper.find('.grid-remove-rows').hide();
 	},
 	before_submit(frm) {
 		if (frm.doc.custom_status === 'Partially Finished' || frm.doc.custom_status === 'Finished') {
@@ -88,6 +91,7 @@ frappe.ui.form.on('Sample Collection', {
 					callback: function(response) {
 						if (response.message) {
 							let disp_doc = response.message;
+							console.log('a')
 							let count_row = 0;
 							let count_finished = 0;
 							disp_doc.assignment_table.forEach(row => {
@@ -111,6 +115,7 @@ frappe.ui.form.on('Sample Collection', {
 									doc: disp_doc
 								},
 								callback: function(save_response) {
+									console.log(save_response)
 									frappe.msgprint('Dispatcher status updated with Finished Examination.');
 								}
 							});
@@ -129,8 +134,6 @@ frappe.ui.form.on('Sample Collection', {
 		frm.fields_dict['custom_sample_table'].grid.wrapper.on('change', '.grid-row-check', function() {
 			check_button_state(frm);
 		});
-		frm.fields_dict['custom_sample_table'].grid.wrapper.find('.grid-add-row').hide();
-		frm.fields_dict['custom_sample_table'].grid.wrapper.find('.grid-remove-rows').hide();
 	},
 	check_lines_status(frm) {
 		const total_rows = frm.doc.custom_sample_table.length;
