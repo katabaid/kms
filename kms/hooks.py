@@ -134,6 +134,9 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+  "Dispatcher Settings": {
+    "on_update": "kms.event.test_on_update",
+  },
   "Item Price": {
     "on_change": "kms.event.update_item_price",
     "after_insert": "kms.event.update_item_price",
@@ -146,14 +149,14 @@ doc_events = {
     "after_insert": "kms.event.update_healthcare_service_unit_branch",
   },
   "Lab Tes": {
-    "after_save": "kms.event.warn_lab_test_exceed_max",
+    "on_update": "kms.event.warn_lab_test_exceed_max",
   },
   "Patient Encounter": {
-    "before_delete": "kms.event.unlink_queue_pooling_before_delete",
+    "on_trash": "kms.event.unlink_queue_pooling_before_delete",
     "after_insert": "kms.event.process_queue_pooling_and_dental",
   },
   "Patient Appointment": {
-    "after_save": "kms.event.process_checkin",
+    "on_update": "kms.event.process_checkin",
   },
   "Vital Signs": {
     "after_submit": "kms.event.return_to_queue_pooling",

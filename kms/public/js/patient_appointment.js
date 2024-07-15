@@ -62,7 +62,7 @@ frappe.ui.form.on('Patient Appointment', {
       frm.add_custom_button(
         'Check In',
         ()=>{
-          frm.set_value('status', 'Checked In');
+          frm.doc.status = 'Checked In';
           frm.save();
       });
     }
