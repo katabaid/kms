@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-07-19 09:49:32.274043",
+ "creation": "2024-07-19 09:43:02.941238",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -13,10 +13,9 @@
   "queue_pooling",
   "patient",
   "patient_name",
-  "patient_sex",
-  "patient_age",
   "patient_encounter",
-  "radiology",
+  "status",
+  "doctor_examination",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -26,14 +25,16 @@
   "expected_result_date",
   "expected_result_time",
   "submitted_date",
-  "status",
   "result_section",
   "examination_item",
   "result",
+  "non_selective_result",
   "consumables_section",
   "items",
   "remark_section",
   "remark",
+  "mcu_tab",
+  "appoinment_type",
   "amended_from"
  ],
  "fields": [
@@ -41,7 +42,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-RAD-.YYYY..MM..DD.-"
+   "options": "HLC-DE-.YYYY..MM..DD.-"
   },
   {
    "fieldname": "company",
@@ -78,31 +79,24 @@
    "read_only": 1
   },
   {
-   "fetch_from": "patient.sex",
-   "fieldname": "patient_sex",
-   "fieldtype": "Link",
-   "label": "Patient Sex",
-   "options": "Gender",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "appointment.patient_age",
-   "fieldname": "patient_age",
-   "fieldtype": "Data",
-   "label": "Patient Age",
-   "read_only": 1
-  },
-  {
    "fieldname": "patient_encounter",
    "fieldtype": "Link",
    "label": "Patient Encounter",
    "options": "Patient Encounter"
   },
   {
-   "fieldname": "radiology",
+   "default": "Started",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
+   "read_only": 1
+  },
+  {
+   "fieldname": "doctor_examination",
    "fieldtype": "Link",
-   "label": "Radiology",
-   "options": "Radiology"
+   "label": "Doctor Examination",
+   "options": "Doctor Examination"
   },
   {
    "fieldname": "column_break_ydxak",
@@ -161,14 +155,6 @@
    "read_only": 1
   },
   {
-   "default": "Started",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
-   "reqd": 1
-  },
-  {
    "fieldname": "result_section",
    "fieldtype": "Section Break",
    "label": "Result"
@@ -177,13 +163,19 @@
    "fieldname": "examination_item",
    "fieldtype": "Table",
    "label": "Examination Item",
-   "options": "Radiology Request"
+   "options": "Doctor Examination Request"
   },
   {
    "fieldname": "result",
    "fieldtype": "Table",
    "label": "Result",
-   "options": "Radiology Results"
+   "options": "Doctor Examination Selective Result"
+  },
+  {
+   "fieldname": "non_selective_result",
+   "fieldtype": "Table",
+   "label": "Non Selective Result",
+   "options": "Doctor Examination Result"
   },
   {
    "fieldname": "consumables_section",
@@ -207,11 +199,23 @@
    "label": "Remark"
   },
   {
+   "fieldname": "mcu_tab",
+   "fieldtype": "Tab Break",
+   "label": "MCU"
+  },
+  {
+   "fetch_from": "appointment.appointment_type",
+   "fieldname": "appoinment_type",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Appoinment Type"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Radiology Result",
+   "options": "Doctor Result",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -220,10 +224,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:49:32.274043",
+ "modified": "2024-07-19 09:43:02.941238",
  "modified_by": "Administrator",
  "module": "KMS",
- "name": "Radiology Result",
+ "name": "Doctor Result",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

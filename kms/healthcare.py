@@ -2,6 +2,36 @@ import frappe, json
 from frappe.utils import today
 
 @frappe.whitelist()
+def get_exam_items(root):
+  exam_items = frappe.db.sql(f"""
+    SELECT name, item_name, item_group
+    FROM tabItem ti WHERE EXISTS (
+    WITH RECURSIVE ItemHierarchy AS (
+      SELECT name, parent_item_group, is_group, tig.custom_bundle_position
+      FROM `tabItem Group` tig 
+      WHERE parent_item_group = '{root}'
+      UNION ALL
+      SELECT t.name, t.parent_item_group, t.is_group, t.custom_bundle_position
+      FROM `tabItem Group` t
+      INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name)  
+    SELECT name, parent_item_group, is_group, custom_bundle_position FROM ItemHierarchy ih
+    WHERE ih.name = ti.item_group
+    AND ih.is_group = 0
+    AND ti.custom_is_mcu_item = 1);""", as_dict=True)
+  exam_group = frappe.db.sql(f"""
+    WITH RECURSIVE ItemHierarchy AS (
+      SELECT name, parent_item_group, is_group, tig.custom_bundle_position
+      FROM `tabItem Group` tig 
+      WHERE parent_item_group = '{root}'
+      UNION ALL
+      SELECT t.name, t.parent_item_group, t.is_group, t.custom_bundle_position
+      FROM `tabItem Group` t
+      INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name)
+    SELECT name, parent_item_group, is_group, custom_bundle_position
+      FROM ItemHierarchy;""", as_dict=True)
+  return {'exam_items': exam_items, 'exam_group': exam_group}
+
+@frappe.whitelist()
 def create_service(target, source, name, room):
   if target == 'Nurse Examination':
     result = create_nurse_exam(source, name, room)
@@ -63,6 +93,7 @@ def create_nurse_exam(source, name, room):
       frappe.throw("No Template found.")
   else:
     frappe.throw(f"Unsupported source: {source}")
+    
 def create_doctor_exam(source, name, room):
   if source == 'Dispatcher':
     appt = frappe.db.get_value('Dispatcher', name, 'patient_appointment')

@@ -9,16 +9,21 @@ frappe.ui.form.on('Quotation', {
       });
     }
   },
-  setup(frm) {
+  /* setup(frm) {
     if(frm.doc.__islocal){
       frm.doc.items = [];
       frm.set_df_property('items', 'hidden', 1);
     } else {
       frm.set_df_property('items', 'hidden', 0);
     }
-  },
+  }, */
   refresh(frm) {
     frm.trigger('create_package_items_tab');
+    frm.add_custom_button(__('Process'), () => {
+      frm.trigger('process');
+    });
+    frm.fields_dict['items'].grid.wrapper.find('.grid-add-multiple-rows').hide();
+    frm.fields_dict['items'].grid.wrapper.find('.grid-add-row').hide();
 
     frm.set_query("item_code", "items", function(doc, cdt, cdn){
       let d = locals[cdt][cdn];
@@ -46,16 +51,6 @@ frappe.ui.form.on('Quotation', {
                 fieldname: 'package_name',
                 fieldtype: 'Data',
                 label: 'Package Name',
-                reqd: 1
-              },
-              {
-                fieldname: 'col_1',
-                fieldtype: 'Column Break'
-              },
-              {
-                fieldname: 'qty',
-                fieldtype: 'Int',
-                label: 'Qty',
                 reqd: 1
               },
               {
@@ -175,7 +170,7 @@ frappe.ui.form.on('Quotation', {
               });
             });
               
-            fields.push(
+            /* fields.push(
               {
                 fieldname: 'sb_0',
                 fieldtype: 'Section Break',
@@ -208,7 +203,7 @@ frappe.ui.form.on('Quotation', {
                 label: 'Price',
                 reqd: 1
               }
-            );
+            ); */
 
             //create dialog
             const pb = new frappe.ui.Dialog({
@@ -237,8 +232,8 @@ frappe.ui.form.on('Quotation', {
                     price_list: '',
                     party_name: frm.doc.party_name,
                     quotation_to: frm.doc.quotation_to,
-                    price: values.price,
-                    margin: values.margin
+                    //price: values.price,
+                    //margin: values.margin
                   },
                   callback: (r) => {
                     if(r.message) {
@@ -246,9 +241,9 @@ frappe.ui.form.on('Quotation', {
                       item.item_code = r.message.name;
                       item.item_name = r.message.description;
                       item.description = r.message.description;
-                      item.qty = values.qty;
+                      //item.qty = values.qty;
                       item.uom = 'Unit';
-                      item.rate = values.price;
+                      //item.rate = values.price;
                       item.warehouse = '';
                       frm.refresh_field("items");
                     }
@@ -259,7 +254,7 @@ frappe.ui.form.on('Quotation', {
             });
             /***REACTIVITY ZONE***/	                    
             //Margin and Price reactivity
-            pb.fields_dict.margin.$input.on('change', ()=>{
+            /* pb.fields_dict.margin.$input.on('change', ()=>{
               let hpp_field = Number(pb.fields_dict.hpp.get_value());
               if(hpp_field){
                 pb.fields_dict.price.set_value(hpp_field+pb.fields_dict.margin.get_value()*hpp_field/100);
@@ -270,7 +265,7 @@ frappe.ui.form.on('Quotation', {
               if(hpp_field){
                 pb.fields_dict.margin.set_value((pb.fields_dict.price.get_value()-hpp_field)/hpp_field*100);
               }
-            });
+            }); */
             let selectedValues = new Set();
               
             //Copy From Reactivity
@@ -428,6 +423,76 @@ frappe.ui.form.on('Quotation', {
     }
   },
 
+  process(frm){
+    let dialog = new frappe.ui.Dialog({
+      title: 'Process Quotation',
+      size: 'extra-large',
+      fields: [
+        {
+          fieldname: 'level_1',
+          fieldtype: 'Select',
+          label: 'Level 1',
+          options: []
+        },
+        {
+          fieldname: 'col2',
+          fieldtype: 'Column Break',
+        },
+        {
+          fieldname: 'level_2',
+          fieldtype: 'Select',
+          label: 'Level 2',
+          options: [],
+          hidden: 1
+        },
+        {
+          fieldname: 'col3',
+          fieldtype: 'Column Break',
+        },
+        {
+          fieldname: 'level_3',
+          fieldtype: 'Select',
+          label: 'Level 3',
+          options: [],
+          hidden: 1
+        },
+        {
+          fieldname: 'dynamic_selects_section',
+          fieldtype: 'Section Break',
+          label: 'Select Examination',
+        },
+        {
+          fieldname: 'selected_items',
+          fieldtype: 'MultiCheck',
+          options: [],
+          hidden: 1,
+          columns: 3
+        },
+        {
+          fieldname: 'selected_items_table',
+          fieldtype: 'Table',
+          label: 'Selected Items',
+          cannot_add_rows: true,
+          cannot_delete_rows: true,
+          in_place_edit: true,
+          data: [],
+          fields: [
+            {fieldname: 'name', label: 'Item / Group', fieldtype: 'Data', in_list_view: 1, read_only: 1, columns: 10},
+            {fieldname: 'is_group', label: 'Is Group', fieldtype: 'Check', hidden: 1},
+            {fieldname: 'item_code', label: 'Item Code', fieldtype: 'Data', hidden: 1}
+          ]
+        }
+      ],
+      primary_action: (values) => {
+        processSelectedItems(values.selected_items);
+        dialog.hide();
+      },
+      primary_action_label: __('Process')
+    });
+    setupDynamicSelects(dialog);
+    dialog.show();
+  },
+
   create_package_items_tab(frm) {
     frappe.call({
       method: 'kms.api.get_quotation_item',
@@ -435,7 +500,6 @@ frappe.ui.form.on('Quotation', {
       args: {quotation_no: frm.doc.name},
       callback: (r) => {
         if(r.message) {
-          console.log(r.message)
           let prev_idx = '';
           let prev_item_group = '';
           
@@ -545,4 +609,186 @@ function processDataWithRate(source, param) {
   table_html += `<tr><td>Total</td><td>${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(hpp)}</td></tr>`;
   table_html += '</table>';
   return table_html;
+};
+
+let allSelectedItems = {};
+let selectedItems = []
+const setupDynamicSelects = (dialog) => {
+  const root = 'Examination';
+  let examItemsMap = {};
+  let examGroupMap = {};
+  let currentItemGroup = '';
+
+  frappe.call({
+    method: 'kms.healthcare.get_exam_items',
+    args: {
+      root: root
+    },
+    freeze: true,
+    callback: (r) => {
+      const {exam_items, exam_group} = r.message;
+      examItemsMap = exam_items.reduce((acc, item) => {
+        acc[item.name] = item;
+        return acc;
+      }, {});
+      examGroupMap = exam_group.reduce((acc, group) => {
+        acc[group.name] = group;
+        return acc;
+      }, {});
+
+      const updateSelectField = (parentGroup, level) =>{
+        const options = exam_group
+          .filter(item => item.parent_item_group === parentGroup)
+          .filter(item => {
+            // Check if this group or any of its descendants have items
+            const hasItems = (group) => {
+              return exam_items.some(item => item.item_group === group.name) ||
+                     exam_group.some(childGroup => 
+                       childGroup.parent_item_group === group.name && hasItems(childGroup)
+                     );
+            };
+            return hasItems(item);
+          })
+          .sort((a,b) => a.custom_bundle_position - b.custom_bundle_position)
+          .map(item => ({value: item.name, label: item.name}))
+        dialog.set_df_property(`level_${level}`, 'options', options);
+        dialog.set_df_property(`level_${level}`, 'hidden', 0);
+        dialog.fields_dict[`level_${level}`].refresh();
+      }
+      const setupSelectField = (level) => {
+        dialog.fields_dict[`level_${level}`].df.onchange = () => {
+          const selectedValue = dialog.get_value(`level_${level}`);
+          const selectedItem = exam_group.find(item => item.name === selectedValue);
+
+          for(let i = level+1; i <= 3; i++) {
+            dialog.set_df_property(`level_${i}`, 'hidden', 1);
+          }
+          dialog.set_df_property('selected_items', 'hidden', 1);
+
+          if(selectedItem.is_group === 1 && level <3) {
+            updateSelectField(selectedItem.name, level+1);
+          } else {
+            updateMultiSelect(selectedValue);
+          }
+          dialog.refresh()
+        };
+      }
+      const updateMultiSelect = (itemGroup) => {
+        currentItemGroup = itemGroup;
+        const options = exam_items
+          .filter(item => item.item_group === itemGroup)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map(item => {
+            return {value: item.name, label: item.item_name, checked: allSelectedItems[itemGroup]?.includes(item.name) || false}
+          });
+        dialog.set_df_property('selected_items', 'options', options);
+        dialog.set_df_property('selected_items', 'hidden', 0);
+        dialog.fields_dict['selected_items'].refresh();
+      }
+
+      const buildHierarchy = () => {
+        const hierarchy = {};
+        const flattenedData = [];
+
+        const getFullPath = (itemGroup) => {
+          const path = [];
+          let currentGroup = examGroupMap[itemGroup];
+          while (currentGroup && currentGroup.name !== root && currentGroup.parent_item_group !== 'All Item Groups') {
+            path.unshift(currentGroup.name);
+            currentGroup = examGroupMap[currentGroup.parent_item_group];
+          }
+          return path;
+        };
+        console.log(Object.values(allSelectedItems).flat())
+        Object.values(allSelectedItems).flat().forEach(itemCode => {
+          const item = examItemsMap[itemCode];
+          const fullPath = getFullPath(item.item_group);
+          console.log(item)
+          console.log(fullPath)
+          
+          let currentLevel = hierarchy;
+          console.log(currentLevel)
+
+          fullPath.forEach(group => {
+            if (!currentLevel[group]) {
+              currentLevel[group] = { items: [], subgroups: {} };
+            }
+            currentLevel = currentLevel[group].subgroups;
+          });
+          
+          if (!currentLevel[item.item_group]) {
+            currentLevel[item.item_group] = { items: [], subgroups: {} };
+          }
+          currentLevel[item.item_group].items.push(item);
+        });
+
+        const addToFlattenedData = (obj, level = 0, path = []) => {
+          Object.entries(obj).forEach(([key, value]) => {
+            const newPath = [...path, key];
+            flattenedData.push({ name: key, level, isGroup: true, path: newPath.join(' > ') });
+            
+            value.items.forEach(item => {
+              flattenedData.push({ 
+                name: item.item_name, 
+                level: level + 1, 
+                isGroup: false, 
+                itemCode: item.name,
+                path: [...newPath, item.item_name].join(' > ')
+              });
+            });
+
+            addToFlattenedData(value.subgroups, level + 1, newPath);
+          });
+        };
+
+        addToFlattenedData(hierarchy);
+        return flattenedData;
+      };
+
+      const updateSelectedItemsTable = () => {
+        const grid = dialog.fields_dict.selected_items_table.grid;
+        const flattenedData = buildHierarchy();
+
+        const newData = flattenedData.map(item => ({
+          name: '  '.repeat(item.level) + item.name,
+          is_group: item.isGroup,
+          item_code: item.itemCode || '',
+          path: item.path
+        }));
+
+        grid.df.data = newData;
+        grid.data = grid.df.data;
+        grid.refresh();
+      };
+
+      // Set up event listener for changes in the MultiCheck field
+      dialog.$wrapper.on('change', '[data-fieldname="selected_items"] .checkbox-options input[type="checkbox"]', function () {
+        const checkboxes = dialog.$wrapper.find('[data-fieldname="selected_items"] .checkbox-options input[type="checkbox"]');
+        selectedItems = [];  // Clear the array and rebuild it based on checked items
+        checkboxes.each(function () {
+          const value = $(this).attr('data-unit');
+          if ($(this).is(':checked')) {
+            selectedItems.push(value);
+          }
+        });
+        // Update global allSelectedItems with the current group
+        allSelectedItems[currentItemGroup] = selectedItems;
+        updateSelectedItemsTable();
+      });
+
+      updateSelectField(root, 1);
+      setupSelectField(1);
+      setupSelectField(2);
+      setupSelectField(3);
+      // Update the MultiSelect initially to ensure all checkboxes are correctly set
+      updateMultiSelect(currentItemGroup);
+    },
+    error: (r) => {
+      console.log(r);
+    },
+  })
+}
+
+const processSelectedItems = (selectedItems) => {
+  console.log(selectedItems);
 }

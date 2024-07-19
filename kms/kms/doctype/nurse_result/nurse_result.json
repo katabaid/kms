@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-07-19 09:49:32.274043",
+ "creation": "2024-07-19 09:40:52.191187",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -13,10 +13,9 @@
   "queue_pooling",
   "patient",
   "patient_name",
-  "patient_sex",
-  "patient_age",
   "patient_encounter",
-  "radiology",
+  "status",
+  "nurse_examination",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -26,10 +25,10 @@
   "expected_result_date",
   "expected_result_time",
   "submitted_date",
-  "status",
   "result_section",
   "examination_item",
   "result",
+  "non_selective_result",
   "consumables_section",
   "items",
   "remark_section",
@@ -41,7 +40,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-RAD-.YYYY..MM..DD.-"
+   "options": "HLC-NE-.YYYY..MM..DD.-"
   },
   {
    "fieldname": "company",
@@ -78,31 +77,18 @@
    "read_only": 1
   },
   {
-   "fetch_from": "patient.sex",
-   "fieldname": "patient_sex",
-   "fieldtype": "Link",
-   "label": "Patient Sex",
-   "options": "Gender",
-   "read_only": 1
-  },
-  {
-   "fetch_from": "appointment.patient_age",
-   "fieldname": "patient_age",
-   "fieldtype": "Data",
-   "label": "Patient Age",
-   "read_only": 1
-  },
-  {
    "fieldname": "patient_encounter",
    "fieldtype": "Link",
    "label": "Patient Encounter",
    "options": "Patient Encounter"
   },
   {
-   "fieldname": "radiology",
-   "fieldtype": "Link",
-   "label": "Radiology",
-   "options": "Radiology"
+   "default": "Started",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ydxak",
@@ -161,14 +147,6 @@
    "read_only": 1
   },
   {
-   "default": "Started",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
-   "reqd": 1
-  },
-  {
    "fieldname": "result_section",
    "fieldtype": "Section Break",
    "label": "Result"
@@ -177,13 +155,19 @@
    "fieldname": "examination_item",
    "fieldtype": "Table",
    "label": "Examination Item",
-   "options": "Radiology Request"
+   "options": "Nurse Examination Request"
   },
   {
    "fieldname": "result",
    "fieldtype": "Table",
    "label": "Result",
-   "options": "Radiology Results"
+   "options": "Nurse Examination Selective Result"
+  },
+  {
+   "fieldname": "non_selective_result",
+   "fieldtype": "Table",
+   "label": "Non Selective Result",
+   "options": "Nurse Examination Result"
   },
   {
    "fieldname": "consumables_section",
@@ -207,11 +191,17 @@
    "label": "Remark"
   },
   {
+   "fieldname": "nurse_examination",
+   "fieldtype": "Link",
+   "label": "Nurse Examination",
+   "options": "Nurse Examination"
+  },
+  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Radiology Result",
+   "options": "Nurse Result",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -220,10 +210,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:49:32.274043",
+ "modified": "2024-07-19 09:53:36.300611",
  "modified_by": "Administrator",
  "module": "KMS",
- "name": "Radiology Result",
+ "name": "Nurse Result",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [

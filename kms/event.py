@@ -234,9 +234,6 @@ def process_checkin(doc, method=None):
       for entry in doc.custom_mcu_exam_items:
         new_entry = entry.as_dict()
         new_entry.name = None
-        #hsu = frappe.db.sql(f"""SELECT service_unit FROM `tabItem Group Service Unit` WHERE parent = '{entry.item_group}' and branch = '{doc.custom_branch}'""", as_dict=True)
-        #if hsu:
-        #    new_entry.healthcare_service_unit = hsu[0].service_unit
         disp_doc.append('package', new_entry)
       values = {'appt': doc.name, 'branch': doc.custom_branch}
       rooms = frappe.db.sql("""select distinct tigsu.service_unit from `tabMCU Appointment` tma, tabItem ti, `tabItem Group Service Unit` tigsu

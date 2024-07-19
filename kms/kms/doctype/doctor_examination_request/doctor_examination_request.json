@@ -7,7 +7,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "template"
+  "template",
+  "status"
  ],
  "fields": [
   {
@@ -17,12 +18,20 @@
    "label": "Template",
    "options": "Doctor Examination Template",
    "reqd": 1
+  },
+  {
+   "default": "Started",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Started\nFinished\nRescheduled\nRefused"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-10 09:08:14.931647",
+ "modified": "2024-07-16 13:07:45.487579",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Request",

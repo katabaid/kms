@@ -15,6 +15,7 @@
   "patient_name",
   "patient_encounter",
   "status",
+  "doctor_result",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -88,7 +89,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved",
+   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
    "read_only": 1
   },
   {
@@ -222,12 +223,18 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Appoinment Type"
+  },
+  {
+   "fieldname": "doctor_result",
+   "fieldtype": "Link",
+   "label": "Doctor Result",
+   "options": "Doctor Result"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-11 13:47:40.656000",
+ "modified": "2024-07-19 09:43:39.063207",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

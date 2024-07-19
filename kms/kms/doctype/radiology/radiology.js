@@ -27,90 +27,9 @@ frappe.ui.form.on('Radiology', {
 		frm.add_fetch('queue_pooling', 'patient', 'patient');
 	},
 	refresh: (frm) => {
-	  frm.set_query('appointment', () =>{
-			return {
-				filters: {
-					status: ['in', ['Open', 'Checked In']]
-				}
-			};
-	  });
-	  frm.set_query('queue_pooling', () =>{
-			return {
-				filters: {
-					status: ['in', ['Queued', 'Ongoing']]
-				}
-			};
-	  });
-	  frm.set_query('service_unit', () => {
-			return {
-				filters: {
-					service_unit_type: 'Radiology'
-				}
-			};
-	  });
-		if(frm.doc.docstatus===0){
-			if(frm.doc.dispatcher){
-				if(frm.doc.status==='Started'){
-					frm.add_custom_button('Check In', ()=>{
-						frappe.call({
-							method: 'kms.kms.doctype.dispatcher.dispatcher.checkin_room',
-							args: {
-								'dispatcher_id': frm.doc.dispatcher,
-								'hsu': frm.doc.service_unit,
-								'doctype': 'Radiology',
-								'docname': frm.doc.name
-							},
-							callback: function(r) {
-								if(r.message) {
-									frappe.show_alert({
-										message: r.message,
-										indicator: 'green'
-									}, 5);
-									frm.doc.status = 'Checked In';
-									frm.dirty();
-									frm.save();
-								}
-							}
-						})
-					}, 'Status');
-					frm.add_custom_button('Remove', ()=>{
-						frappe.call({
-							method: 'kms.kms.doctype.dispatcher.dispatcher.removed_from_room',
-							args: {
-								'dispatcher_id': frm.doc.dispatcher,
-								'hsu': frm.doc.service_unit,
-							},
-							callback: function(r) {
-								if(r.message) {
-									frappe.show_alert({
-										message: r.message,
-										indicator: 'green'
-									}, 5);
-									frm.doc.status = 'Removed';
-									frm.dirty();
-									frm.save();
-								}
-							}
-						})
-					}, 'Status');
-				} else if(frm.doc.status==='Checked In'){
-					frm.remove_custom_button('Check In', 'Status');
-				} else {
-					frm.remove_custom_button('Remove', 'Status');
-					frm.remove_custom_button('Check In', 'Status');
-				}
-			}
-			if(frm.doc.result){
-				frm.refresh_field('result');
-				$.each(frm.doc.result, (key, value) => {
-					frm.fields_dict.result.grid.grid_rows[key].docfields[3].options = value.result_options;
-				});
-			}
-		}
-		frm.fields_dict['result'].grid.wrapper.find('.grid-add-row').hide();
-		frm.fields_dict['examination_item'].grid.wrapper.find('.grid-add-row').hide();
-		frm.fields_dict['result'].grid.wrapper.find('.grid-remove-rows').hide();
-		frm.fields_dict['examination_item'].grid.wrapper.find('.grid-remove-rows').hide();
+		frm.trigger('set_refresh_filters');
+		frm.trigger('process_custom_buttons');
+		frm.trigger('hide_standard_child_tables_buttons');
 	},
 	before_submit: function(frm) {
 		if(frm.doc.dispatcher) {
@@ -160,3 +79,95 @@ frappe.ui.form.on('Radiology Result', {
 		current_row.toggle_reqd('result_text', (d.result_check !== d.normal_value));
 	}
 });
+
+function hide_standard_child_tables_buttons(frm) {
+	frm.fields_dict['result'].grid.wrapper.find('.grid-add-row').hide();
+	frm.fields_dict['examination_item'].grid.wrapper.find('.grid-add-row').hide();
+	frm.fields_dict['result'].grid.wrapper.find('.grid-remove-rows').hide();
+	frm.fields_dict['examination_item'].grid.wrapper.find('.grid-remove-rows').hide();
+}
+function process_custom_buttons(frm) {
+	if(frm.doc.docstatus===0){
+		if(frm.doc.dispatcher){
+			if(frm.doc.status==='Started'){
+				frm.add_custom_button('Check In', ()=>{
+					frappe.call({
+						method: 'kms.kms.doctype.dispatcher.dispatcher.checkin_room',
+						args: {
+							'dispatcher_id': frm.doc.dispatcher,
+							'hsu': frm.doc.service_unit,
+							'doctype': 'Radiology',
+							'docname': frm.doc.name
+						},
+						callback: function(r) {
+							if(r.message) {
+								frappe.show_alert({
+									message: r.message,
+									indicator: 'green'
+								}, 5);
+								frm.doc.status = 'Checked In';
+								frm.dirty();
+								frm.save();
+							}
+						}
+					})
+				}, 'Status');
+				frm.add_custom_button('Remove', ()=>{
+					frappe.call({
+						method: 'kms.kms.doctype.dispatcher.dispatcher.removed_from_room',
+						args: {
+							'dispatcher_id': frm.doc.dispatcher,
+							'hsu': frm.doc.service_unit,
+						},
+						callback: function(r) {
+							if(r.message) {
+								frappe.show_alert({
+									message: r.message,
+									indicator: 'green'
+								}, 5);
+								frm.doc.status = 'Removed';
+								frm.dirty();
+								frm.save();
+							}
+						}
+					})
+				}, 'Status');
+			} else if(frm.doc.status==='Checked In'){
+				frm.remove_custom_button('Check In', 'Status');
+			} else {
+				frm.remove_custom_button('Remove', 'Status');
+				frm.remove_custom_button('Check In', 'Status');
+			}
+		}
+		if(frm.doc.result){
+			frm.refresh_field('result');
+			$.each(frm.doc.result, (key, value) => {
+				frm.fields_dict.result.grid.grid_rows[key].docfields[3].options = value.result_options;
+			});
+		}
+	}
+}
+
+function set_refresh_filters(frm) {
+	frm.set_query('appointment', () =>{
+		return {
+			filters: {
+				status: ['in', ['Open', 'Checked In']]
+			}
+		};
+	});
+	frm.set_query('queue_pooling', () =>{
+		return {
+			filters: {
+				status: ['in', ['Queued', 'Ongoing']]
+			}
+		};
+	});
+	frm.set_query('service_unit', () => {
+		return {
+			filters: {
+				service_unit_type: 'Radiology'
+			}
+		};
+	});
+}
