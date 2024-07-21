@@ -55,9 +55,9 @@ frappe.ui.form.on('Dispatcher', {
 
 	setup: function(frm) {
 		frm.set_indicator_formatter("healthcare_service_unit", function(doc){
-			if(doc.status==='Finished Examination')
+			if(doc.status==='Finished')
 				return 'green';
-			else if(doc.status==='Refused to Test')
+			else if(doc.status==='Refused')
 				return 'red';
 			else if(doc.status==='Wait for Room Assignment')
 				return 'orange';
@@ -87,7 +87,7 @@ function check_button_state(frm) {
 			}
 		}
 		for (let row of selected_rows) {
-			if(row.status === 'Finished Examination'||row.status === 'Refused to Test') {
+			if(row.status === 'Finished'||row.status === 'Refused') {
 				show_retest_button = true;
 			} else {
 				show_retest_button = false;
@@ -103,7 +103,7 @@ function check_button_state(frm) {
 			}
 		}
 		for (let row of selected_rows) {
-			if(row.status != 'Refused to Test'&&row.status != 'Finished Examination') {
+			if(row.status != 'Refused'&&row.status != 'Finished') {
 				show_refuse_to_test_button = true;
 			} else {
 				show_refuse_to_test_button = false;
@@ -136,7 +136,7 @@ function refuse_to_test(frm) {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
 	if(selected_rows.length > 0 && selected_rows) {
 		selected_rows.forEach(row => {
-			frappe.model.set_value(row.doctype, row.name, 'status', 'Refused to Test');
+			frappe.model.set_value(row.doctype, row.name, 'status', 'Refused');
 		})
 		frm.save()
 	}
@@ -229,6 +229,8 @@ function assign_to_room(frm) {
 								}
 							}
 						})
+					} else {
+						frappe.throw('Room type default DocType has not been configured. Please contact Administrator.')
 					}
 				})
 			})

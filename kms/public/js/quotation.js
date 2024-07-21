@@ -22,8 +22,8 @@ frappe.ui.form.on('Quotation', {
     frm.add_custom_button(__('Process'), () => {
       frm.trigger('process');
     });
-    frm.fields_dict['items'].grid.wrapper.find('.grid-add-multiple-rows').hide();
-    frm.fields_dict['items'].grid.wrapper.find('.grid-add-row').hide();
+
+    frm.trigger('hide_add_and_multiple_buttons');
 
     frm.set_query("item_code", "items", function(doc, cdt, cdn){
       let d = locals[cdt][cdn];
@@ -422,7 +422,14 @@ frappe.ui.form.on('Quotation', {
       );
     }
   },
-
+  onload_post_render(frm) {
+    frm.trigger('hide_add_and_multiple_buttons');
+  },
+  hide_add_and_multiple_buttons(frm){
+    console.log('aaaaaaaaaaaaaaaaaaaaaaaa aa')
+    frm.fields_dict['items'].grid.wrapper.find('.grid-add-multiple-rows').hide();
+    frm.fields_dict['items'].grid.wrapper.find('.grid-add-row').hide();
+  },
   process(frm){
     let dialog = new frappe.ui.Dialog({
       title: 'Process Quotation',

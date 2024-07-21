@@ -44,25 +44,22 @@ def refuse_to_test(name, selected, reason):
           hsu.status = 'Refused to Test'
       dispatcher_doc.save()
   # Notifikasi Dispatcher
-    notification_doc = frappe.get_doc({
-      'doctype': 'Notification Log',
-      'for_user': frappe.db.get_value('Dispatcher Settings', {'branch': sample_doc.custom_branch, 'enable_date': today()}, 'dispatcher'),
-      'type': 'Alert',
-      'document_type': 'Sample Collection',
-      'document_name': name,
-      'from_user': frappe.session.user,
-      'subject': f"""Patient {sample_doc.patient_name} refused to test with reason: {reason}."""
-    })
-    notification_doc.insert()
-    comment_doc = frappe.get_doc({
-      'doctype': 'Comment',
-      'comment_type': 'Comment',
-      'comment_by': frappe.session.user,
-      'reference_doctype': 'Dispatcher',
-      'reference_name': sample_doc.custom_dispatcher,
-      'content': f"""Patient {sample_doc.patient_name} refused to test with reason: {reason}."""
-    })
-    comment_doc.insert()
+    notification_doc = frappe.get_doc({'doctype': 'Notification Log',})
+    notification_doc.for_user= frappe.db.get_value('Dispatcher Settings', {'branch': sample_doc.custom_branch, 'enable_date': today()}, 'dispatcher')
+    notification_doc.type = 'Alert'
+    notification_doc.document_type = 'Sample Collection'
+    notification_doc.document_name = name
+    notification_doc.from_user = frappe.session.user
+    notification_doc.subject = f"""Patient {sample_doc.patient_name} refused to test with reason: {reason}."""
+    notification_doc.db_insert()
+
+    comment_doc = frappe.get_doc({'doctype': 'Comment'})
+    comment_doc.comment_type = 'Comment'
+    comment_doc.comment_by = frappe.session.user
+    comment_doc.reference_doctype = 'Dispatcher'
+    comment_doc.reference_name = sample_doc.custom_dispatcher
+    comment_doc.content = f"""Patient {sample_doc.patient_name} refused to test with reason: {reason}."""
+    comment_doc.db_insert()
   return 'success'
 
 @frappe.whitelist()
@@ -83,25 +80,23 @@ def remove(name, reason):
         hsu.reference_doc = None
         hsu.reference_doctype = None
     dispatcher_doc.save()
-    notification_doc = frappe.get_doc({
-      'doctype': 'Notification Log',
-      'for_user': frappe.db.get_value('Dispatcher Settings', {'branch': sample_doc.custom_branch, 'enable_date': today()}, 'dispatcher'),
-      'type': 'Alert',
-      'document_type': 'Sample Collection',
-      'document_name': name,
-      'from_user': frappe.session.user,
-      'subject': f"""Patient {sample_doc.patient_name} removed from room with reason: {reason}."""
-    })
-    notification_doc.insert()
-    comment_doc = frappe.get_doc({
-      'doctype': 'Comment',
-      'comment_type': 'Comment',
-      'comment_by': frappe.session.user,
-      'reference_doctype': 'Dispatcher',
-      'reference_name': sample_doc.custom_dispatcher,
-      'content': f"""Patient {sample_doc.patient_name} removed from room with reason: {reason}."""
-    })
-    comment_doc.insert()
+  # Notifikasi Dispatcher
+    notification_doc = frappe.get_doc({'doctype': 'Notification Log',})
+    notification_doc.for_user= frappe.db.get_value('Dispatcher Settings', {'branch': sample_doc.custom_branch, 'enable_date': today()}, 'dispatcher')
+    notification_doc.type = 'Alert'
+    notification_doc.document_type = 'Sample Collection'
+    notification_doc.document_name = name
+    notification_doc.from_user = frappe.session.user
+    notification_doc.subject = f"""Patient {sample_doc.patient_name} refused to test with reason: {reason}."""
+    notification_doc.db_insert()
+
+    comment_doc = frappe.get_doc({'doctype': 'Comment'})
+    comment_doc.comment_type = 'Comment'
+    comment_doc.comment_by = frappe.session.user
+    comment_doc.reference_doctype = 'Dispatcher'
+    comment_doc.reference_name = sample_doc.custom_dispatcher
+    comment_doc.content = f"""Patient {sample_doc.patient_name} refused to test with reason: {reason}."""
+    comment_doc.db_insert()
   return 'success'
 
 @frappe.whitelist()

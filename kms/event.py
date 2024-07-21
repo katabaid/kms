@@ -221,8 +221,6 @@ def process_queue_pooling_and_dental(doc, method=None):
 @frappe.whitelist()
 def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
-  print(doc)
-  print(method)
   if doc.appointment_date == frappe.utils.nowdate() and doc.status == 'Checked In':
     if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
       disp_doc = frappe.get_doc({
@@ -236,13 +234,13 @@ def process_checkin(doc, method=None):
         new_entry.name = None
         disp_doc.append('package', new_entry)
       values = {'appt': doc.name, 'branch': doc.custom_branch}
-      rooms = frappe.db.sql("""select distinct tigsu.service_unit from `tabMCU Appointment` tma, tabItem ti, `tabItem Group Service Unit` tigsu
+      rooms = frappe.db.sql("""select distinct tigsu.service_unit 
+        from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
         where tma.parent = %(appt)s
         and tma.parenttype = 'Patient Appointment'
-        and ti.name = tma.examination_item
-        and ti.item_group = tigsu.parent
+        and tma.examination_item = tigsu.parent
         and tigsu.branch = %(branch)s
-        and tigsu.parenttype = 'Item Group'""", values=values, as_dict=1)
+        and tigsu.parenttype = 'Item'""", values=values, as_dict=1)
       for room in rooms:
         new_entry = dict()
         new_entry['name'] = None
@@ -262,6 +260,8 @@ def process_checkin(doc, method=None):
       vs_doc.save();
   elif doc.appointment_date != frappe.utils.nowdate():
     frappe.throw("Appointment date must be the same as today's date.")
+  else:
+    pass
 
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):

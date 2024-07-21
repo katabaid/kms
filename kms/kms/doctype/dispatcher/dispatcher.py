@@ -30,11 +30,11 @@ def get_exam_items(dispatcher_id, hcsu, hcsu_type):
 @frappe.whitelist()
 def get_queued_branch(branch):
 	count = frappe.db.sql(f"""SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, tra.`user` 
-			FROM `tabHealthcare Service Unit` thsu
-			LEFT JOIN `tabDispatcher Room` tdr ON thsu.name = tdr.healthcare_service_unit AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
-			LEFT JOIN `tabRoom Assignment` tra ON thsu.name = tra.healthcare_service_unit and tra.`date` = CURDATE()
-			WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0
-			GROUP BY thsu.name""", as_dict=True)
+		FROM `tabHealthcare Service Unit` thsu
+		LEFT JOIN `tabDispatcher Room` tdr ON thsu.name = tdr.healthcare_service_unit AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
+		LEFT JOIN `tabRoom Assignment` tra ON thsu.name = tra.healthcare_service_unit and tra.`date` = CURDATE()
+		WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0
+		GROUP BY thsu.name""", as_dict=True)
 	return count
 
 @frappe.whitelist()
@@ -44,33 +44,56 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 	return 'Checked In.'
 
 @frappe.whitelist()
-def finish_exam(dispatcher_id, hsu):
-	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Finished Examination'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
-	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Finished Examination'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit IN (
-		SELECT name FROM `tabHealthcare Service Unit` thsu1
-		WHERE EXISTS (
-		SELECT 1 FROM `tabHealthcare Service Unit` thsu 
-		WHERE EXISTS 
-		(SELECT 1 FROM `tabDispatcher Room` tdr
-		WHERE tdr.parent = '{dispatcher_id}'
-		AND tdr.parenttype = 'Dispatcher'
-		AND tdr.parentfield = 'assignment_table'
-		AND tdr.healthcare_service_unit  = '{hsu}'
-		AND tdr.healthcare_service_unit = thsu.name)
-		AND thsu.service_unit_type = thsu1.service_unit_type
-		AND thsu.custom_branch = thsu1.custom_branch
-		AND thsu1.name != '{hsu}')
-		AND EXISTS (
-		SELECT 1 FROM `tabDispatcher Room` tdr
-		WHERE tdr.parent = '{dispatcher_id}'
-		AND tdr.parenttype = 'Dispatcher'
-		AND tdr.parentfield = 'assignment_table'
-		AND tdr.healthcare_service_unit  = thsu1.name
-		))""")
+def finish_exam(dispatcher_id, hsu, status):
+	# Update Dispatcher Room status to Finished on selected room
+	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = '{status}'  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
+	# Update Dispatcher Room status to Finished on related room
+	frappe.db.sql(f"""
+		UPDATE `tabDispatcher Room`
+		SET `status` = '{status}'
+		WHERE `parent` = '{dispatcher_id}'
+		AND healthcare_service_unit IN (
+			SELECT name 
+			FROM `tabHealthcare Service Unit` thsu1
+			WHERE EXISTS (
+				SELECT 1 
+				FROM `tabHealthcare Service Unit` thsu 
+				WHERE EXISTS (
+					SELECT 1 FROM `tabDispatcher Room` tdr
+					WHERE tdr.parent = '{dispatcher_id}'
+					AND tdr.parenttype = 'Dispatcher'
+					AND tdr.parentfield = 'assignment_table'
+					AND tdr.healthcare_service_unit  = '{hsu}'
+					AND tdr.healthcare_service_unit = thsu.name)
+				AND thsu.service_unit_type = thsu1.service_unit_type
+				AND thsu.custom_branch = thsu1.custom_branch
+				AND thsu1.name != '{hsu}'
+			)
+			AND EXISTS (
+				SELECT 1
+				FROM `tabDispatcher Room` tdr
+				WHERE tdr.parent = '{dispatcher_id}'
+				AND tdr.parenttype = 'Dispatcher'
+				AND tdr.parentfield = 'assignment_table'
+				AND tdr.healthcare_service_unit  = thsu1.name
+			)
+		)
+	""")
+	# Update Dispatcher status to Finished
 	frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
-	return 'Finished Examination.'
+	return 'Finished.'
+
 @frappe.whitelist()
 def removed_from_room(dispatcher_id, hsu):
 	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = 'Wait for Room Assignment', reference_doctype = '', reference_doc = ''  WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
 	frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
 	return 'Removed from examination room.'
+
+@frappe.whitelist()
+def update_exam_item_status(dispatcher_id, examination_item, status):
+	frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE parent = '{dispatcher_id}' AND item_name = '{examination_item}' AND parentfield = 'package' AND parenttype = 'Dispatcher'""")
+	#frappe.db.get_all('MCU Appointment', {})
+	print(dispatcher_id)
+	print(examination_item)
+	print(status)
+	return f"""Updated Dispatcher item: {examination_item} status to {status}."""

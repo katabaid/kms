@@ -13,7 +13,7 @@ app_license = "MIT"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/kms/css/kms.css"
 # app_include_js = "/assets/kms/js/kms.js"
-# app_include_js = "/assets/kms/js/set_session_default.js"
+app_include_js = "/assets/kms/js/controller/examination.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kms/css/kms.css"
@@ -41,7 +41,7 @@ doctype_js = {
   "Clinical Procedure": "public/js/clinical_procedure.js",
   "Lab Test": "public/js/lab_test.js",
   "Patient Appointment": "public/js/patient_appointment.js",
-  "Service Package": "public/js/service_package.js",
+  "Product Bundle": "public/js/service_package.js",
   "Sample Collection": "public/js/sample_collection.js",
   "Quotation": "public/js/quotation.js",
 }

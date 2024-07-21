@@ -14,6 +14,7 @@
  ],
  "fields": [
   {
+   "columns": 2,
    "fieldname": "examination_item",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -22,6 +23,7 @@
    "reqd": 1
   },
   {
+   "columns": 2,
    "fetch_from": "examination_item.item_group",
    "fieldname": "item_group",
    "fieldtype": "Link",
@@ -31,11 +33,13 @@
    "read_only": 1
   },
   {
+   "columns": 5,
    "fetch_from": "examination_item.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Item Name",
+   "print_width": "4",
    "read_only": 1
   },
   {
@@ -49,9 +53,11 @@
    "options": "Healthcare Service Unit"
   },
   {
+   "columns": 1,
    "default": "Started",
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Status",
    "options": "Started\nFinished\nRefused\nCancelled\nRescheduled"
   }
@@ -59,7 +65,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-11 11:19:41.163001",
+ "modified": "2024-07-21 20:15:50.853376",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Appointment",

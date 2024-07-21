@@ -63,6 +63,7 @@ frappe.ui.form.on('Patient Appointment', {
         'Check In',
         ()=>{
           frm.doc.status = 'Checked In';
+          frm.dirty();
           frm.save();
       });
     }

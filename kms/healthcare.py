@@ -69,9 +69,9 @@ def create_nurse_exam(source, name, room):
       and tma.parentfield = 'package'
       and tma.parent = '{name}'
       AND tnet.item_code = tma.examination_item
-      and tigsu.parenttype = 'Item Group'
-      and tigsu.parentfield = 'custom_units'
-      and tigsu.parent = tma.item_group
+      and tigsu.parenttype = 'Item'
+      and tigsu.parentfield = 'custom_room'
+      and tigsu.parent = tma.examination_item
       and tigsu.branch = '{appt_doc.custom_branch}'
       and tigsu.service_unit = '{room}'""", as_dict=True)
     if exam_items:
@@ -117,9 +117,9 @@ def create_doctor_exam(source, name, room):
       and tma.parentfield = 'package'
       and tma.parent = '{name}'
       AND tnet.item_code = tma.examination_item
-      and tigsu.parenttype = 'Item Group'
-      and tigsu.parentfield = 'custom_units'
-      and tigsu.parent = tma.item_group
+      and tigsu.parenttype = 'Item'
+      and tigsu.parentfield = 'custom_room'
+      and tigsu.parent = tma.examination_item
       and tigsu.branch = '{appt_doc.custom_branch}'
       and tigsu.service_unit = '{room}'""", as_dict=True)
     if exam_items:
@@ -164,9 +164,9 @@ def create_radiology_exam(source, name, room):
       where tma.parenttype = 'Dispatcher'
       and tma.parentfield = 'package'
       and tma.parent = '{name}'
-      and tigsu.parenttype = 'Item Group'
-      and tigsu.parentfield = 'custom_units'
-      and tigsu.parent = tma.item_group
+      and tigsu.parenttype = 'Item'
+      and tigsu.parentfield = 'custom_room'
+      and tigsu.parent = tma.examination_item
       and tigsu.branch = '{appt_doc.custom_branch}'
       and tigsu.service_unit = '{room}'
       and trrt.item_code = tma.examination_item""", as_dict=True)

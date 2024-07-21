@@ -43,6 +43,10 @@ frappe.ui.form.on('Sample Collection', {
           callback: function(r) {
             if(r.message){
               frm.reload_doc();
+							frappe.show_alert({
+								message: 'Updated with Checked In.',
+								indicator: 'green'
+							})
             }
           }
         });
@@ -96,9 +100,9 @@ frappe.ui.form.on('Sample Collection', {
 							let count_finished = 0;
 							disp_doc.assignment_table.forEach(row => {
                 count_row += 1;
-                if (row.status === 'Finished Examination'||row.status === 'Refused to Test') count_finished += 1;
+                if (row.status === 'Finished'||row.status === 'Refused to Test') count_finished += 1;
 								if (row.healthcare_service_unit == frm.doc.custom_service_unit) {
-                  row.status = 'Finished Examination';
+                  row.status = 'Finished';
                   count_finished += 1;
 								}
 							});
@@ -116,7 +120,10 @@ frappe.ui.form.on('Sample Collection', {
 								},
 								callback: function(save_response) {
 									console.log(save_response)
-									frappe.msgprint('Dispatcher status updated with Finished Examination.');
+									frappe.show_alert({
+										message: 'Dispatcher status updated with Finished.',
+										indicator: 'green'
+									})
 								}
 							});
 						}
@@ -201,6 +208,10 @@ function refuse_to_test(frm) {
         callback: function(r) {
           if(r.message){
             frm.reload_doc();
+						frappe.show_alert({
+							message: 'Updated with refusal.',
+							indicator: 'red'
+						})
           }
         }
       })
@@ -230,6 +241,10 @@ function remove(frm) {
       callback: function(r) {
         if(r.message) {
           frm.reload_doc();
+					frappe.show_alert({
+						message: 'Updated with removal.',
+						indicator: 'red'
+					})
         }
       }
     })
