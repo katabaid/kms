@@ -179,7 +179,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }, 'Status');
   }
   
-  function updateChildStatus(frm, grid, newStatus) {
+  function updateChildStatus(frm, grid, newStatus, reason = null) {
     const selectedRows = grid.get_selected();
     if (selectedRows.length === 1) {
       const child = locals[grid.doctype][selectedRows[0]];
