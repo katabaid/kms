@@ -10,22 +10,22 @@ class Dispatcher(Document):
 			self.queue_no = self.name.split('-')[-1].lstrip('0')
 			self.db_update()
 
-@frappe.whitelist()
-def get_exam_items(dispatcher_id, hcsu, hcsu_type):
-	items = frappe.db.sql(f"""select tma.examination_item from `tabMCU Appointment` tma, tabItem ti, `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu, `tabPatient Appointment` tpa, tabDispatcher td 
-		where tma.parenttype = 'Dispatcher'
-		and tma.parent = '{dispatcher_id}'
-		and ti.name = tma.examination_item
-		and ti.item_group = tigsu.parent
-		and tigsu.service_unit  = '{hcsu}'
-		and tigsu.parenttype = 'Item Group'
-		and tigsu.service_unit = thsu.name
-		and thsu.service_unit_type = '{hcsu_type}'
-		and tma.parent = td.name 
-		and td.patient_appointment = tpa.name 
-		and tpa.custom_branch = tigsu.branch """, as_dict=True)
+# @frappe.whitelist()
+# def get_exam_items(dispatcher_id, hcsu, hcsu_type):
+# 	items = frappe.db.sql(f"""select tma.examination_item from `tabMCU Appointment` tma, tabItem ti, `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu, `tabPatient Appointment` tpa, tabDispatcher td 
+# 		where tma.parenttype = 'Dispatcher'
+# 		and tma.parent = '{dispatcher_id}'
+# 		and ti.name = tma.examination_item
+# 		and ti.item_group = tigsu.parent
+# 		and tigsu.service_unit  = '{hcsu}'
+# 		and tigsu.parenttype = 'Item Group'
+# 		and tigsu.service_unit = thsu.name
+# 		and thsu.service_unit_type = '{hcsu_type}'
+# 		and tma.parent = td.name 
+# 		and td.patient_appointment = tpa.name 
+# 		and tpa.custom_branch = tigsu.branch """, as_dict=True)
 
-	return items
+# 	return items
 	
 @frappe.whitelist()
 def get_queued_branch(branch):
@@ -79,8 +79,16 @@ def finish_exam(dispatcher_id, hsu, status):
 			)
 		)
 	""")
-	# Update Dispatcher status to Finished
-	frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
+	#Verify whether all rooms are finished
+	final_status = "('Finished', 'Refused', 'Rescheduled', 'Partial Finished')"
+	room_count = frappe.db.sql(f"""SELECT COUNT(*) count FROM `tabDispatcher Room` WHERE `parent` = '{dispatcher_id}'""", as_dict=True)[0]['count']
+	finished_room_count = frappe.db.sql(f"""SELECT COUNT(*) count FROM `tabDispatcher Room` WHERE `parent` = '{dispatcher_id}' and status in {final_status}""", as_dict=True)[0]['count']
+	if room_count == finished_room_count:
+		# Update Dispatcher status to Finished
+		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'Waiting to Finish', room = ''  WHERE `name` = '{dispatcher_id}'""")
+	else:
+		# Update Dispatcher status to Finished
+		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
 	return 'Finished.'
 
 @frappe.whitelist()
@@ -91,13 +99,28 @@ def removed_from_room(dispatcher_id, hsu):
 
 @frappe.whitelist()
 def update_exam_item_status(dispatcher_id, examination_item, status):
-	flag = frappe.db.sql(f""" SELECT 1 result FROM `tabMCU Appointment` tma WHERE `parent` = '{dispatcher_id}'  and item_name = '{examination_item}' UNION ALL SELECT 2 result FROM `tabMCU Appointment` tma WHERE `parent` = '{dispatcher_id}' and EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name) """, as_dict=True)
-	print('-------------------')
-	print(flag[0].result)
+	flag = frappe.db.sql(
+		f"""
+		SELECT 1 result 
+		FROM `tabMCU Appointment` tma 
+		WHERE `parent` = '{dispatcher_id}' 
+		AND item_name = '{examination_item}' 
+		UNION ALL 
+		SELECT 2 result 
+		FROM `tabMCU Appointment` tma 
+		WHERE `parent` = '{dispatcher_id}' 
+		AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name)
+		""", as_dict=True)
 	if flag[0].result == 1:
 		frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE parent = '{dispatcher_id}' AND item_name = '{examination_item}' AND parentfield = 'package' AND parenttype = 'Dispatcher'""")
 	elif flag[0].result == 2:
-		items = frappe.db.sql(f"""SELECT name FROM `tabMCU Appointment` tma WHERE `parent` = '{dispatcher_id}' and EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name)""", as_dict=True)
+		items = frappe.db.sql(
+			f"""
+			SELECT name 
+			FROM `tabMCU Appointment` tma 
+			WHERE `parent` = '{dispatcher_id}' 
+			AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name)
+			""", as_dict=True)
 		for item in items:
 			frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE name = '{item.name}'""")
 	else:

@@ -1,4 +1,4 @@
-const baseController = kms.controller.createDocTypeController('Doctor Examination');
+/* const baseController = kms.controller.createDocTypeController('Doctor Examination');
 
 frappe.ui.form.on('Doctor Examination', {
     ...baseController,
@@ -11,4 +11,5 @@ frappe.ui.form.on('Doctor Examination', {
     imaging_specific_method: function(frm) {
         // Imaging-specific logic
     }
-});
+}); */
+frappe.ui.form.on('Doctor Examination', kms.controller.createDocTypeController('Doctor Examination'));

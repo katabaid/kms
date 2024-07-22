@@ -16,7 +16,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   // Utility functions
   const utils = {
     handleBeforeSubmit(frm) {
-      const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled'];
+      const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed'];
       if (validStatuses.includes(utils.getStatus(frm))) {
         if (utils.getDispatcher(frm)) {
           finishExam(frm);
@@ -35,7 +35,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     handleCustomButtons(frm) {
       if (utils.getStatus(frm) === 'Started') {
         addCustomButton(frm, 'Check In', 'checkin_room', 'Checked In');
-        addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed');
+        addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed', true);
       } else if (utils.getStatus(frm) === 'Checked In') {
         frm.remove_custom_button('Check In', 'Status');
       } else {
@@ -44,12 +44,11 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       }
     },
     setupChildTableButtons(frm) {
-      console.log('aaaaaaaaaaa')
       const grid = frm.fields_dict[config.childTableButton].grid;
       const buttons = [
-        { label: 'Finish', status: 'Finished', class: 'btn-primary' },
-        { label: 'Refuse', status: 'Refused', class: 'btn-danger' },
-        { label: 'Reschedule', status: 'Rescheduled', class: 'btn-warning' }
+        { label: 'Finish', status: 'Finished', class: 'btn-primary', prompt: false },
+        { label: 'Refuse', status: 'Refused', class: 'btn-danger', prompt: true },
+        { label: 'Reschedule', status: 'Rescheduled', class: 'btn-warning', prompt: true }
       ];
     
       // Remove existing custom buttons
@@ -58,7 +57,18 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       // Add new custom buttons
       buttons.forEach(button => {
         const customButton = grid.add_custom_button(__(button.label), function() {
-          updateChildStatus(frm, grid, button.status);
+          if (button.prompt) {
+            frappe.prompt({
+              fieldname: 'reason',
+              label: 'Reason',
+              fieldtype: 'Small Text',
+              reqd: 1
+            }, (values) => {
+              updateChildStatus(frm, grid, button.status, values.reason);
+            }, __('Provide a Reason'), __('Submit'));
+          } else {
+            updateChildStatus(frm, grid, button.status);
+          }
         }, 'btn-custom');
         customButton.addClass(`${button.class} btn-sm`);
         customButton.hide();
@@ -119,25 +129,53 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     });
   }
     
-  function addCustomButton(frm, label, method, newStatus) {
+  function addCustomButton(frm, label, method, newStatus, prompt = false) {
     frm.add_custom_button(label, () => {
-      frappe.call({
-        method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
-        args: {
-          'dispatcher_id': utils.getDispatcher(frm),
-          'hsu': utils.getHsu(frm),
-          'doctype': frm.doc.doctype,
-          'docname': frm.doc.name
-        },
-        callback: function(r) {
-          if (r.message) {
-            showAlert(r.message, 'green');
-            utils.setStatus(frm, newStatus);
-            frm.dirty();
-            frm.save();
+      if (prompt) {
+        frappe.prompt({
+          fieldname: 'reason',
+          label: 'Reason',
+          fieldtype: 'Small Text',
+          reqd: 1
+        }, (values) => {
+          frappe.call({
+            method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
+            args: {
+              'dispatcher_id': utils.getDispatcher(frm),
+              'hsu': utils.getHsu(frm),
+              'doctype': frm.doc.doctype,
+              'docname': frm.doc.name
+            },
+            callback: function(r) {
+              if (r.message) {
+                showAlert(r.message, 'green');
+                utils.setStatus(frm, newStatus);
+                frm.dirty();
+                frm.save();
+                addComment(frm, values.reason);
+              }
+            }
+          });
+        }, __('Provide a Reason'), __('Submit'));
+      } else {
+        frappe.call({
+          method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
+          args: {
+            'dispatcher_id': utils.getDispatcher(frm),
+            'hsu': utils.getHsu(frm),
+            'doctype': frm.doc.doctype,
+            'docname': frm.doc.name
+          },
+          callback: function(r) {
+            if (r.message) {
+              showAlert(r.message, 'green');
+              utils.setStatus(frm, newStatus);
+              frm.dirty();
+              frm.save();
+            }
           }
-        }
-      });
+        });
+      }
     }, 'Status');
   }
   
@@ -152,12 +190,36 @@ const createDocTypeController = (doctype, customConfig = {}) => {
             updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
             showAlert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
             frm.reload_doc();
+            if (utils.getDispatcher(frm) && reason) {
+              addComment(frm, reason);
+            }
           }).catch((err) => {
             frappe.msgprint(__('Error updating status: {0}', [err.message]));
           });
         });
       }
     }
+  }
+
+  function addComment(frm, reason) {
+    frappe.call({
+      method: 'frappe.client.insert',
+      args: {
+        doc: {
+          doctype: 'Comment',
+          comment_type: 'Comment',
+          reference_doctype: 'Dispatcher',
+          reference_name: utils.getDispatcher(frm),
+          content: `<div class="ql-editor read-mode"><p>${reason}</p></div>`,
+          comment_by: frappe.session.user_fullname
+        }
+      },
+      callback: function(response) {
+        if (!response.exc) {
+          showAlert('Comment added successfully.', 'green');
+        }
+      }
+    });
   }
   
   function setupRowSelector(grid) {
@@ -193,7 +255,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     
     if (selectedRows && selectedRows.length === 1) {
       const child = locals[grid.doctype][selectedRows[0]];
-      console.log('bbbbbbbbbbbbbbbbbbbbbb')
       buttons.toggle(child.status === 'Started');
     } else {
       buttons.hide();
