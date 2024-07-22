@@ -91,9 +91,15 @@ def removed_from_room(dispatcher_id, hsu):
 
 @frappe.whitelist()
 def update_exam_item_status(dispatcher_id, examination_item, status):
-	frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE parent = '{dispatcher_id}' AND item_name = '{examination_item}' AND parentfield = 'package' AND parenttype = 'Dispatcher'""")
-	#frappe.db.get_all('MCU Appointment', {})
-	print(dispatcher_id)
-	print(examination_item)
-	print(status)
+	flag = frappe.db.sql(f""" SELECT 1 result FROM `tabMCU Appointment` tma WHERE `parent` = '{dispatcher_id}'  and item_name = '{examination_item}' UNION ALL SELECT 2 result FROM `tabMCU Appointment` tma WHERE `parent` = '{dispatcher_id}' and EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name) """, as_dict=True)
+	print('-------------------')
+	print(flag[0].result)
+	if flag[0].result == 1:
+		frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE parent = '{dispatcher_id}' AND item_name = '{examination_item}' AND parentfield = 'package' AND parenttype = 'Dispatcher'""")
+	elif flag[0].result == 2:
+		items = frappe.db.sql(f"""SELECT name FROM `tabMCU Appointment` tma WHERE `parent` = '{dispatcher_id}' and EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name)""", as_dict=True)
+		for item in items:
+			frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE name = '{item.name}'""")
+	else:
+		frappe.throw(f"Examination item {examination_item} does not exist.")
 	return f"""Updated Dispatcher item: {examination_item} status to {status}."""
