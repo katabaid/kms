@@ -19,16 +19,19 @@ def get_exam_items(root):
     AND ih.is_group = 0
     AND ti.custom_is_mcu_item = 1);""", as_dict=True)
   exam_group = frappe.db.sql(f"""
-    WITH RECURSIVE ItemHierarchy AS (
-      SELECT name, parent_item_group, is_group, tig.custom_bundle_position
-      FROM `tabItem Group` tig 
-      WHERE parent_item_group = '{root}'
+    WITH RECURSIVE Hierarchy AS (
+      SELECT name, parent_item_group, custom_bundle_position, is_group, 0 AS level
+      FROM `tabItem Group`
+      WHERE name = '{root}'
       UNION ALL
-      SELECT t.name, t.parent_item_group, t.is_group, t.custom_bundle_position
+      SELECT t.name, t.parent_item_group, t.custom_bundle_position, t.is_group, h.level + 1 AS level
       FROM `tabItem Group` t
-      INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name)
-    SELECT name, parent_item_group, is_group, custom_bundle_position
-      FROM ItemHierarchy;""", as_dict=True)
+      INNER JOIN Hierarchy h ON t.parent_item_group = h.name
+    )
+    SELECT name, parent_item_group, custom_bundle_position, is_group
+    FROM Hierarchy
+    WHERE name != '{root}'
+    ORDER BY level, custom_bundle_position;""", as_dict=True)
   return {'exam_items': exam_items, 'exam_group': exam_group}
 
 @frappe.whitelist()

@@ -3,7 +3,12 @@
 
 frappe.ui.form.on('Dispatcher', {
 	refresh: function(frm) {
-		frm.fields_dict['assign_room_button'].df.hidden = true;
+
+		frm.trigger('setup_custom_buttons');
+		frm.trigger('hide_standard_child_tables_buttons');
+		frm.trigger('setup_child_table_custom_buttons');
+
+		/* frm.fields_dict['assign_room_button'].df.hidden = true;
 		frm.fields_dict['refuse_to_test_button'].df.hidden = true;
 		frm.fields_dict['retest_button'].df.hidden = true;
 		frm.fields_dict['remove_from_room_button'].df.hidden = true;
@@ -34,10 +39,22 @@ frappe.ui.form.on('Dispatcher', {
 					frm.save();
 				}, 
 				'Status')
-		}
+		} */
 	},
 
-	onload_post_render: function(frm) {
+	setup_custom_buttons: function(frm) {
+		handleCustomButtons(frm);
+	},
+
+	hide_standard_child_tables_buttons: function(frm) {
+		handleHideChildButtons(frm, childTables);
+	},
+
+	setup_child_table_custom_buttons: function(frm) {
+		handleChildCustomButtons(frm);
+	},
+
+	/* onload_post_render: function(frm) {
 		frm.fields_dict['assignment_table'].grid.wrapper.on('change', 'input, select', function() {
 			check_button_state(frm);
 		});
@@ -51,7 +68,7 @@ frappe.ui.form.on('Dispatcher', {
 		frm.fields_dict['assignment_table'].grid.wrapper.on('click', '.grid-row-check', function() {
 			ensure_single_selection(frm);
 		});
-	},
+	}, */
 
 	setup: function(frm) {
 		frm.set_indicator_formatter("healthcare_service_unit", function(doc){
@@ -60,7 +77,7 @@ frappe.ui.form.on('Dispatcher', {
 			else if(doc.status==='Refused')
 				return 'red';
 			else if(doc.status==='Wait for Room Assignment')
-				return 'orange';
+				return 'cyan';
 			else if(doc.status==='Waiting to Enter the Room')
 				return 'yellow';
 			else if(doc.status==='Ongoing Examination')
@@ -70,6 +87,111 @@ frappe.ui.form.on('Dispatcher', {
 		})
 	}
 });
+
+const childTables = ['assignment_table', 'package'];
+const childTableButton = 'assignment_table';
+
+// triggers
+const handleCustomButtons = (frm) => {
+	if(frm.doc.status === 'Waiting to Finish') {
+		frm.add_custom_button(
+			'Finish', () => {
+				frm.doc.status = 'Finished';
+				frm.dirty();
+				frm.save();
+			}
+		)
+	}
+}
+
+const handleHideChildButtons = (frm, childTablesArray) => {
+	childTablesArray.forEach(field => {
+		const grid = frm.fields_dict[field].grid;
+		grid.wrapper.find('.grid-add-row').hide();
+		grid.wrapper.find('.grid-remove-rows').hide();
+	});
+}
+
+const handleChildCustomButtons = (frm) => {
+	const grid = frm.fields_dict[childTableButton].grid;
+	const buttons = [
+		{ label: 'Assign', status: 'Waiting to Enter the Room', class: 'btn-primary', prompt: false },
+		{ label: 'Refuse', status: 'Refused', class: 'btn-danger', prompt: false },
+		{ label: 'Retest', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false }
+		{ label: 'Remove from Room', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false }
+	];
+
+	// Remove existing custom buttons
+	grid.wrapper.find('.grid-footer').find('.btn-custom').remove();
+
+	// Add new custom buttons
+	buttons.forEach(button => {
+		const customButton = grid.add_custom_button(__(button.label), function() {
+			if (button.prompt) {
+				frappe.prompt({
+					fieldname: 'reason',
+					label: 'Reason',
+					fieldtype: 'Small Text',
+					reqd: 1
+				}, (values) => {
+					updateChildStatus(frm, grid, button.status, values.reason);
+				}, __('Provide a Reason'), __('Submit'));
+			} else {
+				updateChildStatus(frm, grid, button.status);
+			}
+		}, 'btn-custom');
+		customButton.addClass(`${button.class} btn-sm`);
+		customButton.hide();
+	});
+
+	setupRowSelector(grid);
+}
+
+// trigger methods
+const updateChildStatus = (frm, grid, newStatus, reason = null) => {
+	const selectedRows = grid.get_selected();
+	if (selectedRows.length === 1) {
+		const child = locals[grid.doctype][selectedRows[0]];
+		if (child.status === 'Started') {
+			frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
+			updateParentStatus(frm).then(() => {
+				frm.save().then(() => {
+					updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
+					showAlert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
+					frm.reload_doc();
+					if (utils.getDispatcher(frm) && reason) {
+						addComment(frm, reason);
+					}
+				}).catch((err) => {
+					frappe.msgprint(__('Error updating status: {0}', [err.message]));
+				});
+			});
+		}
+	}
+}
+
+const setupRowSelector = (grid) => {
+	grid.row_selector = function(e) {
+		if (e.target.classList.contains('grid-row-check')) {
+			const $row = $(e.target).closest('.grid-row');
+			const docname = $row.attr('data-name');
+			
+			if (this.selected_row && this.selected_row === docname) {
+				$row.removeClass('grid-row-selected');
+				$row.find('.grid-row-check').prop('checked', false);
+				this.selected_row = null;
+			} else {
+				this.$rows.removeClass('grid-row-selected');
+				this.$rows.find('.grid-row-check').prop('checked', false);
+				$row.addClass('grid-row-selected');
+				$row.find('.grid-row-check').prop('checked', true);
+				this.selected_row = docname;
+			}
+			this.refresh_remove_rows_button();
+			updateCustomButtonVisibility(grid);
+		}
+	};
+}
 
 function check_button_state(frm) {
 	let show_assign_room_button = false;
