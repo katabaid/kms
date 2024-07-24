@@ -51,11 +51,6 @@ function createMultiCheckField(fieldname, label, options) {
 // Function to update the next level of select
 function updateNextLevel(dialog, currentLevel) {
   return function () {
-    if (!json_data || !json_data.exam_group || !json_data.exam_items) {
-      console.error('Data not loaded yet.');
-      return;
-    }
-
     const selectedValue = dialog.get_value(`level${currentLevel}`);
     const selectedItem = json_data.exam_group.find(item => item.name === selectedValue);
     const children = getChildren(selectedValue);
@@ -134,6 +129,7 @@ function updateNextLevel(dialog, currentLevel) {
               } else {
                 selectedExamItems = selectedExamItems.filter(item => item !== option.value);
               }
+              updateSelectedItemsTable();
             });
 
             $checkboxWrapper.append($label);
@@ -173,7 +169,12 @@ function createDialog() {
       fieldtype: 'Section Break',
       label: 'Exam Items'
     },
-    createMultiCheckField('exam_items', 'Exam Items', [])
+    createMultiCheckField('exam_items', 'Exam Items', []),
+    {
+      fieldtype: 'HTML',
+      fieldname: 'selected_items_table',
+      options: '<div id="selected-items-table"></div>'
+    }
   ];
 
   const dialog = new frappe.ui.Dialog({
@@ -200,6 +201,7 @@ function createDialog() {
   });
 
   dialog.show();
+  updateSelectedItemsTable();
 }
 
 const getExamItemSelection = (frm) => {
@@ -210,3 +212,65 @@ const getExamItemSelection = (frm) => {
     callback: (r) => { json_data = r.message; }
   });
 };
+
+function updateSelectedItemsTable() {
+  const selectedItems = json_data.exam_items
+    .filter(item => selectedExamItems.includes(item.name))
+    .sort((a, b) => a.custom_bundle_position - b.custom_bundle_position);
+
+  const groupedItems = groupItemsWithParents(selectedItems);
+  
+  const data = groupedItems.map(item => ({
+    'Item Name': item.name,
+    'indent': item.level
+  }));
+
+  const columns = [
+    {
+      name: 'Item Name',
+      //format: value => `<div style="margin-left: ${value.level * 20}px; font-size: ${14 - value.level}px;">${value.name}</div>`,
+      width: 300
+    }
+    
+  ];
+console.log(columns)
+console.log(JSON.stringify(data))
+  // Clear the existing datatable if it exists
+  if (window.selectedItemsDatatable) {
+    window.selectedItemsDatatable.destroy();
+  }
+
+  // Create a new datatable
+  window.selectedItemsDatatable = new frappe.DataTable('#selected-items-table', {
+    columns: columns,
+    data: data,
+    layout: 'fixed',
+    noDataMessage: 'No items selected',
+    treeView: true,
+    serialNoColumn: false,
+  });
+}
+
+function groupItemsWithParents(items) {
+  const grouped = [];
+  items.forEach(item => {
+    const parentGroups = getParentGroups(item.item_group);
+    parentGroups.forEach((group, level) => {
+      if (!grouped.some(g => g.name === group && g.level === level)) {
+        grouped.push({ name: group, level: level });
+      }
+    });
+    grouped.push({ name: item.item_name, level: parentGroups.length });
+  });
+  return grouped;
+}
+
+function getParentGroups(groupName) {
+  const parents = [];
+  let currentGroup = json_data.exam_group.find(group => group.name === groupName);
+  while (currentGroup) {
+    parents.unshift(currentGroup.name);
+    currentGroup = json_data.exam_group.find(group => group.name === currentGroup.parent_item_group);
+  }
+  return parents;
+}
