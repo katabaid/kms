@@ -10,18 +10,152 @@ frappe.ui.form.on('Quotation', {
     }
   },
   refresh(frm) {
-    frm.add_custom_button(__('Process'), function () {
-      createDialog();
-    });
+    if(frm.is_new()&&frm.doc.quotation_to&&frm.doc.party_name) {
+      frm.add_custom_button(__('Create Bundle'), function () {
+        createDialog(frm);
+      });
+    }
+    hideStandardButtons(frm, childTable1);
   },
   setup(frm) {
     getExamItemSelection(frm);
+  },
+  onload(frm) {
+    hideStandardButtons(frm, childTable1);
   }
 });
 
 const childTable = 'items';
+const childTable1 = ['items'];
 let json_data = {};
 let selectedExamItems = [];
+
+const getExamItemSelection = (frm) => {
+  frappe.call({
+    method: 'kms.healthcare.get_exam_items',
+    args: { root: 'Examination' },
+    freeze: true,
+    callback: (r) => { json_data = r.message; }
+  });
+};
+
+const hideStandardButtons = (frm, fields) => {
+  fields.forEach(field => {
+    const grid = frm.fields_dict[field].grid;
+    console.log(grid.wrapper.find('.grid-add-row'))
+    grid.wrapper.find('.grid-add-row').remove();
+    grid.wrapper.find('.grid-add-multiple-rows').remove();
+  });
+}
+
+// Function to create the dialog box
+const createDialog = (frm) => {
+  const root = 'Examination';
+  const firstLevelOptions = getChildren(root);
+  selectedExamItems = [];
+
+  const fields = [
+    {
+      fieldtype: 'Data',
+      fieldname: 'package_name',
+      label: 'Package Name',
+      reqd: 1,
+    },
+    {
+      fieldtype: 'Section Break',
+      label: 'Copy Package from',
+      collapsible: 1
+    },
+    {
+      fieldtype: 'Link',
+      fieldname: 'package_name_link',
+      label: 'Package Name',
+      options: 'Product Bundle',
+      onchange: function() {
+        const packageName = dialog.get_value('package_name_link');
+        console.log(packageName);
+        frappe.call({
+          method: 'kms.sales.get_bundle_items_to_copy',
+          args: { bundle_id: packageName },
+          callback: function(response) {
+            if(response.message){
+              selectedExamItems = response.message;
+              updateSelectedItemsTable();
+            }
+          }
+        });
+      }
+    },
+    {
+      fieldtype: 'Section Break',
+      label: 'Pick Exam Items'
+    },
+    {
+      fieldtype: 'Column Break'
+    },
+    createSelectField('level1', 'Level 1', [''].concat(firstLevelOptions.map(option => option.name))),
+    {
+      fieldtype: 'Column Break'
+    },
+    createSelectField('level2', 'Level 2', []),
+    {
+      fieldtype: 'Column Break'
+    },
+    createSelectField('level3', 'Level 3', []),
+    {
+      fieldtype: 'Section Break',
+      label: 'Selected Exam Items'
+    },
+    createMultiCheckField('exam_items', 'Exam Items', []),
+    {
+      fieldtype: 'HTML',
+      fieldname: 'selected_items_table',
+      options: '<div id="selected-items-table"></div>'
+    }
+  ];
+
+  const dialog = new frappe.ui.Dialog({
+    title: 'Pick service package items',
+    fields: fields,
+    size: 'extra-large'
+  });
+
+  for (let i = 1; i <= 3; i++) {
+    dialog.fields_dict[`level${i}`].df.onchange = updateNextLevel(dialog, i);
+  }
+
+  for (let i = 2; i <= 3; i++) {
+    dialog.fields_dict[`level${i}`].$wrapper.hide();
+  }
+
+  dialog.fields_dict['exam_items'].$wrapper.hide();
+
+  dialog.set_primary_action(__('Create'), function (values) {
+    frappe.call({
+      method: 'kms.sales.create_bundle_from_quotation',
+      args: {
+        items: selectedExamItems, 
+        name: values.package_name, 
+        party_name: frm.doc.party_name, 
+        quotation_to: frm.doc.quotation_to
+      },
+      callback: function (r) {
+        console.log(r.message);
+        frm.doc.items = [];
+        let row = frm.add_child('items', {
+          item_code: r.message,
+          uom: 'Unit'
+        });
+        frm.refresh_field('items');
+      }
+    });
+    dialog.hide();
+  });
+
+  dialog.show();
+
+  updateSelectedItemsTable();
+};
 
 function getChildren(parent) {
   return json_data.exam_group.filter(item => item.parent_item_group === parent);
@@ -52,7 +186,8 @@ function createMultiCheckField(fieldname, label, options) {
 function updateNextLevel(dialog, currentLevel) {
   return function () {
     const selectedValue = dialog.get_value(`level${currentLevel}`);
-    const selectedItem = json_data.exam_group.find(item => item.name === selectedValue);
+    let selectedItem = {}
+    selectedItem = json_data.exam_group.find(item => item.name === selectedValue);
     const children = getChildren(selectedValue);
     const nextLevel = currentLevel + 1;
     const nextLevelField = dialog.fields_dict[`level${nextLevel}`];
@@ -93,7 +228,8 @@ function updateNextLevel(dialog, currentLevel) {
           label: item.item_name,
           value: item.name
         }));
-
+        console.log(options);
+        console.log(examItems);
         dialog.fields_dict['exam_items'].df.options = options;
         dialog.fields_dict['exam_items'].refresh();
         dialog.fields_dict['exam_items'].$wrapper.show();
@@ -146,113 +282,13 @@ function updateNextLevel(dialog, currentLevel) {
   };
 }
 
-// Function to create the dialog box
-function createDialog() {
-  const root = 'Examination';
-  const firstLevelOptions = getChildren(root);
-
-  // Prepare all fields at once
-  const fields = [
-    {
-      fieldtype: 'Data',
-      fieldname: 'package_name',
-      label: 'Package Name',
-      reqd: 1,
-    },
-    {
-      fieldtype: 'Section Break',
-      label: 'Copy Package from',
-      collapsible: 1
-    },
-    {
-      fieldtype: 'Link',
-      fieldname: 'package_name_link',
-      label: 'Package Name',
-      options: 'Product Bundle',
-      onchange: function() {
-        const packageName = dialog.get_value('package_name_link');
-        frappe.call({
-          method: 'kms.sales.get_bundle_items_to_copy',
-          args: { bundle_id: packageName },
-          callback: function(response) {
-            if(response.message){
-              selectedExamItems = response.message;
-              updateSelectedItemsTable();
-            }
-          }
-        });
-      }
-    },
-    {
-      fieldtype: 'Section Break',
-      label: 'Pick Exam Items'
-    },
-    {
-      fieldtype: 'Column Break'
-    },
-    createSelectField('level1', 'Level 1', [''].concat(firstLevelOptions.map(option => option.name))),
-    {
-      fieldtype: 'Column Break'
-    },
-    createSelectField('level2', 'Level 2', []),
-    {
-      fieldtype: 'Column Break'
-    },
-    createSelectField('level3', 'Level 3', []),
-    {
-      fieldtype: 'Section Break',
-      label: 'Selected Exam Items'
-    },
-    createMultiCheckField('exam_items', 'Exam Items', []),
-    {
-      fieldtype: 'HTML',
-      fieldname: 'selected_items_table',
-      options: '<div id="selected-items-table"></div>'
-    }
-  ];
-
-  const dialog = new frappe.ui.Dialog({
-    title: 'Pick service package items',
-    fields: fields,
-    size: 'extra-large'
-  });
-
-  // Set up onchange handlers for all levels
-  for (let i = 1; i <= 3; i++) {
-    dialog.fields_dict[`level${i}`].df.onchange = updateNextLevel(dialog, i);
-  }
-
-  // Hide all levels except the first one
-  for (let i = 2; i <= 3; i++) {
-    dialog.fields_dict[`level${i}`].$wrapper.hide();
-  }
-
-  dialog.fields_dict['exam_items'].$wrapper.hide();
-
-  dialog.set_primary_action(__('Create'), function () {
-    // Handle form submission here
-    dialog.hide();
-  });
-
-  dialog.show();
-  updateSelectedItemsTable();
-}
-
-const getExamItemSelection = (frm) => {
-  frappe.call({
-    method: 'kms.healthcare.get_exam_items',
-    args: { root: 'Examination' },
-    freeze: true,
-    callback: (r) => { json_data = r.message; }
-  });
-};
-
 function updateSelectedItemsTable() {
   const selectedItems = json_data.exam_items
     .filter(item => selectedExamItems.includes(item.name))
     .sort((a, b) => a.custom_bundle_position - b.custom_bundle_position);
-
+  console.log(`Selected items: ${selectedItems.map(item => item.name).join(', ')}`);
   const groupedItems = groupItemsWithParents(selectedItems);
+  console.log(`Grouped items: ${JSON.stringify(groupedItems)}`);
   
   const data = groupedItems.map(item => ({
     'Item Name': item.name,
@@ -268,6 +304,7 @@ function updateSelectedItemsTable() {
   ];
   // Clear the existing datatable if it exists
   if (window.selectedItemsDatatable) {
+    console.log('asasasasa')
     window.selectedItemsDatatable.destroy();
   }
 
@@ -281,6 +318,8 @@ function updateSelectedItemsTable() {
     serialNoColumn: false,
     cellHeight: 30
   });
+  console.log(window.selectedItemsDatatable)
+  window.selectedItemsDatatable.refresh();
 }
 
 function groupItemsWithParents(items) {

@@ -1,4 +1,4 @@
-import frappe, json
+import frappe, json, ast
 
 @frappe.whitelist()
 def get_bundle_items_to_copy(bundle_id):
@@ -6,7 +6,8 @@ def get_bundle_items_to_copy(bundle_id):
   return response
 
 @frappe.whitelist()
-def create_bundle_from_quotation(items, name, price_list, party_name, quotation_to):
+def create_bundle_from_quotation(items, name, party_name, quotation_to):
+  params = convert_to_list(items)
   #Create Item
   item_doc = frappe.new_doc("Item")
   item_doc.naming_series = "Q.{custom_abbreviation}..{custom_product_bundle_customer}..{custom_product_bundle_lead}.-.###"
@@ -22,7 +23,7 @@ def create_bundle_from_quotation(items, name, price_list, party_name, quotation_
   elif quotation_to == "Customer":
     item_doc.custom_product_bundle_customer = party_name
   item_doc.insert();
-  
+
   #Create Product Bundle
   pb_doc = frappe.new_doc("Product Bundle")
   pb_doc.name = item_doc.name
@@ -33,5 +34,34 @@ def create_bundle_from_quotation(items, name, price_list, party_name, quotation_
   elif quotation_to == "Customer":
     pb_doc.custom_customer = party_name
   
-  return item_doc.name
-  pass
+  pb_doc.items = []
+  for item in params:
+    description = frappe.db.get_value("Item", item, "description")
+    pb_doc.append("items", {
+      'parent': item_doc.name,
+      'uom': 'Unit',
+      'qty': 1,
+      'description': description,
+      'item_code': item
+    })
+  pb_doc.insert()
+  return pb_doc.name
+
+import ast
+
+def convert_to_list(input_data):
+  if isinstance(input_data, str):
+    try:
+      # Attempt to convert the string to a list
+      result = ast.literal_eval(input_data)
+      if isinstance(result, list) and all(isinstance(item, str) for item in result):
+        return result
+      else:
+        raise ValueError("String does not contain a list of strings.")
+    except (ValueError, SyntaxError):
+      raise ValueError("Invalid input: The string could not be converted to a list of strings.")
+  elif isinstance(input_data, list) and all(isinstance(item, str) for item in input_data):
+    # Input is already a list of strings
+    return input_data
+  else:
+    raise ValueError("Invalid input: Expected a list of strings or a string representation of a list of strings.")

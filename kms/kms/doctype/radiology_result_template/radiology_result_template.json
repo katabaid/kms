@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:template_name",
  "creation": "2024-06-09 17:38:39.261703",
@@ -53,7 +54,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-30 14:07:54.189948",
+ "modified": "2024-07-25 10:32:17.712492",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result Template",

@@ -4,7 +4,7 @@ from frappe.utils import today
 @frappe.whitelist()
 def get_exam_items(root):
   exam_items = frappe.db.sql(f"""
-    SELECT name, item_name, item_group
+    SELECT name, item_name, item_group, custom_bundle_position
     FROM tabItem ti WHERE EXISTS (
     WITH RECURSIVE ItemHierarchy AS (
       SELECT name, parent_item_group, is_group, tig.custom_bundle_position
