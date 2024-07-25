@@ -154,6 +154,40 @@ function createDialog() {
   // Prepare all fields at once
   const fields = [
     {
+      fieldtype: 'Data',
+      fieldname: 'package_name',
+      label: 'Package Name',
+      reqd: 1,
+    },
+    {
+      fieldtype: 'Section Break',
+      label: 'Copy Package from',
+      collapsible: 1
+    },
+    {
+      fieldtype: 'Link',
+      fieldname: 'package_name_link',
+      label: 'Package Name',
+      options: 'Product Bundle',
+      onchange: function() {
+        const packageName = dialog.get_value('package_name_link');
+        frappe.call({
+          method: 'kms.sales.get_bundle_items_to_copy',
+          args: { bundle_id: packageName },
+          callback: function(response) {
+            if(response.message){
+              selectedExamItems = response.message;
+              updateSelectedItemsTable();
+            }
+          }
+        });
+      }
+    },
+    {
+      fieldtype: 'Section Break',
+      label: 'Pick Exam Items'
+    },
+    {
       fieldtype: 'Column Break'
     },
     createSelectField('level1', 'Level 1', [''].concat(firstLevelOptions.map(option => option.name))),
@@ -167,7 +201,7 @@ function createDialog() {
     createSelectField('level3', 'Level 3', []),
     {
       fieldtype: 'Section Break',
-      label: 'Exam Items'
+      label: 'Selected Exam Items'
     },
     createMultiCheckField('exam_items', 'Exam Items', []),
     {
@@ -178,7 +212,7 @@ function createDialog() {
   ];
 
   const dialog = new frappe.ui.Dialog({
-    title: 'Dynamic Select',
+    title: 'Pick service package items',
     fields: fields,
     size: 'extra-large'
   });
@@ -195,7 +229,7 @@ function createDialog() {
 
   dialog.fields_dict['exam_items'].$wrapper.hide();
 
-  dialog.set_primary_action(__('Submit'), function () {
+  dialog.set_primary_action(__('Create'), function () {
     // Handle form submission here
     dialog.hide();
   });
@@ -228,13 +262,10 @@ function updateSelectedItemsTable() {
   const columns = [
     {
       name: 'Item Name',
-      //format: value => `<div style="margin-left: ${value.level * 20}px; font-size: ${14 - value.level}px;">${value.name}</div>`,
-      width: 300
+      width: 600
     }
     
   ];
-console.log(columns)
-console.log(JSON.stringify(data))
   // Clear the existing datatable if it exists
   if (window.selectedItemsDatatable) {
     window.selectedItemsDatatable.destroy();
@@ -248,6 +279,7 @@ console.log(JSON.stringify(data))
     noDataMessage: 'No items selected',
     treeView: true,
     serialNoColumn: false,
+    cellHeight: 30
   });
 }
 
