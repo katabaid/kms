@@ -59,9 +59,6 @@ def create_bundle_from_quotation(items, name, party_name, quotation_to):
   pb_doc.insert()
   return pb_doc.name
 
-
-import ast
-
 def convert_to_list(input_data):
   if isinstance(input_data, str):
     try:

@@ -1,4 +1,4 @@
-import frappe
+import frappe, re
 import json
 
 @frappe.whitelist()
@@ -27,289 +27,287 @@ def update_quo_status(name):
   doc = frappe.get_doc('Quotation', name)
   doc.status = 'Ordered'
   doc.save()
-
-@frappe.whitelist()
-def get_item_codes_for_bundle():
-  items = frappe.db.get_all("Item", fields=["name", "item_name", "item_group"], filters={"custom_product_bundle": "1", "disabled": "0"}, order_by="item_group")
-  return items
-
-@frappe.whitelist()
-def create_product_bundle_from_quotation(items, name, price_list, party_name, quotation_to, price, margin):
-  if isinstance(items, str):
-    items = json.loads(items)
-  item_name = ''
-# Create Item from selected checkboxes
-  item_doc = frappe.new_doc("Item")
-  item_doc.naming_series = "Q.{custom_abbreviation}..{custom_product_bundle_customer}..{custom_product_bundle_lead}.-.###"
-  item_doc.item_name = name
-  item_doc.item_group = "Exam Course"
-  item_doc.stock_uom = "Unit"
-  item_doc.is_stock_item = False
-  item_doc.include_item_in_manufacturing = False
-  item_doc.is_purchase_item = False
-  item_doc.is_sales_item = True
-  if quotation_to == "Lead":
-    item_doc.custom_product_bundle_lead = party_name
-  elif quotation_to == "Customer":
-    item_doc.custom_product_bundle_customer = party_name
-  item_doc.insert();
-# Create Product Bundle from created Item
-  pb_doc = frappe.new_doc("Product Bundle")
-  pb_doc.name = item_doc.name
-  pb_doc.new_item_code = item_doc.name
-  pb_doc.description = name
-  if quotation_to == "Lead":
-    pb_doc.custom_lead = party_name
-  elif quotation_to == "Customer":
-    pb_doc.custom_customer = party_name
-  if price_list=='':
-    price_list = 'Standard Selling'
-  hpp_price_list = frappe.db.get_single_value("Selling Settings", "custom_hpp_price_list")
-  pb_doc.custom_price_list = price_list
-# Calculate rate from items
-  total_rate = 0
-  rate = 0
-  uom=""
-  pb_doc.items = []
-  for i in items:
-    rate = frappe.db.get_value("Item Price", {"item_code": i["item_code"], "price_list": hpp_price_list}, "price_list_rate")
-    uom = frappe.db.get_value("Item", i["item_code"], "stock_uom")
-    description = frappe.db.get_value("Item", i["item_code"], "description")
-    i["description"] = description
-    i["uom"] = uom
-    if rate is None:
-      rate = 0
-    i["rate"] = rate
-    i["parent"] = item_doc.name
-    
-    total_rate = total_rate + rate
-    pb_doc.append("items", i)
-  pb_doc.custom_rate = price
-  pb_doc.custom_margin = margin
-  pb_doc.custom_enable = 0
-  pb_doc.insert();
-  selling_item_price_name = frappe.db.get_value("Item Price", {"item_code": item_doc.name, "price_list": 'Standard Selling'}, "name")
-  hpp_item_price_name = frappe.db.get_value("Item Price", {"item_code": item_doc.name, "price_list": hpp_price_list}, "name")
-  if selling_item_price_name:
-    sip_doc = frappe.get_doc("Item Price", selling_item_price_name)
-    sip_doc.price_list_rate = price
-    sip_doc.save()
-  else:
-    sip_doc = frappe.get_doc(
-      {
-        "doctype": "Item Price",
-        "price_list": 'Standard Selling',
-        "item_code": item_doc.name,
-        "currency": 'IDR',
-        "price_list_rate": price,
-        "uom": "Unit",
-      }
-    )
-    sip_doc.insert()
-  if hpp_item_price_name:
-    sip_doc = frappe.get_doc("Item Price", hpp_item_price_name)
-    sip_doc.price_list_rate = total_rate
-    sip_doc.save()
-  else:
-    sip_doc = frappe.get_doc(
-      {
-        "doctype": "Item Price",
-        "price_list": hpp_price_list,
-        "item_code": item_doc.name,
-        "currency": 'IDR',
-        "price_list_rate": total_rate,
-        "uom": "Unit",
-      }
-    )
-    sip_doc.insert()
-  message = frappe.get_doc('Product Bundle', pb_doc.name)
-  return message
-
-@frappe.whitelist()
-def get_quotation_item(quotation_no):
-  items = frappe.db.sql(f"""select
-	tqi.idx,
-	tig.name item_group,
-	concat(tqi.item_name, ": ", tpb.name) bundle_name,
-	tpb.name,
-	tpbi.item_code,
-	concat(tpbi.description, ": ", tpbi.item_code) item_name,
-	tip.price_list_rate item_rate,
-	tqi.qty quotation_qty,
-	tqi.rate quotation_rate,
-	nvl((
-	SELECT
-		price_list_rate
-	FROM
-		`tabItem Price` tip2
-	WHERE
-		tip2.item_code = tpbi.item_code
-		AND EXISTS (
-		SELECT
-			1
-		FROM
-			`tabSingles` ts2
-		WHERE
-			ts2.doctype = 'Product Bundle Settings'
-			AND ts2.field = 'default_cogs'
-			AND ts2.value = tip2.price_list )),
-	0) item_cogs
-from
-	`tabItem Group` tig,
-	`tabQuotation Item` tqi,
-	`tabQuotation` tq,
-	`tabProduct Bundle` tpb,
-	`tabProduct Bundle Item` tpbi,
-	`tabItem` ti,
-	`tabItem Price` tip
-WHERE
-	tqi.item_code = tpb.name
-	and tq.name = tqi.parent
-	and tq.name = '{quotation_no}'
-	AND tpb.name = tpbi.parent
-	and tpbi.item_code = ti.name
-	and ti.item_group = tig.name
-	and tip.item_code = tpbi.item_code
-	and tip.price_list = tq.selling_price_list
-	and EXISTS (
-	SELECT
-		1
-	from
-		`tabSingles` ts
-	where
-		ts.doctype = 'Product Bundle Settings'
-		and ts.field = 'default_item_group'
-		and ts.value = tqi.item_group)
-order by
-	tqi.idx,
-	tig.name,
-	tpbi.item_code""", as_dict=True)
-  return items
-
-@frappe.whitelist()
-def start_procedure(args):
-  if isinstance(args, str):
-    args = json.loads(args)
-  args = frappe._dict(args)
-  allow_start = set_actual_qty(args)
-
-  if allow_start:
-    #validate_nursing_tasks(self)
-
-    #self.db_set("status", "In Progress")
-    return "success"
-
-  return "insufficient stock"
-def set_actual_qty(args):
-  allow_negative_stock = frappe.db.get_single_value("Stock Settings", "allow_negative_stock")
-
-  allow_start = True
-  warehouse = args.get("custom_warehouse")
-  for d in args.get("custom_consumables"):
-    d["actual_qty"] = get_stock_qty(d["item_code"], warehouse)
-    # validate qty
-    if not allow_negative_stock and d["actual_qty"] < d["qty"]:
-
-      allow_start = False
-      break
-
-  return allow_start
-  
-
-from erpnext.stock.stock_ledger import get_previous_sle
-from frappe.utils import nowdate, nowtime
-
-def get_stock_qty(item_code, warehouse):
-	return (
-		get_previous_sle(
-			{
-				"item_code": item_code,
-				"warehouse": warehouse,
-				"posting_date": nowdate(),
-				"posting_time": nowtime(),
-			}
-		).get("qty_after_transaction")
-		or 0
-	)
-
-@frappe.whitelist()
-def get_items_to_create_bundle():
-  items = frappe.db.sql(f"""
-    select
-      (select SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 1) from `tabItem Group` tig where name = ti.item_group) as lv1,
-      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
-      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
-      name, item_name,
-      (select price_list_rate from `tabItem Price` tip where tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list') and tip.item_code = ti.item_code order by tip.valid_from desc limit 1) as rate
-    from tabItem as ti
-    where ti.custom_product_bundle = 1 and ti.disabled = 0
-    order by 1, 2, 3, 4""", as_dict=True)
-  return items
-
-@frappe.whitelist()
-def get_items_to_create_bundles():
-  items = frappe.db.sql(f"""
-    (
-    select
-      3 as idx,
-      parent_item_group,
-      name,
-      is_group
-    from
-      `tabItem Group` tig
-    where
-      parent_item_group in (
-      select
-        name
-      from `tabItem Group` tig
-      where
-        parent_item_group in (
-        select
-          name
-        from
-          `tabItem Group` tig
-        where
-          parent_item_group = 'Examination')))
-    union
-    (select
-    2 as idx,
-      parent_item_group,
-      name,
-      is_group
-    from
-      `tabItem Group` tig
-    where
-      parent_item_group in (
-      select
-        name
-      from
-        `tabItem Group` tig
-      where
-        parent_item_group = 'Examination'))
-    union
-    (select
-    1 as idx,
-      parent_item_group,
-      name,
-      is_group
-    from
-      `tabItem Group` tig
-    where
-      parent_item_group = 'Examination')
-    UNION 
-    (select 0, '', 'Examination', 1 from dual)
-    order by 1, 2, 4""", as_dict=True)
-  return items
-
-import re
-
+#start
+#@frappe.whitelist()
+#def get_item_codes_for_bundle():
+#  items = frappe.db.get_all("Item", fields=["name", "item_name", "item_group"], filters={"custom_product_bundle": "1", "disabled": "0"}, order_by="item_group")
+#  return items
+#
+#@frappe.whitelist()
+#def create_product_bundle_from_quotation(items, name, price_list, party_name, quotation_to, price, margin):
+#  if isinstance(items, str):
+#    items = json.loads(items)
+#  item_name = ''
+## Create Item from selected checkboxes
+#  item_doc = frappe.new_doc("Item")
+#  item_doc.naming_series = "Q.{custom_abbreviation}..{custom_product_bundle_customer}..{custom_product_bundle_lead}.-.###"
+#  item_doc.item_name = name
+#  item_doc.item_group = "Exam Course"
+#  item_doc.stock_uom = "Unit"
+#  item_doc.is_stock_item = False
+#  item_doc.include_item_in_manufacturing = False
+#  item_doc.is_purchase_item = False
+#  item_doc.is_sales_item = True
+#  if quotation_to == "Lead":
+#    item_doc.custom_product_bundle_lead = party_name
+#  elif quotation_to == "Customer":
+#    item_doc.custom_product_bundle_customer = party_name
+#  item_doc.insert();
+## Create Product Bundle from created Item
+#  pb_doc = frappe.new_doc("Product Bundle")
+#  pb_doc.name = item_doc.name
+#  pb_doc.new_item_code = item_doc.name
+#  pb_doc.description = name
+#  if quotation_to == "Lead":
+#    pb_doc.custom_lead = party_name
+#  elif quotation_to == "Customer":
+#    pb_doc.custom_customer = party_name
+#  if price_list=='':
+#    price_list = 'Standard Selling'
+#  hpp_price_list = frappe.db.get_single_value("Selling Settings", "custom_hpp_price_list")
+#  pb_doc.custom_price_list = price_list
+## Calculate rate from items
+#  total_rate = 0
+#  rate = 0
+#  uom=""
+#  pb_doc.items = []
+#  for i in items:
+#    rate = frappe.db.get_value("Item Price", {"item_code": i["item_code"], "price_list": hpp_price_list}, "price_list_rate")
+#    uom = frappe.db.get_value("Item", i["item_code"], "stock_uom")
+#    description = frappe.db.get_value("Item", i["item_code"], "description")
+#    i["description"] = description
+#    i["uom"] = uom
+#    if rate is None:
+#      rate = 0
+#    i["rate"] = rate
+#    i["parent"] = item_doc.name
+#    
+#    total_rate = total_rate + rate
+#    pb_doc.append("items", i)
+#  pb_doc.custom_rate = price
+#  pb_doc.custom_margin = margin
+#  pb_doc.custom_enable = 0
+#  pb_doc.insert();
+#  selling_item_price_name = frappe.db.get_value("Item Price", {"item_code": item_doc.name, "price_list": 'Standard Selling'}, "name")
+#  hpp_item_price_name = frappe.db.get_value("Item Price", {"item_code": item_doc.name, "price_list": hpp_price_list}, "name")
+#  if selling_item_price_name:
+#    sip_doc = frappe.get_doc("Item Price", selling_item_price_name)
+#    sip_doc.price_list_rate = price
+#    sip_doc.save()
+#  else:
+#    sip_doc = frappe.get_doc(
+#      {
+#        "doctype": "Item Price",
+#        "price_list": 'Standard Selling',
+#        "item_code": item_doc.name,
+#        "currency": 'IDR',
+#        "price_list_rate": price,
+#        "uom": "Unit",
+#      }
+#    )
+#    sip_doc.insert()
+#  if hpp_item_price_name:
+#    sip_doc = frappe.get_doc("Item Price", hpp_item_price_name)
+#    sip_doc.price_list_rate = total_rate
+#    sip_doc.save()
+#  else:
+#    sip_doc = frappe.get_doc(
+#      {
+#        "doctype": "Item Price",
+#        "price_list": hpp_price_list,
+#        "item_code": item_doc.name,
+#        "currency": 'IDR',
+#        "price_list_rate": total_rate,
+#        "uom": "Unit",
+#      }
+#    )
+#    sip_doc.insert()
+#  message = frappe.get_doc('Product Bundle', pb_doc.name)
+#  return message
+#
+#@frappe.whitelist()
+#def get_quotation_item(quotation_no):
+#  items = frappe.db.sql(f"""select
+#	tqi.idx,
+#	tig.name item_group,
+#	concat(tqi.item_name, ": ", tpb.name) bundle_name,
+#	tpb.name,
+#	tpbi.item_code,
+#	concat(tpbi.description, ": ", tpbi.item_code) item_name,
+#	tip.price_list_rate item_rate,
+#	tqi.qty quotation_qty,
+#	tqi.rate quotation_rate,
+#	nvl((
+#	SELECT
+#		price_list_rate
+#	FROM
+#		`tabItem Price` tip2
+#	WHERE
+#		tip2.item_code = tpbi.item_code
+#		AND EXISTS (
+#		SELECT
+#			1
+#		FROM
+#			`tabSingles` ts2
+#		WHERE
+#			ts2.doctype = 'Product Bundle Settings'
+#			AND ts2.field = 'default_cogs'
+#			AND ts2.value = tip2.price_list )),
+#	0) item_cogs
+#from
+#	`tabItem Group` tig,
+#	`tabQuotation Item` tqi,
+#	`tabQuotation` tq,
+#	`tabProduct Bundle` tpb,
+#	`tabProduct Bundle Item` tpbi,
+#	`tabItem` ti,
+#	`tabItem Price` tip
+#WHERE
+#	tqi.item_code = tpb.name
+#	and tq.name = tqi.parent
+#	and tq.name = '{quotation_no}'
+#	AND tpb.name = tpbi.parent
+#	and tpbi.item_code = ti.name
+#	and ti.item_group = tig.name
+#	and tip.item_code = tpbi.item_code
+#	and tip.price_list = tq.selling_price_list
+#	and EXISTS (
+#	SELECT
+#		1
+#	from
+#		`tabSingles` ts
+#	where
+#		ts.doctype = 'Product Bundle Settings'
+#		and ts.field = 'default_item_group'
+#		and ts.value = tqi.item_group)
+#order by
+#	tqi.idx,
+#	tig.name,
+#	tpbi.item_code""", as_dict=True)
+#  return items
+#
+#@frappe.whitelist()
+#def start_procedure(args):
+#  if isinstance(args, str):
+#    args = json.loads(args)
+#  args = frappe._dict(args)
+#  allow_start = set_actual_qty(args)
+#
+#  if allow_start:
+#    #validate_nursing_tasks(self)
+#
+#    #self.db_set("status", "In Progress")
+#    return "success"
+#
+#  return "insufficient stock"
+#def set_actual_qty(args):
+#  allow_negative_stock = frappe.db.get_single_value("Stock Settings", "allow_negative_stock")
+#
+#  allow_start = True
+#  warehouse = args.get("custom_warehouse")
+#  for d in args.get("custom_consumables"):
+#    d["actual_qty"] = get_stock_qty(d["item_code"], warehouse)
+#    # validate qty
+#    if not allow_negative_stock and d["actual_qty"] < d["qty"]:
+#
+#      allow_start = False
+#      break
+#
+#  return allow_start
+#  
+#
+#from erpnext.stock.stock_ledger import get_previous_sle
+#from frappe.utils import nowdate, nowtime
+#
+#def get_stock_qty(item_code, warehouse):
+#	return (
+#		get_previous_sle(
+#			{
+#				"item_code": item_code,
+#				"warehouse": warehouse,
+#				"posting_date": nowdate(),
+#				"posting_time": nowtime(),
+#			}
+#		).get("qty_after_transaction")
+#		or 0
+#	)
+#
+#@frappe.whitelist()
+#def get_items_to_create_bundle():
+#  items = frappe.db.sql(f"""
+#    select
+#      (select SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 1) from `tabItem Group` tig where name = ti.item_group) as lv1,
+#      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
+#      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
+#      name, item_name,
+#      (select price_list_rate from `tabItem Price` tip where tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list') and tip.item_code = ti.item_code order by tip.valid_from desc limit 1) as rate
+#    from tabItem as ti
+#    where ti.custom_product_bundle = 1 and ti.disabled = 0
+#    order by 1, 2, 3, 4""", as_dict=True)
+#  return items
+#
+#@frappe.whitelist()
+#def get_items_to_create_bundles():
+#  items = frappe.db.sql(f"""
+#    (
+#    select
+#      3 as idx,
+#      parent_item_group,
+#      name,
+#      is_group
+#    from
+#      `tabItem Group` tig
+#    where
+#      parent_item_group in (
+#      select
+#        name
+#      from `tabItem Group` tig
+#      where
+#        parent_item_group in (
+#        select
+#          name
+#        from
+#          `tabItem Group` tig
+#        where
+#          parent_item_group = 'Examination')))
+#    union
+#    (select
+#    2 as idx,
+#      parent_item_group,
+#      name,
+#      is_group
+#    from
+#      `tabItem Group` tig
+#    where
+#      parent_item_group in (
+#      select
+#        name
+#      from
+#        `tabItem Group` tig
+#      where
+#        parent_item_group = 'Examination'))
+#    union
+#    (select
+#    1 as idx,
+#      parent_item_group,
+#      name,
+#      is_group
+#    from
+#      `tabItem Group` tig
+#    where
+#      parent_item_group = 'Examination')
+#    UNION 
+#    (select 0, '', 'Examination', 1 from dual)
+#    order by 1, 2, 4""", as_dict=True)
+#  return items
+#end
 def extract_age_from_string(age_string):
-    age_pattern = re.compile(r'(\d+) Years?')
-    match = age_pattern.match(age_string)
-    if match:
-        return int(match.group(1))
-    else:
-        return None
+  age_pattern = re.compile(r'(\d+) Years?')
+  match = age_pattern.match(age_string)
+  if match:
+    return int(match.group(1))
+  else:
+    return None
     
 @frappe.whitelist()
 def create_sample_and_test(selected, disp="", enc=""):
@@ -452,21 +450,21 @@ def create_sample_and_test(selected, disp="", enc=""):
   message = {'sample': sample_doc.name, 'lab': lab_doc.name}
   return message
 
-@frappe.whitelist()
-def get_items_to_create_lab():
-  items = frappe.db.sql(f"""
-    select lv2, lv3, name, item_name from (
-    select
-      (select SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 1) from `tabItem Group` tig where name = ti.item_group) as lv1,
-      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
-      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
-      ti.name, ltt.name item_name
-    from tabItem as ti, `tabLab Test Template` as ltt
-    where ti.custom_product_bundle = 1 and ti.disabled = 0
-    and ltt.item = ti.name
-    and ltt.disabled = 0
-    order by 1, 2, 3, 4) a WHERE a.lv1 = 'Laboratory'""", as_dict=True)
-  return items
+#@frappe.whitelist()
+#def get_items_to_create_lab():
+#  items = frappe.db.sql(f"""
+#    select lv2, lv3, name, item_name from (
+#    select
+#      (select SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 1) from `tabItem Group` tig where name = ti.item_group) as lv1,
+#      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 2), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv2,
+#      (select SUBSTRING_INDEX(SUBSTRING_INDEX(concat(concat_ws('|', (select parent_item_group from `tabItem Group` where name = tig.parent_item_group and parent_item_group not in ('All Item Groups', 'Examination')), parent_item_group, name), '|'), '|', 3), '|', -1) from `tabItem Group` tig where name = ti.item_group) as lv3,
+#      ti.name, ltt.name item_name
+#    from tabItem as ti, `tabLab Test Template` as ltt
+#    where ti.custom_product_bundle = 1 and ti.disabled = 0
+#    and ltt.item = ti.name
+#    and ltt.disabled = 0
+#    order by 1, 2, 3, 4) a WHERE a.lv1 = 'Laboratory'""", as_dict=True)
+#  return items
 
 @frappe.whitelist()
 def create_mr_from_encounter(enc):
@@ -559,7 +557,3 @@ def create_mr_from_encounter(enc):
   else: 
     message.append('Empty external')
   return message
-
-@frappe.whitelist()
-def create_attendance_from_checkin(from_date, to_date):
-  pass
