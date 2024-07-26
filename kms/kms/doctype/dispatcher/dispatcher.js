@@ -117,7 +117,7 @@ const handleChildCustomButtons = (frm) => {
 	const buttons = [
 		{ label: 'Assign', status: 'Waiting to Enter the Room', class: 'btn-primary', prompt: false },
 		{ label: 'Refuse', status: 'Refused', class: 'btn-danger', prompt: false },
-		{ label: 'Retest', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false }
+		{ label: 'Retest', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false },
 		{ label: 'Remove from Room', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false }
 	];
 
