@@ -8,7 +8,8 @@ def get_bundle_items_to_copy(bundle_id):
 @frappe.whitelist()
 def create_bundle_from_quotation(items, name, party_name, quotation_to):
   params = convert_to_list(items)
-  #Create Item
+  
+  # Create Item
   item_doc = frappe.new_doc("Item")
   item_doc.naming_series = "Q.{custom_abbreviation}..{custom_product_bundle_customer}..{custom_product_bundle_lead}.-.###"
   item_doc.item_name = name
@@ -22,9 +23,19 @@ def create_bundle_from_quotation(items, name, party_name, quotation_to):
     item_doc.custom_product_bundle_lead = party_name
   elif quotation_to == "Customer":
     item_doc.custom_product_bundle_customer = party_name
-  item_doc.insert();
-
-  #Create Product Bundle
+  item_doc.insert()
+  
+  # Fetch bundle positions for all items
+  items_with_positions = []
+  for item in params:
+    position = frappe.db.get_value("Item", item, "custom_bundle_position")
+    bundle_position = int(position) if position else 0
+    items_with_positions.append((item, bundle_position))
+  
+  # Sort items based on bundle_position
+  items_with_positions.sort(key=lambda x: x[1])
+  
+  # Create Product Bundle
   pb_doc = frappe.new_doc("Product Bundle")
   pb_doc.name = item_doc.name
   pb_doc.new_item_code = item_doc.name
@@ -35,7 +46,7 @@ def create_bundle_from_quotation(items, name, party_name, quotation_to):
     pb_doc.custom_customer = party_name
   
   pb_doc.items = []
-  for item in params:
+  for item, _ in items_with_positions:
     description = frappe.db.get_value("Item", item, "description")
     pb_doc.append("items", {
       'parent': item_doc.name,
@@ -44,8 +55,10 @@ def create_bundle_from_quotation(items, name, party_name, quotation_to):
       'description': description,
       'item_code': item
     })
+  
   pb_doc.insert()
   return pb_doc.name
+
 
 import ast
 
