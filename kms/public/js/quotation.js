@@ -9,7 +9,7 @@ frappe.ui.form.on('Quotation', {
   refresh(frm) {
     if(frm.is_new()&&frm.doc.quotation_to&&frm.doc.party_name) {
       frm.add_custom_button(__('Create Bundle'), function () {
-        createDialog(frm);
+        frm.bundle_dialog.show();
       });
     }
     hideStandardButtons(frm, childTable1);
@@ -17,6 +17,7 @@ frappe.ui.form.on('Quotation', {
 
   setup(frm) {
     getExamItemSelection(frm);
+    
   },
 
   onload(frm) {
@@ -27,51 +28,26 @@ frappe.ui.form.on('Quotation', {
 
 const childTable = 'items';
 const childTable1 = ['items'];
-let json_data = {};
 let selectedExamItems = [];
+let json_data = {};
 
-/**
- * The function `getExamItemSelection` makes a server call to retrieve exam items related to the
- * 'Examination' root.
- * @param frm - The `frm` parameter in the `getExamItemSelection` function is typically used to refer
- * to a form object or form data in the context of web development. It is commonly used in frameworks
- * like Frappe to interact with form elements and handle form submissions. In this specific function,
- * the `frm
- */
 const getExamItemSelection = (frm) => {
   frappe.call({
     method: 'kms.healthcare.get_exam_items',
     args: { root: 'Examination' },
     freeze: true,
-    callback: (r) => { json_data = r.message; }
+    callback: (r) => { json_data = r.message; frm.bundle_dialog = createDialog(frm);;}
   });
 };
 
-/**
- * The function `hideStandardButtons` removes specific buttons from the grid of specified fields in a
- * form.
- * @param frm - The `frm` parameter is likely a reference to a form object or form controller in a web
- * application. It is used to access and manipulate form fields and their properties.
- * @param fields - The `fields` parameter in the `hideStandardButtons` function is an array that
- * contains the names of fields for which you want to hide the standard buttons in the grid.
- */
 const hideStandardButtons = (frm, fields) => {
+  frm.wrapper.find('.inner-group-button').remove();
   fields.forEach(field => {
     const grid = frm.fields_dict[field].grid;
     grid.wrapper.find('.grid-add-row, .grid-add-multiple-rows, .grid-remove-rows').remove();
-    //grid.wrapper.find('.grid-add-multiple-rows').remove();
-    //grid.wrapper.find('.grid-remove-rows').remove();
   });
 }
 
-/**
- * The function `createDialog` creates a dialog for selecting exam items and creating a bundle from a
- * quotation in a web application.
- * @param frm - The `frm` parameter in the `createDialog` function seems to be referencing a form
- * object. This form object likely contains information or data related to a specific form in the
- * application. The function appears to be creating a dialog box for selecting service package items
- * based on certain criteria and user interactions with the
- */
 const createDialog = (frm) => {
   const root = 'Examination';
   const firstLevelOptions = getChildren(root);
@@ -169,9 +145,7 @@ const createDialog = (frm) => {
     });
     dialog.hide();
   });
-
-  dialog.show();
-
+  return dialog;
   updateSelectedItemsTable();
 };
 
@@ -200,20 +174,6 @@ function createMultiCheckField(fieldname, label, options) {
   };
 }
 
-// Function to update the next level of select
-/**
- * The function `updateNextLevel` dynamically updates the options and visibility of fields in a dialog
- * based on user selections.
- * @param dialog - The `dialog` parameter in the `updateNextLevel` function seems to be an object that
- * likely represents a dialog or form interface. It is used to interact with the dialog fields and
- * values.
- * @param currentLevel - The `currentLevel` parameter in the `updateNextLevel` function represents the
- * current level of a dialog or form. It is used to determine the level of the dialog fields that need
- * to be updated based on user input. The function dynamically updates the next level of fields based
- * on the selected value at
- * @returns The function `updateNextLevel` is returning another function that handles the logic for
- * updating the next level in a dialog based on the current level and selected values.
- */
 function updateNextLevel(dialog, currentLevel) {
   return function () {
     const selectedValue = dialog.get_value(`level${currentLevel}`);
@@ -223,12 +183,6 @@ function updateNextLevel(dialog, currentLevel) {
     const nextLevel = currentLevel + 1;
     const nextLevelField = dialog.fields_dict[`level${nextLevel}`];
 
-    /* The above code is checking if there are children elements and a nextLevelField available. If so,
-    it creates an options array based on the children names, sets it as options for the
-    nextLevelField, refreshes the field, and shows the nextLevelField while hiding the 'exam_items'
-    field. It then clears and hides all subsequent levels from the next level onwards. If there are
-    no children elements or nextLevelField available, it simply hides all subsequent levels from the
-    current level onwards. */
     if (children.length > 0 && nextLevelField) {
       const options = [''].concat(children.map(child => child.name));
       nextLevelField.df.options = options;
@@ -253,9 +207,8 @@ function updateNextLevel(dialog, currentLevel) {
         }
       }
       // Show multicheck if no children or selected item is not a group
+      console.log(selectedItem);
       console.log(selectedItem.is_group);
-      /* The above code is a JavaScript snippet that handles the dynamic generation of checkboxes based
-      on selected values. Here's a breakdown of what the code is doing: */
       if (selectedValue && (children.length === 0 || (selectedItem && selectedItem.is_group === 0))) {
         const examItems = json_data.exam_items.filter(item => item.item_group === selectedValue);
         // Sort examItems by custom_bundle_position
@@ -269,7 +222,7 @@ function updateNextLevel(dialog, currentLevel) {
         dialog.fields_dict['exam_items'].$wrapper.show();
 
         const $examItemsWrapper = dialog.fields_dict['exam_items'].$wrapper;
-        $examItemsWrapper.empty(); // Clear existing content
+        $examItemsWrapper.empty();
         // Create three columns for the checkboxes
         const columns = [[], [], []];
         options.forEach((option, index) => {
@@ -344,7 +297,7 @@ function updateSelectedItemsTable() {
     serialNoColumn: false,
     cellHeight: 30
   });
-  window.selectedItemsDatatable.refresh();
+  //window.selectedItemsDatatable.refresh();
 }
 
 function groupItemsWithParents(items) {

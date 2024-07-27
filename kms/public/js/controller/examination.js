@@ -46,14 +46,12 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     setupChildTableButtons(frm) {
       const grid = frm.fields_dict[config.childTableButton].grid;
       const buttons = [
-        { label: 'Finish', status: 'Finished', class: 'btn-primary', prompt: false },
-        { label: 'Refuse', status: 'Refused', class: 'btn-danger', prompt: true },
-        { label: 'Reschedule', status: 'Rescheduled', class: 'btn-warning', prompt: true }
+        { label: 'Finish', status: 'Finished', statuses: 'Started', class: 'btn-primary', prompt: false },
+        { label: 'Refuse', status: 'Refused', statuses: 'Started', class: 'btn-danger', prompt: true },
+        { label: 'Reschedule', status: 'Rescheduled', statuses: 'Started', class: 'btn-warning', prompt: true }
       ];
-    
       // Remove existing custom buttons
       grid.wrapper.find('.grid-footer').find('.btn-custom').remove();
-    
       // Add new custom buttons
       buttons.forEach(button => {
         const customButton = grid.add_custom_button(__(button.label), function() {
@@ -70,10 +68,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
             updateChildStatus(frm, grid, button.status);
           }
         }, 'btn-custom');
-        customButton.addClass(`${button.class} btn-sm`);
+        customButton.addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
         customButton.hide();
       });
-    
       setupRowSelector(grid);
     },
     getStatus: config.getStatus,
@@ -81,6 +78,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     getDispatcher: config.getDispatcher,
     getHsu: config.getHsu,
   }
+  
   const controller = {
     refresh: function(frm) {
       frm.trigger('process_custom_buttons');
@@ -130,6 +128,34 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   }
     
   function addCustomButton(frm, label, method, newStatus, prompt = false) {
+    function handleCallback(r) {
+        if (r.message) {
+          showAlert(r.message, 'green');
+          utils.setStatus(frm, newStatus);
+          frm.dirty();
+          frm.save();
+        }
+    }
+
+    function callMethod(reason = null) {
+      const args = {
+        'dispatcher_id': utils.getDispatcher(frm),
+        'hsu': utils.getHsu(frm),
+        'doctype': frm.doc.doctype,
+        'docname': frm.doc.name
+      };
+      frappe.call({
+        method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
+        args: args,
+        callback: function(r) {
+          handleCallback(r);
+          if (reason) {
+            addComment(frm, reason);
+          }
+        }
+      });
+    }
+
     frm.add_custom_button(label, () => {
       if (prompt) {
         frappe.prompt({
@@ -138,43 +164,10 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           fieldtype: 'Small Text',
           reqd: 1
         }, (values) => {
-          frappe.call({
-            method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
-            args: {
-              'dispatcher_id': utils.getDispatcher(frm),
-              'hsu': utils.getHsu(frm),
-              'doctype': frm.doc.doctype,
-              'docname': frm.doc.name
-            },
-            callback: function(r) {
-              if (r.message) {
-                showAlert(r.message, 'green');
-                utils.setStatus(frm, newStatus);
-                frm.dirty();
-                frm.save();
-                addComment(frm, values.reason);
-              }
-            }
-          });
+          callMethod(values.reason);
         }, __('Provide a Reason'), __('Submit'));
       } else {
-        frappe.call({
-          method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
-          args: {
-            'dispatcher_id': utils.getDispatcher(frm),
-            'hsu': utils.getHsu(frm),
-            'doctype': frm.doc.doctype,
-            'docname': frm.doc.name
-          },
-          callback: function(r) {
-            if (r.message) {
-              showAlert(r.message, 'green');
-              utils.setStatus(frm, newStatus);
-              frm.dirty();
-              frm.save();
-            }
-          }
-        });
+        callMethod();
       }
     }, 'Status');
   }
@@ -227,7 +220,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       if (e.target.classList.contains('grid-row-check')) {
         const $row = $(e.target).closest('.grid-row');
         const docname = $row.attr('data-name');
-        
         if (this.selected_row && this.selected_row === docname) {
           $row.removeClass('grid-row-selected');
           $row.find('.grid-row-check').prop('checked', false);
@@ -243,7 +235,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         updateCustomButtonVisibility(grid);
       }		
     };
-  
     grid.wrapper.on('click', '.grid-row', function() {
       updateCustomButtonVisibility(grid);
     });
@@ -252,10 +243,18 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   function updateCustomButtonVisibility(grid) {
     const selectedRows = grid.get_selected();
     const buttons = grid.wrapper.find('.grid-footer').find('.btn-custom');
-    
     if (selectedRows && selectedRows.length === 1) {
       const child = locals[grid.doctype][selectedRows[0]];
-      buttons.toggle(child.status === 'Started');
+      buttons.each((index, button) => {
+        const $button = $(button);
+        const buttonStatuses = $button.data('statuses');
+        if(buttonStatuses) {
+          const statuses = buttonStatuses.split(',');
+          $button.toggle(statuses.includes(child.status));
+        } else {
+          $button.toggle(child.status === 'Started');
+        }
+      });
     } else {
       buttons.hide();
     }
@@ -265,15 +264,12 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     return new Promise((resolve) => {
       const statuses = frm.doc[config.childTableButton].map(row => row.status);
       const uniqueStatuses = new Set(statuses);
-      
       if (uniqueStatuses.has('Started')) {
         resolve();
       } else if (uniqueStatuses.size === 1) {
-        //frm.set_value('status', statuses[0]);
         utils.setStatus(frm, statuses[0]);
         resolve();
       } else {
-        //frm.set_value('status', 'Partial Finished');
         utils.setStatus(frm, 'Partial Finished');
         resolve();
       }
@@ -309,9 +305,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }, 5);
   }
 
-  // Expose utility functions
   controller.utils = utils;
-
   return controller;
 };
 
