@@ -13,6 +13,7 @@ frappe.ui.form.on('Quotation', {
       });
     }
     hideStandardButtons(frm, childTable1);
+    updateCustomHtmlField(frm);
   },
 
   setup(frm) {
@@ -41,10 +42,10 @@ const getExamItemSelection = (frm) => {
 };
 
 const hideStandardButtons = (frm, fields) => {
-  frm.wrapper.find('.inner-group-button').remove();
+  $(frm.wrapper).find('.inner-group-button').remove();
   fields.forEach(field => {
     const grid = frm.fields_dict[field].grid;
-    grid.wrapper.find('.grid-add-row, .grid-add-multiple-rows, .grid-remove-rows').remove();
+    $(grid.wrapper).find('.grid-add-row, .grid-add-multiple-rows, .grid-remove-rows').remove();
   });
 }
 
@@ -323,3 +324,94 @@ function getParentGroups(groupName) {
   }
   return parents;
 }
+
+function updateCustomHtmlField(frm) {
+  if (!frm.doc.items || frm.doc.items.length === 0) {
+    frm.set_df_property('custom_html_field', 'options', '<div>No items selected</div>');
+    return;
+  }
+
+  let allItems = [];
+
+  function processItem(index) {
+    if (index < frm.doc.items.length) {
+      let item = frm.doc.items[index];
+      if (item.item_code) {
+        frappe.call({
+          method: 'kms.sales.get_bundle_items_to_copy',
+          args: { bundle_id: item.item_code },
+          callback: (response) => {
+            if (response.message) {
+              allItems = allItems.concat(response.message);
+              renderDataTable();  // All items processed, render the table
+            }
+            processItem(index + 1);  // Process next item
+          }
+        });
+      }
+      }
+  }
+
+  function renderDataTable() {
+    if (allItems.length === 0) {
+      frm.set_df_property('custom_html_field', 'options', '<div>No bundle items found</div>');
+      return;
+    }
+    const selectedItems = json_data.exam_items
+    .filter(item => allItems.includes(item.name))
+    .sort((a, b) => a.custom_bundle_position - b.custom_bundle_position);
+    const groupedItems = groupItemsWithParents(selectedItems);
+    const data = groupedItems.map(item => ({
+      'Item Name': item.name,
+      'HPP': item.hpp || 0,
+      'indent': item.level
+    }));
+    const columns = [
+      {
+        name: 'Item Name',
+        width: 600
+      },
+      {
+        name: 'HPP',
+        width: 100,
+        format: value => frappe.format(value, {fieldtype: 'Currency'})
+      },
+    ];
+
+    // Clear the existing datatable if it exists
+    if (frm.bundle_items_datatable) {
+      frm.bundle_items_datatable.destroy();
+    }
+
+    frm.set_df_property('custom_html_field', 'options', '<div id="bundle-items-datatable">aaaaaaaaaaaaaaaaaa</div>');
+    setTimeout(() => {
+      if (!document.getElementById('bundle-items-datatable')) {
+        console.error('Element #bundle-items-datatable not found');
+        return;
+      }
+
+      frm.bundle_items_datatable = new frappe.DataTable('#bundle-items-datatable', {
+        columns: columns,
+        data: data,
+        layout: 'fixed',
+        noDataMessage: 'No bundle items found',
+        treeView: true,
+        cellHeight: 30
+      });
+
+      console.log('DataTable created successfully.');
+    }, 1000);
+  }
+
+  processItem(0);  // Start processing from the first item
+}
+
+// Modify the existing function to call updateCustomHtmlField
+frappe.ui.form.on('Quotation Item', {
+  item_code: function(frm, cdt, cdn) {
+    updateCustomHtmlField(frm);
+  },
+  items_remove: function(frm, cdt, cdn) {
+    updateCustomHtmlField(frm);
+  }
+});
