@@ -18,13 +18,18 @@ frappe.ui.form.on('Quotation', {
 
   setup(frm) {
     getExamItemSelection(frm);
-    
   },
 
   onload(frm) {
     hideStandardButtons(frm, childTable1);
+    setTimeout(() => {
+      frm.set_query('item_code', 'items', () => {
+        return {
+          filters: { 'item_group': 'Exam Course' }
+        };
+      }), 
+    1000});
   },
-
 });
 
 const childTable = 'items';
@@ -42,10 +47,12 @@ const getExamItemSelection = (frm) => {
 };
 
 const hideStandardButtons = (frm, fields) => {
-  $(frm.wrapper).find('.inner-group-button').remove();
+  setTimeout(() => {
+    $(frm.wrapper).find('[data-label="Get%20Items%20From"]').remove();
+  }, 250);
   fields.forEach(field => {
     const grid = frm.fields_dict[field].grid;
-    $(grid.wrapper).find('.grid-add-row, .grid-add-multiple-rows, .grid-remove-rows').remove();
+    $(grid.wrapper).find('.grid-footer').remove();
   });
 }
 
@@ -290,8 +297,8 @@ function updateSelectedItemsTable() {
   }
   // Create a new datatable
   window.selectedItemsDatatable = new frappe.DataTable('#selected-items-table', {
-    columns: columns,
-    data: data,
+    columns,
+    data,
     layout: 'fixed',
     noDataMessage: 'No items selected',
     treeView: true,
@@ -383,7 +390,7 @@ function updateCustomHtmlField(frm) {
       frm.bundle_items_datatable.destroy();
     }
 
-    frm.set_df_property('custom_html_field', 'options', '<div id="bundle-items-datatable">aaaaaaaaaaaaaaaaaa</div>');
+    frm.set_df_property('custom_html_field', 'options', '<div id="bundle-items-datatable"></div>');
     setTimeout(() => {
       if (!document.getElementById('bundle-items-datatable')) {
         console.error('Element #bundle-items-datatable not found');
@@ -391,8 +398,8 @@ function updateCustomHtmlField(frm) {
       }
 
       frm.bundle_items_datatable = new frappe.DataTable('#bundle-items-datatable', {
-        columns: columns,
-        data: data,
+        columns,
+        data,
         layout: 'fixed',
         noDataMessage: 'No bundle items found',
         treeView: true,
@@ -400,7 +407,7 @@ function updateCustomHtmlField(frm) {
       });
 
       console.log('DataTable created successfully.');
-    }, 1000);
+    }, 250);
   }
 
   processItem(0);  // Start processing from the first item
