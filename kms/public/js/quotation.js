@@ -7,7 +7,7 @@ frappe.ui.form.on('Quotation', {
   },
 
   refresh(frm) {
-    if(frm.is_new()&&frm.doc.quotation_to&&frm.doc.party_name) {
+    if (frm.is_new() && frm.doc.quotation_to && frm.doc.party_name) {
       frm.add_custom_button(__('Create Bundle'), function () {
         frm.bundle_dialog.show();
       });
@@ -27,8 +27,9 @@ frappe.ui.form.on('Quotation', {
         return {
           filters: { 'item_group': 'Exam Course' }
         };
-      }), 
-    1000});
+      }),
+        1000
+    });
   },
 });
 
@@ -42,7 +43,7 @@ const getExamItemSelection = (frm) => {
     method: 'kms.healthcare.get_exam_items',
     args: { root: 'Examination' },
     freeze: true,
-    callback: (r) => { json_data = r.message; frm.bundle_dialog = createDialog(frm);;}
+    callback: (r) => { json_data = r.message; frm.bundle_dialog = createDialog(frm);; }
   });
 };
 
@@ -78,13 +79,13 @@ const createDialog = (frm) => {
       fieldname: 'package_name_link',
       label: 'Package Name',
       options: 'Product Bundle',
-      onchange: function() {
+      onchange: function () {
         const packageName = dialog.get_value('package_name_link');
         frappe.call({
           method: 'kms.sales.get_bundle_items_to_copy',
           args: { bundle_id: packageName },
-          callback: function(response) {
-            if(response.message){
+          callback: function (response) {
+            if (response.message) {
               selectedExamItems = response.message;
               updateSelectedItemsTable();
             }
@@ -137,9 +138,9 @@ const createDialog = (frm) => {
     frappe.call({
       method: 'kms.sales.create_bundle_from_quotation',
       args: {
-        items: selectedExamItems, 
-        name: values.package_name, 
-        party_name: frm.doc.party_name, 
+        items: selectedExamItems,
+        name: values.package_name,
+        party_name: frm.doc.party_name,
         quotation_to: frm.doc.quotation_to
       },
       callback: function (r) {
@@ -356,7 +357,7 @@ function updateCustomHtmlField(frm) {
           }
         });
       }
-      }
+    }
   }
 
   function renderDataTable() {
@@ -365,8 +366,8 @@ function updateCustomHtmlField(frm) {
       return;
     }
     const selectedItems = json_data.exam_items
-    .filter(item => allItems.includes(item.name))
-    .sort((a, b) => a.custom_bundle_position - b.custom_bundle_position);
+      .filter(item => allItems.includes(item.name))
+      .sort((a, b) => a.custom_bundle_position - b.custom_bundle_position);
     const groupedItems = groupItemsWithParents(selectedItems);
     const data = groupedItems.map(item => ({
       'Item Name': item.name,
@@ -381,7 +382,7 @@ function updateCustomHtmlField(frm) {
       {
         name: 'HPP',
         width: 100,
-        format: value => frappe.format(value, {fieldtype: 'Currency'})
+        format: value => frappe.format(value, { fieldtype: 'Currency' })
       },
     ];
 
@@ -415,10 +416,10 @@ function updateCustomHtmlField(frm) {
 
 // Modify the existing function to call updateCustomHtmlField
 frappe.ui.form.on('Quotation Item', {
-  item_code: function(frm, cdt, cdn) {
+  item_code: function (frm, cdt, cdn) {
     updateCustomHtmlField(frm);
   },
-  items_remove: function(frm, cdt, cdn) {
+  items_remove: function (frm, cdt, cdn) {
     updateCustomHtmlField(frm);
   }
 });

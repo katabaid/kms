@@ -16,7 +16,7 @@
   "patient_sex",
   "patient_age",
   "patient_encounter",
-  "radiology",
+  "exam",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -26,7 +26,6 @@
   "expected_result_date",
   "expected_result_time",
   "submitted_date",
-  "status",
   "result_section",
   "examination_item",
   "result",
@@ -99,12 +98,6 @@
    "options": "Patient Encounter"
   },
   {
-   "fieldname": "radiology",
-   "fieldtype": "Link",
-   "label": "Radiology",
-   "options": "Radiology"
-  },
-  {
    "fieldname": "column_break_ydxak",
    "fieldtype": "Column Break"
   },
@@ -161,14 +154,6 @@
    "read_only": 1
   },
   {
-   "default": "Started",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
-   "reqd": 1
-  },
-  {
    "fieldname": "result_section",
    "fieldtype": "Section Break",
    "label": "Result"
@@ -215,12 +200,18 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "label": "Exam",
+   "options": "Radiology"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:49:32.274043",
+ "modified": "2024-07-28 18:37:29.530130",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",

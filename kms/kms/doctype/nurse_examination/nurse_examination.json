@@ -15,7 +15,7 @@
   "patient_name",
   "patient_encounter",
   "status",
-  "nurse_result",
+  "exam_result",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -211,16 +211,16 @@
    "read_only": 1
   },
   {
-   "fieldname": "nurse_result",
+   "fieldname": "exam_result",
    "fieldtype": "Link",
-   "label": "Nurse Result",
+   "label": "Exam Result",
    "options": "Nurse Result"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:44:14.112879",
+ "modified": "2024-07-28 18:39:18.204880",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

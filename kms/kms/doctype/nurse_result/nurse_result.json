@@ -15,7 +15,7 @@
   "patient_name",
   "patient_encounter",
   "status",
-  "nurse_examination",
+  "exam",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -191,12 +191,6 @@
    "label": "Remark"
   },
   {
-   "fieldname": "nurse_examination",
-   "fieldtype": "Link",
-   "label": "Nurse Examination",
-   "options": "Nurse Examination"
-  },
-  {
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
@@ -205,12 +199,18 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "exam",
+   "fieldtype": "Link",
+   "label": "Exam",
+   "options": "Nurse Examination"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:53:36.300611",
+ "modified": "2024-07-28 18:38:15.248116",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

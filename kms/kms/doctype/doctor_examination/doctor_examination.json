@@ -34,8 +34,154 @@
   "remark_section",
   "remark",
   "amended_from",
-  "mcu_tab",
-  "appoinment_type"
+  "appoinment_type",
+  "pe_tab",
+  "eyes_section",
+  "eyes_check",
+  "abnormal_eyes",
+  "eyes_left",
+  "left_anemic",
+  "left_icteric",
+  "eyes_left_others",
+  "column_break_kvpfb",
+  "eyes_right",
+  "right_anemic",
+  "right_icteric",
+  "eyes_right_others",
+  "ear_section",
+  "ear_check",
+  "abnormal_ear",
+  "ear_left",
+  "left_cerumen",
+  "left_cerumen_prop",
+  "left_tympanic",
+  "ear_left_others",
+  "column_break_4gkw6",
+  "ear_right",
+  "right_cerumen",
+  "right_cerumen_prop",
+  "right_tympanic",
+  "ear_right_others",
+  "nose_section",
+  "nose_check",
+  "abnormal_nose",
+  "septum",
+  "deviated",
+  "column_break_ial0m",
+  "nose_left",
+  "conchae_left",
+  "left_enlarged",
+  "left_hyperemic",
+  "left_polyp",
+  "nose_left_others",
+  "column_break_zfdqh",
+  "nose_right",
+  "conchae_right",
+  "right_enlarged",
+  "right_hyperemic",
+  "right_polyp",
+  "nose_right_others",
+  "throat_section",
+  "throat_check",
+  "enlarged_tonsil",
+  "hyperemic_pharynx",
+  "throat_others",
+  "neck_section",
+  "neck_check",
+  "abnormal_neck",
+  "enlarged_thyroid",
+  "enlarged_thyroid_details",
+  "column_break_wjtbi",
+  "enlarged_lymph_node",
+  "enlarged_lymph_node_details",
+  "column_break_ciyoy",
+  "neck_others",
+  "cardiac_section",
+  "cardiac_check",
+  "abnormal_cardiac",
+  "regular_heart_sound",
+  "murmur",
+  "gallop",
+  "others",
+  "breast_section",
+  "breast_check",
+  "abnormal_breast",
+  "breast_left",
+  "left_enlarged_breast",
+  "left_lumps",
+  "breast_left_others",
+  "column_break_gxf7e",
+  "breast_right",
+  "right_enlarged_breast",
+  "right_lumps",
+  "breast_right_others",
+  "resp_section",
+  "resp_check",
+  "abnormal_resp",
+  "resp_left",
+  "left_ronkhi",
+  "left_wheezing",
+  "resp_left_others",
+  "column_break_1khzo",
+  "resp_right",
+  "right_ronkhi",
+  "right_wheezing",
+  "resp_right_others",
+  "abd_section",
+  "abd_check",
+  "abnormal_abd",
+  "tenderness",
+  "abd_tender_details",
+  "column_break_dpv1r",
+  "hepatomegaly",
+  "splenomegaly",
+  "increased_bowel_sounds",
+  "abd_others",
+  "spine_section",
+  "spine_check",
+  "spine_details",
+  "genit_section",
+  "genit_check",
+  "abnormal_genit",
+  "hernia",
+  "hernia_details",
+  "column_break_0sp6b",
+  "hemorrhoid",
+  "inguinal_nodes",
+  "genit_others",
+  "neuro_section",
+  "neuro_check",
+  "abnormal_neuro",
+  "motoric_system_abnormality",
+  "motoric_details",
+  "column_break_mcuiq",
+  "sensory_system_abnormality",
+  "sensory_details",
+  "column_break_vh4ev",
+  "reflexes_abnormality",
+  "reflex_details",
+  "column_break_ouadx",
+  "neuro_others",
+  "visual_field_test_tab",
+  "visual_check",
+  "visual_details",
+  "romberg_test_tab",
+  "romberg_check",
+  "abnormal_romberg",
+  "romberg_abnormal",
+  "romberg_others",
+  "tinnel_test_tab",
+  "tinnel_check",
+  "tinnel_details",
+  "phallen_test_tab",
+  "phallen_check",
+  "phallen_details",
+  "rectal_examination_tab",
+  "rectal_check",
+  "abnormal_rectal",
+  "rectal_hemorrhoid",
+  "enlarged_prostate",
+  "rectal_others"
  ],
  "fields": [
   {
@@ -213,11 +359,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "mcu_tab",
-   "fieldtype": "Tab Break",
-   "label": "MCU"
-  },
-  {
    "fetch_from": "appointment.appointment_type",
    "fieldname": "appoinment_type",
    "fieldtype": "Data",
@@ -229,12 +370,807 @@
    "fieldtype": "Link",
    "label": "Doctor Result",
    "options": "Doctor Result"
+  },
+  {
+   "fieldname": "pe_tab",
+   "fieldtype": "Tab Break",
+   "label": "Physical Examination"
+  },
+  {
+   "fieldname": "eyes_section",
+   "fieldtype": "Section Break",
+   "label": "Eyes"
+  },
+  {
+   "default": "1",
+   "fieldname": "eyes_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_anemic",
+   "fieldtype": "Check",
+   "label": "Anemic"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_icteric",
+   "fieldtype": "Check",
+   "label": "Icteric"
+  },
+  {
+   "fieldname": "eyes_left_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "column_break_kvpfb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_anemic",
+   "fieldtype": "Check",
+   "label": "Anemic"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_icteric",
+   "fieldtype": "Check",
+   "label": "Icteric"
+  },
+  {
+   "fieldname": "eyes_right_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "depends_on": "eval:!doc.eyes_check",
+   "fieldname": "abnormal_eyes",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ear_section",
+   "fieldtype": "Section Break",
+   "label": "Ear"
+  },
+  {
+   "default": "1",
+   "fieldname": "ear_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.ear_check",
+   "fieldname": "abnormal_ear",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "eyes_left",
+   "fieldtype": "Heading",
+   "label": "Left"
+  },
+  {
+   "fieldname": "eyes_right",
+   "fieldtype": "Heading",
+   "label": "Right"
+  },
+  {
+   "fieldname": "ear_left",
+   "fieldtype": "Heading",
+   "label": "Left"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_cerumen",
+   "fieldtype": "Check",
+   "label": "Cerumen"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_cerumen_prop",
+   "fieldtype": "Check",
+   "label": "Cerumen Prop"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_tympanic",
+   "fieldtype": "Check",
+   "label": "Tympanic membrane intact"
+  },
+  {
+   "fieldname": "ear_left_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "column_break_4gkw6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ear_right",
+   "fieldtype": "Heading",
+   "label": "Right"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_cerumen",
+   "fieldtype": "Check",
+   "label": "Cerumen"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_cerumen_prop",
+   "fieldtype": "Check",
+   "label": "Cerumen Prop"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_tympanic",
+   "fieldtype": "Check",
+   "label": "Tympanic membrane intact"
+  },
+  {
+   "fieldname": "ear_right_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "nose_section",
+   "fieldtype": "Section Break",
+   "label": "Nose"
+  },
+  {
+   "default": "1",
+   "fieldname": "nose_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.nose_check",
+   "fieldname": "abnormal_nose",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "septum",
+   "fieldtype": "Heading",
+   "label": "Septum"
+  },
+  {
+   "default": "0",
+   "fieldname": "deviated",
+   "fieldtype": "Check",
+   "label": "Deviated"
+  },
+  {
+   "fieldname": "column_break_ial0m",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nose_left",
+   "fieldtype": "Heading",
+   "label": "Left"
+  },
+  {
+   "fieldname": "conchae_left",
+   "fieldtype": "Heading",
+   "label": "Conchae"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_enlarged",
+   "fieldtype": "Check",
+   "label": "Enlarged"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_hyperemic",
+   "fieldtype": "Check",
+   "label": "Hyperemic"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_polyp",
+   "fieldtype": "Check",
+   "label": "Polyp"
+  },
+  {
+   "fieldname": "nose_left_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "column_break_zfdqh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nose_right",
+   "fieldtype": "Heading",
+   "label": "Right"
+  },
+  {
+   "fieldname": "conchae_right",
+   "fieldtype": "Heading",
+   "label": "Conchae"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_enlarged",
+   "fieldtype": "Check",
+   "label": "Enlarged"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_hyperemic",
+   "fieldtype": "Check",
+   "label": "Hyperemic"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_polyp",
+   "fieldtype": "Check",
+   "label": "Polyp"
+  },
+  {
+   "fieldname": "nose_right_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "throat_section",
+   "fieldtype": "Section Break",
+   "label": "Throat"
+  },
+  {
+   "default": "1",
+   "fieldname": "throat_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.throat_check",
+   "fieldname": "enlarged_tonsil",
+   "fieldtype": "Check",
+   "label": "Enlarged Tonsil"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.enlarged_tonsil",
+   "fieldname": "hyperemic_pharynx",
+   "fieldtype": "Check",
+   "label": "Hyperemic Pharynx"
+  },
+  {
+   "depends_on": "eval:doc.enlarged_tonsil",
+   "fieldname": "throat_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "neck_section",
+   "fieldtype": "Section Break",
+   "label": "Neck"
+  },
+  {
+   "default": "1",
+   "fieldname": "neck_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.neck_check",
+   "fieldname": "abnormal_neck",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enlarged_thyroid",
+   "fieldtype": "Check",
+   "label": "Enlarged Thyroid"
+  },
+  {
+   "depends_on": "eval:doc.enlarged_thyroid",
+   "fieldname": "enlarged_thyroid_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_wjtbi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enlarged_lymph_node",
+   "fieldtype": "Check",
+   "label": "Enlarged Lymph Node"
+  },
+  {
+   "depends_on": "eval:doc.enlarged_lymph_node",
+   "fieldname": "enlarged_lymph_node_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_ciyoy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "neck_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "cardiac_section",
+   "fieldtype": "Section Break",
+   "label": "Cardiac"
+  },
+  {
+   "default": "1",
+   "fieldname": "cardiac_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.cardiac_check",
+   "fieldname": "abnormal_cardiac",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "regular_heart_sound",
+   "fieldtype": "Check",
+   "label": "Regular Heart Sound"
+  },
+  {
+   "default": "0",
+   "fieldname": "murmur",
+   "fieldtype": "Check",
+   "label": "Murmur"
+  },
+  {
+   "default": "0",
+   "fieldname": "gallop",
+   "fieldtype": "Check",
+   "label": "Gallop"
+  },
+  {
+   "fieldname": "others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "breast_section",
+   "fieldtype": "Section Break",
+   "label": "Breast"
+  },
+  {
+   "default": "1",
+   "fieldname": "breast_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.breast_check",
+   "fieldname": "abnormal_breast",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "breast_left",
+   "fieldtype": "Heading",
+   "label": "Left"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_enlarged_breast",
+   "fieldtype": "Check",
+   "label": "Enlarged Breast Glands"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_lumps",
+   "fieldtype": "Check",
+   "label": "Lumps"
+  },
+  {
+   "fieldname": "breast_left_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "column_break_gxf7e",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "breast_right",
+   "fieldtype": "Heading",
+   "label": "Right"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_enlarged_breast",
+   "fieldtype": "Check",
+   "label": "Enlarged Breast Glands"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_lumps",
+   "fieldtype": "Check",
+   "label": "Lumps"
+  },
+  {
+   "fieldname": "breast_right_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "resp_section",
+   "fieldtype": "Section Break",
+   "label": "Respiratory System"
+  },
+  {
+   "default": "1",
+   "fieldname": "resp_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.resp_check",
+   "fieldname": "abnormal_resp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "resp_left",
+   "fieldtype": "Heading",
+   "label": "Left"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_ronkhi",
+   "fieldtype": "Check",
+   "label": "Ronkhi"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_wheezing",
+   "fieldtype": "Check",
+   "label": "Wheezing"
+  },
+  {
+   "fieldname": "resp_left_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "column_break_1khzo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "resp_right",
+   "fieldtype": "Heading",
+   "label": "Right"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_ronkhi",
+   "fieldtype": "Check",
+   "label": "Ronkhi"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_wheezing",
+   "fieldtype": "Check",
+   "label": "Wheezing"
+  },
+  {
+   "fieldname": "resp_right_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "abd_section",
+   "fieldtype": "Section Break",
+   "label": "Abdomen"
+  },
+  {
+   "default": "1",
+   "fieldname": "abd_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.abd_check",
+   "fieldname": "abnormal_abd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "tenderness",
+   "fieldtype": "Check",
+   "label": "Tenderness"
+  },
+  {
+   "fieldname": "abd_tender_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_dpv1r",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "hepatomegaly",
+   "fieldtype": "Check",
+   "label": "Hepatomegaly"
+  },
+  {
+   "default": "0",
+   "fieldname": "splenomegaly",
+   "fieldtype": "Check",
+   "label": "Splenomegaly"
+  },
+  {
+   "default": "0",
+   "fieldname": "increased_bowel_sounds",
+   "fieldtype": "Check",
+   "label": "Increased Bowel Sounds"
+  },
+  {
+   "fieldname": "abd_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "spine_section",
+   "fieldtype": "Section Break",
+   "label": "Spine"
+  },
+  {
+   "default": "1",
+   "fieldname": "spine_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.spine_check",
+   "fieldname": "spine_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "genit_section",
+   "fieldtype": "Section Break",
+   "label": "Genitourinary"
+  },
+  {
+   "default": "1",
+   "fieldname": "genit_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.genit_check",
+   "fieldname": "abnormal_genit",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "hernia",
+   "fieldtype": "Check",
+   "label": "Hernia"
+  },
+  {
+   "depends_on": "eval:doc.hernia",
+   "fieldname": "hernia_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_0sp6b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "hemorrhoid",
+   "fieldtype": "Check",
+   "label": "Hemorrhoid "
+  },
+  {
+   "default": "0",
+   "fieldname": "inguinal_nodes",
+   "fieldtype": "Check",
+   "label": "Inguinal Nodes"
+  },
+  {
+   "fieldname": "genit_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "neuro_section",
+   "fieldtype": "Section Break",
+   "label": "Neurological System"
+  },
+  {
+   "default": "1",
+   "fieldname": "neuro_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.neuro_check",
+   "fieldname": "abnormal_neuro",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "motoric_system_abnormality",
+   "fieldtype": "Check",
+   "label": "Motoric System Abnormality"
+  },
+  {
+   "fieldname": "motoric_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_mcuiq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "sensory_system_abnormality",
+   "fieldtype": "Check",
+   "label": "Sensory System Abnormality"
+  },
+  {
+   "fieldname": "sensory_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_vh4ev",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "reflexes_abnormality",
+   "fieldtype": "Check",
+   "label": "Reflexes Abnormality"
+  },
+  {
+   "fieldname": "reflex_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "column_break_ouadx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "neuro_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "fieldname": "visual_field_test_tab",
+   "fieldtype": "Tab Break",
+   "label": "Visual Field Test"
+  },
+  {
+   "default": "1",
+   "fieldname": "visual_check",
+   "fieldtype": "Check",
+   "label": "Same As Examiner"
+  },
+  {
+   "fieldname": "romberg_test_tab",
+   "fieldtype": "Tab Break",
+   "label": "Romberg Test"
+  },
+  {
+   "fieldname": "tinnel_test_tab",
+   "fieldtype": "Tab Break",
+   "label": "Tinnel Test"
+  },
+  {
+   "default": "1",
+   "fieldname": "tinnel_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.tinnel_check",
+   "fieldname": "tinnel_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "phallen_test_tab",
+   "fieldtype": "Tab Break",
+   "label": "Phallen Test"
+  },
+  {
+   "default": "1",
+   "fieldname": "phallen_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.phallen_check",
+   "fieldname": "phallen_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "rectal_examination_tab",
+   "fieldtype": "Tab Break",
+   "label": "Rectal Examination"
+  },
+  {
+   "default": "1",
+   "fieldname": "rectal_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.rectal_check",
+   "fieldname": "abnormal_rectal",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rectal_hemorrhoid",
+   "fieldtype": "Select",
+   "label": "Hemorrhoid",
+   "options": "\nA\nB\nC\nD\nE"
+  },
+  {
+   "default": "0",
+   "fieldname": "enlarged_prostate",
+   "fieldtype": "Check",
+   "label": "Enlarged Prostate"
+  },
+  {
+   "fieldname": "rectal_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
+  },
+  {
+   "depends_on": "eval:!doc.visual_check",
+   "fieldname": "visual_details",
+   "fieldtype": "Small Text",
+   "label": "Details"
+  },
+  {
+   "default": "1",
+   "fieldname": "romberg_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.romberg_check",
+   "fieldname": "abnormal_romberg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "romberg_abnormal",
+   "fieldtype": "Select",
+   "label": "Abnormal",
+   "options": "Positive: Swaying or losing balance with eyes closed\nNegative: No swaying or losing balance with eyes open or close\nUndefined: Swaying or losing balance with eyes open/others"
+  },
+  {
+   "depends_on": "eval:doc.romberg_abnormal==='Undefined: Swaying or losing balance with eyes open/others'",
+   "fieldname": "romberg_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:43:39.063207",
+ "modified": "2024-07-29 10:32:44.037012",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

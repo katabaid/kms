@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import today
 
 class Dispatcher(Document):
 	def after_insert(self):
@@ -88,6 +89,14 @@ def finish_exam(dispatcher_id, hsu, status):
 	else:
 		# Update Dispatcher status to Finished
 		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
+	#check whether status is Finished/Partial Finished
+	if status == 'Finished' or status == 'Partial Finished':
+		doc = ''
+		target = ''
+		create_result_doc(doc, target)
+	#determine hsu is using what doctype
+	#get doctype's doc
+	#create_result_doc(doc, source, target)
 	return 'Finished.'
 
 @frappe.whitelist()
@@ -137,3 +146,27 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 	else:
 		frappe.throw(f"Examination item {examination_item} does not exist.")
 	return f"""Updated Dispatcher item: {examination_item} status to {status}."""
+
+def create_result_doc(doc, target):
+	doc = frappe.get_doc({
+		'doctype': target,
+		'company': doc.company,
+		'branch': doc.branch,
+		'queue_pooling': doc.queue_pooling,
+		'patient': doc.patient,
+		'patient_name': doc.patient_name,
+		'patient_sex': doc.patient_sex,
+		'patient_age': doc.patient_age,
+		'patient_encounter': doc.patient_encounter,
+		'appointment': doc.appointment,
+		'dispatcher': doc.dispatcher,
+		'service_unit': doc.service_unit,
+		'created_date': today(),
+		'remark': doc.remark,
+		'exam': doc.name
+	})
+	doc.insert()
+	#append items
+	#append result
+	#update exam_result in source ........
+	#check whether source is finished/partial finished .........

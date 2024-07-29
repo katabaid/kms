@@ -16,6 +16,7 @@
   "patient_sex",
   "patient_age",
   "patient_encounter",
+  "exam_result",
   "column_break_ydxak",
   "queue_no",
   "appointment",
@@ -210,12 +211,18 @@
    "in_list_view": 1,
    "label": "Queue No",
    "read_only": 1
+  },
+  {
+   "fieldname": "exam_result",
+   "fieldtype": "Link",
+   "label": "Exam Result",
+   "options": "Radiology Result"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-21 20:01:25.446895",
+ "modified": "2024-07-28 17:17:38.370640",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

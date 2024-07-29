@@ -1,13 +1,13 @@
 const createDocTypeController = (doctype, customConfig = {}) => {
   // Default configuration
   const defaultConfig = {
-      childTables: ['result', 'examination_item'],
-      childTableButton: 'examination_item',
-      templateField: 'template',
-      getStatus: (frm) => frm.doc.status,
-      setStatus: (frm, newStatus) => frm.set_value('status', newStatus),
-      getDispatcher: (frm) => frm.doc.dispatcher,
-      getHsu: (frm) => frm.doc.service_unit,
+    childTables: ['result', 'examination_item'],
+    childTableButton: 'examination_item',
+    templateField: 'template',
+    getStatus: (frm) => frm.doc.status,
+    setStatus: (frm, newStatus) => frm.set_value('status', newStatus),
+    getDispatcher: (frm) => frm.doc.dispatcher,
+    getHsu: (frm) => frm.doc.service_unit,
   };
 
   // Merge custom configuration with default
@@ -54,7 +54,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       grid.wrapper.find('.grid-footer').find('.btn-custom').remove();
       // Add new custom buttons
       buttons.forEach(button => {
-        const customButton = grid.add_custom_button(__(button.label), function() {
+        const customButton = grid.add_custom_button(__(button.label), function () {
           if (button.prompt) {
             frappe.prompt({
               fieldname: 'reason',
@@ -78,9 +78,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     getDispatcher: config.getDispatcher,
     getHsu: config.getHsu,
   }
-  
+
   const controller = {
-    refresh: function(frm) {
+    refresh: function (frm) {
       frm.trigger('process_custom_buttons');
       frm.trigger('hide_standard_child_tables_buttons');
       if (utils.getStatus(frm) === 'Checked In') {
@@ -88,21 +88,21 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       }
     },
 
-    before_submit: function(frm) {
+    before_submit: function (frm) {
       utils.handleBeforeSubmit(frm);
     },
 
-    hide_standard_child_tables_buttons: function(frm) {
+    hide_standard_child_tables_buttons: function (frm) {
       utils.hideStandardButtons(frm, config.childTables);
     },
-    
-    process_custom_buttons: function(frm) {
+
+    process_custom_buttons: function (frm) {
       if (frm.doc.docstatus === 0 && utils.getDispatcher(frm)) {
         utils.handleCustomButtons(frm);
       }
     },
-        
-    setup_child_table_custom_buttons: function(frm) {
+
+    setup_child_table_custom_buttons: function (frm) {
       utils.setupChildTableButtons(frm);
     }
   };
@@ -110,7 +110,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   // Attach utils and config to the controller
   controller.utils = utils;
   controller.config = config;
-  
+
   function finishExam(frm) {
     frappe.call({
       method: 'kms.kms.doctype.dispatcher.dispatcher.finish_exam',
@@ -119,22 +119,22 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         'hsu': utils.getHsu(frm),
         'status': utils.getStatus(frm)
       },
-      callback: function(r) {
+      callback: function (r) {
         if (r.message) {
           showAlert(r.message, 'green');
         }
       }
     });
   }
-    
+
   function addCustomButton(frm, label, method, newStatus, prompt = false) {
     function handleCallback(r) {
-        if (r.message) {
-          showAlert(r.message, 'green');
-          utils.setStatus(frm, newStatus);
-          frm.dirty();
-          frm.save();
-        }
+      if (r.message) {
+        showAlert(r.message, 'green');
+        utils.setStatus(frm, newStatus);
+        frm.dirty();
+        frm.save();
+      }
     }
 
     function callMethod(reason = null) {
@@ -147,7 +147,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       frappe.call({
         method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
         args: args,
-        callback: function(r) {
+        callback: function (r) {
           handleCallback(r);
           if (reason) {
             addComment(frm, reason);
@@ -171,7 +171,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       }
     }, 'Status');
   }
-  
+
   function updateChildStatus(frm, grid, newStatus, reason = null) {
     const selectedRows = grid.get_selected();
     if (selectedRows.length === 1) {
@@ -207,16 +207,16 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           comment_by: frappe.session.user_fullname
         }
       },
-      callback: function(response) {
+      callback: function (response) {
         if (!response.exc) {
           showAlert('Comment added successfully.', 'green');
         }
       }
     });
   }
-  
+
   function setupRowSelector(grid) {
-    grid.row_selector = function(e) {
+    grid.row_selector = function (e) {
       if (e.target.classList.contains('grid-row-check')) {
         const $row = $(e.target).closest('.grid-row');
         const docname = $row.attr('data-name');
@@ -233,13 +233,13 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         }
         this.refresh_remove_rows_button();
         updateCustomButtonVisibility(grid);
-      }		
+      }
     };
-    grid.wrapper.on('click', '.grid-row', function() {
+    grid.wrapper.on('click', '.grid-row', function () {
       updateCustomButtonVisibility(grid);
     });
   }
-  
+
   function updateCustomButtonVisibility(grid) {
     const selectedRows = grid.get_selected();
     const buttons = grid.wrapper.find('.grid-footer').find('.btn-custom');
@@ -248,7 +248,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       buttons.each((index, button) => {
         const $button = $(button);
         const buttonStatuses = $button.data('statuses');
-        if(buttonStatuses) {
+        if (buttonStatuses) {
           const statuses = buttonStatuses.split(',');
           $button.toggle(statuses.includes(child.status));
         } else {
@@ -259,7 +259,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       buttons.hide();
     }
   }
-  
+
   function updateParentStatus(frm) {
     return new Promise((resolve) => {
       const statuses = frm.doc[config.childTableButton].map(row => row.status);
@@ -275,7 +275,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       }
     });
   }
-  
+
   function updateMcuAppointmentStatus(frm, item, status) {
     if (utils.getDispatcher(frm)) {
       frappe.call({
@@ -297,7 +297,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       });
     }
   }
-  
+
   function showAlert(message, indicator) {
     frappe.show_alert({
       message: message,
