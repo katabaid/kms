@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "creation": "2024-07-29 20:19:09.314553",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "examination_group",
+  "doctor_examination_section",
+  "physical_examination",
+  "visual_field_test",
+  "romberg_test",
+  "tinnel_test",
+  "phallen_test",
+  "rectal_test",
+  "column_break_chfnd",
+  "physical_examination_name",
+  "visual_field_test_name",
+  "romberg_test_name",
+  "tinnel_test_name",
+  "phallen_test_name",
+  "rectal_test_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "doctor_examination_section",
+   "fieldtype": "Section Break",
+   "label": "Doctor Examination"
+  },
+  {
+   "fieldname": "physical_examination",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Physical Examination",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "visual_field_test",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Visual Field Test",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "romberg_test",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Romberg Test",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tinnel_test",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tinnel Test",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "phallen_test",
+   "fieldtype": "Link",
+   "label": "Phallen Test",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rectal_test",
+   "fieldtype": "Link",
+   "label": "Rectal Test",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_chfnd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "examination_group",
+   "fieldtype": "Link",
+   "label": "Examination Group",
+   "options": "Item Group",
+   "reqd": 1
+  },
+  {
+   "fieldname": "physical_examination_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "visual_field_test_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "romberg_test_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tinnel_test_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "phallen_test_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rectal_test_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2024-07-29 20:40:19.550799",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "MCU Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
