@@ -5,7 +5,8 @@ frappe.ui.form.on('Dispatcher', {
 	refresh: function (frm) {
 		frm.trigger('setup_custom_buttons');
 		frm.trigger('hide_standard_child_tables_buttons');
-		frm.trigger('setup_child_table_custom_buttons');
+		//frm.trigger('setup_child_table_custom_buttons');
+		handleChildCustomButtons(frm);
 
 		/* frm.fields_dict['assign_room_button'].df.hidden = true;
 		frm.fields_dict['refuse_to_test_button'].df.hidden = true;
@@ -106,10 +107,10 @@ const handleHideChildButtons = (frm, childTablesArray) => {
 const handleChildCustomButtons = (frm) => {
 	const grid = frm.fields_dict[childTableButton].grid;
 	const buttons = [
-		{ label: 'Assign', status: 'Waiting to Enter the Room', class: 'btn-primary', prompt: false },
-		{ label: 'Refuse', status: 'Refused', class: 'btn-danger', prompt: false },
-		{ label: 'Retest', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false },
-		{ label: 'Remove from Room', status: 'Wait for Room Assignment', class: 'btn-warning', prompt: false },
+		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment', class: 'btn-primary', prompt: false },
+		{ label: 'Refuse', status: 'Refused', statuses: 'Wait for Room Assignment', class: 'btn-danger', prompt: false },
+		{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused, Finished, Rescheduled, Partial Finished', class: 'btn-warning', prompt: false },
+		{ label: 'Remove from Room', status: 'Wait for Room Assignment', statuses: 'Waiting to Enter the Room', class: 'btn-warning', prompt: false },
 	];
 
 	// Remove existing custom buttons
@@ -129,47 +130,46 @@ const handleChildCustomButtons = (frm) => {
 							reqd: 1,
 						},
 						(values) => {
-							updateChildStatus(frm, grid, button.status, values.reason);
+							updateChildStatus(frm, grid, button, values.reason);
 						},
 						__('Provide a Reason'),
 						__('Submit')
 					);
 				} else {
-					updateChildStatus(frm, grid, button.status);
+					updateChildStatus(frm, grid, button);
 				}
 			},
 			'btn-custom'
 		);
-		customButton.addClass(`${button.class} btn-sm`);
+		customButton.addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
 		customButton.hide();
 	});
-
 	setupRowSelector(grid);
 };
 
 // trigger methods
-const updateChildStatus = (frm, grid, newStatus, reason = null) => {
+const updateChildStatus = (frm, grid, button, reason = null) => {
 	const selectedRows = grid.get_selected();
 	if (selectedRows.length === 1) {
 		const child = locals[grid.doctype][selectedRows[0]];
-		if (child.status === 'Started') {
-			frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
-			updateParentStatus(frm).then(() => {
-				frm
-					.save()
-					.then(() => {
-						updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
-						showAlert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
-						frm.reload_doc();
-						if (utils.getDispatcher(frm) && reason) {
-							addComment(frm, reason);
-						}
-					})
-					.catch((err) => {
-						frappe.msgprint(__('Error updating status: {0}', [err.message]));
-					});
-			});
+		frappe.model.set_value(child.doctype, child.name, 'status', button.status);
+		if (button.label === 'Assign') {
+			assign_to_room(frm);
+		} else if (button.label === 'Remove from Room') {
+			
 		}
+		frm
+			.save()
+			.then(() => {
+				showAlert(`Updated status to ${button.status} Successfully.`, button.status === 'Refused' ? 'red' : 'green');
+				frm.refresh();
+				if (reason) {
+					addComment(frm, reason);
+				}
+			})
+			.catch((err) => {
+				frappe.msgprint(__('Error updating status: {0}', [err.message]));
+			});
 	}
 };
 
@@ -194,7 +194,30 @@ const setupRowSelector = (grid) => {
 			updateCustomButtonVisibility(grid);
 		}
 	};
+	grid.wrapper.on('click', '.grid-row', function () {
+		updateCustomButtonVisibility(grid);
+	});
 };
+
+const updateCustomButtonVisibility = (grid) => {
+	const selectedRows = grid.get_selected();
+	const buttons = grid.wrapper.find('.grid-footer').find('.btn-custom');
+	if (selectedRows && selectedRows.length === 1) {
+		const child = locals[grid.doctype][selectedRows[0]];
+		buttons.each((index, button) => {
+			const $button = $(button);
+			const buttonStatuses = $button.data('statuses');
+			if (buttonStatuses) {
+				const statuses = buttonStatuses.split(',');
+				$button.toggle(statuses.includes(child.status));
+			} else {
+				$button.toggle(child.status === 'Started');
+			}
+		});
+	} else {
+		buttons.hide();
+	}
+}
 
 function check_button_state(frm) {
 	let show_assign_room_button = false;
@@ -304,27 +327,30 @@ function remove_from_room(frm) {
 
 function assign_to_room(frm) {
 	//define selected rooms to process
-	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected_children();
+	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected();
 	if (selected_rows.length > 0 && selected_rows) {
-		selected_rows.forEach((row) => {
+		const child = locals[frm.fields_dict['assignment_table'].grid.doctype][selected_rows];
+		//selected_rows.forEach((row) => {
 			//for each room define what method to call
-			frappe.db.get_value('Healthcare Service Unit', row.healthcare_service_unit, 'service_unit_type').then((hsu) => {
+			frappe.db.get_value('Healthcare Service Unit', child.healthcare_service_unit, 'service_unit_type').then((hsu) => {
+				console.log(hsu.message.service_unit_type);
 				frappe.db
 					.get_value('Healthcare Service Unit Type', hsu.message.service_unit_type, 'custom_default_doctype')
 					.then((dt) => {
+						console.log(dt.message.custom_default_doctype);
 						// Lab
 						if (dt.message.custom_default_doctype == 'Sample Collection') {
 							frappe.call({
 								method: 'kms.api.create_sample_and_test',
 								args: {
 									disp: frm.doc.name,
-									selected: row.healthcare_service_unit,
+									selected: child.healthcare_service_unit,
 								},
 								callback: function (r) {
 									if (r.message) {
-										frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
-										frappe.model.set_value(row.doctype, row.name, 'reference_doctype', 'Sample Collection');
-										frappe.model.set_value(row.doctype, row.name, 'reference_doc', r.message.sample);
+										frappe.model.set_value(child.doctype, child.name, 'status', 'Waiting to Enter the Room');
+										frappe.model.set_value(child.doctype, child.name, 'reference_doctype', 'Sample Collection');
+										frappe.model.set_value(child.doctype, child.name, 'reference_doc', r.message.sample);
 										frm.save();
 										frappe.show_alert({
 											message: 'Room assigned successfully.',
@@ -344,19 +370,19 @@ function assign_to_room(frm) {
 									target: dt.message.custom_default_doctype,
 									source: frm.doc.doctype,
 									name: frm.doc.name,
-									room: row.healthcare_service_unit,
+									room: child.healthcare_service_unit,
 								},
 								callback: function (r) {
 									console.log(r);
 									if (r.message) {
-										frappe.model.set_value(row.doctype, row.name, 'status', 'Waiting to Enter the Room');
+										frappe.model.set_value(child.doctype, child.name, 'status', 'Waiting to Enter the Room');
 										frappe.model.set_value(
-											row.doctype,
-											row.name,
+											child.doctype,
+											child.name,
 											'reference_doctype',
 											dt.message.custom_default_doctype
 										);
-										frappe.model.set_value(row.doctype, row.name, 'reference_doc', r.message.docname);
+										frappe.model.set_value(child.doctype, child.name, 'reference_doc', r.message.docname);
 										frm.save();
 										frappe.show_alert({
 											message: 'Room assigned successfully.',
@@ -370,7 +396,7 @@ function assign_to_room(frm) {
 						}
 					});
 			});
-		});
+		//});
 	}
 }
 function ensure_single_selection(frm) {
@@ -384,4 +410,32 @@ function ensure_single_selection(frm) {
 			}
 		}
 	});
+}
+
+function addComment(frm, reason) {
+	frappe.call({
+		method: 'frappe.client.insert',
+		args: {
+			doc: {
+				doctype: 'Comment',
+				comment_type: 'Comment',
+				reference_doctype: frm.doc.doctype,
+				reference_name: frm.doc.name,
+				content: `<div class="ql-editor read-mode"><p>${reason}</p></div>`,
+				comment_by: frappe.session.user_fullname
+			}
+		},
+		callback: function (response) {
+			if (!response.exc) {
+				showAlert('Comment added successfully.', 'green');
+			}
+		}
+	});
+}
+
+function showAlert(message, indicator) {
+	frappe.show_alert({
+		message: message,
+		indicator: indicator
+	}, 5);
 }
