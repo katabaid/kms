@@ -26,7 +26,8 @@ frappe.ui.form.on('Doctor Examination', {
 
     // You can also add more logic here if needed
   },
-  before_load: function (frm){
+
+  before_load: function (frm) {
     frappe.call({
       method: 'kms.healthcare.get_mcu_settings',
       callback: (r) => {
@@ -36,42 +37,53 @@ frappe.ui.form.on('Doctor Examination', {
       }
     })
   },
+
   refresh: function (frm) {
     // If you also want to override refresh
-    if (doctorExaminationController.refresh) {
-      doctorExaminationController.refresh(frm);
-    }
-    frm.set_df_property('pe_tab', 'hidden', 1);
-    frm.set_df_property('visual_field_test_tab', 'hidden', 1);
-    frm.set_df_property('romberg_test_tab', 'hidden', 1);
-    frm.set_df_property('tinnel_test_tab', 'hidden', 1);
-    frm.set_df_property('phallen_test_tab', 'hidden', 1);
-    frm.set_df_property('rectal_examination_tab', 'hidden', 1);
-    frm.refresh_field('pe_tab');
-    frm.refresh_field('visual_field_test_tab');
-    frm.refresh_field('romberg_test_tab');
-    frm.refresh_field('tinnel_test_tab');
-    frm.refresh_field('phallen_test_tab');
-    frm.refresh_field('rectal_examination_tab');
+    doctorExaminationController.refresh(frm);
+    frm.set_df_property('eyes_section', 'hidden', 1);
+    frm.set_df_property('ear_section', 'hidden', 1);
+    frm.set_df_property('nose_section', 'hidden', 1);
+    frm.set_df_property('throat_section', 'hidden', 1);
+    frm.set_df_property('neck_section', 'hidden', 1);
+    frm.set_df_property('cardiac_section', 'hidden', 1);
+    frm.set_df_property('breast_section', 'hidden', 1);
+    frm.set_df_property('resp_section', 'hidden', 1);
+    frm.set_df_property('abd_section', 'hidden', 1);
+    frm.set_df_property('spine_section', 'hidden', 1);
+    frm.set_df_property('genit_section', 'hidden', 1);
+    frm.set_df_property('neuro_section', 'hidden', 1);
+    frm.set_df_property('visual_field_test_section', 'hidden', 1);
+    frm.set_df_property('romberg_test_section', 'hidden', 1);
+    frm.set_df_property('tinnel_test_section', 'hidden', 1);
+    frm.set_df_property('phallen_test_section', 'hidden', 1);
+    frm.set_df_property('rectal_examination_section', 'hidden', 1);
     if (frm.doc.status === 'Checked In') {
-      const examItems = frm.doc.examination_item.filter(row=> row.status==='Started').map(row => row.template)
+      const examItems = frm.doc.examination_item.filter(row => row.status === 'Started').map(row => row.template)
       const matchingItems = mcu_settings.filter(item => examItems.includes(item.value));
       if (matchingItems.length > 0) {
         matchingItems.forEach(item => {
           console.log(item.field)
-          if (item.field==='physical_examination_name') frm.set_df_property('pe_tab', 'hidden', 0);
-          if (item.field==='visual_field_test_name') frm.set_df_property('visual_field_test_tab', 'hidden', 0);
-          if (item.field==='romberg_test_name') frm.set_df_property('romberg_test_tab', 'hidden', 0);
-          if (item.field==='tinnel_test_name') frm.set_df_property('tinnel_test_tab', 'hidden', 0);
-          if (item.field==='phallen_test_name') frm.set_df_property('phallen_test_tab', 'hidden', 0);
-          if (item.field==='rectal_test_name') frm.set_df_property('rectal_examination_tab', 'hidden', 0);
+          if (item.field === 'physical_examination_name') {
+            frm.set_df_property('eyes_section', 'hidden', 0);
+            frm.set_df_property('ear_section', 'hidden', 0);
+            frm.set_df_property('nose_section', 'hidden', 0);
+            frm.set_df_property('throat_section', 'hidden', 0);
+            frm.set_df_property('neck_section', 'hidden', 0);
+            frm.set_df_property('cardiac_section', 'hidden', 0);
+            frm.set_df_property('breast_section', 'hidden', 0);
+            frm.set_df_property('resp_section', 'hidden', 0);
+            frm.set_df_property('abd_section', 'hidden', 0);
+            frm.set_df_property('spine_section', 'hidden', 0);
+            frm.set_df_property('genit_section', 'hidden', 0);
+            frm.set_df_property('neuro_section', 'hidden', 0);
+          }
+          if (item.field === 'visual_field_test_name') frm.set_df_property('visual_field_test_section', 'hidden', 0);
+          if (item.field === 'romberg_test_name') frm.set_df_property('romberg_test_section', 'hidden', 0);
+          if (item.field === 'tinnel_test_name') frm.set_df_property('tinnel_test_section', 'hidden', 0);
+          if (item.field === 'phallen_test_name') frm.set_df_property('phallen_test_section', 'hidden', 0);
+          if (item.field === 'rectal_test_name') frm.set_df_property('rectal_examination_section', 'hidden', 0);
         });
-        frm.refresh_field('pe_tab');
-        frm.refresh_field('visual_field_test_tab');
-        frm.refresh_field('romberg_test_tab');
-        frm.refresh_field('tinnel_test_tab');
-        frm.refresh_field('phallen_test_tab');
-        frm.refresh_field('rectal_examination_tab');    
       }
     }
   }

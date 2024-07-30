@@ -164,20 +164,25 @@
   "column_break_ouadx",
   "neuro_others",
   "visual_field_test_tab",
+  "visual_field_test_section",
   "visual_check",
   "visual_details",
   "romberg_test_tab",
+  "romberg_test_section",
   "romberg_check",
   "abnormal_romberg",
   "romberg_abnormal",
   "romberg_others",
   "tinnel_test_tab",
+  "tinnel_test_section",
   "tinnel_check",
   "tinnel_details",
   "phallen_test_tab",
+  "phallen_test_section",
   "phallen_check",
   "phallen_details",
   "rectal_examination_tab",
+  "rectal_examination_section",
   "rectal_check",
   "abnormal_rectal",
   "rectal_hemorrhoid",
@@ -1171,12 +1176,32 @@
    "fieldname": "details_tab",
    "fieldtype": "Tab Break",
    "label": "Details"
+  },
+  {
+   "fieldname": "visual_field_test_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "romberg_test_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tinnel_test_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "phallen_test_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "rectal_examination_section",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-30 10:20:13.456600",
+ "modified": "2024-07-31 04:03:15.731700",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
