@@ -1,7 +1,7 @@
 const createDocTypeController = (doctype, customConfig = {}) => {
   // Default configuration
   const defaultConfig = {
-    childTables: ['result', 'examination_item'],
+    childTables: ['result', 'examination_item', 'non_selective_result'],
     childTableButton: 'examination_item',
     templateField: 'template',
     getStatus: (frm) => frm.doc.status,
