@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-03-20 09:12:09.871992",
+ "creation": "2024-06-09 17:38:40.124981",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -92,7 +92,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-20 13:39:46.655535",
+ "modified": "2024-07-31 14:08:27.288158",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "KPI",
