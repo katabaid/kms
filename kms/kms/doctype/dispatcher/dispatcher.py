@@ -64,6 +64,7 @@ def finish_exam(dispatcher_id, hsu, status):
 					AND 	tma.examination_item = tigsu.parent
 				)
 			)
+		)
 	""")
 	#Verify whether all rooms are finished
 	final_status = "('Finished', 'Refused', 'Rescheduled', 'Partial Finished')"
