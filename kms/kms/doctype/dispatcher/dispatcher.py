@@ -91,9 +91,10 @@ def finish_exam(dispatcher_id, hsu, status):
 		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
 	#check whether status is Finished/Partial Finished
 	if status == 'Finished' or status == 'Partial Finished':
-		doc = ''
-		target = ''
-		create_result_doc(doc, target)
+		pass
+		#doc = ''
+		#target = ''
+		#create_result_doc(doc, target)
 	#determine hsu is using what doctype
 	#get doctype's doc
 	#create_result_doc(doc, source, target)
