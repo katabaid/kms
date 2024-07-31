@@ -46,31 +46,24 @@ def finish_exam(dispatcher_id, hsu, status):
 		SET `status` = '{status}'
 		WHERE `parent` = '{dispatcher_id}'
 		AND healthcare_service_unit IN (
-			SELECT name 
-			FROM `tabHealthcare Service Unit` thsu1
-			WHERE EXISTS (
-				SELECT 1 
-				FROM `tabHealthcare Service Unit` thsu 
-				WHERE EXISTS (
-					SELECT 1 FROM `tabDispatcher Room` tdr
-					WHERE tdr.parent = '{dispatcher_id}'
-					AND tdr.parenttype = 'Dispatcher'
-					AND tdr.parentfield = 'assignment_table'
-					AND tdr.healthcare_service_unit  = '{hsu}'
-					AND tdr.healthcare_service_unit = thsu.name)
-				AND thsu.service_unit_type = thsu1.service_unit_type
-				AND thsu.custom_branch = thsu1.custom_branch
-				AND thsu1.name != '{hsu}'
+			SELECT service_unit FROM `tabItem Group Service Unit` tigsu1
+			WHERE tigsu1.parentfield = 'custom_room'
+			AND 	tigsu1.parenttype = 'Item'
+			AND 	tigsu1.service_unit != '{hsu}'
+			AND 	EXISTS (
+				SELECT 1 FROM `tabItem Group Service Unit` tigsu 
+				WHERE tigsu.parentfield = 'custom_room'
+				AND 	tigsu.parenttype = 'Item'
+				AND 	tigsu.service_unit = '{hsu}'
+				AND 	tigsu.parent = tigsu1.parent
+				AND EXISTS (
+					SELECT 1 FROM `tabMCU Appointment` tma
+					WHERE tma.parent = '{dispatcher_id}'
+					AND 	tma.parentfield = 'package'
+					AND		tma.parenttype = 'Dispatcher'
+					AND 	tma.examination_item = tigsu.parent
+				)
 			)
-			AND EXISTS (
-				SELECT 1
-				FROM `tabDispatcher Room` tdr
-				WHERE tdr.parent = '{dispatcher_id}'
-				AND tdr.parenttype = 'Dispatcher'
-				AND tdr.parentfield = 'assignment_table'
-				AND tdr.healthcare_service_unit  = thsu1.name
-			)
-		)
 	""")
 	#Verify whether all rooms are finished
 	final_status = "('Finished', 'Refused', 'Rescheduled', 'Partial Finished')"
