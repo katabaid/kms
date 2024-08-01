@@ -8588,14 +8588,14 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"type\":\"chart\",\"data\":{\"chart_name\":\"Open Projects\",\"col\":12}},{\"type\":\"spacer\",\"data\":{\"col\":12}},{\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Task\",\"col\":3}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":3}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Timesheet\",\"col\":3}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project Billing Summary\",\"col\":3}},{\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":3}},{\"type\":\"spacer\",\"data\":{\"col\":12}},{\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"type\":\"card\",\"data\":{\"card_name\":\"Projects\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Time Tracking\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
+  "content": "[{\"id\":\"Ag9TtxC-nh\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Open Projects\",\"col\":12}},{\"id\":\"Wghr9TH-7h\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"MzZePNHmWP\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"K3VzHtJ4dX\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Task\",\"col\":3}},{\"id\":\"8iRcKGESbD\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project\",\"col\":3}},{\"id\":\"Df6zR_3-69\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Timesheet\",\"col\":3}},{\"id\":\"1LZuGmA-53\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Project Billing Summary\",\"col\":3}},{\"id\":\"TKtAysoaki\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":3}},{\"id\":\"y6JNFtz39p\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"I-8mBcYro6\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"VJwgssHcn7\",\"type\":\"card\",\"data\":{\"card_name\":\"Projects\",\"col\":4}},{\"id\":\"npPtsrO3dv\",\"type\":\"card\",\"data\":{\"card_name\":\"Time Tracking\",\"col\":4}},{\"id\":\"YUy352DEbg\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"e8TNqFrUos\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
   "for_user": "",
   "hide_custom": 0,
   "icon": "project",
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Projects",
   "links": [
    {
@@ -8871,7 +8871,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2023-05-24 14:47:23.179860",
+  "modified": "2024-08-01 17:37:56.734556",
   "module": "Projects",
   "name": "Projects",
   "number_cards": [],
@@ -10108,7 +10108,7 @@
   "for_user": "",
   "hide_custom": 0,
   "icon": "quality",
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Quality",
   "links": [
    {
@@ -10320,7 +10320,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2023-05-24 14:47:22.597974",
+  "modified": "2024-08-01 17:37:53.793922",
   "module": "Quality Management",
   "name": "Quality",
   "number_cards": [],
