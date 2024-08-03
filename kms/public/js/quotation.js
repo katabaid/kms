@@ -2,7 +2,7 @@ frappe.ui.form.on('Quotation', {
   quotation_to(frm) {
     frm.doc.party_name = '';
     if (frm.doc.quotation_to === 'Customer') {
-      frm.set_query('party_name', () => ({ filters: { customer_type: 'Company' } }));
+      frm.set_query('party_name', () => ({ filters: { customer_group: 'Commercial' } }));
     }
   },
 

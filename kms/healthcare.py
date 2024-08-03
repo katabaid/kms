@@ -3,7 +3,11 @@ from frappe.utils import today
 
 @frappe.whitelist()
 def get_mcu_settings():
-  doc_exam_settings = frappe.db.sql("SELECT field, value FROM tabSingles WHERE doctype = 'MCU Settings' AND field IN ('phallen_test_name', 'physical_examination_name', 'rectal_test_name', 'romberg_test_name', 'tinnel_test_name', 'visual_field_test_name')", as_dict=True)
+  doc_exam_settings = frappe.db.sql("""
+    SELECT field, value FROM tabSingles 
+    WHERE doctype = 'MCU Settings' 
+    AND field IN ('phallen_test_name', 'physical_examination_name', 'rectal_test_name', 'romberg_test_name', 'tinnel_test_name', 'visual_field_test_name')
+    """, as_dict=True)
   return doc_exam_settings
 
 @frappe.whitelist()

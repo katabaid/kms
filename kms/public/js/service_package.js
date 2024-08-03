@@ -34,7 +34,6 @@ frappe.ui.form.on('Product Bundle', {
         label: 'Customer',
         fieldname: 'customer',
         fieldtype: 'Link',
-        reqd: true,
         options:"Customer",
         get_query: () => {
           return {
@@ -46,7 +45,6 @@ frappe.ui.form.on('Product Bundle', {
         label: "Price List",
         fieldname: "price_list",
         fieldtype: "Link",
-        reqd: true,
         options: "Price List",
         get_query: () => {
           return {

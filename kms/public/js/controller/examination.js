@@ -51,7 +51,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         { label: 'Reschedule', status: 'Rescheduled', statuses: 'Started', class: 'btn-warning', prompt: true }
       ];
       // Remove existing custom buttons
-      grid.wrapper.find('.grid-footer').find('.btn-custom').remove();
+      grid.wrapper.find('.grid-footer').find('.btn-custom').hide();
       // Add new custom buttons
       buttons.forEach(button => {
         const customButton = grid.add_custom_button(__(button.label), function () {

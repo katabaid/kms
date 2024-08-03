@@ -336,11 +336,13 @@ def create_sample_and_test(selected, disp="", enc=""):
   if disp:
     appt = frappe.db.get_value('Dispatcher', disp, 'patient_appointment')
     appt_doc = frappe.get_doc('Patient Appointment', appt) 
-    param = frappe.db.sql(f"""SELECT GROUP_CONCAT(quote(tma.item_name)) params from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
+    param = frappe.db.sql(f"""
+      SELECT GROUP_CONCAT(quote(tma.item_name)) params 
+      from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
       where tma.parenttype = 'Dispatcher'
       and tma.parentfield = 'package'
       and tma.parent = '{disp}'
-      and tma.item_group = tigsu.parent  
+      and tma.examination_item = tigsu.parent  
       and tigsu.service_unit = '{selected}'""")
     params = ','.join(str(y) for x in param for y in x if len(x) > 0)
     print(selected)

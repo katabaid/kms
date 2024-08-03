@@ -25,10 +25,10 @@ frappe.ui.form.on('Patient Appointment', {
     });
 	},
 	appointment_type(frm) {
-    let branch = frm.doc.custom_branch;
     if(frm.doc.appointment_type==='MCU') {
       frm.set_value('custom_priority', '4. MCU');
-      frm.set_value('custom_branch', branch);
+      frm.set_value('custom_branch', frm.branch);
+      frm.refresh_field("custom_branch");
       frm.enable_save();
     }
 	},
@@ -48,8 +48,10 @@ frappe.ui.form.on('Patient Appointment', {
     }
 	},
 	refresh(frm) {
+    frm.branch = frm.doc.custom_branch;
     frm.remove_custom_button('Vital Signs', 'Create');
     frm.remove_custom_button('Patient Encounter', 'Create');
+    frm.toggle_display('practitioner');
     frm.set_query('service_unit', () => {
       return{
         filters: {

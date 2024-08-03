@@ -109,12 +109,12 @@ const handleChildCustomButtons = (frm) => {
 	const buttons = [
 		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment', class: 'btn-primary', prompt: false },
 		{ label: 'Refuse', status: 'Refused', statuses: 'Wait for Room Assignment', class: 'btn-danger', prompt: false },
-		{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused, Finished, Rescheduled, Partial Finished', class: 'btn-warning', prompt: false },
+		{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused,Finished,Rescheduled,Partial Finished', class: 'btn-warning', prompt: false },
 		{ label: 'Remove from Room', status: 'Wait for Room Assignment', statuses: 'Waiting to Enter the Room', class: 'btn-warning', prompt: false },
 	];
 
 	// Remove existing custom buttons
-	grid.wrapper.find('.grid-footer').find('.btn-custom').remove();
+	grid.wrapper.find('.grid-footer').find('.btn-custom').hide();
 
 	// Add new custom buttons
 	buttons.forEach((button) => {
@@ -154,7 +154,9 @@ const updateChildStatus = (frm, grid, button, reason = null) => {
 		const child = locals[grid.doctype][selectedRows[0]];
 		frappe.model.set_value(child.doctype, child.name, 'status', button.status);
 		if (button.label === 'Assign') {
+			console.log('before assign_to_room')
 			assign_to_room(frm);
+			console.log('after assign_to_room')
 		} else if (button.label === 'Remove from Room') {
 			
 		}
@@ -330,73 +332,72 @@ function assign_to_room(frm) {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected();
 	if (selected_rows.length > 0 && selected_rows) {
 		const child = locals[frm.fields_dict['assignment_table'].grid.doctype][selected_rows];
-		//selected_rows.forEach((row) => {
-			//for each room define what method to call
-			frappe.db.get_value('Healthcare Service Unit', child.healthcare_service_unit, 'service_unit_type').then((hsu) => {
-				console.log(hsu.message.service_unit_type);
-				frappe.db
-					.get_value('Healthcare Service Unit Type', hsu.message.service_unit_type, 'custom_default_doctype')
-					.then((dt) => {
-						console.log(dt.message.custom_default_doctype);
-						// Lab
-						if (dt.message.custom_default_doctype == 'Sample Collection') {
-							frappe.call({
-								method: 'kms.api.create_sample_and_test',
-								args: {
-									disp: frm.doc.name,
-									selected: child.healthcare_service_unit,
-								},
-								callback: function (r) {
-									if (r.message) {
-										frappe.model.set_value(child.doctype, child.name, 'status', 'Waiting to Enter the Room');
-										frappe.model.set_value(child.doctype, child.name, 'reference_doctype', 'Sample Collection');
-										frappe.model.set_value(child.doctype, child.name, 'reference_doc', r.message.sample);
-										frm.save();
-										frappe.show_alert({
-											message: 'Room assigned successfully.',
-											indicator: 'green',
-										});
-									}
-								},
-							});
-						} else if (
-							dt.message.custom_default_doctype == 'Doctor Examination' ||
-							dt.message.custom_default_doctype == 'Nurse Examination' ||
-							dt.message.custom_default_doctype == 'Radiology'
-						) {
-							frappe.call({
-								method: 'kms.healthcare.create_service',
-								args: {
-									target: dt.message.custom_default_doctype,
-									source: frm.doc.doctype,
-									name: frm.doc.name,
-									room: child.healthcare_service_unit,
-								},
-								callback: function (r) {
-									console.log(r);
-									if (r.message) {
-										frappe.model.set_value(child.doctype, child.name, 'status', 'Waiting to Enter the Room');
-										frappe.model.set_value(
-											child.doctype,
-											child.name,
-											'reference_doctype',
-											dt.message.custom_default_doctype
-										);
-										frappe.model.set_value(child.doctype, child.name, 'reference_doc', r.message.docname);
-										frm.save();
-										frappe.show_alert({
-											message: 'Room assigned successfully.',
-											indicator: 'green',
-										});
-									}
-								},
-							});
-						} else {
-							frappe.throw('Room type default DocType has not been configured. Please contact Administrator.');
-						}
+		//for each room define what method to call
+		frappe.db.get_value('Healthcare Service Unit', child.healthcare_service_unit, 'service_unit_type').then((hsu) => {
+			frappe.db
+			.get_value('Healthcare Service Unit Type', hsu.message.service_unit_type, 'custom_default_doctype')
+			.then((dt) => {
+				console.log(dt.message.custom_default_doctype);
+				// Lab
+				if (dt.message.custom_default_doctype == 'Sample Collection') {
+					frappe.call({
+						method: 'kms.api.create_sample_and_test',
+						args: {
+							disp: frm.doc.name,
+							selected: child.healthcare_service_unit,
+						},
+						callback: function (r) {
+							if (r.message) {
+								frappe.model.set_value(child.doctype, child.name, 'status', 'Waiting to Enter the Room');
+								frappe.model.set_value(child.doctype, child.name, 'reference_doctype', 'Sample Collection');
+								frappe.model.set_value(child.doctype, child.name, 'reference_doc', r.message.sample);
+								frm.save();
+								frappe.show_alert({
+									message: 'Room assigned successfully.',
+									indicator: 'green',
+								});
+							}
+						},
 					});
+				} else if (
+					dt.message.custom_default_doctype == 'Doctor Examination' ||
+					dt.message.custom_default_doctype == 'Nurse Examination' ||
+					dt.message.custom_default_doctype == 'Radiology'
+				) {
+					console.log('before kms.healthcare.create_service')
+					frappe.call({
+						method: 'kms.healthcare.create_service',
+						args: {
+							target: dt.message.custom_default_doctype,
+							source: frm.doc.doctype,
+							name: frm.doc.name,
+							room: child.healthcare_service_unit,
+						},
+						callback: function (r) {
+							console.log('after kms.healthcare.create_service')
+							console.log(r);
+							if (r.message) {
+								frappe.model.set_value(child.doctype, child.name, 'status', 'Waiting to Enter the Room');
+								frappe.model.set_value(
+									child.doctype,
+									child.name,
+									'reference_doctype',
+									dt.message.custom_default_doctype
+								);
+								frappe.model.set_value(child.doctype, child.name, 'reference_doc', r.message.docname);
+								frm.save();
+								frappe.show_alert({
+									message: 'Room assigned successfully.',
+									indicator: 'green',
+								});
+							}
+						},
+					});
+				} else {
+					frappe.throw('Room type default DocType has not been configured. Please contact Administrator.');
+				}
 			});
-		//});
+		});
 	}
 }
 function ensure_single_selection(frm) {
