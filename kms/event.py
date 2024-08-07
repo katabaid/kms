@@ -221,47 +221,46 @@ def process_queue_pooling_and_dental(doc, method=None):
 @frappe.whitelist()
 def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
-  if doc.appointment_date == frappe.utils.nowdate() and doc.status == 'Checked In':
-    if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
-      disp_doc = frappe.get_doc({
-        'doctype': 'Dispatcher',
-        'patient_appointment': doc.name,
-        'date': frappe.utils.today(),
-        'status': 'In Queue'
-      })
-      for entry in doc.custom_mcu_exam_items:
-        new_entry = entry.as_dict()
-        new_entry.name = None
-        disp_doc.append('package', new_entry)
-      values = {'appt': doc.name, 'branch': doc.custom_branch}
-      rooms = frappe.db.sql("""select distinct tigsu.service_unit 
-        from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
-        where tma.parent = %(appt)s
-        and tma.parenttype = 'Patient Appointment'
-        and tma.examination_item = tigsu.parent
-        and tigsu.branch = %(branch)s
-        and tigsu.parenttype = 'Item'""", values=values, as_dict=1)
-      for room in rooms:
-        new_entry = dict()
-        new_entry['name'] = None
-        new_entry['healthcare_service_unit'] = room.service_unit
-        new_entry['status'] = 'Wait for Room Assignment'
-        disp_doc.append('assignment_table', new_entry)
-      disp_doc.save()
+  if  doc.status == 'Checked In':
+    if doc.appointment_date == frappe.utils.nowdate():
+      if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
+        disp_doc = frappe.get_doc({
+          'doctype': 'Dispatcher',
+          'patient_appointment': doc.name,
+          'date': frappe.utils.today(),
+          'status': 'In Queue'
+        })
+        for entry in doc.custom_mcu_exam_items:
+          new_entry = entry.as_dict()
+          new_entry.name = None
+          disp_doc.append('package', new_entry)
+        values = {'appt': doc.name, 'branch': doc.custom_branch}
+        rooms = frappe.db.sql("""select distinct tigsu.service_unit 
+          from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
+          where tma.parent = %(appt)s
+          and tma.parenttype = 'Patient Appointment'
+          and tma.examination_item = tigsu.parent
+          and tigsu.branch = %(branch)s
+          and tigsu.parenttype = 'Item'""", values=values, as_dict=1)
+        for room in rooms:
+          new_entry = dict()
+          new_entry['name'] = None
+          new_entry['healthcare_service_unit'] = room.service_unit
+          new_entry['status'] = 'Wait for Room Assignment'
+          disp_doc.append('assignment_table', new_entry)
+        disp_doc.save()
+      else:
+        vs_doc = frappe.get_doc(dict(
+          doctype = 'Vital Signs',
+          patient = doc.patient,
+          signs_date = frappe.utils.nowdate(),
+          signs_time = frappe.utils.nowtime(),
+          appointment = doc.name,
+          custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.service_unit, 'custom_branch'),
+          vital_signs_note = doc.notes)).insert();
+        vs_doc.save();
     else:
-      vs_doc = frappe.get_doc(dict(
-        doctype = 'Vital Signs',
-        patient = doc.patient,
-        signs_date = frappe.utils.nowdate(),
-        signs_time = frappe.utils.nowtime(),
-        appointment = doc.name,
-        custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.service_unit, 'custom_branch'),
-        vital_signs_note = doc.notes)).insert();
-      vs_doc.save();
-  elif doc.appointment_date != frappe.utils.nowdate():
-    frappe.throw("Appointment date must be the same as today's date.")
-  else:
-    pass
+      frappe.throw("Appointment date must be the same as today's date.")
 
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):

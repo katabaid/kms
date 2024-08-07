@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-07-19 09:43:02.941238",
+ "creation": "2024-08-01 17:52:03.383742",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -224,7 +224,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-19 09:43:02.941238",
+ "modified": "2024-08-06 11:07:48.763233",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

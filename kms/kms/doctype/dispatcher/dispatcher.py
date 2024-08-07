@@ -4,12 +4,37 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import today
+from frappe import _
 
 class Dispatcher(Document):
 	def after_insert(self):
 		if self.name:
 			self.queue_no = self.name.split('-')[-1].lstrip('0')
 			self.db_update()
+
+	def validate(self):
+		if self.status == "In Queue":
+			self.update_status_if_all_rooms_finished()
+		if self.status == "Finished" and self.status_changed_to_finished():
+			self.update_patient_appointment()
+
+	def update_status_if_all_rooms_finished(self):
+		finished_statuses = {'Refused', 'Finished', 'Rescheduled', 'Partial Finished'}
+		if all(room.status in finished_statuses for room in self.assignment_table):
+			self.status = 'Waiting to Finish'
+
+	def status_changed_to_finished(self):
+		doc_before_save = self.get_doc_before_save()
+		return doc_before_save and doc_before_save.status != "Finished"
+
+	def update_patient_appointment(self):
+		if self.patient_appointment:
+			appointment = frappe.get_doc("Patient Appointment", self.patient_appointment)
+			if appointment.status != "Closed":
+				appointment.db_set('status', 'Closed', commit=True)
+				frappe.msgprint(_("Patient Appointment {0} has been closed.").format(self.patient_appointment))
+		else:
+			frappe.msgprint(_("No linked Patient Appointment found."))
 
 @frappe.whitelist()
 def get_queued_branch(branch):

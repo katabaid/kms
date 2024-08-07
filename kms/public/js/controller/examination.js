@@ -184,7 +184,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
             showAlert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
             frm.reload_doc();
             if (utils.getDispatcher(frm) && reason) {
-              addComment(frm, reason);
+              addComment(frm, `${newStatus} for the reason of: ${reason}`);
             }
           }).catch((err) => {
             frappe.msgprint(__('Error updating status: {0}', [err.message]));
