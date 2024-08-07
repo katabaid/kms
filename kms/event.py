@@ -221,7 +221,7 @@ def process_queue_pooling_and_dental(doc, method=None):
 @frappe.whitelist()
 def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
-  if  doc.status == 'Checked In':
+  if doc.status == 'Checked In':
     if doc.appointment_date == frappe.utils.nowdate():
       if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
         disp_doc = frappe.get_doc({

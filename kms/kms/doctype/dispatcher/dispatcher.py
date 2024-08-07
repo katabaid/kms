@@ -30,9 +30,9 @@ class Dispatcher(Document):
 	def update_patient_appointment(self):
 		if self.patient_appointment:
 			appointment = frappe.get_doc("Patient Appointment", self.patient_appointment)
-			if appointment.status != "Closed":
-				appointment.db_set('status', 'Closed', commit=True)
-				frappe.msgprint(_("Patient Appointment {0} has been closed.").format(self.patient_appointment))
+			if appointment.status != "Closed" or appointment.status != "Checked Out":
+				appointment.db_set('status', 'Checked Out', commit=True)
+				frappe.msgprint(_("Patient Appointment {0} has been Checked Out.").format(self.patient_appointment))
 		else:
 			frappe.msgprint(_("No linked Patient Appointment found."))
 
@@ -61,6 +61,8 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 @frappe.whitelist()
 def finish_exam(dispatcher_id, hsu, status):
 	# Update Dispatcher Room status to Finished on selected room
+	if status == 'Removed':
+		status = 'Wait for Room Assignment'
 	frappe.db.sql(f"""
 		UPDATE `tabDispatcher Room` SET `status` = '{status}'  
 		WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'
@@ -166,6 +168,10 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 	else:
 		frappe.throw(f"Examination item {examination_item} does not exist.")
 	return f"""Updated Dispatcher item: {examination_item} status to {status}."""
+
+@frappe.whitelist()
+def add_additional():
+	pass
 
 def create_result_doc(doc, target):
 	doc = frappe.get_doc({

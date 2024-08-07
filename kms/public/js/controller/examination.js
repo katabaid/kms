@@ -150,7 +150,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         callback: function (r) {
           handleCallback(r);
           if (reason) {
-            addComment(frm, reason);
+            addComment(frm, `${newStatus} for the reason of: ${reason}`);
           }
         }
       });

@@ -69,16 +69,42 @@ frappe.ui.form.on('Patient Appointment', {
           frm.save();
       });
     }
-    frm.fields_dict['custom_mcu_exam_items'].grid.get_field('examination_item').get_query = function(doc, cdt, cdn) {
-      var child = locals[cdt][cdn];
-      return {
-        filters: [
-          ['Item', 'is_stock_item', '=', 0],
-          ['Item', 'disabled', '=', 0],
-          ['Item', 'is_sales_item', '=', 1],
-          ['Item', 'item_group', '!=', 'Exam Course'],
-        ]
-      };
-    };
+    if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In') && frm.doc.mcu) {
+      frm.add_custom_button(
+        'Additional MCU Item',
+        () =>{
+          let dialog = new frappe.ui.Dialog({
+            title: 'Enter Exam Item',
+            fields: [
+              {
+                fieldname: 'item',
+                label: 'Item',
+                fieldtype: 'Link',
+                options: 'Item',
+              }
+            ],
+            primary_action_label: 'Submit',
+            primary_action(values) {
+              frm.add_child('custom_additional_mcu_items', {
+                examination_item: values.item
+              })
+              dialog.hide()
+            }
+          });
+          dialog.show();
+          dialog.fields_dict['item'].get_query = () => {
+            return {
+              filters: [
+                ['Item', 'is_stock_item', '=', 0],
+                ['Item', 'disabled', '=', 0],
+                ['Item', 'is_sales_item', '=', 1],
+                ['Item', 'custom_is_mcu_item', '=', 1],
+                ['Item', 'item_group', '!=', 'Exam Course'],
+              ]
+            }
+          }
+        }
+      )
+    }
 	}
 });

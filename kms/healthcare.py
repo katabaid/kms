@@ -104,13 +104,64 @@ def remove_from_room(name, room):
 @frappe.whitelist()
 def retest(name, room):
   doc = frappe.get_doc('Dispatcher', name)
+  allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
+  hsu_exist = False
+  package_exist = False
   for hsu in doc.assignment_table:
     if hsu.healthcare_service_unit == room:
-      if hsu.status == 'Wait for Room Assignment':
-        hsu.status = 'Refused'
-        doc.save()
+      if hsu.status in allowed_status:
+        hsu.status = 'Wait for Room Assignment'
+        hsu.reference_doctype = ''
+        hsu.reference_doc = ''
+        hsu_exist = True
+        if doc.status != 'In Queue':
+          doc.status = 'In Queue'
+          doc.room = ''
       else:
-        frappe.throw(f"Cannot make patient refuse to test, because server status of room: {room} is {hsu.status}.")
+        frappe.throw(f"Cannot make patient retest, because server status of room: {room} is {hsu.status}.")
+  service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
+  target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
+  match target:
+    case 'Nurse Examination':
+      template_doctype = 'Nurse Examination Template'
+    case 'Doctor Examination':
+      template_doctype = 'Doctor Examination Template'
+    case 'Radiology':
+      template_doctype = 'Radiology Result Template'
+    case 'Sample Collection':
+      template_doctype = 'Lab Test Template'
+    case _:
+      frappe.throw(f"Undefined Default Doctype for room: {room}.")
+  if (template_doctype != 'Lab Test Template'):
+    exam_items = fetch_exam_items(name, room, doc.branch, template_doctype)
+    for package_item in doc.package:
+      for exam_item in exam_items:
+        if package_item.examination_item == exam_item.item_code:
+          package_item.status = 'Started'
+          package_exist = True
+  else:
+    query = f"""
+      SELECT examination_item AS item_code
+      FROM `tabMCU Appointment` tma
+      INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
+      INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
+      WHERE tma.parenttype = 'Dispatcher'
+      AND tma.parentfield = 'package'
+      AND tma.parent = '{name}'
+      AND tigsu.parenttype = 'Item'
+      AND tigsu.parentfield = 'custom_room'
+      AND tigsu.branch = '{doc.branch}'
+      AND tigsu.service_unit = '{room}'
+      """
+    exam_items = frappe.db.sql(query, as_dict=True)
+    for package_item in doc.package:
+      for exam_item in exam_items:
+        if package_item.examination_item == exam_item.item_code:
+          package_item.status = 'Started'
+          package_exist = True
+  if hsu_exist and package_exist:
+    doc.save()
+    return {'docname': doc.name}
 
 @frappe.whitelist()
 def refuse_to_test(name, room):
@@ -161,14 +212,10 @@ def refuse_to_test(name, room):
     exam_items = frappe.db.sql(query, as_dict=True)
     for package_item in doc.package:
       for exam_item in exam_items:
-        print(exam_item.item_code)
-        print(package_item.examination_item)
         if package_item.examination_item == exam_item.item_code:
-          print('menuju save.')
           package_item.status = 'Refused'
           package_exist = True
   if hsu_exist and package_exist:
-    print('save')
     doc.save()
     return {'docname': doc.name}
 
