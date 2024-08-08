@@ -17,6 +17,13 @@ class Dispatcher(Document):
 			self.update_status_if_all_rooms_finished()
 		if self.status == "Finished" and self.status_changed_to_finished():
 			self.update_patient_appointment()
+	
+	def before_insert(self):
+		if frappe.db.exists(self.doctype,{
+			'patient_appointment': self.patient_appointment,
+			'date': self.date,
+		}):
+			frappe.throw(_("Patient already in Dispatcher's queue."))
 
 	def update_status_if_all_rooms_finished(self):
 		finished_statuses = {'Refused', 'Finished', 'Rescheduled', 'Partial Finished'}
@@ -60,14 +67,14 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 
 @frappe.whitelist()
 def finish_exam(dispatcher_id, hsu, status):
-	# Update Dispatcher Room status to Finished on selected room
+	# 1. Change status if being removed from room
 	if status == 'Removed':
 		status = 'Wait for Room Assignment'
-	frappe.db.sql(f"""
-		UPDATE `tabDispatcher Room` SET `status` = '{status}'  
-		WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'
-		""")
-	# Update Dispatcher Room status to Finished on related room
+	# 2. Update Dispatcher Room status
+	## a. Update to Finished on selected room
+	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = '{status}'  
+		WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
+	## b. Update to Finished on related rooms
 	frappe.db.sql(f"""
 		UPDATE `tabDispatcher Room`
 		SET `status` = '{status}'
@@ -93,7 +100,8 @@ def finish_exam(dispatcher_id, hsu, status):
 			)
 		)
 	""")
-	#Verify whether all rooms are finished
+	# 3. Determine whether a patient is still have examination left
+	## a. Verify whether all rooms are finished
 	final_status = "('Finished', 'Refused', 'Rescheduled', 'Partial Finished')"
 	room_count = frappe.db.sql(f"""
 		SELECT COUNT(*) count FROM `tabDispatcher Room` WHERE `parent` = '{dispatcher_id}'
@@ -104,21 +112,20 @@ def finish_exam(dispatcher_id, hsu, status):
 		WHERE `parent` = '{dispatcher_id}' 
 		AND status in {final_status}
 		""", as_dict=True)[0]['count']
+	## b. Update Dispatcher status according to number of finished rooms
 	if room_count == finished_room_count:
-		# Update Dispatcher status to Finished
 		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'Waiting to Finish', room = ''  WHERE `name` = '{dispatcher_id}'""")
 	else:
-		# Update Dispatcher status to Finished
 		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
-	#check whether status is Finished/Partial Finished
+
+	# 4. On finished and submitted doctype, then create result doctype
 	if status == 'Finished' or status == 'Partial Finished':
-		pass
-		#doc = ''
-		#target = ''
-		#create_result_doc(doc, target)
-	#determine hsu is using what doctype
-	#get doctype's doc
-	#create_result_doc(doc, source, target)
+	## a. determine hsu is using what doctype
+	## b. get doctype's doc
+	## c. create_result_doc(doc, source, target)
+		doc = ''
+		target = ''
+		create_result_doc(doc, target)
 	return 'Finished.'
 
 @frappe.whitelist()
@@ -174,7 +181,7 @@ def add_additional():
 	pass
 
 def create_result_doc(doc, target):
-	doc = frappe.get_doc({
+	new_doc = frappe.get_doc({
 		'doctype': target,
 		'company': doc.company,
 		'branch': doc.branch,
@@ -191,7 +198,7 @@ def create_result_doc(doc, target):
 		'remark': doc.remark,
 		'exam': doc.name
 	})
-	doc.insert()
+	new_doc.insert()
 	#append items
 	#append result
 	#update exam_result in source ........

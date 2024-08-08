@@ -51,6 +51,9 @@ frappe.ui.form.on('Patient Appointment', {
     frm.branch = frm.doc.custom_branch;
     frm.remove_custom_button('Vital Signs', 'Create');
     frm.remove_custom_button('Patient Encounter', 'Create');
+    frm.remove_custom_button('Cancel');
+    frm.remove_custom_button('Reschedule');
+    frm.remove_custom_button('Patient History', 'View');
     frm.toggle_display('practitioner');
     frm.set_query('service_unit', () => {
       return{

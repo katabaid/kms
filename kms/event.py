@@ -297,9 +297,3 @@ def reset_status_after_amend(doc, method=None):
     for item in doc.custom_sample_table:
       item.status = 'Started'
     doc.save()
-
-@frappe.whitelist()
-def test_on_update(doc, method=None):
-  print('test_on_update')
-  print(doc)
-  print(method)

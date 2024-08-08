@@ -44,6 +44,7 @@ doctype_js = {
   "Product Bundle": "public/js/service_package.js",
   "Sample Collection": "public/js/sample_collection.js",
   "Quotation": "public/js/quotation.js",
+  "Patient History Settings": "public/js/patient_history_settings.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -134,9 +135,11 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
-  "Dispatcher Settings": {
-    "on_update": "kms.event.test_on_update",
-  },
+  "*": {
+		"on_submit": "kms.event.create_medical_record",
+		"on_cancel": "kms.event.delete_medical_record",
+		"on_update_after_submit": "kms.event.update_medical_record",
+	},
   "Item Price": {
     "on_change": "kms.event.update_item_price",
     "after_insert": "kms.event.update_item_price",
@@ -148,7 +151,7 @@ doc_events = {
   "Healthcare Service Unit": {
     "after_insert": "kms.event.update_healthcare_service_unit_branch",
   },
-  "Lab Tes": {
+  "Lab Test": {
     "on_update": "kms.event.warn_lab_test_exceed_max",
   },
   "Patient Encounter": {

@@ -10,6 +10,5 @@ class DispatcherSettings(Document):
 		if frappe.db.exists(self.doctype,{
 			'branch': self.branch,
 			'enable_date': self.enable_date,
-			'name': ('!=', self.name)
 		}):
 			frappe.throw(_("The combination of Branch and Enable Date must be unique."))
