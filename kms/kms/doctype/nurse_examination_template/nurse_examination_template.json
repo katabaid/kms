@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:template_name",
- "creation": "2024-07-01 09:59:40.220875",
+ "creation": "2024-08-08 11:48:47.571920",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -12,6 +12,7 @@
   "template_name",
   "item_code",
   "item_name",
+  "result_in_exam",
   "items",
   "normal_items",
   "consumables"
@@ -57,11 +58,17 @@
    "fieldtype": "Table",
    "label": "Normal Items",
    "options": "Nurse Examination Template Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "result_in_exam",
+   "fieldtype": "Check",
+   "label": "Result in Exam"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-09 18:07:10.911464",
+ "modified": "2024-08-09 13:05:28.671409",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template",

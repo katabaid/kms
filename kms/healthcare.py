@@ -252,26 +252,50 @@ def append_exam_results(doc, exam_items, template_doctype):
     else:
       doc.append('examination_item', {'template': exam_item.name})
       template_doc = frappe.get_doc(template_doctype, exam_item.name)
-      selectives = template_doc.get('items')
-      if selectives:
-        for selective in selectives:
-          doc.append('result', {
-            'result_line': selective.result_text,
-            'normal_value': selective.normal_value,
-            'result_check': selective.normal_value,
-            'item_code': exam_item.item_code,
-            'result_options': selective.result_select
-          })
-      non_selectives = template_doc.get('normal_items')
-      if non_selectives:
-        for non_selective in non_selectives:
-          doc.append('non_selective_result', {
-            'test_name': non_selective.heading_text,
-            'test_event': non_selective.lab_test_event,
-            'test_uom': non_selective.lab_test_uom,
-            'min_value': non_selective.min_value,
-            'max_value': non_selective.max_value
-          })
+      match template_doctype:
+        case 'Nurse Examination Template':
+          if template_doc.result_in_exam:
+            selectives = template_doc.get('items')
+            if selectives:
+              for selective in selectives:
+                doc.append('result', {
+                  'result_line': selective.result_text,
+                  'normal_value': selective.normal_value,
+                  'result_check': selective.normal_value,
+                  'item_code': exam_item.item_code,
+                  'result_options': selective.result_select
+                })
+            non_selectives = template_doc.get('normal_items')
+            if non_selectives:
+              for non_selective in non_selectives:
+                doc.append('non_selective_result', {
+                  'test_name': non_selective.heading_text,
+                  'test_event': non_selective.lab_test_event,
+                  'test_uom': non_selective.lab_test_uom,
+                  'min_value': non_selective.min_value,
+                  'max_value': non_selective.max_value
+                })
+        case 'Doctor Examination Template':
+          selectives = template_doc.get('items')
+          if selectives:
+            for selective in selectives:
+              doc.append('result', {
+                'result_line': selective.result_text,
+                'normal_value': selective.normal_value,
+                'result_check': selective.normal_value,
+                'item_code': exam_item.item_code,
+                'result_options': selective.result_select
+              })
+          non_selectives = template_doc.get('normal_items')
+          if non_selectives:
+            for non_selective in non_selectives:
+              doc.append('non_selective_result', {
+                'test_name': non_selective.heading_text,
+                'test_event': non_selective.lab_test_event,
+                'test_uom': non_selective.lab_test_uom,
+                'min_value': non_selective.min_value,
+                'max_value': non_selective.max_value
+              })
 
 def update_dispatcher_room_status(doc, room, doc_type, doc_name):
   for hsu in doc.assignment_table:

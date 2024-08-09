@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-07-19 09:49:32.274043",
+ "creation": "2024-08-08 11:48:52.493767",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -211,7 +211,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-28 18:37:29.530130",
+ "modified": "2024-08-09 15:04:53.406958",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",

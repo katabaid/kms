@@ -69,6 +69,18 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 	return 'Checked In.'
 
 @frappe.whitelist()
+def removed_from_room(dispatcher_id, hsu):
+	doc = frappe.get_doc('Dispatcher', dispatcher_id)
+	doc.status = 'In Queue'
+	doc.room = ''
+	for room in doc.assignment_table:
+		if room.healthcare_service_unit == hsu:
+			room.status = 'Wait for Room Assignment'
+			room.reference_doctype = ''
+	doc.save(ignore_permissions=True)
+	return 'Removed from examination room.'
+
+@frappe.whitelist()
 def finish_exam(dispatcher_id, hsu, status):
 	if status == 'Removed':
 		status = 'Wait for Room Assignment'
@@ -128,18 +140,6 @@ def finish_exam(dispatcher_id, hsu, status):
 	return 'Finished.'
 
 @frappe.whitelist()
-def removed_from_room(dispatcher_id, hsu):
-	doc = frappe.get_doc('Dispatcher', dispatcher_id)
-	doc.status = 'In Queue'
-	doc.room = ''
-	for room in doc.assignment_table:
-		if room.healthcare_service_unit == hsu:
-			room.status = 'Wait for Room Assignment'
-			room.reference_doctype = ''
-	doc.save(ignore_permissions=True)
-	return 'Removed from examination room.'
-
-@frappe.whitelist()
 def update_exam_item_status(dispatcher_id, examination_item, status):
 	flag = frappe.db.sql(
 		f"""
@@ -180,7 +180,9 @@ def add_additional():
 	pass
 
 def create_result_doc(doc, target):
+	not_created = True
 	if target == 'Lab Test':
+		not_created = False
 		new_doc = frappe.get_doc({
 			'doctype': target,
 			'company': doc.company,
@@ -196,8 +198,26 @@ def create_result_doc(doc, target):
 			#'service_unit': doc.service_unit,
 			#'created_date': today(),
 			#'remark': doc.remark,
-			#'exam': doc.name
+			'custom_sample_collection': doc.name
 		})
+		for item in doc.custom_sample_table:
+			if item.status == 'Finished':
+				pass
+				#lab_test = frappe.db.sql(f"""
+				#	SELECT name
+				#	FROM `tabLab Test Template` tltt
+				#	WHERE tltt.sample = '{item.sample}'
+				#	AND EXISTS (
+				#	SELECT 1 
+				#	FROM `tabMCU Appointment` tma 
+				#	WHERE tltt.name = tma.item_name
+				#	AND tma.parent = '{doc.custom_dispatcher}'
+				#	AND tma.parentfield = 'package'
+				#	AND tma.parenttype = 'Dispatcher')""", as_dict=True)
+				#for exam in lab_test:
+				#	new_doc.append('normal_test_items', {
+				#		'template': exam.name
+				#	})
 	else:
 		new_doc = frappe.get_doc({
 			'doctype': target,
@@ -224,6 +244,7 @@ def create_result_doc(doc, target):
 				})
 				match target:
 					case 'Radiology Result':
+						not_created = False
 						template = 'Radiology Result Template'
 						template_doc = frappe.get_doc(template, item.template)
 						for result in template_doc.items:
@@ -246,7 +267,29 @@ def create_result_doc(doc, target):
 								})
 					case 'Nurse Result':
 						template = 'Nurse Examination Template'
+						template_doc = frappe.get_doc(template, item.template)
+						if template_doc.result_in_exam:
+							not_created = True
+						else:
+							for result in template_doc.items:
+									new_doc.append('result', {
+										'result_line': result.result_text,
+										'normal_value': result.normal_value,
+										'result_check': result.normal_value,
+										'item_code': template_doc.item_code,
+										'result_options': result.result_select
+									})
+							for selective_result in template_doc.normal_items:
+									new_doc.append('selective_non_selective_result', {
+										'test_name': selective_result.heading_text,
+										'test_event': selective_result.lab_test_event,
+										'test_uom': selective_result.lab_test_uom,
+										'min_value': selective_result.min_value,
+										'max_value': selective_result.max_value
+									})
+							not_created = False
 					case _:
 						frappe.throw(f"Unhandled Template for {target} DocType.")
-	new_doc.insert(ignore_permissions=True)
+	if not not_created:
+		new_doc.insert(ignore_permissions=True)
 	return new_doc.name
