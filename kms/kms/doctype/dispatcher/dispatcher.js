@@ -5,6 +5,7 @@ frappe.ui.form.on('Dispatcher', {
 	refresh: function (frm) {
 		handleCustomButtons(frm);
 		handleHideChildButtons(frm, childTables);
+		handleChildRouteButtons(frm, childTableButton);
 		handleChildCustomButtons(frm);
 	},
 
@@ -40,6 +41,20 @@ const handleHideChildButtons = (frm, childTablesArray) => {
 	childTablesArray.forEach((field) => {
 		const grid = frm.fields_dict[field].grid;
 		grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+	});
+};
+
+const handleChildRouteButtons = (frm, childTables) => {
+	frm.fields_dict[childTables].grid.grid_rows.forEach(row => {
+		if (row.doc.reference_doctype) {
+			if (!row.wrapper.find('.custom-button').length) {
+				const button = $('<button class="btn btn-xs btn-primary custom-button">List</button>');
+				button.appendTo(row.wrapper);
+				button.on('click', function() {
+					frappe.set_route('List', row.doc.reference_doctype, {service_unit: row.doc.healthcare_service_unit});
+				});
+			}
+		}
 	});
 };
 

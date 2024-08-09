@@ -44,10 +44,8 @@ def get_exam_items(root):
   WHERE name != %s
   ORDER BY level, custom_bundle_position;
   """
-  
   exam_items = frappe.db.sql(exam_items_query, (root,), as_dict=True)
   exam_group = frappe.db.sql(exam_group_query, (root, root), as_dict=True)
-  
   return {'exam_items': exam_items, 'exam_group': exam_group}
 
 @frappe.whitelist()
@@ -60,7 +58,6 @@ def create_service(name, room):
     'Radiology': create_radiology_exam,
     'Sample Collection': create_sample_collection
   }
-  
   if target in target_map:
     result = target_map[target](name, room)
     if result:
@@ -84,8 +81,7 @@ def remove_from_room(name, room):
         hsu.status = 'Wait for Room Assignment'
         hsu.reference_doctype = ''
         hsu.reference_doc = ''
-        doc.save()
-
+        doc.save(ignore_permissions=True)
         exam_doc = frappe.get_doc(doc_type, doc_name)
         if doc_type == 'Sample Collection':
           exam_doc.custom_status = 'Removed'
@@ -95,7 +91,7 @@ def remove_from_room(name, room):
           exam_doc.status = 'Removed'
           for exam_item in exam_doc.examination_item:
             exam_item.status = 'Started'
-        exam_doc.save()
+        exam_doc.save(ignore_permissions=True)
         frappe.db.set_value(doc_type, doc_name, 'docstatus', '2')
         return {'docname': doc_name}
       else:
@@ -160,7 +156,7 @@ def retest(name, room):
           package_item.status = 'Started'
           package_exist = True
   if hsu_exist and package_exist:
-    doc.save()
+    doc.save(ignore_permissions=True)
     return {'docname': doc.name}
 
 @frappe.whitelist()
@@ -216,7 +212,7 @@ def refuse_to_test(name, room):
           package_item.status = 'Refused'
           package_exist = True
   if hsu_exist and package_exist:
-    doc.save()
+    doc.save(ignore_permissions=True)
     return {'docname': doc.name}
 
 def fetch_exam_items(name, room, branch, template_doctype):
@@ -256,7 +252,6 @@ def append_exam_results(doc, exam_items, template_doctype):
     else:
       doc.append('examination_item', {'template': exam_item.name})
       template_doc = frappe.get_doc(template_doctype, exam_item.name)
-      
       selectives = template_doc.get('items')
       if selectives:
         for selective in selectives:
@@ -266,8 +261,7 @@ def append_exam_results(doc, exam_items, template_doctype):
             'result_check': selective.normal_value,
             'item_code': exam_item.item_code,
             'result_options': selective.result_select
-            })
-              
+          })
       non_selectives = template_doc.get('normal_items')
       if non_selectives:
         for non_selective in non_selectives:
@@ -285,7 +279,7 @@ def update_dispatcher_room_status(doc, room, doc_type, doc_name):
       hsu.status = 'Waiting to Enter the Room'
       hsu.reference_doctype = doc_type
       hsu.reference_doc = doc_name
-      doc.save()
+      doc.save(ignore_permissions=True)
 
 def create_exam(name, room, doc_type, template_doctype):
   disp_doc = frappe.get_doc('Dispatcher', name)
@@ -295,7 +289,6 @@ def create_exam(name, room, doc_type, template_doctype):
     for hsu in disp_doc.assignment_table:
       if hsu.status in ['Waiting to Enter the Room', 'Ongoing Examination']:
         frappe.throw(f"""Patient {disp_doc.patient} is already in a queue for {hsu.healthcare_service_unit} room.""")
-
   appt_doc = frappe.get_doc('Patient Appointment', disp_doc.patient_appointment)
   doc_fields = {
     'doctype': doc_type,
@@ -313,13 +306,12 @@ def create_exam(name, room, doc_type, template_doctype):
   }
   if doc_type != 'Sample Collection':
     doc_fields['expected_result_date'] = today()
-  
   doc = frappe.get_doc(doc_fields)
   exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")
   append_exam_results(doc, exam_items, template_doctype)
-  doc.insert()
+  doc.insert(ignore_permissions=True)
   update_dispatcher_room_status(disp_doc, room, doc_type, doc.name)
   return {'docname': doc.name}
 

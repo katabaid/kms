@@ -12,32 +12,33 @@ frappe.ui.form.on('Room Assignment Tool', {
 	branch(frm) {
 		frm.trigger('load_rooms');
 	},
-
+	date(frm) {
+		frm.trigger('load_rooms');
+	},
 	load_rooms(frm){
-		if(!frm.doc.date||!frm.doc.branch){
-			return
+		if(frm.doc.date&&frm.doc.branch){	
+			frappe.call({
+				method: 'kms.kms.doctype.room_assignment_tool.room_assignment_tool.get_room',
+				args: {
+					branch: frm.doc.branch
+				},
+				callback: r => {
+					frm.rooms = r.message['unassigned'];
+					if (r.message['assigned'].length > 0) {
+						unhide_field('assigned_html');
+						frm.events.show_assigned_rooms(frm, r.message['assigned']);
+					} else {
+						hide_field('assigned_html');
+					}
+					if (r.message['unassigned'].length > 0) {
+						unhide_field('rooms_html');
+						frm.events.show_unassigned_rooms(frm, r.message['unassigned']);
+					} else {
+						hide_field('rooms_html');
+					}
+				}
+			})
 		}
-		frappe.call({
-			method: 'kms.kms.doctype.room_assignment_tool.room_assignment_tool.get_room',
-			args: {
-				branch: frm.doc.branch
-			},
-			callback: r => {
-				frm.rooms = r.message['unassigned'];
-				if (r.message['assigned'].length > 0) {
-					unhide_field('assigned_html');
-					frm.events.show_assigned_rooms(frm, r.message['assigned']);
-				} else {
-					hide_field('assigned_html');
-				}
-				if (r.message['unassigned'].length > 0) {
-					unhide_field('rooms_html');
-					frm.events.show_unassigned_rooms(frm, r.message['unassigned']);
-				} else {
-					hide_field('rooms_html');
-				}
-			}
-		})
 	},
 	set_primary_button(frm){
 		frm.disable_save();
@@ -184,10 +185,14 @@ frappe.ui.form.on('Room Assignment Tool', {
 		]
 	},
 	set_assigned_room(frm) {
-		frappe.db.get_doc('Room Assignment', null, {date: frm.doc.date, user: frappe.session.user}).then((doc) => {
-			if (doc) {
-				frm.set_value('assigned_room', doc.healthcare_service_unit);
-				frm.set_value('room_assignment_id', doc.name);
+		frappe.db
+		.get_value('Room Assignment', {date: frm.doc.date, user: frappe.session.user}, ['name', 'healthcare_service_unit'])
+		.then((doc) => {
+			if (doc.message) {
+				frm.set_value('assigned_room', doc.message.healthcare_service_unit);
+				frm.set_value('room_assignment_id', doc.message.name);
+			} else {
+				console.log('aaaa')
 			}
 		})
 	}

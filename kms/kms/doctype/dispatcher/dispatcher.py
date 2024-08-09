@@ -57,87 +57,86 @@ def get_queued_branch(branch):
 
 @frappe.whitelist()
 def checkin_room(dispatcher_id, hsu, doctype, docname):
-	frappe.db.sql(f"""
-		UPDATE `tabDispatcher Room` 
-		SET `status` = 'Ongoing Examination', reference_doctype = '{doctype}', reference_doc = '{docname}' 
-		WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'
-		""")
-	frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Room', room = '{hsu}' WHERE `name` = '{dispatcher_id}'""")
+	doc = frappe.get_doc('Dispatcher', dispatcher_id)
+	doc.status = 'In Room'
+	doc.room = hsu
+	for room in doc.assignment_table:
+		if room.healthcare_service_unit == hsu:
+			room.status = 'Ongoing Examination'
+			room.reference_doctype = doctype
+			room.reference_doc = docname
+	doc.save(ignore_permissions=True)
 	return 'Checked In.'
 
 @frappe.whitelist()
 def finish_exam(dispatcher_id, hsu, status):
-	# 1. Change status if being removed from room
 	if status == 'Removed':
 		status = 'Wait for Room Assignment'
-	# 2. Update Dispatcher Room status
-	## a. Update to Finished on selected room
-	frappe.db.sql(f"""UPDATE `tabDispatcher Room` SET `status` = '{status}'  
-		WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'""")
-	## b. Update to Finished on related rooms
-	frappe.db.sql(f"""
-		UPDATE `tabDispatcher Room`
-		SET `status` = '{status}'
-		WHERE `parent` = '{dispatcher_id}'
-		AND healthcare_service_unit IN (
-			SELECT service_unit FROM `tabItem Group Service Unit` tigsu1
-			WHERE tigsu1.parentfield = 'custom_room'
-			AND 	tigsu1.parenttype = 'Item'
-			AND 	tigsu1.service_unit != '{hsu}'
-			AND 	EXISTS (
-				SELECT 1 FROM `tabItem Group Service Unit` tigsu 
-				WHERE tigsu.parentfield = 'custom_room'
-				AND 	tigsu.parenttype = 'Item'
-				AND 	tigsu.service_unit = '{hsu}'
-				AND 	tigsu.parent = tigsu1.parent
-				AND EXISTS (
-					SELECT 1 FROM `tabMCU Appointment` tma
-					WHERE tma.parent = '{dispatcher_id}'
-					AND 	tma.parentfield = 'package'
-					AND		tma.parenttype = 'Dispatcher'
-					AND 	tma.examination_item = tigsu.parent
-				)
-			)
-		)
-	""")
-	# 3. Determine whether a patient is still have examination left
-	## a. Verify whether all rooms are finished
-	final_status = "('Finished', 'Refused', 'Rescheduled', 'Partial Finished')"
-	room_count = frappe.db.sql(f"""
-		SELECT COUNT(*) count FROM `tabDispatcher Room` WHERE `parent` = '{dispatcher_id}'
-		""", as_dict=True)[0]['count']
-	finished_room_count = frappe.db.sql(f"""
-		SELECT COUNT(*) count 
-		FROM `tabDispatcher Room` 
-		WHERE `parent` = '{dispatcher_id}' 
-		AND status in {final_status}
-		""", as_dict=True)[0]['count']
-	## b. Update Dispatcher status according to number of finished rooms
-	if room_count == finished_room_count:
-		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'Waiting to Finish', room = ''  WHERE `name` = '{dispatcher_id}'""")
-	else:
-		frappe.db.sql(f"""UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'""")
 
-	# 4. On finished and submitted doctype, then create result doctype
+	doc = frappe.get_doc('Dispatcher', dispatcher_id)
+
+	room_count = 0
+	final_count = 0
+	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished']
+	target = ''
+
+	related_rooms = frappe.db.sql(f"""
+		SELECT service_unit FROM `tabItem Group Service Unit` tigsu1
+		WHERE tigsu1.parentfield = 'custom_room'
+		AND 	tigsu1.parenttype = 'Item'
+		AND 	tigsu1.service_unit != '{hsu}'
+		AND 	EXISTS (
+			SELECT 1 FROM `tabItem Group Service Unit` tigsu 
+			WHERE tigsu.parentfield = 'custom_room'
+			AND 	tigsu.parenttype = 'Item'
+			AND 	tigsu.service_unit = '{hsu}'
+			AND 	tigsu.parent = tigsu1.parent
+			AND EXISTS (
+				SELECT 1 FROM `tabMCU Appointment` tma
+				WHERE tma.parent = '{dispatcher_id}'
+				AND 	tma.parentfield = 'package'
+				AND		tma.parenttype = 'Dispatcher'
+				AND 	tma.examination_item = tigsu.parent
+			)
+		)""", pluck = 'service_unit')
+
+	for room in doc.assignment_table:
+		room_count += 1
+		if room.status in final_status:
+			final_count += 1
+		if room.healthcare_service_unit == hsu:
+			doctype = room.reference_doctype
+			docname = room.reference_doc
+			room.status = status
+		if room.healthcare_service_unit in related_rooms:
+			room.status = status
+	doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
+	doc.room = ''
+	doc.save(ignore_permissions=True)
+
 	if status == 'Finished' or status == 'Partial Finished':
-	## a. determine hsu is using what doctype
-	## b. get doctype's doc
-	## c. create_result_doc(doc, source, target)
-		doc = ''
-		target = ''
-		create_result_doc(doc, target)
+		doc = frappe.get_doc(doctype, docname)
+		match doctype:
+			case 'Radiology':
+				target = 'Radiology Result'
+			case 'Nurse Examination':
+				target = 'Nurse Result'
+			case 'Sample Collection':
+				target = 'Lab Test'
+		if target:
+			create_result_doc(doc, target)
 	return 'Finished.'
 
 @frappe.whitelist()
 def removed_from_room(dispatcher_id, hsu):
-	frappe.db.sql(f"""
-		UPDATE `tabDispatcher Room` 
-		SET `status` = 'Wait for Room Assignment', reference_doctype = '', reference_doc = ''  
-		WHERE `parent` = '{dispatcher_id}' and healthcare_service_unit = '{hsu}'
-		""")
-	frappe.db.sql(f"""
-		UPDATE `tabDispatcher` SET `status` = 'In Queue', room = '' WHERE `name` = '{dispatcher_id}'
-		""")
+	doc = frappe.get_doc('Dispatcher', dispatcher_id)
+	doc.status = 'In Queue'
+	doc.room = ''
+	for room in doc.assignment_table:
+		if room.healthcare_service_unit == hsu:
+			room.status = 'Wait for Room Assignment'
+			room.reference_doctype = ''
+	doc.save(ignore_permissions=True)
 	return 'Removed from examination room.'
 
 @frappe.whitelist()
@@ -181,24 +180,50 @@ def add_additional():
 	pass
 
 def create_result_doc(doc, target):
-	new_doc = frappe.get_doc({
-		'doctype': target,
-		'company': doc.company,
-		'branch': doc.branch,
-		'queue_pooling': doc.queue_pooling,
-		'patient': doc.patient,
-		'patient_name': doc.patient_name,
-		'patient_sex': doc.patient_sex,
-		'patient_age': doc.patient_age,
-		'patient_encounter': doc.patient_encounter,
-		'appointment': doc.appointment,
-		'dispatcher': doc.dispatcher,
-		'service_unit': doc.service_unit,
-		'created_date': today(),
-		'remark': doc.remark,
-		'exam': doc.name
-	})
-	new_doc.insert()
+	if target == 'Lab Test':
+		new_doc = frappe.get_doc({
+			'doctype': target,
+			'company': doc.company,
+			'custom_branch': doc.custom_branch,
+			#'queue_pooling': doc.queue_pooling,
+			'patient': doc.patient,
+			'patient_name': doc.patient_name,
+			'patient_sex': doc.patient_sex,
+			'patient_age': doc.patient_age,
+			#'patient_encounter': doc.patient_encounter,
+			'custom_appointment': doc.custom_appointment,
+			#'dispatcher': doc.dispatcher,
+			#'service_unit': doc.service_unit,
+			#'created_date': today(),
+			#'remark': doc.remark,
+			#'exam': doc.name
+		})
+	else:
+		new_doc = frappe.get_doc({
+			'doctype': target,
+			'company': doc.company,
+			'branch': doc.branch,
+			'queue_pooling': doc.queue_pooling,
+			'patient': doc.patient,
+			'patient_name': doc.patient_name,
+			'patient_sex': doc.patient_sex,
+			'patient_age': doc.patient_age,
+			'patient_encounter': doc.patient_encounter,
+			'appointment': doc.appointment,
+			'dispatcher': doc.dispatcher,
+			'service_unit': doc.service_unit,
+			'created_date': today(),
+			'remark': doc.remark,
+			'exam': doc.name
+		})
+		for item in doc.examination_item:
+			if item.status == 'Finished':
+				new_doc.append('examination_item', {
+					'status': 'Started',
+					'template': item.template
+				})
+	new_doc.insert(ignore_permissions=True)
+	return new_doc.name
 	#append items
 	#append result
 	#update exam_result in source ........
