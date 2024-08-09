@@ -45,7 +45,7 @@ def get_exam_items(root):
   ORDER BY level, custom_bundle_position;
   """
   exam_items = frappe.db.sql(exam_items_query, (root,), as_dict=True)
-  exam_group = frappe.db.sql(exam_group_query, (root, root), as_dict=True)
+  exam_group = frappe.db.sql(exam_group_query, (root, root), as_dict=True)  
   return {'exam_items': exam_items, 'exam_group': exam_group}
 
 @frappe.whitelist()

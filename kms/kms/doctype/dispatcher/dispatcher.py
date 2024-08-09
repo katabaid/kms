@@ -222,9 +222,31 @@ def create_result_doc(doc, target):
 					'status': 'Started',
 					'template': item.template
 				})
+				match target:
+					case 'Radiology Result':
+						template = 'Radiology Result Template'
+						template_doc = frappe.get_doc(template, item.template)
+						for result in template_doc.items:
+							if result.sex:
+								if result.sex == doc.patient_sex:
+									new_doc.append('result', {
+										'result_line': result.result_text,
+										'normal_value': result.normal_value,
+										'result_check': result.normal_value,
+										'item_code': template_doc.item_code,
+										'result_options': result.result_select
+									})
+							else:
+								new_doc.append('result', {
+									'result_line': result.result_text,
+									'normal_value': result.normal_value,
+									'result_check': result.normal_value,
+									'item_code': template_doc.item_code,
+									'result_options': result.result_select
+								})
+					case 'Nurse Result':
+						template = 'Nurse Examination Template'
+					case _:
+						frappe.throw(f"Unhandled Template for {target} DocType.")
 	new_doc.insert(ignore_permissions=True)
 	return new_doc.name
-	#append items
-	#append result
-	#update exam_result in source ........
-	#check whether source is finished/partial finished .........
