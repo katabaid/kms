@@ -301,156 +301,156 @@ def update_quo_status(name):
 #    order by 1, 2, 4""", as_dict=True)
 #  return items
 #end
-def extract_age_from_string(age_string):
-  age_pattern = re.compile(r'(\d+) Years?')
-  match = age_pattern.match(age_string)
-  if match:
-    return int(match.group(1))
-  else:
-    return None
+#def extract_age_from_string(age_string):
+#  age_pattern = re.compile(r'(\d+) Years?')
+#  match = age_pattern.match(age_string)
+#  if match:
+#    return int(match.group(1))
+#  else:
+#    return None
     
-@frappe.whitelist()
-def create_sample_and_test(selected, disp="", enc=""):
-  if enc:
-    trtrt = json.loads(selected)
-    print(trtrt)
-    params = ','.join([f"'{s}'" for s in trtrt])
-    print(params)
-    print(type(params))
-    enc_doc = frappe.get_doc('Patient Encounter', enc)
-    appt_doc = frappe.get_doc('Patient Appointment', enc_doc.appointment) 
-    lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
-    lab_doc = frappe.get_doc({
-      'doctype': 'Lab Test',
-      'custom_appointment': appt_doc.name,
-      'patient': appt_doc.patient,
-      'patient_name': appt_doc.patient_name,
-      'patient_age': appt_doc.patient_age,
-      'patient_sex': appt_doc.patient_sex,
-      'company': appt_doc.company,
-      'custom_branch': appt_doc.custom_branch,
-      'service_unit': lab,
-      'normal_toggle': 1,
-      'practitioner': enc_doc.practitioner
-    })
-  if disp:
-    appt = frappe.db.get_value('Dispatcher', disp, 'patient_appointment')
-    appt_doc = frappe.get_doc('Patient Appointment', appt) 
-    param = frappe.db.sql(f"""
-      SELECT GROUP_CONCAT(quote(tma.item_name)) params 
-      from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
-      where tma.parenttype = 'Dispatcher'
-      and tma.parentfield = 'package'
-      and tma.parent = '{disp}'
-      and tma.examination_item = tigsu.parent  
-      and tigsu.service_unit = '{selected}'""")
-    params = ','.join(str(y) for x in param for y in x if len(x) > 0)
-    print(selected)
-    print(params)
-    print(type(params))
-    lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
-    lab_doc = frappe.get_doc({
-      'doctype': 'Lab Test',
-      'custom_appointment': appt_doc.name,
-      'patient': appt_doc.patient,
-      'patient_name': appt_doc.patient_name,
-      'patient_age': appt_doc.patient_age,
-      'patient_sex': appt_doc.patient_sex,
-      'company': appt_doc.company,
-      'custom_branch': appt_doc.custom_branch,
-      'service_unit': lab,
-      'normal_toggle': 1
-    })
-     
-  for test in params.replace("'", "").split(','):
-    normal = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabNormal Test Template` WHERE parent = '{test}')""")[0][0]
-    selective = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabLab Test Select Template` WHERE parent = '{test}')""")[0][0]
-    age = extract_age_from_string(appt_doc.patient_age)
-    print(test, normal, selective, age)
-    if normal:
-      minmax = frappe.db.sql(f"""
-        WITH cte AS (
-          SELECT
-            parent,
-            lab_test_event,
-            custom_age,
-            custom_sex,
-            custom_min_value,
-            custom_max_value,
-            MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
-          FROM
-            `tabNormal Test Template`
-        )
-        SELECT
-          lab_test_event,
-          COALESCE(
-            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age < {age}))
-          ) AS custom_min_value,
-          COALESCE(
-            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age < {age}))
-          ) AS custom_max_value
-        FROM
-          cte c
-        WHERE
-          parent = '{test}'
-          AND custom_sex = '{appt_doc.patient_sex}'
-        GROUP BY
-          lab_test_event;
-      """, as_dict=True)
-      min_val = 0
-      max_val = 0
-      for mm in minmax:
-        lab_doc.append('normal_test_items', {'lab_test_name': test, 'custom_min_value': mm.custom_min_value, 'custom_max_value': mm.custom_max_value, 'lab_test_event': mm.lab_test_event})
-    if selective:
-      sel_test = frappe.db.sql(f"""SELECT result_select FROM `tabLab Test Select Template` WHERE parent = '{test}'""", as_dict=True)
-      for sel in sel_test:
-        lab_doc.append('custom_selective_test_result', {'event': test, 'result_set': sel.result_select, 'result': sel.result_select.splitlines()[0]})
-  lab_doc.insert()
-
-  if disp:
-    sample_doc = frappe.get_doc({
-      'doctype': 'Sample Collection',
-      'custom_appointment': appt_doc.name,
-      'patient': appt_doc.patient,
-      'patient_name': appt_doc.patient_name,
-      'patient_age': appt_doc.patient_age,
-      'patient_sex': appt_doc.patient_sex,
-      'company': appt_doc.company,
-      'custom_branch': appt_doc.custom_branch,
-      'custom_service_unit': selected,
-      'custom_lab_test': lab_doc.name,
-      'custom_dispatcher': disp,
-      'custom_status': 'Started'
-    })
-  if enc:
-    sample_doc = frappe.get_doc({
-      'doctype': 'Sample Collection',
-      'custom_appointment': appt_doc.name,
-      'patient': appt_doc.patient,
-      'patient_name': appt_doc.patient_name,
-      'patient_age': appt_doc.patient_age,
-      'patient_sex': appt_doc.patient_sex,
-      'company': appt_doc.company,
-      'custom_branch': appt_doc.custom_branch,
-      'custom_service_unit': lab,
-      'custom_lab_test': lab_doc.name,
-      'custom_status': 'Started'
-    })
-  
-  samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in ({params}) group by 1""", as_dict=True)
-  for smpl in samples:
-    sample_doc.append('custom_sample_table', {'sample': smpl.sample, 'quantity': smpl.qty, 'status':'Started'})
-  sample_doc.insert()
-
-  if enc:
-    for item in params.replace("'", "").split(','):
-      enc_doc.append ("lab_test_prescription", {'lab_test_code':item, 'lab_test_name': item, 'custom_sample_collection': sample_doc.name, 'custom_lab_test': lab_doc.name})
-    enc_doc.save()
-
-  message = {'sample': sample_doc.name, 'lab': lab_doc.name}
-  return message
+#@frappe.whitelist()
+#def create_sample_and_test(selected, disp="", enc=""):
+#  if enc:
+#    trtrt = json.loads(selected)
+#    print(trtrt)
+#    params = ','.join([f"'{s}'" for s in trtrt])
+#    print(params)
+#    print(type(params))
+#    enc_doc = frappe.get_doc('Patient Encounter', enc)
+#    appt_doc = frappe.get_doc('Patient Appointment', enc_doc.appointment) 
+#    lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
+#    lab_doc = frappe.get_doc({
+#      'doctype': 'Lab Test',
+#      'custom_appointment': appt_doc.name,
+#      'patient': appt_doc.patient,
+#      'patient_name': appt_doc.patient_name,
+#      'patient_age': appt_doc.patient_age,
+#      'patient_sex': appt_doc.patient_sex,
+#      'company': appt_doc.company,
+#      'custom_branch': appt_doc.custom_branch,
+#      'service_unit': lab,
+#      'normal_toggle': 1,
+#      'practitioner': enc_doc.practitioner
+#    })
+#  if disp:
+#    appt = frappe.db.get_value('Dispatcher', disp, 'patient_appointment')
+#    appt_doc = frappe.get_doc('Patient Appointment', appt) 
+#    param = frappe.db.sql(f"""
+#      SELECT GROUP_CONCAT(quote(tma.item_name)) params 
+#      from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
+#      where tma.parenttype = 'Dispatcher'
+#      and tma.parentfield = 'package'
+#      and tma.parent = '{disp}'
+#      and tma.examination_item = tigsu.parent  
+#      and tigsu.service_unit = '{selected}'""")
+#    params = ','.join(str(y) for x in param for y in x if len(x) > 0)
+#    print(selected)
+#    print(params)
+#    print(type(params))
+#    lab = frappe.db.get_value('Branch', appt_doc.custom_branch, 'custom_default_lab')
+#    lab_doc = frappe.get_doc({
+#      'doctype': 'Lab Test',
+#      'custom_appointment': appt_doc.name,
+#      'patient': appt_doc.patient,
+#      'patient_name': appt_doc.patient_name,
+#      'patient_age': appt_doc.patient_age,
+#      'patient_sex': appt_doc.patient_sex,
+#      'company': appt_doc.company,
+#      'custom_branch': appt_doc.custom_branch,
+#      'service_unit': lab,
+#      'normal_toggle': 1
+#    })
+#     
+#  for test in params.replace("'", "").split(','):
+#    normal = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabNormal Test Template` WHERE parent = '{test}')""")[0][0]
+#    selective = frappe.db.sql(f"""SELECT EXISTS(SELECT * FROM `tabLab Test Select Template` WHERE parent = '{test}')""")[0][0]
+#    age = extract_age_from_string(appt_doc.patient_age)
+#    print(test, normal, selective, age)
+#    if normal:
+#      minmax = frappe.db.sql(f"""
+#        WITH cte AS (
+#          SELECT
+#            parent,
+#            lab_test_event,
+#            custom_age,
+#            custom_sex,
+#            custom_min_value,
+#            custom_max_value,
+#            MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
+#          FROM
+#            `tabNormal Test Template`
+#        )
+#        SELECT
+#          lab_test_event,
+#          COALESCE(
+#            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+#            (SELECT custom_min_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age < {age}))
+#          ) AS custom_min_value,
+#          COALESCE(
+#            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+#            (SELECT custom_max_value FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{test}' AND lab_test_event = c.lab_test_event AND custom_sex = '{appt_doc.patient_sex}' AND max_age < {age}))
+#          ) AS custom_max_value
+#        FROM
+#          cte c
+#        WHERE
+#          parent = '{test}'
+#          AND custom_sex = '{appt_doc.patient_sex}'
+#        GROUP BY
+#          lab_test_event;
+#      """, as_dict=True)
+#      min_val = 0
+#      max_val = 0
+#      for mm in minmax:
+#        lab_doc.append('normal_test_items', {'lab_test_name': test, 'custom_min_value': mm.custom_min_value, 'custom_max_value': mm.custom_max_value, 'lab_test_event': mm.lab_test_event})
+#    if selective:
+#      sel_test = frappe.db.sql(f"""SELECT result_select FROM `tabLab Test Select Template` WHERE parent = '{test}'""", as_dict=True)
+#      for sel in sel_test:
+#        lab_doc.append('custom_selective_test_result', {'event': test, 'result_set': sel.result_select, 'result': sel.result_select.splitlines()[0]})
+#  lab_doc.insert()
+#
+#  if disp:
+#    sample_doc = frappe.get_doc({
+#      'doctype': 'Sample Collection',
+#      'custom_appointment': appt_doc.name,
+#      'patient': appt_doc.patient,
+#      'patient_name': appt_doc.patient_name,
+#      'patient_age': appt_doc.patient_age,
+#      'patient_sex': appt_doc.patient_sex,
+#      'company': appt_doc.company,
+#      'custom_branch': appt_doc.custom_branch,
+#      'custom_service_unit': selected,
+#      'custom_lab_test': lab_doc.name,
+#      'custom_dispatcher': disp,
+#      'custom_status': 'Started'
+#    })
+#  if enc:
+#    sample_doc = frappe.get_doc({
+#      'doctype': 'Sample Collection',
+#      'custom_appointment': appt_doc.name,
+#      'patient': appt_doc.patient,
+#      'patient_name': appt_doc.patient_name,
+#      'patient_age': appt_doc.patient_age,
+#      'patient_sex': appt_doc.patient_sex,
+#      'company': appt_doc.company,
+#      'custom_branch': appt_doc.custom_branch,
+#      'custom_service_unit': lab,
+#      'custom_lab_test': lab_doc.name,
+#      'custom_status': 'Started'
+#    })
+#  
+#  samples = frappe.db.sql(f"""select sample, sum(sample_qty) qty from `tabLab Test Template` tltt where name in ({params}) group by 1""", as_dict=True)
+#  for smpl in samples:
+#    sample_doc.append('custom_sample_table', {'sample': smpl.sample, 'quantity': smpl.qty, 'status':'Started'})
+#  sample_doc.insert()
+#
+#  if enc:
+#    for item in params.replace("'", "").split(','):
+#      enc_doc.append ("lab_test_prescription", {'lab_test_code':item, 'lab_test_name': item, 'custom_sample_collection': sample_doc.name, 'custom_lab_test': lab_doc.name})
+#    enc_doc.save()
+#
+#  message = {'sample': sample_doc.name, 'lab': lab_doc.name}
+#  return message
 
 #@frappe.whitelist()
 #def get_items_to_create_lab():
