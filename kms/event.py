@@ -130,10 +130,11 @@ def update_healthcare_service_unit_branch(doc, method=None):
 def warn_lab_test_exceed_max(doc, method=None):
   ################Doctype: Lab Tes################
   for row in doc.get("normal_test_items"):
-    if row.result_value > row.custom_max_value:
-      frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which exceeds max value {row.custom_max_value}", alert=True)
-    elif row.result_value < row.custom_min_value:
-      frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which is less than min value {row.custom_min_value}", alert=True)
+    if row.result_value:
+      if row.result_value > row.custom_max_value:
+        frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which exceeds max value {row.custom_max_value}", alert=True)
+      elif row.result_value < row.custom_min_value:
+        frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which is less than min value {row.custom_min_value}", alert=True)
 
 @frappe.whitelist()
 def unlink_queue_pooling_before_delete(doc, method=None):

@@ -1,7 +1,7 @@
 # Copyright (c) 2024, GIS and contributors
 # For license information, please see license.txt
 
-import frappe
+import frappe, re
 from frappe.model.document import Document
 from frappe.utils import today
 from frappe import _
@@ -127,7 +127,7 @@ def finish_exam(dispatcher_id, hsu, status):
 	doc.save(ignore_permissions=True)
 
 	if status == 'Finished' or status == 'Partial Finished':
-		doc = frappe.get_doc(doctype, docname)
+		source_doc = frappe.get_doc(doctype, docname)
 		match doctype:
 			case 'Radiology':
 				target = 'Radiology Result'
@@ -136,7 +136,10 @@ def finish_exam(dispatcher_id, hsu, status):
 			case 'Sample Collection':
 				target = 'Lab Test'
 		if target:
-			create_result_doc(doc, target)
+			source_doc_name = create_result_doc(source_doc, target)
+			if target != 'Lab Test':
+				source_doc.exam_result = source_doc_name
+				source_doc.save(ignore_permissions=True)
 	return 'Finished.'
 
 @frappe.whitelist()
@@ -202,22 +205,73 @@ def create_result_doc(doc, target):
 		})
 		for item in doc.custom_sample_table:
 			if item.status == 'Finished':
-				pass
-				#lab_test = frappe.db.sql(f"""
-				#	SELECT name
-				#	FROM `tabLab Test Template` tltt
-				#	WHERE tltt.sample = '{item.sample}'
-				#	AND EXISTS (
-				#	SELECT 1 
-				#	FROM `tabMCU Appointment` tma 
-				#	WHERE tltt.name = tma.item_name
-				#	AND tma.parent = '{doc.custom_dispatcher}'
-				#	AND tma.parentfield = 'package'
-				#	AND tma.parenttype = 'Dispatcher')""", as_dict=True)
-				#for exam in lab_test:
-				#	new_doc.append('normal_test_items', {
-				#		'template': exam.name
-				#	})
+				lab_test = frappe.db.sql(f"""
+					SELECT name
+					FROM `tabLab Test Template` tltt
+					WHERE tltt.sample = '{item.sample}'
+					AND EXISTS (
+					SELECT 1 
+					FROM `tabMCU Appointment` tma 
+					WHERE tltt.name = tma.item_name
+					AND tma.parent = '{doc.custom_dispatcher}'
+					AND tma.parentfield = 'package'
+					AND tma.parenttype = 'Dispatcher')""", pluck='name')
+				for exam in lab_test:
+					template_doc = frappe.get_doc('Lab Test Template', exam)
+					non_selective = template_doc.get('normal_test_templates')
+					selective = template_doc.get('custom_selective')
+					if non_selective:
+						match = re.compile(r'(\d+) Years?').match(doc.patient_age)
+						age = int(match.group(1)) if match else None
+						minmax = frappe.db.sql(f"""
+							WITH cte AS (
+								SELECT
+									parent,
+									lab_test_event,
+									lab_test_uom,
+									custom_age,
+									custom_sex,
+									custom_min_value,
+									custom_max_value,
+									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
+								FROM
+									`tabNormal Test Template`
+							)
+							SELECT
+								lab_test_event,
+								lab_test_uom,
+								COALESCE(
+									(SELECT custom_min_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+									(SELECT custom_min_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age < {age}))
+								) AS custom_min_value,
+								COALESCE(
+									(SELECT custom_max_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
+									(SELECT custom_max_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age < {age}))
+								) AS custom_max_value
+							FROM
+								cte c
+							WHERE
+								parent = '{exam}'
+								AND custom_sex = '{doc.patient_sex}'
+							GROUP BY
+								lab_test_event;
+						""", as_dict=True)
+						for mm in minmax:
+							new_doc.append('normal_test_items', {
+								'lab_test_name': exam, 
+								'custom_min_value': mm.custom_min_value, 
+								'custom_max_value': mm.custom_max_value, 
+								'lab_test_event': mm.lab_test_event, 
+								'lab_test_uom': mm.lab_test_uom
+							})
+					if selective:
+						for sel in template_doc.custom_selective:
+							new_doc.append('custom_selective_test_result', {
+								'event': exam,
+								'result_set': sel.result_select, 
+								'result': sel.result_select.splitlines()[0]
+							})
+		#new_doc.insert(ignore_permissions=True)
 	else:
 		new_doc = frappe.get_doc({
 			'doctype': target,

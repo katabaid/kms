@@ -31,22 +31,24 @@ app_include_js = "/assets/kms/js/controller/examination.js"
 
 # include js in doctype views
 doctype_js = {
-  "Patient Encounter": "public/js/patient_encounter.js",
   "Blanket Order": "public/js/blanket_order.js",
+  "Sales Order": "public/js/sales_order.js",
   "Customer": "public/js/customer.js",
+  "Product Bundle": "public/js/service_package.js",
+  "Quotation": "public/js/quotation.js",
   "Shift Type": "public/js/shift_type.js",
   "Leave Application": "public/js/leave_application.js",
   "Patient": "public/js/patient.js",
-  "Sales Order": "public/js/sales_order.js",
-  "Clinical Procedure": "public/js/clinical_procedure.js",
-  "Lab Test": "public/js/lab_test.js",
+  "Patient Encounter": "public/js/patient_encounter.js",
   "Patient Appointment": "public/js/patient_appointment.js",
-  "Product Bundle": "public/js/service_package.js",
   "Sample Collection": "public/js/sample_collection.js",
-  "Quotation": "public/js/quotation.js",
+  "Lab Test": "public/js/lab_test.js",
+  "Clinical Procedure": "public/js/clinical_procedure.js",
   "Patient History Settings": "public/js/patient_history_settings.js",
 }
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_list_js = {
+  "Healthcare Service Unit" : "public/js/healthcare_service_unit_list.js",
+}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
