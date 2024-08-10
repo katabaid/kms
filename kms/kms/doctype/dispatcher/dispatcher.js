@@ -70,8 +70,8 @@ const handleChildCustomButtons = (frm) => {
 						(values) => { updateChildStatus(frm, grid, button, values.reason); },
 						__('Provide a Reason'),
 						__('Submit')
-						);
-					} else {
+					);
+				} else {
 					updateChildStatus(frm, grid, button);
 				}
 			},
