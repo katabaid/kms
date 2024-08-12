@@ -1,12 +1,8 @@
-// Custom before_submit function for Doctor Examination
 const customBeforeSubmit = (frm) => {
-  // Your custom before_submit logic here
   console.log('Custom before_submit logic for Doctor Examination');
-  // Example custom logic
   if (frm.doc.some_field === 'some_value') {
     frappe.throw('Cannot submit when some_field is some_value');
   } else {
-    // Call the common logic if needed
     doctorExaminationController.utils.handleBeforeSubmit(frm);
   }
 };
@@ -21,24 +17,18 @@ let mcu_settings = [];
 frappe.ui.form.on('Doctor Examination', {
   ...doctorExaminationController,
   before_submit: function (frm) {
-    // Call the custom before_submit function
     doctorExaminationController.config.before_submit(frm);
-    // You can also add more logic here if needed
   },
 
   before_load: function (frm) {
     frappe.call({
       method: 'kms.healthcare.get_mcu_settings',
-      callback: (r) => {
-        if (r.message) {
-          mcu_settings = r.message;
-        }
-      }
+      callback: (r) => { if (r.message) mcu_settings = r.message; }
     })
   },
 
   refresh: function (frm) {
-    // If you also want to override refresh
+    //TODO: Add for Dental Section
     doctorExaminationController.refresh(frm);
     const sectionsToHide = [
       'eyes_section', 'ear_section', 'nose_section', 'throat_section', 'neck_section', 
@@ -46,13 +36,15 @@ frappe.ui.form.on('Doctor Examination', {
       'genit_section', 'neuro_section', 'visual_field_test_section', 'romberg_test_section', 'tinnel_test_section',
       'phallen_test_section', 'rectal_examination_section'
     ];
+    const visibleStatus = ['Checked In', 'Finished', 'Partial Finished'];
+    const visibleRowStatus = ['Started', 'Checked In', 'Finished', 'Partial Finished'];
     sectionsToHide.forEach(section => frm.set_df_property(section, 'hidden', 1));
-
-    if (frm.doc.status === 'Checked In') {
-      const examItems = frm.doc.examination_item.filter(row => row.status === 'Started').map(row => row.template)
+    if (visibleStatus.includes(frm.doc.status)) {
+      const examItems = frm.doc.examination_item.filter(row => visibleRowStatus.includes(row.status)).map(row => row.template)
       const matchingItems = mcu_settings.filter(item => examItems.includes(item.value));
       if (matchingItems.length > 0) {
         matchingItems.forEach(item => {
+          console.log(item)
           if (item.field === 'physical_examination_name') sectionsToHide.slice(0, 12).forEach(section => frm.set_df_property(section, 'hidden', 0));
           if (item.field === 'visual_field_test_name') frm.set_df_property('visual_field_test_section', 'hidden', 0);
           if (item.field === 'romberg_test_name') frm.set_df_property('romberg_test_section', 'hidden', 0);

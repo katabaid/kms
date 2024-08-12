@@ -33,14 +33,54 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       });
     },
     handleCustomButtons(frm) {
-      if (utils.getStatus(frm) === 'Started') {
-        addCustomButton(frm, 'Check In', 'checkin_room', 'Checked In');
-        addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed', true);
-      } else if (utils.getStatus(frm) === 'Checked In') {
-        frm.remove_custom_button('Check In', 'Status');
-      } else {
-        frm.remove_custom_button('Remove', 'Status');
-        frm.remove_custom_button('Check In', 'Status');
+      $('.add-assignment-btn').remove();
+      switch (utils.getStatus(frm)) {
+        case 'Started':
+          addCustomButton(frm, 'Check In', 'checkin_room', 'Checked In');
+          addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed', true);
+          break;
+        case 'Checked In':
+          frm.remove_custom_button('Check In', 'Status');
+          addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed', true);
+          break;
+        case 'Finished':
+        case 'Partial Finished':
+          const fields = [
+            {
+              label: 'Assignee',
+              fieldname: 'assignee',
+              fieldtype: 'Link',
+              options: 'User'
+            }
+          ];
+          frm.add_custom_button('Assign Result', () =>{
+            let dialog = new frappe.ui.Dialog({
+              title: '',
+              fields: fields,
+              size: 'small',
+              primary_action_label: 'Assign',
+              primary_action (values) {
+                dialog.hide();
+              }
+            });
+            dialog.show();
+            dialog.fields_dict['assignee'].get_query = () => {
+              return {
+                filters: [
+                  ['Item', 'is_stock_item', '=', 0],
+                  ['Item', 'disabled', '=', 0],
+                  ['Item', 'is_sales_item', '=', 1],
+                  ['Item', 'custom_is_mcu_item', '=', 1],
+                  ['Item', 'item_group', '!=', 'Exam Course'],
+                ]
+              }
+            }
+          })
+          frm.change_custom_button_type('Assign Result', null, 'info');
+          break;
+        default:
+          frm.remove_custom_button('Remove', 'Status');
+          frm.remove_custom_button('Check In', 'Status');
       }
     },
     setupChildTableButtons(frm) {
@@ -97,9 +137,10 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
 
     process_custom_buttons: function (frm) {
-      if (frm.doc.docstatus === 0 && utils.getDispatcher(frm)) {
+      /* if (frm.doc.docstatus === 0 && utils.getDispatcher(frm)) {
         utils.handleCustomButtons(frm);
-      }
+      } */
+      utils.handleCustomButtons(frm);
     },
 
     setup_child_table_custom_buttons: function (frm) {

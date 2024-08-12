@@ -1,6 +1,6 @@
 {
  "actions": [],
- "creation": "2024-07-29 20:19:09.314553",
+ "creation": "2024-08-08 11:48:53.387929",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -20,7 +20,11 @@
   "romberg_test_name",
   "tinnel_test_name",
   "phallen_test_name",
-  "rectal_test_name"
+  "rectal_test_name",
+  "dental_examination_section",
+  "dental_examination",
+  "column_break_npqjw",
+  "name1"
  ],
  "fields": [
   {
@@ -86,37 +90,66 @@
    "reqd": 1
   },
   {
+   "fetch_from": "physical_examination.item_name",
    "fieldname": "physical_examination_name",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
   },
   {
+   "fetch_from": "visual_field_test.item_name",
    "fieldname": "visual_field_test_name",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
   },
   {
+   "fetch_from": "romberg_test.item_name",
    "fieldname": "romberg_test_name",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
   },
   {
+   "fetch_from": "tinnel_test.item_name",
    "fieldname": "tinnel_test_name",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
   },
   {
+   "fetch_from": "phallen_test.item_name",
    "fieldname": "phallen_test_name",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
   },
   {
+   "fetch_from": "rectal_test.item_name",
    "fieldname": "rectal_test_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dental_examination",
+   "fieldtype": "Link",
+   "label": "Dental Examination",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dental_examination_section",
+   "fieldtype": "Section Break",
+   "label": "Dental Examination"
+  },
+  {
+   "fieldname": "column_break_npqjw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "dental_examination.item_name",
+   "fieldname": "name1",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
@@ -124,7 +157,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-07-29 20:40:19.550799",
+ "modified": "2024-08-11 16:06:32.758038",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
