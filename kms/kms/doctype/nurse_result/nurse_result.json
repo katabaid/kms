@@ -224,10 +224,11 @@
    "read_only": 1
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-09 17:16:01.756276",
+ "modified": "2024-08-12 16:51:44.796080",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

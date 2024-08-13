@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-04-20 19:09:34.243115",
+ "creation": "2024-08-08 11:48:44.900816",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -196,10 +196,11 @@
    "options": "1. Emergency\n2. VIP\n3. Outpatient\n4. MCU"
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2024-05-02 13:13:13.880123",
+ "modified": "2024-08-12 16:53:30.851069",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Queue Pooling",

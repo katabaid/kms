@@ -76,7 +76,7 @@ def removed_from_room(dispatcher_id, hsu):
 	for room in doc.assignment_table:
 		if room.healthcare_service_unit == hsu:
 			room.status = 'Wait for Room Assignment'
-			room.reference_doctype = ''
+			room.reference_doc = ''
 	doc.save(ignore_permissions=True)
 	return 'Removed from examination room.'
 
@@ -124,7 +124,9 @@ def finish_exam(dispatcher_id, hsu, status):
 			room.status = status
 	doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
 	doc.room = ''
+	print('=======sebelum save dipatcher===========')
 	doc.save(ignore_permissions=True)
+	print('=======setelah save dipatcher===========')
 
 	if status == 'Finished' or status == 'Partial Finished':
 		source_doc = frappe.get_doc(doctype, docname)
@@ -136,11 +138,8 @@ def finish_exam(dispatcher_id, hsu, status):
 			case 'Sample Collection':
 				target = 'Lab Test'
 		if target:
-			source_doc_name = create_result_doc(source_doc, target)
-			if target != 'Lab Test':
-				source_doc.exam_result = source_doc_name
-				source_doc.save(ignore_permissions=True)
-	return 'Finished.'
+			result_doc_name = create_result_doc(source_doc, target)
+	return {'message': 'Finished', 'docname': result_doc_name}
 
 @frappe.whitelist()
 def update_exam_item_status(dispatcher_id, examination_item, status):
@@ -290,12 +289,15 @@ def create_result_doc(doc, target):
 			'remark': doc.remark,
 			'exam': doc.name
 		})
+		print('111111111111111111111111111111111')
 		for item in doc.examination_item:
+			print('22222222222222222222222222222222222')
 			if item.status == 'Finished':
 				new_doc.append('examination_item', {
 					'status': 'Started',
 					'template': item.template
 				})
+				print('3333333333333333333333333333333333333')
 				match target:
 					case 'Radiology Result':
 						not_created = False
@@ -320,27 +322,33 @@ def create_result_doc(doc, target):
 									'result_options': result.result_select
 								})
 					case 'Nurse Result':
+						print('444444444444444444444444444444444444444444444')
 						template = 'Nurse Examination Template'
 						template_doc = frappe.get_doc(template, item.template)
 						if template_doc.result_in_exam:
+							print('555555555555555555555555555555555555555555555')
 							not_created = True
 						else:
+							print('666666666666666666666666666666666666666666666')
 							for result in template_doc.items:
-									new_doc.append('result', {
-										'result_line': result.result_text,
-										'normal_value': result.normal_value,
-										'result_check': result.normal_value,
-										'item_code': template_doc.item_code,
-										'result_options': result.result_select
-									})
+								print('77777777777777777777777777777777777777777')
+								new_doc.append('result', {
+									'result_line': result.result_text,
+									'normal_value': result.normal_value,
+									'result_check': result.normal_value,
+									'item_code': template_doc.item_code,
+									'result_options': result.result_select
+								})
 							for selective_result in template_doc.normal_items:
-									new_doc.append('selective_non_selective_result', {
-										'test_name': selective_result.heading_text,
-										'test_event': selective_result.lab_test_event,
-										'test_uom': selective_result.lab_test_uom,
-										'min_value': selective_result.min_value,
-										'max_value': selective_result.max_value
-									})
+								print('8888888888888888888888888888888888888888')
+								new_doc.append('non_selective_result', {
+									'test_name': selective_result.heading_text,
+									'test_event': selective_result.lab_test_event,
+									'test_uom': selective_result.lab_test_uom,
+									'min_value': selective_result.min_value,
+									'max_value': selective_result.max_value
+								})
+							print('99999999999999999999999999999999999999999')
 							not_created = False
 					case _:
 						frappe.throw(f"Unhandled Template for {target} DocType.")

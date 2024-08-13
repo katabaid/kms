@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-08-01 17:52:02.236881",
+ "creation": "2024-08-08 11:48:50.881674",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -187,7 +187,19 @@
   "abnormal_rectal",
   "rectal_hemorrhoid",
   "enlarged_prostate",
-  "rectal_others"
+  "rectal_others",
+  "dental_tab",
+  "dental_section",
+  "extra_oral",
+  "column_break_4ylqu",
+  "intra_oral",
+  "teeth_section",
+  "dental_teeth_html",
+  "teeth_options_html",
+  "dental_detail",
+  "dental_detail_html",
+  "other_dental",
+  "is_dental_record_inserted"
  ],
  "fields": [
   {
@@ -1196,12 +1208,80 @@
   {
    "fieldname": "rectal_examination_section",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "dental_tab",
+   "fieldtype": "Tab Break",
+   "label": "Dental"
+  },
+  {
+   "fieldname": "dental_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "extra_oral",
+   "fieldtype": "Table MultiSelect",
+   "label": "Extra Oral",
+   "options": "Extra Oral"
+  },
+  {
+   "fieldname": "column_break_4ylqu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intra_oral",
+   "fieldtype": "Table MultiSelect",
+   "label": "Intra Oral",
+   "options": "Intra Oral"
+  },
+  {
+   "fieldname": "teeth_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "dental_detail",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Dental Detail",
+   "options": "Dental Detail"
+  },
+  {
+   "fieldname": "other_dental",
+   "fieldtype": "Table",
+   "label": "Other Dental",
+   "options": "Other Dental"
+  },
+  {
+   "fieldname": "dental_detail_html",
+   "fieldtype": "HTML",
+   "label": "Dental Detail HTML"
+  },
+  {
+   "fieldname": "dental_teeth_html",
+   "fieldtype": "HTML",
+   "label": "Dental Teeth"
+  },
+  {
+   "fieldname": "teeth_options_html",
+   "fieldtype": "HTML",
+   "label": "Teeth Options"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_dental_record_inserted",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Dental Record Inserted",
+   "no_copy": 1,
+   "print_hide": 1,
+   "report_hide": 1
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-03 08:14:48.290956",
+ "modified": "2024-08-13 08:56:23.427423",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

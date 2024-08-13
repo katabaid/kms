@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_copy": 1,
- "creation": "2024-07-01 10:27:20.048000",
+ "creation": "2024-08-08 11:48:48.291062",
  "default_view": "List",
  "doctype": "DocType",
  "document_type": "Document",
@@ -58,18 +58,20 @@
    "fieldname": "min_value",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Min Value"
+   "label": "Min Value",
+   "read_only": 1
   },
   {
    "fieldname": "max_value",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Max Value"
+   "label": "Max Value",
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2024-07-21 15:06:25.892136",
+ "modified": "2024-08-13 07:34:12.606944",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Result",

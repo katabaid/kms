@@ -7,7 +7,7 @@ def get_mcu_settings():
     SELECT field, value FROM tabSingles 
     WHERE doctype = 'MCU Settings' 
     AND field IN ('phallen_test_name', 'physical_examination_name', 'rectal_test_name', 
-    'romberg_test_name', 'tinnel_test_name', 'visual_field_test_name', 'dental_examination')
+    'romberg_test_name', 'tinnel_test_name', 'visual_field_test_name', 'dental_examination_name')
     """, as_dict=True)
   return doc_exam_settings
 

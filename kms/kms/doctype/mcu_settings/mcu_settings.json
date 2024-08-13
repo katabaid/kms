@@ -24,7 +24,7 @@
   "dental_examination_section",
   "dental_examination",
   "column_break_npqjw",
-  "name1"
+  "dental_examination_name"
  ],
  "fields": [
   {
@@ -149,7 +149,7 @@
   },
   {
    "fetch_from": "dental_examination.item_name",
-   "fieldname": "name1",
+   "fieldname": "dental_examination_name",
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
@@ -157,7 +157,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-08-11 16:06:32.758038",
+ "modified": "2024-08-12 07:48:20.632691",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
