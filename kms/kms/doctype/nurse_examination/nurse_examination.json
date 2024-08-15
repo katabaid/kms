@@ -31,6 +31,7 @@
   "examination_item",
   "result",
   "non_selective_result",
+  "calculated_result",
   "consumables_section",
   "items",
   "remark_section",
@@ -232,13 +233,19 @@
    "fieldtype": "Data",
    "label": "Patient Age",
    "read_only": 1
+  },
+  {
+   "fieldname": "calculated_result",
+   "fieldtype": "Table",
+   "label": "Calculated Result",
+   "options": "Calculated Exam"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-12 16:51:58.650920",
+ "modified": "2024-08-14 12:34:42.838241",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

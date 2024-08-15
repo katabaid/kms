@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "doctor_examination_tab",
   "examination_group",
   "doctor_examination_section",
   "physical_examination",
@@ -24,7 +25,17 @@
   "dental_examination_section",
   "dental_examination",
   "column_break_npqjw",
-  "dental_examination_name"
+  "dental_examination_name",
+  "assignment_tab",
+  "dispatcher_role",
+  "nurse_result_assignment_role",
+  "lab_test_assignment_role",
+  "column_break_ytemr",
+  "room_assignment_role",
+  "doctor_result_assignment_role",
+  "radiology_result_assignment_role",
+  "relationship_tab",
+  "relationship"
  ],
  "fields": [
   {
@@ -153,11 +164,72 @@
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "doctor_examination_tab",
+   "fieldtype": "Tab Break",
+   "label": "Doctor Examination"
+  },
+  {
+   "fieldname": "assignment_tab",
+   "fieldtype": "Tab Break",
+   "label": "Assignment"
+  },
+  {
+   "fieldname": "nurse_result_assignment_role",
+   "fieldtype": "Table MultiSelect",
+   "label": "Nurse Result Assignment Role",
+   "options": "MCU Assignment Role"
+  },
+  {
+   "fieldname": "doctor_result_assignment_role",
+   "fieldtype": "Table MultiSelect",
+   "label": "Doctor Result Assignment Role",
+   "options": "MCU Assignment Role"
+  },
+  {
+   "fieldname": "lab_test_assignment_role",
+   "fieldtype": "Table MultiSelect",
+   "label": "Lab Test Assignment Role",
+   "options": "MCU Assignment Role"
+  },
+  {
+   "fieldname": "radiology_result_assignment_role",
+   "fieldtype": "Table MultiSelect",
+   "label": "Radiology Result Assignment Role",
+   "options": "MCU Assignment Role"
+  },
+  {
+   "fieldname": "column_break_ytemr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dispatcher_role",
+   "fieldtype": "Link",
+   "label": "Dispatcher Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "room_assignment_role",
+   "fieldtype": "Table MultiSelect",
+   "label": "Room Assignment Role",
+   "options": "MCU Assignment Role"
+  },
+  {
+   "fieldname": "relationship_tab",
+   "fieldtype": "Tab Break",
+   "label": "Relationship"
+  },
+  {
+   "fieldname": "relationship",
+   "fieldtype": "Table",
+   "label": "Relationship",
+   "options": "MCU Relationship"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-08-12 07:48:20.632691",
+ "modified": "2024-08-15 08:02:23.920694",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

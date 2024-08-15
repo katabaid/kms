@@ -2,16 +2,6 @@ frappe.listview_settings['Healthcare Service Unit'] = {
 	hide_name_column: true,
 	add_fields: ["name", "is_group", "custom_branch", "service_unit_type", "custom_default_doctype"],
 
-	/* onload: function (me) {
-		if (!frappe.route_options) {
-			frappe.route_options = {
-				owner: frappe.session.user,
-				status: "Open",
-			};
-		}
-		me.page.set_title(__("To Do"));
-	}, */
-
 	button: {
 		show: function (doc) {
 			return !doc.is_group&&doc.custom_default_doctype;
@@ -31,21 +21,7 @@ frappe.listview_settings['Healthcare Service Unit'] = {
 		},
 	},
 
-	refresh: function (litview) {
+	refresh: function (listview) {
 		$("button.btn.btn-action.btn-default.btn-xs").addClass("btn-info").removeClass("btn-default");
 	}
-	/* refresh: function (me) {
-		if (me.todo_sidebar_setup) return;
-
-		// add assigned by me
-		me.page.add_sidebar_item(
-			__("Assigned By Me"),
-			function () {
-				me.filter_area.add([[me.doctype, "assigned_by", "=", frappe.session.user]]);
-			},
-			'.list-link[data-view="Kanban"]'
-		);
-
-		me.todo_sidebar_setup = true;
-	}, */
 };

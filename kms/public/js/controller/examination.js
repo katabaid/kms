@@ -45,59 +45,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           break;
         case 'Finished':
         case 'Partial Finished':
-          if (frm.doc.docstatus === 1) {
-            const fields = [
-              {
-                label: 'Assignee',
-                fieldname: 'assignee',
-                fieldtype: 'Link',
-                options: 'User'
-              }
-            ];
-            frm.add_custom_button('Assign Result', () =>{
-              let dialog = new frappe.ui.Dialog({
-                title: '',
-                fields: fields,
-                size: 'small',
-                primary_action_label: 'Assign',
-                primary_action (values) {
-                  dialog.hide();
-                  let assignee = [];
-                  assignee.push(values.assignee)
-                  frappe.call ({
-                    method: 'frappe.desk.form.assign_to.add',
-                    args: {
-                      doctype: frm.doc.doctype,
-					            name: frm.doc.name,
-					            assign_to: JSON.stringify([assignee])
-                    },
-                    callback: (r) => {
-                      if (!r.exc) {
-                        frappe.show_alert({
-                          message: __("The document has been assigned to {0}", [assignee]),
-                          indicator: 'green'
-                        });
-                        return;
-                      }
-                    }
-                  })
-                }
-              });
-              dialog.show();
-              /* dialog.fields_dict['assignee'].get_query = () => {
-                return {
-                  filters: [
-                    ['Item', 'is_stock_item', '=', 0],
-                    ['Item', 'disabled', '=', 0],
-                    ['Item', 'is_sales_item', '=', 1],
-                    ['Item', 'custom_is_mcu_item', '=', 1],
-                    ['Item', 'item_group', '!=', 'Exam Course'],
-                  ]
-                }
-              } */
-            })
-            frm.change_custom_button_type('Assign Result', null, 'info');
-          }
           break;
         default:
           frm.remove_custom_button('Remove', 'Status');
@@ -158,9 +105,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
 
     process_custom_buttons: function (frm) {
-      /* if (frm.doc.docstatus === 0 && utils.getDispatcher(frm)) {
-        utils.handleCustomButtons(frm);
-      } */
       utils.handleCustomButtons(frm);
     },
 

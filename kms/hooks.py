@@ -260,6 +260,9 @@ fixtures = [
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'DocType', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
-  {'dt':'Workspace'},]
+  {'dt':'Workspace'},
+  {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
+  {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
+]
 on_logout = ["kms.session.remove_room_assignment"]
 #on_session_creation = ["kms.session.redirect_after_login"]

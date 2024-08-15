@@ -3,7 +3,14 @@ import json
 
 @frappe.whitelist()
 def get_mcu(price_list):
-  mcu = frappe.db.sql(f"""SELECT ti.item_code, ti.item_name, tip.price_list_rate FROM `tabItem` ti, `tabItem Price` tip WHERE is_stock_item = 0 AND is_sales_item = 1 AND is_purchase_item = 0 AND custom_mandatory_item_in_package = 1 and ti.item_code = tip.item_code and price_list = '{price_list}'""", as_dict=True)
+  mcu = frappe.db.sql(f"""SELECT ti.item_code, ti.item_name, tip.price_list_rate
+    FROM `tabItem` ti, `tabItem Price` tip 
+    WHERE is_stock_item = 0 
+    AND is_sales_item = 1 
+    AND is_purchase_item = 0 
+    AND custom_mandatory_item_in_package = 1 
+    and ti.item_code = tip.item_code 
+    and price_list = '{price_list}'""", as_dict=True)
   return mcu 
 
 @frappe.whitelist()
@@ -18,7 +25,16 @@ def upsert_item_price(item_code, price_list, customer, price_list_rate):
     return doc.name
   else:
     today = frappe.utils.today()
-    doc = frappe.get_doc({"doctype":"Item Price", "item_code": item_code, "uom": "Unit", "price_list": price_list, "selling":"true", "customer": customer, "currency": "IDR", "price_list_rate": price_list_rate, "valid_from": today})
+    doc = frappe.get_doc({
+      "doctype":"Item Price", 
+      "item_code": item_code, 
+      "uom": "Unit", 
+      "price_list": price_list, 
+      "selling":"true", 
+      "customer": customer, 
+      "currency": "IDR", 
+      "price_list_rate": price_list_rate, 
+      "valid_from": today})
     doc.insert()
     return doc.name
 
@@ -27,6 +43,24 @@ def update_quo_status(name):
   doc = frappe.get_doc('Quotation', name)
   doc.status = 'Ordered'
   doc.save()
+
+@frappe.whitelist()
+def get_users_by_role(role):
+  users = frappe.get_all(
+    "Has Role",
+    filters={"role": role, "parenttype": "User"},
+    fields=["parent"],
+    distinct=True
+  )
+  user_list = []
+  for user in users:
+    user_doc = frappe.get_doc("User", user.parent)
+    user_list.append({
+      "name": user_doc.name,
+      "full_name": user_doc.full_name
+    })
+  return user_list
+
 #start
 #@frappe.whitelist()
 #def get_item_codes_for_bundle():

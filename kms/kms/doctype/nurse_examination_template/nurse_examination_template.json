@@ -15,6 +15,7 @@
   "result_in_exam",
   "items",
   "normal_items",
+  "calculated_exam",
   "consumables"
  ],
  "fields": [
@@ -64,11 +65,17 @@
    "fieldname": "result_in_exam",
    "fieldtype": "Check",
    "label": "Result in Exam"
+  },
+  {
+   "fieldname": "calculated_exam",
+   "fieldtype": "Table",
+   "label": "Calculated Exam",
+   "options": "Exam Calculation"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-09 13:05:28.671409",
+ "modified": "2024-08-14 12:32:49.540572",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template",

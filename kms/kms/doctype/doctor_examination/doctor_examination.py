@@ -70,3 +70,7 @@ class DoctorExamination(Document):
 							'position': data['position'],
 							'location': data['location']
 						})
+	def on_submit(self):
+		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')
+		if exam_result:
+			self.db_set('exam_result', exam_result)
