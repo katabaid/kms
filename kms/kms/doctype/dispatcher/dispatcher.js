@@ -3,9 +3,9 @@
 
 frappe.ui.form.on('Dispatcher', {
 	refresh: function (frm) {
-		handleCustomButtons(frm);
-		handleHideChildButtons(frm, childTables);
-		handleChildCustomButtons(frm);
+		addFinishButtons(frm);
+		hideAddDeleteButtonOnChildTable(frm, childTables);
+		addCustomButtonOnChildTable(frm);
 	},
 
 	setup: function (frm) {
@@ -26,7 +26,7 @@ const childTables = ['assignment_table', 'package'];
 const childTableButton = 'assignment_table';
 
 // triggers
-const handleCustomButtons = (frm) => {
+const addFinishButtons = (frm) => {
 	if (frm.doc.status === 'Waiting to Finish') {
 		frm.add_custom_button('Finish', () => {
 			frm.doc.status = 'Finished';
@@ -36,14 +36,14 @@ const handleCustomButtons = (frm) => {
 	}
 };
 
-const handleHideChildButtons = (frm, childTablesArray) => {
+const hideAddDeleteButtonOnChildTable = (frm, childTablesArray) => {
 	childTablesArray.forEach((field) => {
 		const grid = frm.fields_dict[field].grid;
 		grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
 	});
 };
 
-const handleChildCustomButtons = (frm) => {
+const addCustomButtonOnChildTable = (frm) => {
 	const grid = frm.fields_dict[childTableButton].grid;
 	const buttons = [
 		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment', class: 'btn-primary', prompt: false },

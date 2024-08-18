@@ -87,7 +87,14 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     getHsu: config.getHsu,
   }
 
+  let utilsLoaded = false;
+
   const controller = {
+    setup: function (frm) {
+      frappe.require('/assets/kms/js/utils.js', () => {
+        utilsLoaded = true;
+      });
+    },
     refresh: function (frm) {
       frm.trigger('process_custom_buttons');
       frm.trigger('hide_standard_child_tables_buttons');
@@ -127,7 +134,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       },
       callback: function (r) {
         if (r.message) {
-          showAlert(`${r.message.message} ${r.message.docname}`, 'green');
+          if (utilsLoaded && kms.utils) {
+            kms.utils.show_alert(`${r.message.message} ${r.message.docname}`, 'green');
+          }
         }
       }
     });
@@ -136,7 +145,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   function addCustomButton(frm, label, method, newStatus, prompt = false) {
     function handleCallback(r) {
       if (r.message) {
-        showAlert(r.message, 'green');
+        if (utilsLoaded && kms.utils) {
+          kms.utils.show_alert(r.message, 'green');
+        }
         utils.setStatus(frm, newStatus);
         frm.dirty();
         frm.save();
@@ -187,7 +198,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         updateParentStatus(frm).then(() => {
           frm.save().then(() => {
             updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
-            showAlert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
+            if (utilsLoaded && kms.utils) {
+              kms.utils.show_alert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
+            }
             frm.reload_doc();
             if (utils.getDispatcher(frm) && reason) {
               addComment(frm, `${newStatus} for the reason of: ${reason}`);
@@ -215,7 +228,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       },
       callback: function (response) {
         if (!response.exc) {
-          showAlert('Comment added successfully.', 'green');
+          if (utilsLoaded && kms.utils) {
+            kms.utils.show_alert('Comment added successfully.', 'green');
+          }
         }
       }
     });
@@ -293,9 +308,13 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         },
         callback: (r) => {
           if (r.message) {
-            showAlert(r.message, 'green');
+            if (utilsLoaded && kms.utils) {
+              kms.utils.show_alert(r.message, 'green');
+            }
           } else {
-            showAlert('No corresponding MCU Appointment found.', 'red');
+            if (utilsLoaded && kms.utils) {
+              kms.utils.show_alert('No corresponding MCU Appointment found.', 'red');
+            }
             frappe.model.set_value(child.doctype, child.name, 'status', 'Started');
             frm.reload_doc();
           }
@@ -304,12 +323,12 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }
   }
 
-  function showAlert(message, indicator) {
+  /* function showAlert(message, indicator) {
     frappe.show_alert({
       message: message,
       indicator: indicator
     }, 5);
-  }
+  } */
 
   controller.utils = utils;
   return controller;
