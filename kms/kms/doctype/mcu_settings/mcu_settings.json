@@ -35,7 +35,9 @@
   "doctor_result_assignment_role",
   "radiology_result_assignment_role",
   "relationship_tab",
-  "relationship"
+  "relationship",
+  "vital_sign_tab",
+  "vital_sign_templates"
  ],
  "fields": [
   {
@@ -225,11 +227,22 @@
    "fieldtype": "Table",
    "label": "Relationship",
    "options": "MCU Relationship"
+  },
+  {
+   "fieldname": "vital_sign_tab",
+   "fieldtype": "Tab Break",
+   "label": "Vital Sign"
+  },
+  {
+   "fieldname": "vital_sign_templates",
+   "fieldtype": "Table MultiSelect",
+   "label": "Vital Sign Templates",
+   "options": "MCU Vital SIgn"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-08-15 08:02:23.920694",
+ "modified": "2024-08-18 20:25:14.527743",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
