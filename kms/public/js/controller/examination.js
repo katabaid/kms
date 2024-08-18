@@ -167,7 +167,15 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         callback: function (r) {
           handleCallback(r);
           if (reason) {
-            addComment(frm, `${newStatus} for the reason of: ${reason}`);
+            if (utilsLoaded && kms.utils) {
+              kms.utils.add_comment(
+                frm.doc.doctype, 
+                frm.doc.name, 
+                `${newStatus} for the reason of: ${reason}`, 
+                frappe.session.user_fullname,
+                'Comment added successfully.'
+              );
+            }
           }
         }
       });
@@ -203,7 +211,15 @@ const createDocTypeController = (doctype, customConfig = {}) => {
             }
             frm.reload_doc();
             if (utils.getDispatcher(frm) && reason) {
-              addComment(frm, `${newStatus} for the reason of: ${reason}`);
+              if (utilsLoaded && kms.utils) {
+                kms.utils.add_comment(
+                  frm.doc.doctype, 
+                  frm.doc.name, 
+                  `${newStatus} for the reason of: ${reason}`, 
+                  frappe.session.user_fullname,
+                  'Comment added successfully.'
+                );
+              }
             }
           }).catch((err) => {
             frappe.msgprint(__('Error updating status: {0}', [err.message]));
@@ -213,7 +229,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }
   }
 
-  function addComment(frm, reason) {
+  /* function addComment(frm, reason) {
     frappe.call({
       method: 'frappe.client.insert',
       args: {
@@ -234,7 +250,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         }
       }
     });
-  }
+  } */
 
   function setupRowSelector(grid) {
     grid.row_selector = function (e) {

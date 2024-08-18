@@ -1,6 +1,6 @@
 // Copyright (c) 2024, GIS and contributors
 // For license information, please see license.txt
-
+let utilsLoaded = false;
 frappe.ui.form.on('Dispatcher', {
 	refresh: function (frm) {
 		addFinishButtons(frm);
@@ -18,6 +18,9 @@ frappe.ui.form.on('Dispatcher', {
 				'Ongoing Examination': 'pink',
 			};
 			return statusColors[doc.status] || 'orange';
+		});
+		frappe.require('/assets/kms/js/utils.js', () => {
+			utilsLoaded = true;
 		});
 	},
 });
@@ -104,8 +107,20 @@ const updateChildStatus = async (frm, grid, button, reason = null) => {
 				break;
 		}
 		if (next) {
-			showAlert(`Updated status to ${button.status} Successfully.`, 'green');
-			if (reason) { addComment(frm, `${button.status} for the reason of: ${reason}`); }
+			if (utilsLoaded && kms.utils) {
+				kms.utils.show_alert(`Updated status to ${button.status} Successfully.`, 'green');
+			}
+			if (reason) { 
+				if (utilsLoaded && kms.utils) {
+					kms.utils.add_comment(
+						frm.doc.doctype,
+						frm.doc.name,
+						`${button.status} for the reason of: ${reason}`,
+						frappe.session.user_fullname,
+						'Comment added successfully.'
+					) 
+				}
+			}
 			frm.reload_doc();
 		}
 	}
@@ -170,31 +185,3 @@ const assign_to_room = createPromiseHandler('kms.healthcare.create_service');
 const remove_from_room = createPromiseHandler('kms.healthcare.remove_from_room');
 const retest = createPromiseHandler('kms.healthcare.retest');
 const refuse_to_test = createPromiseHandler('kms.healthcare.refuse_to_test');
-
-function addComment(frm, reason) {
-	frappe.call({
-		method: 'frappe.client.insert',
-		args: {
-			doc: {
-				doctype: 'Comment',
-				comment_type: 'Comment',
-				reference_doctype: frm.doc.doctype,
-				reference_name: frm.doc.name,
-				content: `<div class="ql-editor read-mode"><p>${reason}</p></div>`,
-				comment_by: frappe.session.user_fullname
-			}
-		},
-		callback: function (response) {
-			if (!response.exc) {
-				showAlert('Comment added successfully.', 'green');
-			}
-		}
-	});
-}
-
-function showAlert(message, indicator) {
-	frappe.show_alert({
-		message: message,
-		indicator: indicator
-	}, 5);
-}
