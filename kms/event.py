@@ -145,7 +145,7 @@ def unlink_queue_pooling_before_delete(doc, method=None):
     qp.dequeue_time = None
     qp.encounter = None
     qp.healthcare_practitioner = None
-    qp.save()
+    qp.save(ignore_permissions=True)
 
 @frappe.whitelist()
 def process_queue_pooling_and_dental(doc, method=None):
@@ -156,7 +156,7 @@ def process_queue_pooling_and_dental(doc, method=None):
     qp.dequeue_time = frappe.utils.nowtime()
     qp.encounter = doc.name
     qp.healthcare_practitioner = doc.practitioner
-    qp.save()
+    qp.save(ignore_permissions=True)
 
 @frappe.whitelist()
 def process_checkin(doc, method=None):
@@ -188,7 +188,7 @@ def process_checkin(doc, method=None):
           new_entry['healthcare_service_unit'] = room.service_unit
           new_entry['status'] = 'Wait for Room Assignment'
           disp_doc.append('assignment_table', new_entry)
-        disp_doc.save()
+        disp_doc.save(ignore_permissions=True)
       else:
         vs_doc = frappe.get_doc(dict(
           doctype = 'Vital Signs',
@@ -197,8 +197,8 @@ def process_checkin(doc, method=None):
           signs_time = frappe.utils.nowtime(),
           appointment = doc.name,
           custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.service_unit, 'custom_branch'),
-          vital_signs_note = doc.notes)).insert();
-        vs_doc.save();
+          vital_signs_note = doc.notes))
+        vs_doc.insert(ignore_permissions=True)
     else:
       frappe.throw("Appointment date must be the same as today's date.")
 
@@ -216,7 +216,7 @@ def return_to_queue_pooling(doc, method=None):
       company = doc.company,
       branch = doc.custom_branch,
       service_unit = frappe.db.get_value('Patient Appoinment', doc.appointment, 'service_unit'),
-      note = doc.vital_signs_note)).insert();
+      note = doc.vital_signs_note)).insert(ignore_permissions=True);
 
 @frappe.whitelist()
 def update_rate_amount_after_amend(doc, method=None):

@@ -18,6 +18,7 @@ class NurseExamination(Document):
 					template_doc = frappe.get_doc('Nurse Examination Template', exam_item.template)
 					if template_doc.result_in_exam:
 						if template_doc.calculated_exam:
+							self.calculated_result = []
 							for calc in template_doc.calculated_exam:
 								formula = calc.formula
 								for key, value in results_dict.items():

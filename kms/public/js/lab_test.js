@@ -1,5 +1,5 @@
 frappe.ui.form.on('Lab Test', {
-	template: function(frm) {
+	template: function (frm) {
 		if (frm.doc.template) {
 			frappe.call({
 				method: "healthcare.healthcare.utils.get_medical_codes",
@@ -22,7 +22,7 @@ frappe.ui.form.on('Lab Test', {
 						});
 						frm.refresh_field("codification_table");
 						frappe.db.get_doc('Lab Test Template', frm.doc.template).then(doc=>{
-              //Get Worksheet & Result Legend Print 
+							//Get Worksheet & Result Legend Print 
               frm.doc.worksheet_instructions = doc.worksheet_instructions;
               frm.doc.result_legend = doc.result_legend;
               frm.doc.legend_print_position = doc.legend_print_position;
@@ -43,21 +43,36 @@ frappe.ui.form.on('Lab Test', {
 			frm.refresh_field("codification_table");
 		}
 	},
-	setup(frm){
+	setup: function (frm){
+		frm.get_field('normal_test_items').grid.editable_fields = [
+			{ fieldname: 'lab_test_name', columns: 3 },
+			{ fieldname: 'lab_test_event', columns: 2 },
+			{ fieldname: 'result_value', columns: 2 },
+			{ fieldname: 'lab_test_uom', columns: 1 },
+			{ fieldname: 'custom_min_value', columns: 1 },
+			{ fieldname: 'custom_max_value', columns: 1 }
+		];
     frm.set_query('service_unit', () => {
-      return{
-        filters: {
-          is_group: 0,
+			return{
+				filters: {
+					is_group: 0,
           company: frm.doc.company
         }
       };
     });
     if(frm.doc.custom_selective_test_result&&frm.doc.docstatus===0){
-      frm.refresh_field('custom_selective_test_result');
+			frm.refresh_field('custom_selective_test_result');
       $.each(frm.doc.custom_selective_test_result, (key, value) => {
-        frm.fields_dict.custom_selective_test_result.grid.grid_rows[key].docfields[1].options=frm.fields_dict.custom_selective_test_result.get_value()[key].result_set;
+				frm.fields_dict.custom_selective_test_result.grid.grid_rows[key].docfields[1].options=frm.fields_dict.custom_selective_test_result.get_value()[key].result_set;
       });
       frm.refresh_field('custom_selective_test_result');
     }
+	},
+	refresh: function (frm) {
+		frappe.require('assets/kms/js/controller/result.js', function() {
+			if (typeof kms.assign_result_dialog_setup === 'function') {
+				kms.assign_result_dialog_setup(frm);
+			}
+		});
 	}
 });

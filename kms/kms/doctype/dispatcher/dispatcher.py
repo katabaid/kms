@@ -37,7 +37,7 @@ class Dispatcher(Document):
 	def update_patient_appointment(self):
 		if self.patient_appointment:
 			appointment = frappe.get_doc("Patient Appointment", self.patient_appointment)
-			if appointment.status != "Closed" or appointment.status != "Checked Out":
+			if appointment.status not in {"Closed", "Checked Out"}:
 				appointment.db_set('status', 'Checked Out', commit=True)
 				frappe.msgprint(_("Patient Appointment {0} has been Checked Out.").format(self.patient_appointment))
 		else:

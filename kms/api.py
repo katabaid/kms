@@ -45,20 +45,36 @@ def update_quo_status(name):
   doc.save()
 
 @frappe.whitelist()
-def get_users_by_role(role):
-  users = frappe.get_all(
-    "Has Role",
-    filters={"role": role, "parenttype": "User"},
-    fields=["parent"],
-    distinct=True
-  )
+def get_users_by_doctype(doctype):
+  # Mapping of doctype to target field
+  doctype_to_target = {
+    'Radiology Result': 'radiology_result_assignment_role',
+    'Lab Test': 'lab_test_assignment_role',
+    'Nurse Result': 'nurse_result_assignment_role',
+    'Doctor Result': 'doctor_result_assignment_role'
+  }
+  # Get the target field based on the doctype
+  target = doctype_to_target.get(doctype)
+  if not target:
+    return []
+  # Fetch roles based on the target field
+  roles = frappe.get_all('MCU Assignment Role', filters={'parentfield': target}, fields=['role'], pluck='role')
   user_list = []
-  for user in users:
-    user_doc = frappe.get_doc("User", user.parent)
-    user_list.append({
-      "name": user_doc.name,
-      "full_name": user_doc.full_name
-    })
+  for role in roles:
+    # Fetch users with the given role
+    users = frappe.get_all(
+      "Has Role",
+      filters={"role": role, "parenttype": "User"},
+      fields=["parent"],
+      distinct=True
+    )
+    # Fetch user details and append to the user_list
+    for user in users:
+      user_doc = frappe.get_doc("User", user.parent)
+      user_list.append({
+        "name": user_doc.name,
+        "full_name": user_doc.full_name
+      })
   return user_list
 
 #start

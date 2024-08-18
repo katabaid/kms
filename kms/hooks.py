@@ -47,6 +47,7 @@ doctype_js = {
   "Patient History Settings": "public/js/patient_history_settings.js",
 }
 doctype_list_js = {
+  "ToDo": "public/js/todo_list.js",
   "Healthcare Service Unit" : "public/js/healthcare_service_unit_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -129,7 +130,8 @@ doctype_list_js = {
 # Override standard doctype classes
 
 override_doctype_class = {
-"Shift Request": "kms.override.shift_request.KmsShiftRequest"
+  "Shift Request": "kms.override.shift_request.KmsShiftRequest",
+  "ToDo": "kms.override.todo.CustomToDo",
 }
 
 # Document Events

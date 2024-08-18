@@ -25,6 +25,7 @@
   "created_date",
   "expected_result_date",
   "expected_result_time",
+  "assignee",
   "submitted_date",
   "result_section",
   "examination_item",
@@ -206,13 +207,19 @@
    "fieldtype": "Link",
    "label": "Exam",
    "options": "Radiology"
+  },
+  {
+   "fieldname": "assignee",
+   "fieldtype": "Link",
+   "label": "Assignee",
+   "options": "Healthcare Practitioner"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-12 16:52:10.610792",
+ "modified": "2024-08-16 15:04:17.277097",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",
