@@ -199,7 +199,10 @@
   "dental_detail",
   "dental_detail_html",
   "other_dental",
-  "is_dental_record_inserted"
+  "is_dental_record_inserted",
+  "vital_signs_tab",
+  "vital_sign_calculated_result",
+  "vital_sign_html"
  ],
  "fields": [
   {
@@ -1275,13 +1278,31 @@
    "no_copy": 1,
    "print_hide": 1,
    "report_hide": 1
+  },
+  {
+   "fieldname": "vital_signs_tab",
+   "fieldtype": "Tab Break",
+   "label": "Vital Signs"
+  },
+  {
+   "fieldname": "vital_sign_calculated_result",
+   "fieldtype": "Table",
+   "label": "Vital SIgn Result",
+   "options": "Calculated Exam",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vital_sign_html",
+   "fieldtype": "HTML",
+   "label": "Vital Sign HTML",
+   "options": "<div id=\"vital_sign_html\"></div>"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-13 08:56:23.427423",
+ "modified": "2024-08-19 09:58:15.852456",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

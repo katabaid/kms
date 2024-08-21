@@ -4,8 +4,9 @@ let utilsLoaded = false;
 frappe.ui.form.on('Dispatcher', {
 	refresh: function (frm) {
 		addFinishButtons(frm);
-		hideAddDeleteButtonOnChildTable(frm, childTables);
+		hideStandardButtonOnChildTable(frm, childTables);
 		addCustomButtonOnChildTable(frm);
+		addCustomButtononPackage(frm);
 	},
 
 	setup: function (frm) {
@@ -28,6 +29,31 @@ frappe.ui.form.on('Dispatcher', {
 const childTables = ['assignment_table', 'package'];
 const childTableButton = 'assignment_table';
 
+const addCustomButtononPackage = (frm) => {
+	let child_table = frm.fields_dict['package'].grid;
+	if (child_table) {
+		// hide standard buttons
+		const customButton = child_table.add_custom_button(
+			'Retest',
+			() => { frappe.msgprint('tes') },
+			'btn-custom'
+		);
+		customButton.addClass("btn-warning btn-xs").removeClass("btn-default btn-secondary");
+		customButton.hide()
+		//test condition on selected row to show button
+		child_table.wrapper.on('change', '.grid-row-check', function() {
+			const selected_rows = child_table.get_selected()
+			const buttons = child_table.wrapper.find('.grid-footer').find('.btn-custom');
+			if (selected_rows.length === 1) {
+				const selected_doc = child_table.get_selected_children()[0];
+				customButton.toggle(selected_doc.status >= 'Started');
+			} else {
+				buttons.hide();
+			}
+		})
+	}
+}
+
 // triggers
 const addFinishButtons = (frm) => {
 	if (frm.doc.status === 'Waiting to Finish') {
@@ -39,10 +65,19 @@ const addFinishButtons = (frm) => {
 	}
 };
 
-const hideAddDeleteButtonOnChildTable = (frm, childTablesArray) => {
+const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 	childTablesArray.forEach((field) => {
-		const grid = frm.fields_dict[field].grid;
-		grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+		frm.fields_dict[field].grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+		frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
+		// Remove buttons from detail view dialog
+		frm.fields_dict[field].grid.grid_rows.forEach(function(row) {
+			//row.wrapper.find('.row-check').hide(); // Hide the checkbox
+			row.wrapper.find('.btn-open-row').on('click', function() {
+				setTimeout(function() {
+					$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+				}, 100);
+			});
+		});
 	});
 };
 

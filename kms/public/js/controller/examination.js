@@ -26,10 +26,23 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       }
     },
     hideStandardButtons(frm, fields) {
-      fields.forEach(field => {
-        const grid = frm.fields_dict[field].grid;
-        grid.wrapper.find('.grid-add-row').hide();
-        grid.wrapper.find('.grid-remove-rows').hide();
+      fields.forEach((field) => {
+        child = frm.fields_dict[field];
+        if (child) {
+          if (child.grid.grid_rows) {
+            child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+            child.grid.wrapper.find('.row-index').hide();
+            // Remove buttons from detail view dialog
+            child.grid.grid_rows.forEach(function(row) {
+              //row.wrapper.find('.row-check').hide(); // Hide the checkbox
+              row.wrapper.find('.btn-open-row').on('click', function() {
+                setTimeout(function() {
+                  $('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+                }, 100);
+              });
+            });
+          }
+        }
       });
     },
     handleCustomButtons(frm) {
@@ -97,7 +110,10 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
     refresh: function (frm) {
       frm.trigger('process_custom_buttons');
-      frm.trigger('hide_standard_child_tables_buttons');
+      //frm.trigger('hide_standard_child_tables_buttons');
+      //hide_standard_child_tables_buttons(frm);
+      console.log(config.childTables)
+      utils.hideStandardButtons(frm, config.childTables);
       if (utils.getStatus(frm) === 'Checked In') {
         frm.trigger('setup_child_table_custom_buttons');
       }
@@ -203,6 +219,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       const child = locals[grid.doctype][selectedRows[0]];
       if (child.status === 'Started') {
         frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
+        frappe.model.set_value(child.doctype, child.name, 'status_time', frappe.datetime.now_datetime());
         updateParentStatus(frm).then(() => {
           frm.save().then(() => {
             updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
@@ -228,29 +245,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       }
     }
   }
-
-  /* function addComment(frm, reason) {
-    frappe.call({
-      method: 'frappe.client.insert',
-      args: {
-        doc: {
-          doctype: 'Comment',
-          comment_type: 'Comment',
-          reference_doctype: 'Dispatcher',
-          reference_name: utils.getDispatcher(frm),
-          content: `<div class="ql-editor read-mode"><p>${reason}</p></div>`,
-          comment_by: frappe.session.user_fullname
-        }
-      },
-      callback: function (response) {
-        if (!response.exc) {
-          if (utilsLoaded && kms.utils) {
-            kms.utils.show_alert('Comment added successfully.', 'green');
-          }
-        }
-      }
-    });
-  } */
 
   function setupRowSelector(grid) {
     grid.row_selector = function (e) {
@@ -338,13 +332,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       });
     }
   }
-
-  /* function showAlert(message, indicator) {
-    frappe.show_alert({
-      message: message,
-      indicator: indicator
-    }, 5);
-  } */
 
   controller.utils = utils;
   return controller;

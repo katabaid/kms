@@ -84,28 +84,31 @@ frappe.ui.form.on('Patient Appointment', {
                 label: 'Item',
                 fieldtype: 'Link',
                 options: 'Item',
+                get_query: () => {
+                  return {
+                    filters: [
+                      ['Item', 'is_stock_item', '=', 0],
+                      ['Item', 'disabled', '=', 0],
+                      ['Item', 'is_sales_item', '=', 1],
+                      ['Item', 'custom_is_mcu_item', '=', 1],
+                      ['Item', 'item_group', '!=', 'Exam Course'],
+                    ]
+                  }
+                }
               }
             ],
             primary_action_label: 'Submit',
             primary_action(values) {
-              frm.add_child('custom_additional_mcu_items', {
-                examination_item: values.item
-              })
+              console.log(values)
+              console.log(values.item)
+              let row = frm.add_child('custom_additional_mcu_items')
+              row.examination_item = values.item
+              refresh_field("custom_additional_mcu_items");
               dialog.hide()
+
             }
           });
           dialog.show();
-          dialog.fields_dict['item'].get_query = () => {
-            return {
-              filters: [
-                ['Item', 'is_stock_item', '=', 0],
-                ['Item', 'disabled', '=', 0],
-                ['Item', 'is_sales_item', '=', 1],
-                ['Item', 'custom_is_mcu_item', '=', 1],
-                ['Item', 'item_group', '!=', 'Exam Course'],
-              ]
-            }
-          }
         }
       )
     }

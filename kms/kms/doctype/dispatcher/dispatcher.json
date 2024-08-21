@@ -55,8 +55,7 @@
    "fieldname": "package",
    "fieldtype": "Table",
    "label": "Package",
-   "options": "MCU Appointment",
-   "read_only": 1
+   "options": "MCU Appointment"
   },
   {
    "fieldname": "status",
@@ -132,7 +131,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-12 16:51:30.189813",
+ "modified": "2024-08-20 08:11:32.116186",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

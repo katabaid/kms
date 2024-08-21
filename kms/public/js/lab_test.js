@@ -69,10 +69,8 @@ frappe.ui.form.on('Lab Test', {
     }
 	},
 	refresh: function (frm) {
-		frappe.require('assets/kms/js/controller/result.js', function() {
-			if (typeof kms.assign_result_dialog_setup === 'function') {
-				kms.assign_result_dialog_setup(frm);
-			}
-		});
+		if (frm.doc.docstatus === 1 && frm.doc.sms_sent === 0 && frm.doc.status !== 'Rejected' ) {
+			frm.remove_custom_button(__('Send SMS'))
+		}
 	}
 });

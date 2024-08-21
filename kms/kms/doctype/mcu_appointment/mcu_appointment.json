@@ -1,6 +1,6 @@
 {
  "actions": [],
- "creation": "2024-05-19 17:36:43.208610",
+ "creation": "2024-08-08 11:48:39.770444",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -20,6 +20,7 @@
    "in_list_view": 1,
    "label": "Examination Item",
    "options": "Item",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -50,7 +51,8 @@
    "fieldname": "healthcare_service_unit",
    "fieldtype": "Link",
    "label": "Healthcare Service Unit",
-   "options": "Healthcare Service Unit"
+   "options": "Healthcare Service Unit",
+   "read_only": 1
   },
   {
    "columns": 1,
@@ -59,13 +61,14 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Started\nFinished\nRefused\nCancelled\nRescheduled"
+   "options": "Started\nFinished\nRefused\nCancelled\nRescheduled",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-21 20:15:50.853376",
+ "modified": "2024-08-20 08:11:01.047859",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Appointment",

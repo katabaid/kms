@@ -131,9 +131,9 @@ def warn_lab_test_exceed_max(doc, method=None):
   ################Doctype: Lab Tes################
   for row in doc.get("normal_test_items"):
     if row.result_value:
-      if row.result_value > row.custom_max_value:
+      if float(row.result_value) > float(row.custom_max_value):
         frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which exceeds max value {row.custom_max_value}", alert=True)
-      elif row.result_value < row.custom_min_value:
+      elif float(row.result_value) < float(row.custom_min_value):
         frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which is less than min value {row.custom_min_value}", alert=True)
 
 @frappe.whitelist()
@@ -164,30 +164,39 @@ def process_checkin(doc, method=None):
   if doc.status == 'Checked In':
     if doc.appointment_date == frappe.utils.nowdate():
       if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
-        disp_doc = frappe.get_doc({
-          'doctype': 'Dispatcher',
-          'patient_appointment': doc.name,
-          'date': frappe.utils.today(),
-          'status': 'In Queue'
-        })
-        for entry in doc.custom_mcu_exam_items:
-          new_entry = entry.as_dict()
-          new_entry.name = None
-          disp_doc.append('package', new_entry)
-        values = {'appt': doc.name, 'branch': doc.custom_branch}
-        rooms = frappe.db.sql("""select distinct tigsu.service_unit 
-          from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
-          where tma.parent = %(appt)s
-          and tma.parenttype = 'Patient Appointment'
-          and tma.examination_item = tigsu.parent
-          and tigsu.branch = %(branch)s
-          and tigsu.parenttype = 'Item'""", values=values, as_dict=1)
-        for room in rooms:
-          new_entry = dict()
-          new_entry['name'] = None
-          new_entry['healthcare_service_unit'] = room.service_unit
-          new_entry['status'] = 'Wait for Room Assignment'
-          disp_doc.append('assignment_table', new_entry)
+        exist_doc = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
+        if exist_doc: 
+          disp_doc = frappe.get_doc('Dispatcher', exist_doc)
+          for entry in doc.custom_additional_mcu_items:
+            new_entry = entry.as_dict()
+            new_entry.name = None
+            disp_doc.append('package', new_entry)
+            #rooms = frappe.get_all()
+            print(entry.examination_item)
+        else:
+          disp_doc = frappe.get_doc({
+            'doctype': 'Dispatcher',
+            'patient_appointment': doc.name,
+            'date': frappe.utils.today(),
+            'status': 'In Queue'
+          })
+          for entry in doc.custom_mcu_exam_items:
+            new_entry = entry.as_dict()
+            new_entry.name = None
+            disp_doc.append('package', new_entry)
+          rooms = frappe.db.sql(f"""select distinct tigsu.service_unit 
+            from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
+            where tma.parent = '{doc.name}'
+            and tma.parenttype = 'Patient Appointment'
+            and tma.examination_item = tigsu.parent
+            and tigsu.branch = '{doc.custom_branch}'
+            and tigsu.parenttype = 'Item'""", as_dict=1)
+          for room in rooms:
+            new_entry = dict()
+            new_entry['name'] = None
+            new_entry['healthcare_service_unit'] = room.service_unit
+            new_entry['status'] = 'Wait for Room Assignment'
+            disp_doc.append('assignment_table', new_entry)
         disp_doc.save(ignore_permissions=True)
       else:
         vs_doc = frappe.get_doc(dict(

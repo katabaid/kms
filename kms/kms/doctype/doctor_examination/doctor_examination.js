@@ -41,6 +41,46 @@ const handleDentalSections = (frm) => {
   prepareOtherDentalOptions(frm);
 }
 
+const handleVitalSign = (frm) => {
+  if (frm.doc.appointment) {
+    frappe.call({
+      method: 'kms.healthcare.get_vital_sign_for_doctor_examination',
+      args: {
+        docname: frm.doc.name
+      },
+      callback: (r) => {
+        if (r.message) {
+          const data = r.message.map(entry => [entry.label, entry.result]);
+          const columns = [
+            {
+              name: "label",      id: "label",      content: `${__("Label")}`,
+              editable: false,    sortable: false,  focusable: false,
+              dropdown: false,    align: "left",    width: 200,
+            },
+            {
+              name: "result",     id: "result",     content: `${__("Result")}`,
+              editable: false,    sortable: false,  focusable: false,
+              dropdown: false,    align: "right",   width: 350,
+            },
+          ];
+          if (!frm.vital_sign_datatable) {
+            const datatable_options = {
+              columns,
+              data,
+              inlineFilters: false,
+              noDataMessage: __("No Data"),
+              disableReorderColumn: true
+            }
+            frm.vital_sign_datatable = new frappe.DataTable('#vital_sign_html', datatable_options);
+          } else {
+            frm.vital_sign_datatable.refresh(data, columns);
+          }
+        }
+      }
+    })
+  }
+}
+
 const prepareDentalSections = (frm) => {
   const referenceArray = ['missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 'caries', 'fracture', 'mob', 'bridge', 'rg', 'exfolia', 'fistula'];
 
@@ -394,5 +434,6 @@ frappe.ui.form.on('Doctor Examination', {
     doctorExaminationController.refresh(frm);
     handleTabVisibility(frm);
     handleDentalSections(frm);
+    handleVitalSign(frm)
   },
 });

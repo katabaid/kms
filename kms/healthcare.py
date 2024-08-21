@@ -12,6 +12,29 @@ def get_mcu_settings():
   return doc_exam_settings
 
 @frappe.whitelist()
+def get_vital_sign_for_doctor_examination (docname):
+  return frappe.db.sql(f"""
+    SELECT CONCAT_WS(' ', test_name, test_event) label, result_value result
+    FROM `tabNurse Examination Result` tneres 
+    WHERE EXISTS (
+    SELECT 1 FROM `tabNurse Examination` tne 
+    WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = '{docname}' AND tde.appointment = tne.appointment)
+    AND EXISTS (SELECT 1 FROM `tabNurse Examination Request` tner WHERE tner.parent = tne.name AND tner.parenttype = 'Nurse Examination' AND EXISTS(SELECT 1 FROM `tabMCU Vital SIgn` tmvs WHERE tmvs.template = tner.template))
+    AND tne.docstatus = 1
+    AND tneres.parent = tne.name)
+    AND tneres.parenttype = 'Nurse Examination'
+    UNION 
+    SELECT test_label, format(result, 5, "id_ID")
+    FROM `tabCalculated Exam` tce 
+    WHERE EXISTS (
+    SELECT 1 FROM `tabNurse Examination` tne 
+    WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = '{docname}' AND tde.appointment = tne.appointment)
+    AND EXISTS (SELECT 1 FROM `tabNurse Examination Request` tner WHERE tner.parent = tne.name AND tner.parenttype = 'Nurse Examination' AND EXISTS(SELECT 1 FROM `tabMCU Vital SIgn` tmvs WHERE tmvs.template = tner.template))
+    AND tne.docstatus = 1
+    AND tce.parent = tne.name)
+    AND tce.parenttype = 'Nurse Examination'""", as_dict=True)
+
+@frappe.whitelist()
 def get_exam_items(root):
   exam_items_query = """
   SELECT name, item_name, item_group, custom_bundle_position
@@ -108,7 +131,7 @@ def retest(name, room):
     if hsu.healthcare_service_unit == room:
       if hsu.status in allowed_status:
         hsu.status = 'Wait for Room Assignment'
-        hsu.reference_doctype = ''
+        #hsu.reference_doctype = ''
         hsu.reference_doc = ''
         hsu_exist = True
         if doc.status != 'In Queue':

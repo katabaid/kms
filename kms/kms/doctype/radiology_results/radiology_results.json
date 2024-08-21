@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-01-04 07:50:41.839237",
+ "creation": "2024-08-08 11:48:41.831846",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -20,6 +20,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Result Line",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -48,13 +49,15 @@
    "in_list_view": 1,
    "label": "Item Code",
    "options": "Item",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
-   "label": "Item Name"
+   "label": "Item Name",
+   "read_only": 1
   },
   {
    "fieldname": "result_options",
@@ -66,7 +69,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-08 17:32:15.045903",
+ "modified": "2024-08-21 18:51:57.709390",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Results",
