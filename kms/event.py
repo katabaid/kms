@@ -246,3 +246,13 @@ def reset_status_after_amend(doc, method=None):
     for item in doc.custom_sample_table:
       item.status = 'Started'
     doc.save()
+
+def set_collector(doc, method=None):
+  if not doc.collected_by:
+    doc.collected_by = frappe.session.user
+  if not doc.collected_time:
+    doc.collected_time = frappe.utils.now()
+
+  exam_result = frappe.db.exists('Doctor Examination Result', {'exam': doc.name}, 'name')
+  if exam_result:
+    doc.exam_result = exam_result

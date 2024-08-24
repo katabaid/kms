@@ -25,7 +25,7 @@ kms.utils.add_comment = function (
 		callback: function (response) {
 			if (!response.exc) {
         if (alert_msg) {
-          showAlert(alert_msg, alert_indicator);
+          show_alert(alert_msg, alert_indicator);
         }
 			}
 		}

@@ -6,7 +6,8 @@ frappe.ui.form.on('Dispatcher', {
 		addFinishButtons(frm);
 		hideStandardButtonOnChildTable(frm, childTables);
 		addCustomButtonOnChildTable(frm);
-		addCustomButtononPackage(frm);
+		addCustomButtonOnPackage(frm);
+		frm.disable_save();
 	},
 
 	setup: function (frm) {
@@ -29,7 +30,7 @@ frappe.ui.form.on('Dispatcher', {
 const childTables = ['assignment_table', 'package'];
 const childTableButton = 'assignment_table';
 
-const addCustomButtononPackage = (frm) => {
+const addCustomButtonOnPackage = (frm) => {
 	let child_table = frm.fields_dict['package'].grid;
 	if (child_table) {
 		// hide standard buttons
@@ -46,7 +47,7 @@ const addCustomButtononPackage = (frm) => {
 			const buttons = child_table.wrapper.find('.grid-footer').find('.btn-custom');
 			if (selected_rows.length === 1) {
 				const selected_doc = child_table.get_selected_children()[0];
-				customButton.toggle(selected_doc.status >= 'Started');
+				customButton.toggle(selected_doc.status === 'Finished');
 			} else {
 				buttons.hide();
 			}
@@ -87,7 +88,7 @@ const addCustomButtonOnChildTable = (frm) => {
 		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment', class: 'btn-primary', prompt: false },
 		{ label: 'Refuse', status: 'Refused', statuses: 'Wait for Room Assignment', class: 'btn-danger', prompt: true },
 		{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused,Finished,Rescheduled,Partial Finished', class: 'btn-warning', prompt: true },
-		{ label: 'Remove from Room', status: 'Wait for Room Assignment', statuses: 'Waiting to Enter the Room', class: 'btn-warning', prompt: false },
+		{ label: 'Remove from Room', status: 'Wait for Room Assignment', statuses: 'Waiting to Enter the Room', class: 'btn-info', prompt: false },
 	];
 	// Remove existing custom buttons
 	grid.wrapper.find('.grid-footer').find('.btn-custom').hide();
@@ -115,7 +116,7 @@ const addCustomButtonOnChildTable = (frm) => {
 			},
 			'btn-custom'
 		);
-		customButton.addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
+		customButton.removeClass("btn-default btn-secondary").addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
 		customButton.hide();
 		});
 		setupRowSelector(grid);

@@ -45,7 +45,8 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-DSP-.YYYY..MM..DD.-"
+   "options": "HLC-DSP-.YYYY..MM..DD.-",
+   "read_only": 1
   },
   {
    "fieldname": "tab_break_taqcr",
@@ -80,6 +81,7 @@
    "in_standard_filter": 1,
    "label": "Patient Appointment",
    "options": "Patient Appointment",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -117,6 +119,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Date",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -131,7 +134,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-20 08:11:32.116186",
+ "modified": "2024-08-23 20:06:51.387798",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

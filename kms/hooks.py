@@ -173,6 +173,7 @@ doc_events = {
   },
   "Sample Collection": {
     "after_submit": "kms.event.reset_status_after_amend",
+    "before_submit": "kms.event.set_collector",
   },
 }
 

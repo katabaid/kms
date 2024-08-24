@@ -122,7 +122,11 @@ def remove_from_room(name, room):
         frappe.throw(f"Cannot remove from room, because server status of room: {room} is {hsu.status}.")
 
 @frappe.whitelist()
-def retest(name, room):
+def retest(name, room, item_to_retest = None):
+  if item_to_retest:
+    room = frappe.get_all('Item Group Service Unit', filters={'parent': item_to_retest}, fields=['service_unit'])
+  else:
+    pass
   doc = frappe.get_doc('Dispatcher', name)
   allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
   hsu_exist = False
@@ -130,9 +134,11 @@ def retest(name, room):
   for hsu in doc.assignment_table:
     if hsu.healthcare_service_unit == room:
       if hsu.status in allowed_status:
+        previous_doctype = hsu.reference_doctype
+        previous_docname = hsu.reference_doc
         hsu.status = 'Wait for Room Assignment'
         #hsu.reference_doctype = ''
-        hsu.reference_doc = ''
+        #hsu.reference_doc = ''
         hsu_exist = True
         if doc.status != 'In Queue':
           doc.status = 'In Queue'
@@ -141,16 +147,10 @@ def retest(name, room):
         frappe.throw(f"Cannot make patient retest, because server status of room: {room} is {hsu.status}.")
   service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
   target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
-  match target:
-    case 'Nurse Examination':
-      template_doctype = 'Nurse Examination Template'
-    case 'Doctor Examination':
-      template_doctype = 'Doctor Examination Template'
-    case 'Radiology':
-      template_doctype = 'Radiology Result Template'
-    case 'Sample Collection':
-      template_doctype = 'Lab Test Template'
-    case _:
+  rel = frappe.get_all('MCU Relationship', filters={'examination': target}, fields=['result', 'template'])
+  if rel:
+    result_doctype, template_doctype = rel[0].values()
+    if not template_doctype or not result_doctype:
       frappe.throw(f"Undefined Default Doctype for room: {room}.")
   if (template_doctype != 'Lab Test Template'):
     exam_items = fetch_exam_items(name, room, doc.branch, template_doctype)
@@ -180,6 +180,21 @@ def retest(name, room):
           package_item.status = 'Started'
           package_exist = True
   if hsu_exist and package_exist:
+    to_cancel_doc = frappe.get_doc(previous_doctype, previous_docname)
+    if to_cancel_doc.docstatus == 1:
+      if previous_doctype == 'Sample Collection':
+        for cancel_item in to_cancel_doc.custom_sample_table:
+          frappe.db.set_value('Sample Collection Bulk', cancel_item.name, {'status': 'To Retest'});
+        frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'custom_status': 'To Retest'});
+        frappe.db.set_value('Lab Test', {'custom_sample_collection': previous_docname}, {'docstatus': 2});
+      else:
+        for cancel_item in to_cancel_doc.examination_item:
+          cancel_item.status = 'To Retest'
+        to_cancel_doc.save(ignore_permissions=True)
+        frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'status': 'To Retest'});
+        if to_cancel_doc.exam_result:
+          to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result);
+          frappe.db.set_value(result_doctype, to_cancel_res.name, {'docstatus': 2});
     doc.save(ignore_permissions=True)
     return {'docname': doc.name}
 
@@ -335,6 +350,8 @@ def create_exam(name, room, doc_type, template_doctype):
     frappe.throw(f"""Patient {disp_doc.patient} is already in a queue for {disp_doc.room} room.""")
   else:
     for hsu in disp_doc.assignment_table:
+      if hsu.healthcare_service_unit == room:
+        previous_docname = hsu.reference_doc
       if hsu.status in ['Waiting to Enter the Room', 'Ongoing Examination']:
         frappe.throw(f"""Patient {disp_doc.patient} is already in a queue for {hsu.healthcare_service_unit} room.""")
   appt_doc = frappe.get_doc('Patient Appointment', disp_doc.patient_appointment)
@@ -355,6 +372,14 @@ def create_exam(name, room, doc_type, template_doctype):
   if doc_type != 'Sample Collection':
     doc_fields['expected_result_date'] = today()
   doc = frappe.get_doc(doc_fields)
+  if previous_docname:
+    cancelled_doc = frappe.get_doc(doc_type, previous_docname)
+    if doc_type == 'Sample Collection':
+      if cancelled_doc.custom_status == 'To Retest':
+        doc.amended_from = cancelled_doc.name
+    else:
+      if cancelled_doc.status == 'To Retest':
+        doc.amended_from = cancelled_doc.name
   exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")

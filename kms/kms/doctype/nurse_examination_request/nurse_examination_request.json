@@ -1,14 +1,15 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2024-07-01 09:27:18.724832",
+ "creation": "2024-08-08 11:48:47.411858",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "template",
-  "status"
+  "status",
+  "status_time"
  ],
  "fields": [
   {
@@ -26,12 +27,18 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Started\nFinished\nRescheduled\nRefused"
+  },
+  {
+   "fieldname": "status_time",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Status Time"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-16 13:07:52.410306",
+ "modified": "2024-08-22 20:01:34.345509",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Request",

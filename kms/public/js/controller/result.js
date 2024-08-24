@@ -1,4 +1,5 @@
 function show_user_selection_dialog(frm) {
+	$('.add-assignment-btn').remove();
 	frm.add_custom_button('Assign Result', () => {
 		frappe.call({
 			method: 'kms.api.get_users_by_doctype',
