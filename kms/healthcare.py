@@ -137,8 +137,6 @@ def retest(name, room, item_to_retest = None):
         previous_doctype = hsu.reference_doctype
         previous_docname = hsu.reference_doc
         hsu.status = 'Wait for Room Assignment'
-        #hsu.reference_doctype = ''
-        #hsu.reference_doc = ''
         hsu_exist = True
         if doc.status != 'In Queue':
           doc.status = 'In Queue'
@@ -189,8 +187,7 @@ def retest(name, room, item_to_retest = None):
         frappe.db.set_value('Lab Test', {'custom_sample_collection': previous_docname}, {'docstatus': 2});
       else:
         for cancel_item in to_cancel_doc.examination_item:
-          cancel_item.status = 'To Retest'
-        to_cancel_doc.save(ignore_permissions=True)
+          frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
         frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'status': 'To Retest'});
         if to_cancel_doc.exam_result:
           to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result);

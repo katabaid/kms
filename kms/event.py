@@ -122,9 +122,8 @@ def update_customer_name(doc, method=None):
 @frappe.whitelist()
 def update_healthcare_service_unit_branch(doc, method=None):
   ################Doctype: Healthcare Service Unit################
-  if doc.parent_healthcare_service_unit:
+  if doc.parent_healthcare_service_unit and doc.is_group==0:
     doc.custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
-    doc.save()
 
 @frappe.whitelist()
 def warn_lab_test_exceed_max(doc, method=None):

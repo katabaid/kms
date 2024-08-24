@@ -26,9 +26,6 @@ frappe.ui.form.on('Patient Appointment', {
 	},
 	appointment_type(frm) {
     if(frm.doc.appointment_type==='MCU') {
-      frm.set_value('custom_priority', '4. MCU');
-      frm.set_value('custom_branch', frm.branch);
-      frm.refresh_field("custom_branch");
       frm.enable_save();
     }
 	},
@@ -48,7 +45,6 @@ frappe.ui.form.on('Patient Appointment', {
     }
 	},
 	refresh(frm) {
-    frm.branch = frm.doc.custom_branch;
     frm.remove_custom_button('Vital Signs', 'Create');
     frm.remove_custom_button('Patient Encounter', 'Create');
     frm.remove_custom_button('Cancel');
@@ -105,7 +101,6 @@ frappe.ui.form.on('Patient Appointment', {
               row.examination_item = values.item
               refresh_field("custom_additional_mcu_items");
               dialog.hide()
-
             }
           });
           dialog.show();

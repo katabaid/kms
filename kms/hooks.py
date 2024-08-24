@@ -153,7 +153,7 @@ doc_events = {
     "after_insert": "kms.event.update_customer_name",
   },
   "Healthcare Service Unit": {
-    "after_insert": "kms.event.update_healthcare_service_unit_branch",
+    "before_save": "kms.event.update_healthcare_service_unit_branch",
   },
   "Lab Test": {
     "on_update": "kms.event.warn_lab_test_exceed_max",
