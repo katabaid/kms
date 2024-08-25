@@ -6,7 +6,7 @@ from frappe.model.document import Document
 
 class NurseExamination(Document):
 	def on_submit(self):
-		exam_result = frappe.db.exists('Nurse Examination Result', {'exam': self.name}, 'name')
+		exam_result = frappe.db.exists('Nurse Result', {'exam': self.name}, 'name')
 		if exam_result:
 			self.db_set('exam_result', exam_result)
 	def before_save(self):
