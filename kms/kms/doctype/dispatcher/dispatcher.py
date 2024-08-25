@@ -307,6 +307,7 @@ def create_result_doc(doc, target):
 									new_doc.append('result', {
 										'result_line': result.result_text,
 										'normal_value': result.normal_value,
+										'mandatory_value': result.mandatory_value,
 										'result_check': result.normal_value,
 										'item_code': template_doc.item_code,
 										'result_options': result.result_select
@@ -315,6 +316,7 @@ def create_result_doc(doc, target):
 								new_doc.append('result', {
 									'result_line': result.result_text,
 									'normal_value': result.normal_value,
+									'mandatory_value': result.mandatory_value,
 									'result_check': result.normal_value,
 									'item_code': template_doc.item_code,
 									'result_options': result.result_select
@@ -327,6 +329,7 @@ def create_result_doc(doc, target):
 								new_doc.append('result', {
 									'result_line': result.result_text,
 									'normal_value': result.normal_value,
+									'mandatory_value': result.mandatory_value,
 									'result_check': result.normal_value,
 									'item_code': template_doc.item_code,
 									'result_options': result.result_select

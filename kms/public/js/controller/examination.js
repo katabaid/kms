@@ -110,9 +110,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
     refresh: function (frm) {
       frm.trigger('process_custom_buttons');
-      //frm.trigger('hide_standard_child_tables_buttons');
-      //hide_standard_child_tables_buttons(frm);
-      console.log(config.childTables)
       utils.hideStandardButtons(frm, config.childTables);
       if (utils.getStatus(frm) === 'Checked In') {
         frm.trigger('setup_child_table_custom_buttons');

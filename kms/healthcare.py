@@ -294,6 +294,7 @@ def append_exam_results(doc, exam_items, template_doctype):
                 doc.append('result', {
                   'result_line': selective.result_text,
                   'normal_value': selective.normal_value,
+                  'mandatory_value': selective.mandatory_value,
                   'result_check': selective.normal_value,
                   'item_code': exam_item.item_code,
                   'result_options': selective.result_select
@@ -316,6 +317,7 @@ def append_exam_results(doc, exam_items, template_doctype):
               doc.append('result', {
                 'result_line': selective.result_text,
                 'normal_value': selective.normal_value,
+                'mandatory_value': selective.mandatory_value,
                 'result_check': selective.normal_value,
                 'item_code': exam_item.item_code,
                 'result_options': selective.result_select
