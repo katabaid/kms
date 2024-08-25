@@ -322,9 +322,7 @@ def create_result_doc(doc, target):
 					case 'Nurse Result':
 						template = 'Nurse Examination Template'
 						template_doc = frappe.get_doc(template, item.template)
-						if template_doc.result_in_exam:
-							not_created = True
-						else:
+						if not template_doc.result_in_exam:
 							for result in template_doc.items:
 								new_doc.append('result', {
 									'result_line': result.result_text,
