@@ -167,11 +167,14 @@ def process_checkin(doc, method=None):
         if exist_doc: 
           disp_doc = frappe.get_doc('Dispatcher', exist_doc)
           for entry in doc.custom_additional_mcu_items:
-            new_entry = entry.as_dict()
-            new_entry.name = None
-            disp_doc.append('package', new_entry)
-            #rooms = frappe.get_all()
-            print(entry.examination_item)
+            add_to_list = True
+            for already_exam_item in disp_doc.package:
+              if entry.examination_item == already_exam_item.examination_item:
+                add_to_list = False
+            if add_to_list:
+              new_entry = entry.as_dict()
+              new_entry.name = None
+              disp_doc.append('package', new_entry)
         else:
           disp_doc = frappe.get_doc({
             'doctype': 'Dispatcher',

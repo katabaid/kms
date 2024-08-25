@@ -103,7 +103,6 @@ def remove_from_room(name, room):
         doc.status = 'In Queue'
         doc.room = ''
         hsu.status = 'Wait for Room Assignment'
-        hsu.reference_doctype = ''
         hsu.reference_doc = ''
         doc.save(ignore_permissions=True)
         exam_doc = frappe.get_doc(doc_type, doc_name)
@@ -125,8 +124,6 @@ def remove_from_room(name, room):
 def retest(name, room, item_to_retest = None):
   if item_to_retest:
     room = frappe.get_all('Item Group Service Unit', filters={'parent': item_to_retest}, fields=['service_unit'])
-  else:
-    pass
   doc = frappe.get_doc('Dispatcher', name)
   allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
   hsu_exist = False
