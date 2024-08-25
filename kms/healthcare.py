@@ -302,6 +302,7 @@ def append_exam_results(doc, exam_items, template_doctype):
             if non_selectives:
               for non_selective in non_selectives:
                 doc.append('non_selective_result', {
+                  'item_code': exam_item.item_code,
                   'test_name': non_selective.heading_text,
                   'test_event': non_selective.lab_test_event,
                   'test_uom': non_selective.lab_test_uom,
@@ -323,6 +324,7 @@ def append_exam_results(doc, exam_items, template_doctype):
           if non_selectives:
             for non_selective in non_selectives:
               doc.append('non_selective_result', {
+                'item_code': exam_item.item_code,
                 'test_name': non_selective.heading_text,
                 'test_event': non_selective.lab_test_event,
                 'test_uom': non_selective.lab_test_uom,

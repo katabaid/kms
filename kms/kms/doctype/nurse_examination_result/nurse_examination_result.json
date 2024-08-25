@@ -8,6 +8,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "item_code",
   "test_name",
   "test_event",
   "result_value",
@@ -67,11 +68,19 @@
    "in_list_view": 1,
    "label": "Max Value",
    "read_only": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "read_only": 1
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2024-08-13 07:34:12.606944",
+ "modified": "2024-08-25 07:53:22.330940",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Result",

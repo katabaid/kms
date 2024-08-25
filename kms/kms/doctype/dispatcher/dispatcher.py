@@ -333,6 +333,7 @@ def create_result_doc(doc, target):
 								})
 							for selective_result in template_doc.normal_items:
 								new_doc.append('non_selective_result', {
+									'item_code': template_doc.item_code,
 									'test_name': selective_result.heading_text,
 									'test_event': selective_result.lab_test_event,
 									'test_uom': selective_result.lab_test_uom,
