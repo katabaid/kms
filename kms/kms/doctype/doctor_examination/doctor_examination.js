@@ -65,8 +65,8 @@ const handleVitalSign = (frm) => {
           ];
           if (!frm.vital_sign_datatable) {
             const datatable_options = {
-              columns,
-              data,
+              columns: columns,
+              data: data,
               inlineFilters: false,
               noDataMessage: __("No Data"),
               disableReorderColumn: true

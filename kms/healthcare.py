@@ -186,7 +186,8 @@ def retest(name, room, item_to_retest = None):
         for cancel_item in to_cancel_doc.examination_item:
           frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
         frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'status': 'To Retest'});
-        if to_cancel_doc.exam_result:
+        #if to_cancel_doc.exam_result:
+        if getattr(to_cancel_doc, 'exam_result', None):
           to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result);
           frappe.db.set_value(result_doctype, to_cancel_res.name, {'docstatus': 2});
     doc.save(ignore_permissions=True)

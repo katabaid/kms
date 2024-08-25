@@ -18,6 +18,7 @@
    "in_list_view": 1,
    "label": "Template",
    "options": "Nurse Examination Template",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -26,19 +27,21 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Started\nFinished\nRescheduled\nRefused\nTo Retest"
+   "options": "Started\nFinished\nRescheduled\nRefused\nTo Retest",
+   "read_only": 1
   },
   {
    "fieldname": "status_time",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Status Time"
+   "label": "Status Time",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-24 17:35:50.940233",
+ "modified": "2024-08-25 10:53:24.953089",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Request",
