@@ -292,8 +292,11 @@ def create_result_doc(doc, target):
 		})
 		for item in doc.examination_item:
 			if item.status == 'Finished':
+				item_status = 'Started'
+				if target == 'Nurse Result' and frappe.db.get_value('Nurse Examination Template', item.template, 'result_in_exam'):
+					item_status = 'Finished'
 				new_doc.append('examination_item', {
-					'status': 'Started',
+					'status': item_status,
 					'template': item.template
 				})
 				match target:
@@ -322,9 +325,34 @@ def create_result_doc(doc, target):
 									'result_options': result.result_select
 								})
 					case 'Nurse Result':
+						not_created = False
 						template = 'Nurse Examination Template'
 						template_doc = frappe.get_doc(template, item.template)
-						if not template_doc.result_in_exam:
+						if getattr(template_doc, 'result_in_exam', None):
+							for result in doc.result:
+								new_doc.append('result', {
+									'item_code': result.item_code,
+									'item_name': result.item_name,
+									'result_line': result.result_line,
+									'result_check': result.result_check,
+									'result_text': result.result_text,
+									'normal_value': result.normal_value,
+									'result_options': result.result_options,
+									'mandatory_value': result.mandatory_value,
+									'is_finished': True
+								})
+							for normal_item in doc.non_selective_result:
+								new_doc.append('non_selective_result', {
+									'item_code': normal_item.item_code,
+									'test_name': normal_item.test_name,
+									'test_event': normal_item.test_event,
+									'result_value': normal_item.result_value,
+									'test_uom': normal_item.test_uom,
+									'min_value': normal_item.min_value,
+									'max_value': normal_item.max_value,
+									'is_finished': True
+								})
+						else:
 							for result in template_doc.items:
 								new_doc.append('result', {
 									'result_line': result.result_text,
@@ -332,18 +360,19 @@ def create_result_doc(doc, target):
 									'mandatory_value': result.mandatory_value,
 									'result_check': result.normal_value,
 									'item_code': template_doc.item_code,
-									'result_options': result.result_select
+									'result_options': result.result_select,
+									'is_finished': False
 								})
-							for selective_result in template_doc.normal_items:
+							for normal_item in template_doc.normal_items:
 								new_doc.append('non_selective_result', {
 									'item_code': template_doc.item_code,
-									'test_name': selective_result.heading_text,
-									'test_event': selective_result.lab_test_event,
-									'test_uom': selective_result.lab_test_uom,
-									'min_value': selective_result.min_value,
-									'max_value': selective_result.max_value
+									'test_name': normal_item.heading_text,
+									'test_event': normal_item.lab_test_event,
+									'test_uom': normal_item.lab_test_uom,
+									'min_value': normal_item.min_value,
+									'max_value': normal_item.max_value,
+									'is_finished': False
 								})
-							not_created = False
 					case _:
 						frappe.throw(f"Unhandled Template for {target} DocType.")
 	if not not_created:

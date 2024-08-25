@@ -255,6 +255,6 @@ def set_collector(doc, method=None):
   if not doc.collected_time:
     doc.collected_time = frappe.utils.now()
 
-  exam_result = frappe.db.exists('Doctor Examination Result', {'exam': doc.name}, 'name')
+  exam_result = frappe.db.exists('Lab Test', {'custom_sample_collection': doc.name}, 'name')
   if exam_result:
-    doc.exam_result = exam_result
+    doc.custom_lab_test = exam_result
