@@ -217,17 +217,11 @@ def refuse_to_test(name, room):
         frappe.throw(f"Cannot make patient refuse to test, because server status of room: {room} is {hsu.status}.")
   service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
   target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
-  match target:
-    case 'Nurse Examination':
-      template_doctype = 'Nurse Examination Template'
-    case 'Doctor Examination':
-      template_doctype = 'Doctor Examination Template'
-    case 'Radiology':
-      template_doctype = 'Radiology Result Template'
-    case 'Sample Collection':
-      template_doctype = 'Lab Test Template'
-    case _:
-      frappe.throw(f"Undefined Default Doctype for room: {room}.")
+  rel = frappe.get_all('MCU Relationship', filters={'examination': target}, fields=['result', 'template'])
+  if rel:
+    template_doctype = rel[0].template
+  else:
+    frappe.throw(f"Undefined Default Doctype for room: {room}.")
   if (template_doctype != 'Lab Test Template'):
     exam_items = fetch_exam_items(name, room, doc.branch, template_doctype)
     for package_item in doc.package:
@@ -318,66 +312,31 @@ def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None)
       if template_doctype in ['Nurse Examination Template', 'Doctor Examination Template']:
         if template_doctype == 'Nurse Examination Template' and not template_doc.result_in_exam:
           continue
-        append_selective_results(doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
-        append_non_selective_results(doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
+        append_results (doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
 
-def append_selective_results(doc, template_doc, item_code, cancelled_doc = None, assigned_status = None):
-  if cancelled_doc and assigned_status:
-    selectives = cancelled_doc.get('result')
-    if selectives:
-      for selective in selectives:
-        if item_code == selective.item_code: 
-          doc.append('result', {
-            'item_code': selective.item_code,
-            'item_name': selective.item_name,
-            'result_line': selective.result_line,
-            'result_check': selective.result_check,
-            'result_text': selective.result_text if assigned_status == 'Finished' else '',
-            'normal_value': selective.normal_value,
-            'result_options': selective.result_options,
-            'mandatory_value': selective.mandatory_value,
-            'is_finished': True if assigned_status == 'Finished' else False
-          })
-  else:
-    selectives = template_doc.get('items')
-    if selectives:
-      for selective in selectives:
-        doc.append('result', {
-          'result_line': selective.result_text,
-          'normal_value': selective.normal_value,
-          'mandatory_value': selective.mandatory_value,
-          'result_check': selective.normal_value,
-          'item_code': item_code,
-          'result_options': selective.result_select
-        })
-def append_non_selective_results(doc, template_doc, item_code, cancelled_doc = None, assigned_status = None):
-  if cancelled_doc and assigned_status:
-    non_selectives = cancelled_doc.get('non_selective_result')
-    if non_selectives:
-      for non_selective in non_selectives:
-        if item_code == non_selective.item_code:
-          doc.append('non_selective_result', {
-            'item_code': non_selective.item_code,
-            'test_name': non_selective.test_name,
-            'test_event': non_selective.test_event,
-            'result_value': non_selective.result_value if assigned_status == 'Finished' else '',
-            'test_uom': non_selective.test_uom,
-            'min_value': non_selective.min_value,
-            'max_value': non_selective.max_value,
-            'is_finished': True if assigned_status == 'Finished' else False
-          })
-  else:
-    non_selectives = template_doc.get('normal_items')
-    if non_selectives:
-      for non_selective in non_selectives:
-        doc.append('non_selective_result', {
-          'item_code': item_code,
-          'test_name': non_selective.heading_text,
-          'test_event': non_selective.lab_test_event,
-          'test_uom': non_selective.lab_test_uom,
-          'min_value': non_selective.min_value,
-          'max_value': non_selective.max_value
-        })
+def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_status=None):
+  is_cancelled = bool(cancelled_doc and assigned_status)
+  is_finished = assigned_status == 'Finished' if is_cancelled else False
+  for result_type in ['result', 'non_selective_result']:
+    source = cancelled_doc.get(result_type, []) if is_cancelled else template_doc.get('items' if result_type == 'result' else 'normal_items', [])
+    for item in source:
+      if not is_cancelled or item.item_code == item_code:
+        result = {'item_code': item.item_code if is_cancelled else item_code}
+        if is_cancelled:
+          cancelled_attr = ['item_name', 'result_line', 'result_check', 'test_name', 'test_event', 'test_uom', 'min_value', 'max_value']
+          result.update({attr: getattr(item, attr, '') for attr in cancelled_attr})
+          result.update({
+            'is_finished': is_finished, 
+            result_type.split('_')[0] + '_value': getattr(item, result_type.split('_')[0] + '_value', '') if is_finished else ''})
+        else:
+          cancelled_pair = [
+            ('result_line', 'result_text'),         ('normal_value', 'normal_value'), 
+            ('mandatory_value', 'mandatory_value'), ('result_check', 'normal_value'), 
+            ('result_options', 'result_select'),    ('test_name', 'heading_text'), 
+            ('test_event', 'lab_test_event'),       ('test_uom', 'lab_test_uom'), 
+            ('min_value', 'min_value'),             ('max_value', 'max_value')] 
+          result.update({new_key: getattr(item, old_key) for new_key, old_key in cancelled_pair if hasattr(item, old_key)})
+        doc.append(result_type, result)
 
 def update_dispatcher_room_status(doc, room, doc_type, doc_name):
   for hsu in doc.assignment_table:
