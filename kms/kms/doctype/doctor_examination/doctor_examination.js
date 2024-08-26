@@ -71,7 +71,8 @@ const handleVitalSign = (frm) => {
               noDataMessage: __("No Data"),
               disableReorderColumn: true
             }
-            frm.vital_sign_datatable = new frappe.DataTable('#vital_sign_html', datatable_options);
+            const container = document.querySelector('#vital_sign_html');
+            frm.vital_sign_datatable = new frappe.DataTable(container, datatable_options);
           } else {
             frm.vital_sign_datatable.refresh(data, columns);
           }
@@ -390,24 +391,18 @@ const prepareStaticDental = (frm) => {
 }
 
 const prepareOtherDentalOptions = (frm) => {
-  frm.fields_dict['other_dental'].grid.grid_rows.forEach(row => {
-    if (row.doc.other) {
-      frappe.db
-      .get_doc('Other Dental Option', row.doc.other)
-      .then(doc => {
-        if (doc && doc.selections) {
-          frappe.model.set_value(row.doctype, row.name, 'selective_value', '');
-          frm.fields_dict['other_dental'].grid.update_docfield_property('selective_value', 'options', doc.selections.split('\n'));
-          frm.fields_dict['other_dental'].grid.refresh();
-          //row.fields_dict.selective_value.df.options = doc.selections.split('\n');
-        }
-      });
-    } else {
-      frappe.model.set_value(row.doctype, row.name, 'selective_value', '');
-      frm.fields_dict['other_dental'].grid.update_docfield_property('selective_value', 'options', []);
-      frm.fields_dict['other_dental'].grid.refresh();
+  if (frm.doc.docstatus === 0) {
+    if (frm.doc.other_dental) {
+      frm.refresh_field ('other_dental');
+      $.each (frm.doc.other_dental, (key, value) => {
+        frappe.db
+        .get_value('Other Dental Option', value.other, 'selections')
+        .then(opt=> {
+          frappe.meta.get_docfield('Other Dental', 'selective_value', value.name).options = opt.message.selections.split('\n')
+        })
+      })
     }
-  });
+  }
 }
 
 // Use the common controller with custom before_submit function for Doctor Examination
@@ -473,5 +468,17 @@ frappe.ui.form.on('Doctor Examination Selective Result',{
     frappe.meta.get_docfield(cdt, 'result_text', cdn).read_only = (row.result_check === row.normal_value) ? 1 : 0;
     frappe.meta.get_docfield(cdt, 'result_text', cdn).reqd = (row.result_check === row.mandatory_value) ? 1 : 0;
 		frm.refresh_field('result');
+	}
+})
+
+frappe.ui.form.on('Other Dental',{
+	other(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+    frappe.db
+    .get_value('Other Dental Option', row.other, 'selections')
+    .then(opt=> {
+      frappe.meta.get_docfield(cdt, 'selective_value', cdn).options = opt.message.selections.split('\n')
+      frm.refresh_field('other_dental');
+    })
 	}
 })
