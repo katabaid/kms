@@ -11,26 +11,30 @@ frappe.ui.form.on('Nurse Result', {
 		hide_standard_buttons (frm, ['examination_item', 'result', 'non_selective_result']);
 	},
 	setup: function (frm) {
-		if(frm.doc.result&&frm.doc.docstatus===0){
-			frm.refresh_field('result');
-      $.each(frm.doc.result, (key, value) => {
-				frm.fields_dict.result.grid.grid_rows[key].docfields[3].options=frm.fields_dict.result.get_value()[key].result_options;
-        frm.fields_dict.result.grid.grid_rows[key].docfields[4].read_only = (value.result_check === value.normal_value) ? 1 : 0;
-        frm.fields_dict.result.grid.grid_rows[key].docfields[4].reqd = (value.result_check === value.mandatory_value) ? 1 : 0;
-				if (value.is_finished) {
-					frm.fields_dict.result.grid.grid_rows[key].docfields[3].read_only = 1;
-					frm.fields_dict.result.grid.grid_rows[key].docfields[3].reqd = 0;
-					frm.fields_dict.result.grid.grid_rows[key].docfields[4].read_only = 1;
-					frm.fields_dict.result.grid.grid_rows[key].docfields[4].reqd = 0;
-				}
-      });
-			frm.refresh_field('non_selective_result');
-			$.each(frm.doc.non_selective_result, (key, value) => {
-				if (value.is_finished) {
-					frappe.meta.get_docfield('Nurse Examination Result', 'result_value', value.name).read_only = 1
-				}
-			})
-      frm.refresh_field('result');
+		if(frm.doc.docstatus === 0){
+			if (frm.doc.result) {
+				frm.refresh_field('result');
+				$.each(frm.doc.result, (key, value) => {
+					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name).options = value.result_options;
+					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).read_only = (value.result_check === value.normal_value) ? 1 : 0;
+					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).reqd = (value.result_check === value.normal_value) ? 1 : 0;
+					if (value.is_finished) {
+						frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name).read_only = 1;
+						frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name).reqd = 0;
+						frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).read_only = 1;
+						frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).reqd = 0;
+					}
+				});
+			}
+			if (frm.doc.non_selective_result) {
+				frm.refresh_field('non_selective_result');
+				$.each(frm.doc.non_selective_result, (key, value) => {
+					if (value.is_finished) {
+						frappe.meta.get_docfield('Nurse Examination Result', 'result_value', value.name).read_only = 1;
+						frappe.meta.get_docfield('Nurse Examination Result', 'result_value', value.name).reqd = 0;
+					}
+				})
+			}
     }
 	}	
 });

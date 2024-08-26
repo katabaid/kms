@@ -213,10 +213,8 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   async function updateChildStatus(frm, grid, newStatus, reason = null) {
     const selectedRows = grid.get_selected();
     if (selectedRows.length !== 1) return;
-  
     const child = locals[grid.doctype][selectedRows[0]];
     if (child.status !== 'Started') return;
-  
     try {
       if (frm.doc.non_selective_result && newStatus === 'Finished') {
         const r = await frappe.db.get_value(
@@ -224,32 +222,24 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           child.template,
           ['item_code']
         );
-  
         const filteredData = frm.doc.non_selective_result.filter(item => 
           item.item_code === r.message.item_code && 
           (!item.hasOwnProperty('result_value') || item.result_value === null)
         );
-        console.log(filteredData)
         if (filteredData.length > 0) {
           frappe.throw(__(`All rows of ${child.template} result must have value to finish.`));
           return; // This will stop the execution if frappe.throw doesn't
         }
       }
-  
       await frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
       await frappe.model.set_value(child.doctype, child.name, 'status_time', frappe.datetime.now_datetime());
-  
       await updateParentStatus(frm);
       await frm.save();
-  
       updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
-  
       if (utilsLoaded && kms.utils) {
         kms.utils.show_alert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
       }
-  
       frm.reload_doc();
-  
       if (utils.getDispatcher(frm) && reason && utilsLoaded && kms.utils) {
         kms.utils.add_comment(
           frm.doc.doctype,

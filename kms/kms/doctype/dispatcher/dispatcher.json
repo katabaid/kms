@@ -13,9 +13,12 @@
   "status",
   "room",
   "tab_break_taqcr",
+  "patient",
+  "age",
+  "gender",
+  "column_break_0jucv",
   "date",
   "branch",
-  "patient",
   "mcu_package",
   "room_assignment_section",
   "assignment_table",
@@ -129,12 +132,30 @@
    "in_standard_filter": 1,
    "label": "Queue No",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_0jucv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "patient_appointment.patient_age",
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.sex",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-23 20:06:51.387798",
+ "modified": "2024-08-26 07:36:52.369282",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

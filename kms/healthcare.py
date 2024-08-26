@@ -91,7 +91,6 @@ def create_service(name, room):
   else:
     frappe.throw(f"Unsupported target: {target}")
 
-
 @frappe.whitelist()
 def remove_from_room(name, room):
   doc = frappe.get_doc('Dispatcher', name)
@@ -121,10 +120,10 @@ def remove_from_room(name, room):
         frappe.throw(f"Cannot remove from room, because server status of room: {room} is {hsu.status}.")
 
 @frappe.whitelist()
-def retest(name, room, item_to_retest = None):
-  if item_to_retest:
-    room = frappe.get_all('Item Group Service Unit', filters={'parent': item_to_retest}, fields=['service_unit'])
+def retest(name, room = None, item_to_retest = None):
   doc = frappe.get_doc('Dispatcher', name)
+  if item_to_retest:
+    room = frappe.get_all('Item Group Service Unit', filters={'parent': item_to_retest, 'branch': doc.branch}, fields=['service_unit'])[0].service_unit
   allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
   hsu_exist = False
   package_exist = False
@@ -145,6 +144,8 @@ def retest(name, room, item_to_retest = None):
   rel = frappe.get_all('MCU Relationship', filters={'examination': target}, fields=['result', 'template'])
   if rel:
     result_doctype, template_doctype = rel[0].values()
+    if item_to_retest:
+      template_name = frappe.get_all(template_doctype, filters={'item_code': item_to_retest}, fields=['name'])[0].name
     if not template_doctype or not result_doctype:
       frappe.throw(f"Undefined Default Doctype for room: {room}.")
   if (template_doctype != 'Lab Test Template'):
@@ -155,25 +156,30 @@ def retest(name, room, item_to_retest = None):
           package_item.status = 'Started'
           package_exist = True
   else:
-    query = f"""
-      SELECT examination_item AS item_code
-      FROM `tabMCU Appointment` tma
-      INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
-      INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
-      WHERE tma.parenttype = 'Dispatcher'
-      AND tma.parentfield = 'package'
-      AND tma.parent = '{name}'
-      AND tigsu.parenttype = 'Item'
-      AND tigsu.parentfield = 'custom_room'
-      AND tigsu.branch = '{doc.branch}'
-      AND tigsu.service_unit = '{room}'
-      """
-    exam_items = frappe.db.sql(query, as_dict=True)
+    if not item_to_retest:
+      query = f"""
+        SELECT examination_item AS item_code
+        FROM `tabMCU Appointment` tma
+        INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
+        INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
+        WHERE tma.parenttype = 'Dispatcher'
+        AND tma.parentfield = 'package'
+        AND tma.parent = '{name}'
+        AND tigsu.parenttype = 'Item'
+        AND tigsu.parentfield = 'custom_room'
+        AND tigsu.branch = '{doc.branch}'
+        AND tigsu.service_unit = '{room}'
+        """
+      exam_items = frappe.db.sql(query, as_dict=True)
     for package_item in doc.package:
-      for exam_item in exam_items:
-        if package_item.examination_item == exam_item.item_code:
-          package_item.status = 'Started'
-          package_exist = True
+      if (item_to_retest and package_item.examination_item == item_to_retest) or \
+      (not item_to_retest and package_item.examination_item in [item.item_code for item in exam_items]):
+        package_item.status = 'Started'
+        package_exist = True
+        #for exam_item in exam_items:
+        #  if package_item.examination_item == exam_item.item_code:
+        #    package_item.status = 'Started'
+        #    package_exist = True
   if hsu_exist and package_exist:
     to_cancel_doc = frappe.get_doc(previous_doctype, previous_docname)
     if to_cancel_doc.docstatus == 1:
@@ -184,7 +190,11 @@ def retest(name, room, item_to_retest = None):
         frappe.db.set_value('Lab Test', {'custom_sample_collection': previous_docname}, {'docstatus': 2});
       else:
         for cancel_item in to_cancel_doc.examination_item:
-          frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
+          if item_to_retest:
+            if template_name == cancel_item.template:
+              frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
+          else:
+            frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
         frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'status': 'To Retest'});
         #if to_cancel_doc.exam_result:
         if getattr(to_cancel_doc, 'exam_result', None):
@@ -261,14 +271,10 @@ def fetch_exam_items(name, room, branch, template_doctype):
 
   if template_doctype == 'Lab Test Template':
     query = f"""
-    SELECT sample, SUM(sample_qty) qty
-    FROM `tab{template_doctype}` tltt
-    WHERE EXISTS (
-      SELECT 1
-      FROM `tabMCU Appointment` tma
-      INNER JOIN `tab{template_doctype}` tnet ON tnet.lab_test_code = tma.examination_item
-      {common_conditions}
-      AND tnet.name = tltt.name)
+    SELECT sample, SUM(sample_qty) qty FROM `tabMCU Appointment` tma
+    INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
+    {common_conditions}
+    GROUP BY 1
     """
   else:
     query = f"""
@@ -279,43 +285,99 @@ def fetch_exam_items(name, room, branch, template_doctype):
     """
   return frappe.db.sql(query, (name, branch, room), as_dict=True)
 
-def append_exam_results(doc, exam_items, template_doctype):
+def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None):
   for exam_item in exam_items:
     if template_doctype == 'Lab Test Template':
-      doc.append('custom_sample_table', {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status':'Started'})
+      doc.append('custom_sample_table', {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status': 'Started'})
     else:
-      doc.append('examination_item', {'template': exam_item.name})
+      assigned_status = ''
+      if cancelled_doc:
+        cancelled_item_count = len(cancelled_doc.examination_item) 
+        have_status = False
+        for index, cancelled_item in enumerate(cancelled_doc.examination_item, start = 1):
+          if cancelled_item.template == exam_item.name: 
+            if cancelled_item.status == 'To Retest':
+              doc.append('examination_item', {'template': exam_item.name, 'status': 'Started'})
+              have_status = True
+              assigned_status = 'Started'
+            elif cancelled_item.status == 'Finished':
+              doc.append(
+                'examination_item', 
+                {'template': exam_item.name, 'status': 'Finished', 'status_time': cancelled_item.status_time}
+              )
+              have_status = True
+              assigned_status = 'Finished'
+            else:
+              pass
+          if index == cancelled_item_count and not have_status:
+            doc.append('examination_item', {'template': exam_item.name, 'status': 'Started'})
+            assigned_status = 'Started'
+      else:
+        doc.append('examination_item', {'template': exam_item.name})
       template_doc = frappe.get_doc(template_doctype, exam_item.name)
       if template_doctype in ['Nurse Examination Template', 'Doctor Examination Template']:
         if template_doctype == 'Nurse Examination Template' and not template_doc.result_in_exam:
           continue
-        append_selective_results(doc, template_doc, exam_item)
-        append_non_selective_results(doc, template_doc, exam_item)
+        append_selective_results(doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
+        append_non_selective_results(doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
 
-def append_selective_results(doc, template_doc, exam_item):
-  selectives = template_doc.get('items')
-  if selectives:
-    for selective in selectives:
-      doc.append('result', {
-        'result_line': selective.result_text,
-        'normal_value': selective.normal_value,
-        'mandatory_value': selective.mandatory_value,
-        'result_check': selective.normal_value,
-        'item_code': exam_item.item_code,
-        'result_options': selective.result_select
-      })
-def append_non_selective_results(doc, template_doc, exam_item):
-  non_selectives = template_doc.get('normal_items')
-  if non_selectives:
-    for non_selective in non_selectives:
-      doc.append('non_selective_result', {
-        'item_code': exam_item.item_code,
-        'test_name': non_selective.heading_text,
-        'test_event': non_selective.lab_test_event,
-        'test_uom': non_selective.lab_test_uom,
-        'min_value': non_selective.min_value,
-        'max_value': non_selective.max_value
-      })
+def append_selective_results(doc, template_doc, item_code, cancelled_doc = None, assigned_status = None):
+  if cancelled_doc and assigned_status:
+    selectives = cancelled_doc.get('result')
+    if selectives:
+      for selective in selectives:
+        if item_code == selective.item_code: 
+          doc.append('result', {
+            'item_code': selective.item_code,
+            'item_name': selective.item_name,
+            'result_line': selective.result_line,
+            'result_check': selective.result_check,
+            'result_text': selective.result_text if assigned_status == 'Finished' else '',
+            'normal_value': selective.normal_value,
+            'result_options': selective.result_options,
+            'mandatory_value': selective.mandatory_value,
+            'is_finished': True if assigned_status == 'Finished' else False
+          })
+  else:
+    selectives = template_doc.get('items')
+    if selectives:
+      for selective in selectives:
+        doc.append('result', {
+          'result_line': selective.result_text,
+          'normal_value': selective.normal_value,
+          'mandatory_value': selective.mandatory_value,
+          'result_check': selective.normal_value,
+          'item_code': item_code,
+          'result_options': selective.result_select
+        })
+def append_non_selective_results(doc, template_doc, item_code, cancelled_doc = None, assigned_status = None):
+  if cancelled_doc and assigned_status:
+    non_selectives = cancelled_doc.get('non_selective_result')
+    if non_selectives:
+      for non_selective in non_selectives:
+        if item_code == non_selective.item_code:
+          doc.append('non_selective_result', {
+            'item_code': non_selective.item_code,
+            'test_name': non_selective.test_name,
+            'test_event': non_selective.test_event,
+            'result_value': non_selective.result_value if assigned_status == 'Finished' else '',
+            'test_uom': non_selective.test_uom,
+            'min_value': non_selective.min_value,
+            'max_value': non_selective.max_value,
+            'is_finished': True if assigned_status == 'Finished' else False
+          })
+  else:
+    non_selectives = template_doc.get('normal_items')
+    if non_selectives:
+      for non_selective in non_selectives:
+        doc.append('non_selective_result', {
+          'item_code': item_code,
+          'test_name': non_selective.heading_text,
+          'test_event': non_selective.lab_test_event,
+          'test_uom': non_selective.lab_test_uom,
+          'min_value': non_selective.min_value,
+          'max_value': non_selective.max_value
+        })
 
 def update_dispatcher_room_status(doc, room, doc_type, doc_name):
   for hsu in doc.assignment_table:
@@ -353,6 +415,7 @@ def create_exam(name, room, doc_type, template_doctype):
   if doc_type != 'Sample Collection':
     doc_fields['expected_result_date'] = today()
   doc = frappe.get_doc(doc_fields)
+  cancelled_doc = None
   if previous_docname:
     cancelled_doc = frappe.get_doc(doc_type, previous_docname)
     if doc_type == 'Sample Collection':
@@ -364,7 +427,7 @@ def create_exam(name, room, doc_type, template_doctype):
   exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")
-  append_exam_results(doc, exam_items, template_doctype)
+  append_exam_results(doc, exam_items, template_doctype, cancelled_doc)
   doc.insert(ignore_permissions=True)
   update_dispatcher_room_status(disp_doc, room, doc_type, doc.name)
   return {'docname': doc.name}

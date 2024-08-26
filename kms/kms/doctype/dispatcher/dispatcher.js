@@ -36,7 +36,27 @@ const addCustomButtonOnPackage = (frm) => {
 		// hide standard buttons
 		const customButton = child_table.add_custom_button(
 			'Retest',
-			() => { frappe.msgprint('tes') },
+			() => { 
+				let selected_rows = frm.fields_dict['package'].grid.get_selected();
+				if (selected_rows && selected_rows.length === 1) {
+					const child = locals[frm.fields_dict['package'].grid.doctype][selected_rows];
+					frappe.call({
+						method: 'kms.healthcare.retest',
+						args: {
+							name: frm.doc.name,
+							room: undefined,
+							item_to_retest: child.examination_item,
+						},
+						callback: (r) => {
+							if (utilsLoaded && kms.utils) {
+								kms.utils.show_alert(`Marked ${child.examination_item} to retest successfully.`, 'green');
+							}				
+							frm.reload_doc();
+						},
+						error: (err) => { console.log(err) }
+					});
+				}
+			},
 			'btn-custom'
 		);
 		customButton.addClass("btn-warning btn-xs").removeClass("btn-default btn-secondary");
@@ -72,7 +92,6 @@ const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 		frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
 		// Remove buttons from detail view dialog
 		frm.fields_dict[field].grid.grid_rows.forEach(function(row) {
-			//row.wrapper.find('.row-check').hide(); // Hide the checkbox
 			row.wrapper.find('.btn-open-row').on('click', function() {
 				setTimeout(function() {
 					$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
@@ -128,23 +147,13 @@ const updateChildStatus = async (frm, grid, button, reason = null) => {
 	const selectedRows = grid.get_selected();
 	if (selectedRows.length === 1) {
 		let next = false;
-		switch (button.label) {
-			case 'Assign':
-				next = await assign_to_room(frm);
-				break;
-			case 'Remove from Room':
-				next = await remove_from_room(frm);
-				break;
-			case 'Retest':
-				next = await retest(frm);
-				break;
-			case 'Refuse':
-				next = await refuse_to_test(frm);
-				break;
-		}
+		if (button.label === 'Assign') next = await assign_to_room(frm);
+		else if (button.label === 'Remove from Room') next = await remove_from_room(frm);
+		else if (button.label === 'Retest') next = await retest(frm);
+		else if (button.label === 'Refuse') next = await refuse_to_test(frm);
 		if (next) {
 			if (utilsLoaded && kms.utils) {
-				kms.utils.show_alert(`Updated status to ${button.status} Successfully.`, 'green');
+				kms.utils.show_alert(`Updated status to ${button.status} successfully.`, 'green');
 			}
 			if (reason) { 
 				if (utilsLoaded && kms.utils) {
@@ -167,7 +176,6 @@ const setupRowSelector = (grid) => {
 		if (e.target.classList.contains('grid-row-check')) {
 			const $row = $(e.target).closest('.grid-row');
 			const docname = $row.attr('data-name');
-
 			if (grid.selected_row && grid.selected_row === docname) {		
 				$row.removeClass('grid-row-selected').find('.grid-row-check').prop('checked', false);
 				grid.selected_row = null;

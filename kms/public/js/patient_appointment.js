@@ -26,6 +26,7 @@ frappe.ui.form.on('Patient Appointment', {
 	},
 	appointment_type(frm) {
     if(frm.doc.appointment_type==='MCU') {
+      frm.set_value('custom_priority', '4. MCU');
       frm.enable_save();
     }
 	},

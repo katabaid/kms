@@ -84,7 +84,6 @@ def removed_from_room(dispatcher_id, hsu):
 def finish_exam(dispatcher_id, hsu, status):
 	if status == 'Removed':
 		status = 'Wait for Room Assignment'
-
 	doc = frappe.get_doc('Dispatcher', dispatcher_id)
 
 	room_count = 0
@@ -175,10 +174,6 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 	else:
 		frappe.throw(f"Examination item {examination_item} does not exist.")
 	return f"""Updated Dispatcher item: {examination_item} status to {status}."""
-
-@frappe.whitelist()
-def add_additional():
-	pass
 
 def create_result_doc(doc, target):
 	not_created = True
@@ -290,6 +285,13 @@ def create_result_doc(doc, target):
 			'remark': doc.remark,
 			'exam': doc.name
 		})
+		if target == 'Nurse Result':
+			count_nurse_result = frappe.db.sql(f"""SELECT count(*) count FROM `tabNurse Examination Template` tnet
+				WHERE EXISTS (SELECT * FROM `tabNurse Examination Request` tner 
+				WHERE tner.parent = '{doc.name}' AND tnet.name = tner.template)
+				AND tnet.result_in_exam = 0""", as_dict = True)
+			if count_nurse_result[0].count == 0:
+				return
 		for item in doc.examination_item:
 			if item.status == 'Finished':
 				item_status = 'Started'
@@ -297,7 +299,8 @@ def create_result_doc(doc, target):
 					item_status = 'Finished'
 				new_doc.append('examination_item', {
 					'status': item_status,
-					'template': item.template
+					'template': item.template,
+					'status_time': item.status_time if item.status == 'Finished' else None
 				})
 				match target:
 					case 'Radiology Result':
@@ -330,28 +333,30 @@ def create_result_doc(doc, target):
 						template_doc = frappe.get_doc(template, item.template)
 						if getattr(template_doc, 'result_in_exam', None):
 							for result in doc.result:
-								new_doc.append('result', {
-									'item_code': result.item_code,
-									'item_name': result.item_name,
-									'result_line': result.result_line,
-									'result_check': result.result_check,
-									'result_text': result.result_text,
-									'normal_value': result.normal_value,
-									'result_options': result.result_options,
-									'mandatory_value': result.mandatory_value,
-									'is_finished': True
-								})
+								if template_doc.item_code == result.item_code:
+									new_doc.append('result', {
+										'item_code': result.item_code,
+										'item_name': result.item_name,
+										'result_line': result.result_line,
+										'result_check': result.result_check,
+										'result_text': result.result_text,
+										'normal_value': result.normal_value,
+										'result_options': result.result_options,
+										'mandatory_value': result.mandatory_value,
+										'is_finished': True
+									})
 							for normal_item in doc.non_selective_result:
-								new_doc.append('non_selective_result', {
-									'item_code': normal_item.item_code,
-									'test_name': normal_item.test_name,
-									'test_event': normal_item.test_event,
-									'result_value': normal_item.result_value,
-									'test_uom': normal_item.test_uom,
-									'min_value': normal_item.min_value,
-									'max_value': normal_item.max_value,
-									'is_finished': True
-								})
+								if template_doc.item_code == normal_item.item_code:
+									new_doc.append('non_selective_result', {
+										'item_code': normal_item.item_code,
+										'test_name': normal_item.test_name,
+										'test_event': normal_item.test_event,
+										'result_value': normal_item.result_value,
+										'test_uom': normal_item.test_uom,
+										'min_value': normal_item.min_value,
+										'max_value': normal_item.max_value,
+										'is_finished': True
+									})
 						else:
 							for result in template_doc.items:
 								new_doc.append('result', {
