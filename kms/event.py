@@ -163,9 +163,9 @@ def process_checkin(doc, method=None):
   if doc.status == 'Checked In':
     if doc.appointment_date == frappe.utils.nowdate():
       if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
-        exist_doc = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
-        if exist_doc: 
-          disp_doc = frappe.get_doc('Dispatcher', exist_doc)
+        exist_docname = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
+        if exist_docname: 
+          disp_doc = frappe.get_doc('Dispatcher', exist_docname)
           for entry in doc.custom_additional_mcu_items:
             add_to_list = True
             for already_exam_item in disp_doc.package:
@@ -186,18 +186,24 @@ def process_checkin(doc, method=None):
             new_entry = entry.as_dict()
             new_entry.name = None
             disp_doc.append('package', new_entry)
-          rooms = frappe.db.sql(f"""select distinct tigsu.service_unit 
-            from `tabMCU Appointment` tma, `tabItem Group Service Unit` tigsu
-            where tma.parent = '{doc.name}'
-            and tma.parenttype = 'Patient Appointment'
-            and tma.examination_item = tigsu.parent
-            and tigsu.branch = '{doc.custom_branch}'
-            and tigsu.parenttype = 'Item'""", as_dict=1)
+          rooms = frappe.db.sql(f"""
+            SELECT distinct tigsu.service_unit, thsu.custom_default_doctype
+            FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
+            WHERE tigsu.branch = '{doc.custom_branch}'
+            AND tigsu.parenttype = 'Item'
+            AND tigsu.service_unit = thsu.name 
+            AND EXISTS (
+            SELECT 1 FROM `tabMCU Appointment` tma
+            WHERE tma.parenttype = 'Patient Appointment'
+            AND tma.parent = '{doc.name}'
+            AND tma.examination_item = tigsu.parent)
+            ORDER BY thsu.custom_room_number, thsu.custom_default_doctype""", as_dict=1)
           for room in rooms:
             new_entry = dict()
             new_entry['name'] = None
             new_entry['healthcare_service_unit'] = room.service_unit
             new_entry['status'] = 'Wait for Room Assignment'
+            new_entry['reference_doctype'] = room.custom_default_doctype
             disp_doc.append('assignment_table', new_entry)
         disp_doc.save(ignore_permissions=True)
       else:

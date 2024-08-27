@@ -41,11 +41,11 @@ const addCustomButtonOnPackage = (frm) => {
 				if (selected_rows && selected_rows.length === 1) {
 					const child = locals[frm.fields_dict['package'].grid.doctype][selected_rows];
 					frappe.call({
-						method: 'kms.healthcare.retest',
+						method: 'kms.healthcare.exam_retest',
 						args: {
 							name: frm.doc.name,
-							room: undefined,
-							item_to_retest: child.examination_item,
+							item: child.examination_item,
+							item_name: child.item_name,
 						},
 						callback: (r) => {
 							if (utilsLoaded && kms.utils) {

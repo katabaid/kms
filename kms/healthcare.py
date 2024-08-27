@@ -1,4 +1,4 @@
-import frappe
+import frappe, json
 from frappe.utils import today
 
 @frappe.whitelist()
@@ -120,13 +120,50 @@ def remove_from_room(name, room):
         frappe.throw(f"Cannot remove from room, because server status of room: {room} is {hsu.status}.")
 
 @frappe.whitelist()
-def retest(name, room = None, item_to_retest = None):
-  doc = frappe.get_doc('Dispatcher', name)
-  if item_to_retest:
-    room = frappe.get_all('Item Group Service Unit', filters={'parent': item_to_retest, 'branch': doc.branch}, fields=['service_unit'])[0].service_unit
+def exam_retest (name, item, item_name):
   allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
-  hsu_exist = False
-  package_exist = False
+  disp_doc = get_dispatcher_doc (name)
+  room = get_room_by_item_branch (item, disp_doc.branch)
+  hsu_exist, previous_doctype, previous_docname = process_hsu (disp_doc, room, allowed_status)
+  if hsu_exist and disp_doc.status != 'In Queue':
+    disp_doc.statue = 'In Queue'
+    disp_doc.room = ''
+  result_doctype, template_doctype = get_relationship(room)
+  sample = ''
+  if template_doctype == 'Lab Test Template':
+    sample = get_sample_from_template(item_name)
+  exam_items = get_affected_exam_items_list (template_doctype, disp_doc, item_name, sample)
+  if exam_items:
+    for package_item in disp_doc.package:
+      if package_item.item_name in [item for item in exam_items]:
+        package_item.status = 'Started'
+  if exam_items and hsu_exist:
+    to_cancel_doc = get_cancelled_doc (previous_doctype, previous_docname)
+    if to_cancel_doc.docstatus == 1:
+      if previous_doctype == 'Sample Collection':
+        for cancel_item in to_cancel_doc.custom_sample_table:
+          if cancel_item.sample == sample:
+            frappe.db.set_value('Sample Collection Bulk', cancel_item.name, {'status': 'To Retest'})
+        frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'custom_status': 'To Retest'})
+        frappe.db.set_value(result_doctype, {'custom_sample_collection': previous_docname}, {'docstatus': 2})
+      else:
+        for cancel_item in to_cancel_doc.examination_item:
+          if cancel_item.template == exam_items[0]:
+            frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'})
+        frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'status': 'To Retest'})
+        if getattr(to_cancel_doc, 'exam_result', None):
+          to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result)
+          frappe.db.set_value(result_doctype, to_cancel_res.name, {'docstatus': 2})
+    disp_doc.save(ignore_permissions=True)
+    return {'docname': disp_doc.name}
+
+def get_dispatcher_doc (name):
+  return frappe.get_doc ('Dispatcher', name)
+
+def get_room_by_item_branch (item, branch):
+  return frappe.get_all('Item Group Service Unit', filters={'parent': item, 'branch': branch}, fields=['service_unit'])[0].service_unit
+
+def process_hsu (doc, room, allowed_status):
   for hsu in doc.assignment_table:
     if hsu.healthcare_service_unit == room:
       if hsu.status in allowed_status:
@@ -134,74 +171,43 @@ def retest(name, room = None, item_to_retest = None):
         previous_docname = hsu.reference_doc
         hsu.status = 'Wait for Room Assignment'
         hsu_exist = True
-        if doc.status != 'In Queue':
-          doc.status = 'In Queue'
-          doc.room = ''
+        return hsu_exist, previous_doctype, previous_docname
       else:
         frappe.throw(f"Cannot make patient retest, because server status of room: {room} is {hsu.status}.")
-  service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
-  target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
-  rel = frappe.get_all('MCU Relationship', filters={'examination': target}, fields=['result', 'template'])
-  if rel:
-    result_doctype, template_doctype = rel[0].values()
-    if item_to_retest:
-      template_name = frappe.get_all(template_doctype, filters={'item_code': item_to_retest}, fields=['name'])[0].name
-    if not template_doctype or not result_doctype:
-      frappe.throw(f"Undefined Default Doctype for room: {room}.")
-  if (template_doctype != 'Lab Test Template'):
-    exam_items = fetch_exam_items(name, room, doc.branch, template_doctype)
-    for package_item in doc.package:
-      for exam_item in exam_items:
-        if package_item.examination_item == exam_item.item_code:
-          package_item.status = 'Started'
-          package_exist = True
+
+def get_relationship(room):
+  return frappe.get_all(
+    'MCU Relationship', 
+    filters={
+      'examination': 
+      frappe.db.get_value(
+        'Healthcare Service Unit Type', 
+        frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type'), 
+        'custom_default_doctype'
+      )
+    }, 
+    fields=['result', 'template'])[0].values()
+
+def get_sample_from_template (item_name):
+  return frappe.db.get_value('Lab Test Template', item_name, 'sample')
+
+def get_affected_exam_items_list (template_doctype, doc, item_name = None, sample = None):
+  if template_doctype == 'Lab Test Template':
+    return list(set(frappe.get_all('Lab Test Template', filters={'sample':sample}, pluck='name')) & set(list(o.item_name for o in doc.package)))
   else:
-    if not item_to_retest:
-      query = f"""
-        SELECT examination_item AS item_code
-        FROM `tabMCU Appointment` tma
-        INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
-        INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
-        WHERE tma.parenttype = 'Dispatcher'
-        AND tma.parentfield = 'package'
-        AND tma.parent = '{name}'
-        AND tigsu.parenttype = 'Item'
-        AND tigsu.parentfield = 'custom_room'
-        AND tigsu.branch = '{doc.branch}'
-        AND tigsu.service_unit = '{room}'
-        """
-      exam_items = frappe.db.sql(query, as_dict=True)
-    for package_item in doc.package:
-      if (item_to_retest and package_item.examination_item == item_to_retest) or \
-      (not item_to_retest and package_item.examination_item in [item.item_code for item in exam_items]):
-        package_item.status = 'Started'
-        package_exist = True
-        #for exam_item in exam_items:
-        #  if package_item.examination_item == exam_item.item_code:
-        #    package_item.status = 'Started'
-        #    package_exist = True
-  if hsu_exist and package_exist:
-    to_cancel_doc = frappe.get_doc(previous_doctype, previous_docname)
-    if to_cancel_doc.docstatus == 1:
-      if previous_doctype == 'Sample Collection':
-        for cancel_item in to_cancel_doc.custom_sample_table:
-          frappe.db.set_value('Sample Collection Bulk', cancel_item.name, {'status': 'To Retest'});
-        frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'custom_status': 'To Retest'});
-        frappe.db.set_value('Lab Test', {'custom_sample_collection': previous_docname}, {'docstatus': 2});
-      else:
-        for cancel_item in to_cancel_doc.examination_item:
-          if item_to_retest:
-            if template_name == cancel_item.template:
-              frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
-          else:
-            frappe.db.set_value(cancel_item.doctype, cancel_item.name, {'status': 'To Retest'});
-        frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'status': 'To Retest'});
-        #if to_cancel_doc.exam_result:
-        if getattr(to_cancel_doc, 'exam_result', None):
-          to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result);
-          frappe.db.set_value(result_doctype, to_cancel_res.name, {'docstatus': 2});
-    doc.save(ignore_permissions=True)
-    return {'docname': doc.name}
+    return [item_name]
+
+def get_cancelled_doc (previous_doctype, previous_docname):
+  return frappe.get_doc(previous_doctype, previous_docname)
+
+def get_additional_items (name, room):
+  pass
+
+@frappe.whitelist()
+def retest_for_additional(name, room):
+  doc = get_dispatcher_doc (name)
+
+  return {'docname': doc.name}
 
 @frappe.whitelist()
 def refuse_to_test(name, room):
@@ -282,7 +288,18 @@ def fetch_exam_items(name, room, branch, template_doctype):
 def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None):
   for exam_item in exam_items:
     if template_doctype == 'Lab Test Template':
-      doc.append('custom_sample_table', {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status': 'Started'})
+      if cancelled_doc:
+        for sample in cancelled_doc.custom_sample_table:
+          doc.append(
+            'custom_sample_table', 
+            {
+              'sample': sample.sample, 
+              'quantity': sample.quantity, 
+              'status': 'Started' if sample.status == 'To Retest' else sample.status,
+              'uom': sample.uom,
+              'status_time': sample.status_time if sample.status != 'To Retest' else ''})
+      else:
+        doc.append('custom_sample_table', {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status': 'Started'})
     else:
       assigned_status = ''
       if cancelled_doc:
