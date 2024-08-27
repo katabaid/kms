@@ -135,8 +135,11 @@ const addCustomButtonOnChildTable = (frm) => {
 			},
 			'btn-custom'
 		);
-		customButton.removeClass("btn-default btn-secondary").addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
-		customButton.hide();
+		customButton
+		.removeClass("btn-default btn-secondary")
+		.addClass(`${button.class} btn-sm`)
+		.attr('data-statuses', button.statuses)
+		.hide();
 		});
 		setupRowSelector(grid);
 	}

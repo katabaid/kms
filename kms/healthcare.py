@@ -95,29 +95,28 @@ def create_service(name, room):
 def remove_from_room(name, room):
   doc = frappe.get_doc('Dispatcher', name)
   for hsu in doc.assignment_table:
-    if hsu.healthcare_service_unit == room:
-      if hsu.status == 'Waiting to Enter the Room':
-        doc_type = hsu.reference_doctype
-        doc_name = hsu.reference_doc
-        doc.status = 'In Queue'
-        doc.room = ''
-        hsu.status = 'Wait for Room Assignment'
-        hsu.reference_doc = ''
-        doc.save(ignore_permissions=True)
-        exam_doc = frappe.get_doc(doc_type, doc_name)
-        if doc_type == 'Sample Collection':
-          exam_doc.custom_status = 'Removed'
-          for sample in exam_doc.custom_sample_table:
-            sample.status = 'Started'
-        else:
-          exam_doc.status = 'Removed'
-          for exam_item in exam_doc.examination_item:
-            exam_item.status = 'Started'
-        exam_doc.save(ignore_permissions=True)
-        frappe.db.set_value(doc_type, doc_name, 'docstatus', '2')
-        return {'docname': doc_name}
+    if hsu.healthcare_service_unit == room and hsu.status == 'Waiting to Enter the Room':
+      doc_type = hsu.reference_doctype
+      doc_name = hsu.reference_doc
+      doc.status = 'In Queue'
+      doc.room = ''
+      hsu.status = 'Wait for Room Assignment'
+      hsu.reference_doc = ''
+      doc.save(ignore_permissions=True)
+      exam_doc = frappe.get_doc(doc_type, doc_name)
+      if doc_type == 'Sample Collection':
+        exam_doc.custom_status = 'Removed'
+        for sample in exam_doc.custom_sample_table:
+          sample.status = 'Started'
       else:
-        frappe.throw(f"Cannot remove from room, because server status of room: {room} is {hsu.status}.")
+        exam_doc.status = 'Removed'
+        for exam_item in exam_doc.examination_item:
+          exam_item.status = 'Started'
+      exam_doc.save(ignore_permissions=True)
+      frappe.db.set_value(doc_type, doc_name, 'docstatus', '2')
+      return {'docname': doc_name}
+    else:
+      frappe.throw(f"Cannot remove from room, because server status of room: {room} is {hsu.status}.")
 
 @frappe.whitelist()
 def exam_retest (name, item, item_name):
