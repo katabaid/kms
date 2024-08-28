@@ -169,7 +169,8 @@ const updateChildStatus = async (frm, grid, button, reason = null) => {
 					) 
 				}
 			}
-			frm.reload_doc();
+			frappe.set_route('List', 'Dispatcher', 'List');
+			//frm.reload_doc();
 		}
 	}
 };

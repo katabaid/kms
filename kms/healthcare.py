@@ -289,14 +289,15 @@ def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None)
     if template_doctype == 'Lab Test Template':
       if cancelled_doc:
         for sample in cancelled_doc.custom_sample_table:
-          doc.append(
-            'custom_sample_table', 
-            {
-              'sample': sample.sample, 
-              'quantity': sample.quantity, 
-              'status': 'Started' if sample.status == 'To Retest' else sample.status,
-              'uom': sample.uom,
-              'status_time': sample.status_time if sample.status != 'To Retest' else ''})
+          if sample.sample == exam_item.sample:
+            doc.append(
+              'custom_sample_table', 
+              {
+                'sample': sample.sample, 
+                'quantity': sample.quantity, 
+                'status': 'Started' if sample.status == 'To Retest' else sample.status,
+                'uom': sample.uom,
+                'status_time': sample.status_time if sample.status != 'To Retest' else ''})
       else:
         doc.append('custom_sample_table', {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status': 'Started'})
     else:
