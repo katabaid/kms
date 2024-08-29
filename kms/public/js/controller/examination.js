@@ -20,6 +20,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       if (validStatuses.includes(utils.getStatus(frm))) {
         if (utils.getDispatcher(frm)) {
           finishExam(frm);
+          frappe.set_route('List', frm.doctype, 'List');
         }
       } else {
         frappe.throw('All examinations must have final status to submit.');
@@ -69,7 +70,8 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       const buttons = [
         { label: 'Finish', status: 'Finished', statuses: 'Started', class: 'btn-primary', prompt: false },
         { label: 'Refuse', status: 'Refused', statuses: 'Started', class: 'btn-danger', prompt: true },
-        { label: 'Reschedule', status: 'Rescheduled', statuses: 'Started', class: 'btn-warning', prompt: true }
+        { label: 'Reschedule', status: 'Rescheduled', statuses: 'Started', class: 'btn-warning', prompt: true },
+        { label: 'Retest', status: 'To Retest', statuses: 'Finished', class: 'btn-info', prompt: true }
       ];
       // Remove existing custom buttons
       grid.wrapper.find('.grid-footer').find('.btn-custom').hide();
@@ -89,7 +91,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
             updateChildStatus(frm, grid, button.status).catch(err => {console.error('Error in updateChildStatus:', err);});
           }
         }, 'btn-custom');
-        customButton.addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
+        customButton.removeClass("btn-default btn-secondary").addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
         customButton.hide();
       });
       setupRowSelector(grid);
@@ -143,7 +145,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       args: {
         'dispatcher_id': utils.getDispatcher(frm),
         'hsu': utils.getHsu(frm),
-        'status': utils.getStatus(frm)
+        'status': utils.getStatus(frm),
+        'doctype': frm.doc.doctype,
+        'docname': frm.doc.name
       },
       callback: function (r) {
         if (r.message) {
@@ -214,7 +218,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     const selectedRows = grid.get_selected();
     if (selectedRows.length !== 1) return;
     const child = locals[grid.doctype][selectedRows[0]];
-    if (child.status !== 'Started') return;
+    if (child.status !== 'Started' && !(child.status === 'Finished' && newStatus === 'To Retest')) return;
     try {
       if (frm.doc.non_selective_result && newStatus === 'Finished') {
         const r = await frappe.db.get_value(
@@ -244,7 +248,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         kms.utils.add_comment(
           frm.doc.doctype,
           frm.doc.name,
-          `${newStatus} for the reason of: ${reason}`,
+          `${frm.doctype} ${newStatus} for the reason of: ${reason}`,
           frappe.session.user_fullname,
           'Comment added successfully.'
         );

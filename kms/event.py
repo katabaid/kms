@@ -162,19 +162,37 @@ def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
   if doc.status == 'Checked In':
     if doc.appointment_date == frappe.utils.nowdate():
-      if frappe.db.exists("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}) and doc.appointment_type == 'MCU':
+      dispatcher_user = frappe.db.get_value("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, ['dispatcher'])
+      if dispatcher_user and doc.appointment_type == 'MCU':
         exist_docname = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
         if exist_docname: 
           disp_doc = frappe.get_doc('Dispatcher', exist_docname)
+          existing_items = {item.examination_item for item in disp_doc.package}
           for entry in doc.custom_additional_mcu_items:
-            add_to_list = True
-            for already_exam_item in disp_doc.package:
-              if entry.examination_item == already_exam_item.examination_item:
-                add_to_list = False
-            if add_to_list:
+            if entry.examination_item not in existing_items:
+            #add_to_list = True
+            #for already_exam_item in disp_doc.package:
+            #  if entry.examination_item == already_exam_item.examination_item:
+            #    add_to_list = False
+            #if add_to_list:
               new_entry = entry.as_dict()
               new_entry.name = None
               disp_doc.append('package', new_entry)
+              rooms = frappe.get_all('Item Group Service Unit', filters={'parent': entry.examination_item, 'branch': doc.custom_branch}, fields=['service_unit'])
+              room_dict = {room.service_unit: room for room in rooms}
+              for hsu in disp_doc.assignment_table:
+                if hsu.healthcare_service_unit in room_dict:
+                  hsu.status = 'Additional or Retest Request'
+                #for room in rooms:
+                #  if hsu.healthcare_service_unit == room.service_unit:
+                #    hsu.status = 'Additional or Retest Request'
+              notification_doc = frappe.new_doc('Notification Log')
+              notification_doc.for_user = dispatcher_user
+              notification_doc.from_user = frappe.session.user
+              notification_doc.document_type = 'Dispatcher'
+              notification_doc.document_name = disp_doc.name
+              notification_doc.subject = f"""Patient <strong>{doc.patient_name}</strong> has added additional MCU examination item: {entry.item_name}."""
+              notification_doc.insert(ignore_permissions=True)
         else:
           disp_doc = frappe.get_doc({
             'doctype': 'Dispatcher',

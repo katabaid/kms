@@ -104,9 +104,9 @@ const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 const addCustomButtonOnChildTable = (frm) => {
 	const grid = frm.fields_dict[childTableButton].grid;
 	const buttons = [
-		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment', class: 'btn-primary', prompt: false },
+		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment,Additional or Retest Request', class: 'btn-primary', prompt: false },
 		{ label: 'Refuse', status: 'Refused', statuses: 'Wait for Room Assignment', class: 'btn-danger', prompt: true },
-		{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused,Finished,Rescheduled,Partial Finished', class: 'btn-warning', prompt: true },
+		//{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused,Finished,Rescheduled,Partial Finished', class: 'btn-warning', prompt: true },
 		{ label: 'Remove from Room', status: 'Wait for Room Assignment', statuses: 'Waiting to Enter the Room', class: 'btn-info', prompt: false },
 	];
 	// Remove existing custom buttons
@@ -169,8 +169,8 @@ const updateChildStatus = async (frm, grid, button, reason = null) => {
 					) 
 				}
 			}
+			frm.reload_doc();
 			frappe.set_route('List', 'Dispatcher', 'List');
-			//frm.reload_doc();
 		}
 	}
 };

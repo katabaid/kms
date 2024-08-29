@@ -69,7 +69,7 @@ def get_exam_items(root):
   ORDER BY level, custom_bundle_position;
   """
   exam_items = frappe.db.sql(exam_items_query, (root,), as_dict=True)
-  exam_group = frappe.db.sql(exam_group_query, (root, root), as_dict=True)  
+  exam_group = frappe.db.sql(exam_group_query, (root, root), as_dict=True)
   return {'exam_items': exam_items, 'exam_group': exam_group}
 
 @frappe.whitelist()
@@ -120,10 +120,9 @@ def remove_from_room(name, room):
 
 @frappe.whitelist()
 def exam_retest (name, item, item_name):
-  allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
   disp_doc = get_dispatcher_doc (name)
   room = get_room_by_item_branch (item, disp_doc.branch)
-  hsu_exist, previous_doctype, previous_docname = process_hsu (disp_doc, room, allowed_status)
+  hsu_exist, previous_doctype, previous_docname = process_hsu (disp_doc, room)
   if hsu_exist and disp_doc.status != 'In Queue':
     disp_doc.statue = 'In Queue'
     disp_doc.room = ''
@@ -135,7 +134,7 @@ def exam_retest (name, item, item_name):
   if exam_items:
     for package_item in disp_doc.package:
       if package_item.item_name in [item for item in exam_items]:
-        package_item.status = 'Started'
+        package_item.status = 'To Retest'
   if exam_items and hsu_exist:
     to_cancel_doc = get_cancelled_doc (previous_doctype, previous_docname)
     if to_cancel_doc.docstatus == 1:
@@ -162,13 +161,14 @@ def get_dispatcher_doc (name):
 def get_room_by_item_branch (item, branch):
   return frappe.get_all('Item Group Service Unit', filters={'parent': item, 'branch': branch}, fields=['service_unit'])[0].service_unit
 
-def process_hsu (doc, room, allowed_status):
+def process_hsu (doc, room):
+  allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
   for hsu in doc.assignment_table:
     if hsu.healthcare_service_unit == room:
       if hsu.status in allowed_status:
         previous_doctype = hsu.reference_doctype
         previous_docname = hsu.reference_doc
-        hsu.status = 'Wait for Room Assignment'
+        hsu.status = 'Additional or Retest Request'
         hsu_exist = True
         return hsu_exist, previous_doctype, previous_docname
       else:
@@ -356,6 +356,7 @@ def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_st
         doc.append(result_type, result)
 
 def update_dispatcher_room_status(doc, room, doc_type, doc_name):
+  doc.room = room
   for hsu in doc.assignment_table:
     if hsu.healthcare_service_unit == room:
       hsu.status = 'Waiting to Enter the Room'

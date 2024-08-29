@@ -46,11 +46,11 @@ class Dispatcher(Document):
 @frappe.whitelist()
 def get_queued_branch(branch):
 	count = frappe.db.sql(f"""
-		SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, tra.`user` 
+		SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, tra.`user`, thsu.custom_default_doctype
 		FROM `tabHealthcare Service Unit` thsu
 		LEFT JOIN `tabDispatcher Room` tdr ON thsu.name = tdr.healthcare_service_unit AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
 		LEFT JOIN `tabRoom Assignment` tra ON thsu.name = tra.healthcare_service_unit and tra.`date` = CURDATE()
-		WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0
+		WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0 AND thsu.custom_default_doctype IS NOT NULL
 		GROUP BY thsu.name
 		""", as_dict=True)
 	return count
@@ -81,7 +81,7 @@ def removed_from_room(dispatcher_id, hsu):
 	return 'Removed from examination room.'
 
 @frappe.whitelist()
-def finish_exam(dispatcher_id, hsu, status):
+def finish_exam(dispatcher_id, hsu, status, doctype, docname):
 	if status == 'Removed':
 		status = 'Wait for Room Assignment'
 	doc = frappe.get_doc('Dispatcher', dispatcher_id)
@@ -111,22 +111,30 @@ def finish_exam(dispatcher_id, hsu, status):
 			)
 		)""", pluck = 'service_unit')
 
+	exists_to_retest = False
+	source_doc = frappe.get_doc(doctype, docname)
+	if doctype == 'Sample Collection':
+		for sample in source_doc.custom_sample_table:
+			if sample.status == 'To Retest':
+				exists_to_retest = True
+	else:
+		for item in source_doc.examination_item:
+			if item.status == 'To Retest':
+				exists_to_retest = True
+
 	for room in doc.assignment_table:
 		room_count += 1
 		if room.status in final_status:
 			final_count += 1
 		if room.healthcare_service_unit == hsu:
-			doctype = room.reference_doctype
-			docname = room.reference_doc
-			room.status = status
+			room.status = 'Additional or Retest Request' if exists_to_retest else status
 		if room.healthcare_service_unit in related_rooms:
-			room.status = status
+			room.status = 'Additional or Retest Request' if exists_to_retest else status
 	doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
 	doc.room = ''
 	doc.save(ignore_permissions=True)
 
-	if status == 'Finished' or status == 'Partial Finished':
-		source_doc = frappe.get_doc(doctype, docname)
+	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:
 			case 'Radiology':
 				target = 'Radiology Result'

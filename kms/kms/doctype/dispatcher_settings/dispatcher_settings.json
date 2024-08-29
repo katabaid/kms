@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "naming_series:",
- "creation": "2024-06-09 17:38:42.130997",
+ "creation": "2024-08-08 11:48:45.500475",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -22,6 +22,7 @@
    "reqd": 1
   },
   {
+   "default": "Today",
    "fieldname": "enable_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -44,7 +45,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-13 21:23:54.545715",
+ "modified": "2024-08-30 05:41:53.343327",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher Settings",
