@@ -182,16 +182,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "amended_from",
-   "fieldtype": "Link",
-   "label": "Amended From",
-   "no_copy": 1,
-   "options": "Nurse Examination",
-   "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "non_selective_result",
    "fieldtype": "Table",
    "label": "Non Selective Result",
