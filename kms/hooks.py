@@ -257,11 +257,8 @@ scheduler_events = {
 #	"kms.auth.validate"
 # ]
 fixtures = [
-  {'dt':'Server Script', 'filters': [['module', '=', 'KMS']]}, 
-  {'dt':'Client Script', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Custom Field', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
-  {'dt':'DocType', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Workspace'},
   {'dt':'Role', 'filters': [["is_custom", "=", 1]]},

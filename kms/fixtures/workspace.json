@@ -1375,7 +1375,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-03-17 16:31:09.881310",
+  "modified": "2024-08-27 19:05:01.566515",
   "module": "Setup",
   "name": "Home",
   "number_cards": [],
@@ -12070,7 +12070,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"id\":\"v5BmtetDyZ\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Patient Appointments\",\"col\":12}},{\"id\":\"mM80mTZei1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"OOYIc4AERa\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"td6IsztsD3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"5NR_xHhFjm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"QCgU7D4oHt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Service Unit\",\"col\":4}},{\"id\":\"9nJcHLQ493\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Practitioner\",\"col\":4}},{\"id\":\"bpogXYn9hd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}},{\"id\":\"YXGuXz5gJJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":4}},{\"id\":\"XxcosZUp4J\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sO0ZJlmNGB\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Masters</span>\",\"col\":12}},{\"id\":\"P6fdyVinza\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"Tq2Thm4L0Q\",\"type\":\"card\",\"data\":{\"card_name\":\"Consultation Setup\",\"col\":4}},{\"id\":\"rDQyPOiZs9\",\"type\":\"card\",\"data\":{\"card_name\":\"Consultation\",\"col\":4}},{\"id\":\"E9LGqpk8b6\",\"type\":\"card\",\"data\":{\"card_name\":\"Facility Management\",\"col\":4}},{\"id\":\"5oZHECPCDr\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"8vm9HJO-6o\",\"type\":\"card\",\"data\":{\"card_name\":\"Examination Setup\",\"col\":4}},{\"id\":\"f__CtFLBV1\",\"type\":\"card\",\"data\":{\"card_name\":\"Examination\",\"col\":4}},{\"id\":\"JnBYKZigat\",\"type\":\"card\",\"data\":{\"card_name\":\"Result\",\"col\":4}},{\"id\":\"nUDb7CpP_O\",\"type\":\"card\",\"data\":{\"card_name\":\"Records and History\",\"col\":4}},{\"id\":\"IDb-zLwaTX\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"MZ17qWmpr0\",\"type\":\"paragraph\",\"data\":{\"text\":\"&nbsp; <br>\",\"col\":12}}]",
+  "content": "[{\"id\":\"v5BmtetDyZ\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Patient Appointments\",\"col\":12}},{\"id\":\"mM80mTZei1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"OOYIc4AERa\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Your Shortcuts</span>\",\"col\":12}},{\"id\":\"td6IsztsD3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient Appointment\",\"col\":4}},{\"id\":\"5NR_xHhFjm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient\",\"col\":4}},{\"id\":\"QCgU7D4oHt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Service Unit\",\"col\":4}},{\"id\":\"9nJcHLQ493\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Healthcare Practitioner\",\"col\":4}},{\"id\":\"bpogXYn9hd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Patient History\",\"col\":4}},{\"id\":\"YXGuXz5gJJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Dashboard\",\"col\":4}},{\"id\":\"XxcosZUp4J\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"1RL30GWY6D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Assign Tasks\",\"col\":3}},{\"id\":\"sO0ZJlmNGB\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Reports &amp; Masters</span>\",\"col\":12}},{\"id\":\"P6fdyVinza\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"Tq2Thm4L0Q\",\"type\":\"card\",\"data\":{\"card_name\":\"Consultation Setup\",\"col\":4}},{\"id\":\"rDQyPOiZs9\",\"type\":\"card\",\"data\":{\"card_name\":\"Consultation\",\"col\":4}},{\"id\":\"E9LGqpk8b6\",\"type\":\"card\",\"data\":{\"card_name\":\"Facility Management\",\"col\":4}},{\"id\":\"5oZHECPCDr\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"8vm9HJO-6o\",\"type\":\"card\",\"data\":{\"card_name\":\"Examination Setup\",\"col\":4}},{\"id\":\"f__CtFLBV1\",\"type\":\"card\",\"data\":{\"card_name\":\"Examination\",\"col\":4}},{\"id\":\"JnBYKZigat\",\"type\":\"card\",\"data\":{\"card_name\":\"Result\",\"col\":4}},{\"id\":\"nUDb7CpP_O\",\"type\":\"card\",\"data\":{\"card_name\":\"Records and History\",\"col\":4}},{\"id\":\"IDb-zLwaTX\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"MZ17qWmpr0\",\"type\":\"paragraph\",\"data\":{\"text\":\"&nbsp; <br>\",\"col\":12}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -12961,7 +12961,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-07-29 20:22:18.577037",
+  "modified": "2024-08-16 15:00:41.650460",
   "module": "Healthcare",
   "name": "Healthcare",
   "number_cards": [],
@@ -12972,6 +12972,22 @@
   "roles": [],
   "sequence_id": 13.0,
   "shortcuts": [
+   {
+    "color": "Grey",
+    "doc_view": "List",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Assign Tasks",
+    "link_to": "ToDo",
+    "parent": "Healthcare",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "restrict_to_domain": null,
+    "stats_filter": "[]",
+    "type": "DocType",
+    "url": null
+   },
    {
     "color": "Orange",
     "doc_view": null,
