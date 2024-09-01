@@ -96,6 +96,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Select which Item Group do MCU's Doctor Examinations belongs to.",
    "fieldname": "examination_group",
    "fieldtype": "Link",
    "label": "Examination Group",
@@ -145,6 +146,7 @@
    "read_only": 1
   },
   {
+   "description": "Select which Item do MCU's Dental Examinations belongs to.",
    "fieldname": "dental_examination",
    "fieldtype": "Link",
    "label": "Dental Examination",
@@ -178,24 +180,28 @@
    "label": "Assignment"
   },
   {
+   "description": "Choose role(s) to be assigned to enter Nurse Examination Result.",
    "fieldname": "nurse_result_assignment_role",
    "fieldtype": "Table MultiSelect",
    "label": "Nurse Result Assignment Role",
    "options": "MCU Assignment Role"
   },
   {
+   "description": "Choose role(s) to be assigned to enter Doctor Examination Result.",
    "fieldname": "doctor_result_assignment_role",
    "fieldtype": "Table MultiSelect",
    "label": "Doctor Result Assignment Role",
    "options": "MCU Assignment Role"
   },
   {
+   "description": "Choose role(s) to be assigned to enter Lab Test.",
    "fieldname": "lab_test_assignment_role",
    "fieldtype": "Table MultiSelect",
    "label": "Lab Test Assignment Role",
    "options": "MCU Assignment Role"
   },
   {
+   "description": "Choose role(s) to be assigned to enter Radiology Result.",
    "fieldname": "radiology_result_assignment_role",
    "fieldtype": "Table MultiSelect",
    "label": "Radiology Result Assignment Role",
@@ -206,12 +212,14 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Choose one role to be assigned to dispatcher users.",
    "fieldname": "dispatcher_role",
    "fieldtype": "Link",
    "label": "Dispatcher Role",
    "options": "Role"
   },
   {
+   "description": "Choose role(s) that can be assign to a room.",
    "fieldname": "room_assignment_role",
    "fieldtype": "Table MultiSelect",
    "label": "Room Assignment Role",
@@ -223,6 +231,7 @@
    "label": "Relationship"
   },
   {
+   "description": "Describe relationship amongst Examination, Result, and Template Doctypes  ",
    "fieldname": "relationship",
    "fieldtype": "Table",
    "label": "Relationship",
@@ -234,6 +243,7 @@
    "label": "Vital Sign"
   },
   {
+   "description": "List Nurse Examination Templates to be included in Vital Sign tab in Doctor Examination.",
    "fieldname": "vital_sign_templates",
    "fieldtype": "Table MultiSelect",
    "label": "Vital Sign Templates",
@@ -242,7 +252,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-08-18 20:25:14.527743",
+ "modified": "2024-09-01 17:31:59.138112",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
