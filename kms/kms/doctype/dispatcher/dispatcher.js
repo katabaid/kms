@@ -213,19 +213,23 @@ const updateCustomButtonVisibility = (grid) => {
 
 const createPromiseHandler = (method) => (frm) => new Promise((resolve) => {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected();
-	if (selected_rows.length > 0 && selected_rows) {
-		const child = locals[frm.fields_dict['assignment_table'].grid.doctype][selected_rows];
-		frappe.call({
-			method,
-			args: {
-				name: frm.doc.name,
-				room: child.healthcare_service_unit,
-			},
-			callback: (r) => resolve(!!r.message),
-			error: () => resolve(false),
-		});
+	if (frm.doc.room) {
+		frappe.throw(`Patient ${frm.doc.patient} is already in a queue for ${frm.doc.room} room.`);
 	} else {
-		resolve(false);
+		if (selected_rows.length > 0 && selected_rows) {
+			const child = locals[frm.fields_dict['assignment_table'].grid.doctype][selected_rows];
+			frappe.call({
+				method,
+				args: {
+					name: frm.doc.name,
+					room: child.healthcare_service_unit,
+				},
+				callback: (r) => {console.log (`r: ${r}`);resolve(!!r.message)},
+				error: (err) => {console.log (`err:${err}`);resolve(false)},
+			});
+		} else {
+			resolve(false);
+		}
 	}
 });
 
