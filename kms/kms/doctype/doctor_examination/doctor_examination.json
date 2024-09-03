@@ -199,10 +199,7 @@
   "dental_detail",
   "dental_detail_html",
   "other_dental",
-  "is_dental_record_inserted",
-  "vital_signs_tab",
-  "vital_sign_calculated_result",
-  "vital_sign_html"
+  "is_dental_record_inserted"
  ],
  "fields": [
   {
@@ -685,7 +682,8 @@
    "depends_on": "eval:doc.enlarged_thyroid",
    "fieldname": "enlarged_thyroid_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.enlarged_thyroid"
   },
   {
    "fieldname": "column_break_wjtbi",
@@ -701,7 +699,8 @@
    "depends_on": "eval:doc.enlarged_lymph_node",
    "fieldname": "enlarged_lymph_node_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.enlarged_lymph_node"
   },
   {
    "fieldname": "column_break_ciyoy",
@@ -902,9 +901,11 @@
    "label": "Tenderness"
   },
   {
+   "depends_on": "eval:doc.tenderness",
    "fieldname": "abd_tender_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.tenderness"
   },
   {
    "fieldname": "column_break_dpv1r",
@@ -948,7 +949,8 @@
    "depends_on": "eval:!doc.spine_check",
    "fieldname": "spine_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:!doc.spine_check"
   },
   {
    "fieldname": "genit_section",
@@ -976,7 +978,8 @@
    "depends_on": "eval:doc.hernia",
    "fieldname": "hernia_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.hernia"
   },
   {
    "fieldname": "column_break_0sp6b",
@@ -986,7 +989,7 @@
    "default": "0",
    "fieldname": "hemorrhoid",
    "fieldtype": "Check",
-   "label": "Hemorrhoid "
+   "label": "Hemorrhoid"
   },
   {
    "default": "0",
@@ -1022,9 +1025,11 @@
    "label": "Motoric System Abnormality"
   },
   {
+   "depends_on": "eval:doc.motoric_system_abnormality",
    "fieldname": "motoric_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.motoric_system_abnormality"
   },
   {
    "fieldname": "column_break_mcuiq",
@@ -1037,9 +1042,11 @@
    "label": "Sensory System Abnormality"
   },
   {
+   "depends_on": "eval:doc.sensory_system_abnormality",
    "fieldname": "sensory_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.sensory_system_abnormality"
   },
   {
    "fieldname": "column_break_vh4ev",
@@ -1052,9 +1059,11 @@
    "label": "Reflexes Abnormality"
   },
   {
+   "depends_on": "eval:doc.reflexes_abnormality",
    "fieldname": "reflex_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:doc.reflexes_abnormality"
   },
   {
    "fieldname": "column_break_ouadx",
@@ -1096,7 +1105,8 @@
    "depends_on": "eval:!doc.tinnel_check",
    "fieldname": "tinnel_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:!doc.tinnel_check"
   },
   {
    "fieldname": "phallen_test_tab",
@@ -1113,7 +1123,8 @@
    "depends_on": "eval:!doc.phallen_check",
    "fieldname": "phallen_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:!doc.phallen_check"
   },
   {
    "fieldname": "rectal_examination_tab",
@@ -1152,7 +1163,8 @@
    "depends_on": "eval:!doc.visual_check",
    "fieldname": "visual_details",
    "fieldtype": "Small Text",
-   "label": "Details"
+   "label": "Details",
+   "mandatory_depends_on": "eval:!doc.visual_check"
   },
   {
    "default": "1",
@@ -1268,31 +1280,13 @@
    "no_copy": 1,
    "print_hide": 1,
    "report_hide": 1
-  },
-  {
-   "fieldname": "vital_signs_tab",
-   "fieldtype": "Tab Break",
-   "label": "Vital Signs"
-  },
-  {
-   "fieldname": "vital_sign_calculated_result",
-   "fieldtype": "Table",
-   "label": "Vital SIgn Result",
-   "options": "Calculated Exam",
-   "read_only": 1
-  },
-  {
-   "fieldname": "vital_sign_html",
-   "fieldtype": "HTML",
-   "label": "Vital Sign HTML",
-   "options": "<div id=\"vital_sign_html\"></div>"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-19 09:58:15.852456",
+ "modified": "2024-09-03 14:28:37.926959",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
