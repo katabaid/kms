@@ -41,47 +41,6 @@ const handleDentalSections = (frm) => {
   prepareOtherDentalOptions(frm);
 }
 
-/* const handleVitalSign = (frm) => {
-  if (frm.doc.appointment) {
-    frappe.call({
-      method: 'kms.healthcare.get_vital_sign_for_doctor_examination',
-      args: {
-        docname: frm.doc.name
-      },
-      callback: (r) => {
-        if (r.message) {
-          const data = r.message.map(entry => [entry.label, entry.result]);
-          const columns = [
-            {
-              name: "label",      id: "label",      content: `${__("Label")}`,
-              editable: false,    sortable: false,  focusable: false,
-              dropdown: false,    align: "left",    width: 200,
-            },
-            {
-              name: "result",     id: "result",     content: `${__("Result")}`,
-              editable: false,    sortable: false,  focusable: false,
-              dropdown: false,    align: "right",   width: 350,
-            },
-          ];
-          if (!frm.vital_sign_datatable) {
-            const datatable_options = {
-              columns: columns,
-              data: data,
-              inlineFilters: false,
-              noDataMessage: __("No Data"),
-              disableReorderColumn: true
-            }
-            const container = document.querySelector('#vital_sign_html');
-            frm.vital_sign_datatable = new frappe.DataTable(container, datatable_options);
-          } else {
-            frm.vital_sign_datatable.refresh(data, columns);
-          }
-        }
-      }
-    })
-  }
-} */
-
 const prepareDentalSections = (frm) => {
   const referenceArray = [
     'missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 
@@ -106,7 +65,6 @@ const prepareDentalSections = (frm) => {
     const justifyContent = alignment === 'left' ? 'start' : 'end';
     const filler = alignment.concat(customType) === 'startPrimary Teeth' ? '<div></div><div></div><div></div>' : '';
     const labelColor = customType === 'Primary Teeth' ? 'blue' : 'inherit';
-
     return `
       <div style="display:grid;grid-template-columns: ${gridTemplateColumns};justify-content: ${justifyContent};">
         ${filler}
@@ -415,7 +373,6 @@ const addSidebarUserAction = (frm) => {
 	.attr('target', '_blank')
 };
 
-
 // Use the common controller with custom before_submit function for Doctor Examination
 const doctorExaminationController = kms.controller.createDocTypeController('Doctor Examination', {
   before_submit: customBeforeSubmit,
@@ -440,12 +397,10 @@ frappe.ui.form.on('Doctor Examination', {
     doctorExaminationController.refresh(frm);
     handleTabVisibility(frm);
     handleDentalSections(frm);
-    //handleVitalSign(frm);
     addSidebarUserAction(frm);
   },
 
   setup: function (frm) {
-    //handleVitalSign(frm);
 		if(frm.doc.docstatus === 0){
 			if (frm.doc.result) {
 				frm.refresh_field('result');

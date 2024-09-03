@@ -23,8 +23,6 @@
   "dispatcher",
   "service_unit",
   "created_date",
-  "expected_result_date",
-  "expected_result_time",
   "submitted_date",
   "status",
   "result_section",
@@ -56,19 +54,6 @@
    "fieldtype": "Datetime",
    "label": "Submitted Date",
    "read_only": 1
-  },
-  {
-   "default": "Today",
-   "fieldname": "expected_result_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Expected Result Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "expected_result_time",
-   "fieldtype": "Time",
-   "label": "Expected Result Time"
   },
   {
    "fieldname": "patient",
@@ -223,7 +208,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-12 16:54:04.184650",
+ "modified": "2024-09-03 15:10:39.665901",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

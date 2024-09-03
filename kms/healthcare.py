@@ -392,8 +392,6 @@ def create_exam(name, room, doc_type, template_doctype):
     'custom_document_date' if doc_type == 'Sample Collection' else 'created_date': today(),
     'custom_status' if doc_type == 'Sample Collection' else 'status': 'Started'
   }
-  if doc_type != 'Sample Collection':
-    doc_fields['expected_result_date'] = today()
   doc = frappe.get_doc(doc_fields)
   cancelled_doc = None
   if previous_docname:

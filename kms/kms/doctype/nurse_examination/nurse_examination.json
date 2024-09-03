@@ -24,8 +24,6 @@
   "dispatcher",
   "service_unit",
   "created_date",
-  "expected_result_date",
-  "expected_result_time",
   "submitted_date",
   "result_section",
   "examination_item",
@@ -113,19 +111,6 @@
    "fieldname": "created_date",
    "fieldtype": "Date",
    "label": "Created Date"
-  },
-  {
-   "default": "Today",
-   "fieldname": "expected_result_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Expected Result Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "expected_result_time",
-   "fieldtype": "Time",
-   "label": "Expected Result Time"
   },
   {
    "fieldname": "submitted_date",
@@ -235,7 +220,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-14 12:34:42.838241",
+ "modified": "2024-09-03 15:10:29.750136",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",
