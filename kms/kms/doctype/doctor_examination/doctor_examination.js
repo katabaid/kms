@@ -83,7 +83,10 @@ const handleVitalSign = (frm) => {
 }
 
 const prepareDentalSections = (frm) => {
-  const referenceArray = ['missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 'caries', 'fracture', 'mob', 'bridge', 'rg', 'exfolia', 'fistula'];
+  const referenceArray = [
+    'missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 
+    'caries', 'fracture', 'mob', 'bridge', 'rg', 'exfolia', 'fistula'
+  ];
 
   const generateOptions = item => referenceArray.reduce((acc, key) => {
     acc[key] = (item.options && item.options.split(', ').includes(key)) ? 1 : 0;

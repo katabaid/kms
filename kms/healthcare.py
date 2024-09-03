@@ -2,14 +2,17 @@ import frappe, json
 from frappe.utils import today
 
 @frappe.whitelist()
-def get_mcu_settings():
-  doc_exam_settings = frappe.db.sql("""
-    SELECT field, value FROM tabSingles 
-    WHERE doctype = 'MCU Settings' 
-    AND field IN ('phallen_test_name', 'physical_examination_name', 'rectal_test_name', 
-    'romberg_test_name', 'tinnel_test_name', 'visual_field_test_name', 'dental_examination_name')
-    """, as_dict=True)
-  return doc_exam_settings
+def get_mcu_settings(is_item=False):
+    base_fields = ['phallen_test', 'physical_examination', 'rectal_test', 
+      'romberg_test', 'tinnel_test', 'visual_field_test', 'dental_examination']
+    fields = base_fields if is_item else [f'{f}_name' for f in base_fields]
+    
+    return frappe.db.sql(f"""
+      SELECT field, value 
+      FROM tabSingles
+      WHERE doctype = 'MCU Settings'
+      AND field IN ({', '.join(['%s']*len(fields))})
+      """, tuple(fields), as_dict=True)
 
 @frappe.whitelist()
 def get_vital_sign_for_doctor_examination (docname):

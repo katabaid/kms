@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "test_label",
-  "result"
+  "result",
+  "item_code"
  ],
  "fields": [
   {
@@ -23,12 +24,18 @@
    "in_list_view": 1,
    "label": "Result",
    "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-14 12:34:18.900721",
+ "modified": "2024-09-02 18:23:58.193678",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Calculated Exam",

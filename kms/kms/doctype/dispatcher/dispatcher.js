@@ -7,6 +7,7 @@ frappe.ui.form.on('Dispatcher', {
 		hideStandardButtonOnChildTable(frm, childTables);
 		addCustomButtonOnChildTable(frm);
 		addCustomButtonOnPackage(frm);
+		addSidebarUserAction(frm);
 		frm.disable_save();
 	},
 
@@ -84,6 +85,13 @@ const addFinishButtons = (frm) => {
 			frm.save();
 		});
 	}
+};
+
+const addSidebarUserAction = (frm) => {
+	frm.sidebar
+	.add_user_action(__('Check Patient Result'))
+	.attr('href', `/app/query-report/Result per Appointment?exam_id=${frm.doc.patient_appointment}`)
+	.attr('target', '_blank')
 };
 
 const hideStandardButtonOnChildTable = (frm, childTablesArray) => {

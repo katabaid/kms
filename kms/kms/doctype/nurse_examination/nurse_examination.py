@@ -32,5 +32,6 @@ class NurseExamination(Document):
 										frappe.throw(f"Error evaluating formula for {calc.test_label}: {str(e)}")
 									self.append('calculated_result',{
 										'test_label': calc.test_label,
-										'result': result_value
+										'result': result_value,
+										'item_code': template_doc.item_code
 									})
