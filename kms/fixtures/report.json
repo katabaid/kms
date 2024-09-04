@@ -47,5 +47,60 @@
     "role": "Employee Self Service"
    }
   ]
+ },
+ {
+  "add_total_row": 0,
+  "columns": [],
+  "disable_prepared_report": 0,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2024-09-02 09:16:24.509449",
+  "module": "KMS",
+  "name": "Result per Appointment",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Patient Appointment",
+  "reference_report": null,
+  "report_name": "Result per Appointment",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "Result per Appointment",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Physician"
+   },
+   {
+    "parent": "Result per Appointment",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Healthcare Administrator"
+   },
+   {
+    "parent": "Result per Appointment",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Nursing User"
+   },
+   {
+    "parent": "Result per Appointment",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HC Front Office"
+   },
+   {
+    "parent": "Result per Appointment",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HC Basic"
+   }
+  ]
  }
 ]
