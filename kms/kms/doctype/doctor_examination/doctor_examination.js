@@ -232,104 +232,37 @@ const prepareStaticDental = (frm) => {
     const secondHalf = array.slice(halfIndex).reverse();
     return firstHalf.concat(secondHalf);
   };
+  const addColumn = (
+    name,               content,          width = 50, 
+    format = null,      editable = false, sortable = false, 
+    focusable = false,  dropdown = false, align = 'left') => {
+      return {
+        name: name,
+        id: name,
+        content: content,
+        editable: editable,
+        sortable: sortable,
+        focusable: focusable,
+        dropdown: dropdown,
+        align: align,
+        width: width,
+        format: format ? format : (value) => value
+      }
+    };
   const $wrapper = frm.get_field('dental_detail_html').$wrapper;
   const detail_wrapper = $(`<div class="detail_wrapper">`).appendTo($wrapper);
   const newdata = transform(frm.doc.dental_detail);
   const data = reverseLastHalf(newdata);
 
   const columns = [
-    {
-      name: 'l_perm',
-      id: 'l_perm',
-      content: `${__("Pos")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 50,
-    },
-    {
-      name: 'l_opt_perm',
-      id: 'l_opt_perm',
-      content: `${__("Opt")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 250,
-      format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
-    },
-    {
-      name: 'l_prim',
-      id: 'l_prim',
-      content: `${__("Pos")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 50,
-    },
-    {
-      name: 'l_opt_prim',
-      id: 'l_opt_prim',
-      content: `${__("Opt")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 250,
-      format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
-    },
-    {
-      name: 'r_opt_prim',
-      id: 'r_opt_prim',
-      content: `${__("Opt")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 250,
-      format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
-    },
-    {
-      name: 'r_prim',
-      id: 'r_prim',
-      content: `${__("Pos")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 50,
-    },
-    {
-      name: 'r_opt_perm',
-      id: 'r_opt_perm',
-      content: `${__("Opt")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 250,
-      format: (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`
-    },
-    {
-      name: 'r_perm',
-      id: 'r_perm',
-      content: `${__("Pos")}`,
-      editable: false,
-      sortable: false,
-      focusable: false,
-      dropdown: false,
-      align: 'left',
-      width: 50,
-    },
+    addColumn('l_perm', `${__("Pos")}`),
+    addColumn('l_opt_perm', `${__("Opt")}`, 250, (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`),
+    addColumn('l_prim', `${__("Pos")}`),
+    addColumn('l_opt_prim', `${__("Opt")}`, 250, (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`),
+    addColumn('r_opt_prim', `${__("Opt")}`, 250, (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`),
+    addColumn('r_prim', `${__("Pos")}`),
+    addColumn('r_opt_perm', `${__("Opt")}`, 250, (value) => `<div style="white-space: normal; word-wrap: break-word; line-height: 1;">${value}</div>`),
+    addColumn('r_perm', `${__("Pos")}`),
   ];
   if (!frm.static_dental_datatable) {
     const datatable_options = {
