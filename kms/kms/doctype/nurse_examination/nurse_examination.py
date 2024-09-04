@@ -7,6 +7,7 @@ from frappe.model.document import Document
 class NurseExamination(Document):
 	def on_submit(self):
 		exam_result = frappe.db.exists('Nurse Result', {'exam': self.name}, 'name')
+		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:
 			self.db_set('exam_result', exam_result)
 	def before_save(self):
@@ -35,3 +36,7 @@ class NurseExamination(Document):
 										'result': result_value,
 										'item_code': template_doc.item_code
 									})
+	def on_update(self):
+		old = self.get_doc_before_save()
+		if self.status == 'Checked In' and self.docstatus == 0 and old.status == 'Started':
+			self.db_set('checked_in_time', frappe.utils.now_datetime())

@@ -23,6 +23,7 @@
   "dispatcher",
   "service_unit",
   "created_date",
+  "checked_in_time",
   "submitted_date",
   "result_section",
   "examination_item",
@@ -204,7 +205,8 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-DE-.YYYY..MM..DD.-"
+   "options": "HLC-DE-.YYYY..MM..DD.-",
+   "read_only": 1
   },
   {
    "fieldname": "company",
@@ -212,25 +214,29 @@
    "in_list_view": 1,
    "label": "Company",
    "options": "Company",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "read_only": 1
   },
   {
    "fieldname": "queue_pooling",
    "fieldtype": "Link",
    "label": "Queue Pooling",
-   "options": "Queue Pooling"
+   "options": "Queue Pooling",
+   "read_only": 1
   },
   {
    "fieldname": "patient",
    "fieldtype": "Link",
    "label": "Patient",
    "options": "Patient",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -244,14 +250,15 @@
    "fieldname": "patient_encounter",
    "fieldtype": "Link",
    "label": "Patient Encounter",
-   "options": "Patient Encounter"
+   "options": "Patient Encounter",
+   "read_only": 1
   },
   {
    "default": "Started",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
+   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused\nTo Retest",
    "read_only": 1
   },
   {
@@ -262,26 +269,30 @@
    "fieldname": "appointment",
    "fieldtype": "Link",
    "label": "Appointment",
-   "options": "Patient Appointment"
+   "options": "Patient Appointment",
+   "read_only": 1
   },
   {
    "fieldname": "dispatcher",
    "fieldtype": "Link",
    "label": "Dispatcher",
-   "options": "Dispatcher"
+   "options": "Dispatcher",
+   "read_only": 1
   },
   {
    "fieldname": "service_unit",
    "fieldtype": "Link",
    "label": "Service Unit",
    "options": "Healthcare Service Unit",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
-   "label": "Created Date"
+   "label": "Created Date",
+   "read_only": 1
   },
   {
    "fieldname": "submitted_date",
@@ -362,7 +373,8 @@
    "fieldname": "doctor_result",
    "fieldtype": "Link",
    "label": "Doctor Result",
-   "options": "Doctor Result"
+   "options": "Doctor Result",
+   "read_only": 1
   },
   {
    "fieldname": "pe_tab",
@@ -1265,13 +1277,19 @@
    "no_copy": 1,
    "print_hide": 1,
    "report_hide": 1
+  },
+  {
+   "fieldname": "checked_in_time",
+   "fieldtype": "Datetime",
+   "label": "Checked In Time",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-03 15:10:33.562239",
+ "modified": "2024-09-04 18:13:36.303629",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

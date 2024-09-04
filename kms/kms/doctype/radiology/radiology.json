@@ -23,6 +23,7 @@
   "dispatcher",
   "service_unit",
   "created_date",
+  "checked_in_time",
   "submitted_date",
   "status",
   "result_section",
@@ -39,7 +40,8 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-RAD-.YYYY..MM..DD.-"
+   "options": "HLC-RAD-.YYYY..MM..DD.-",
+   "read_only": 1
   },
   {
    "fieldname": "company",
@@ -47,6 +49,7 @@
    "in_list_view": 1,
    "label": "Company",
    "options": "Company",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -60,6 +63,7 @@
    "fieldtype": "Link",
    "label": "Patient",
    "options": "Patient",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -84,6 +88,7 @@
    "fieldtype": "Link",
    "label": "Service Unit",
    "options": "Healthcare Service Unit",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -94,7 +99,8 @@
    "fieldname": "appointment",
    "fieldtype": "Link",
    "label": "Appointment",
-   "options": "Patient Appointment"
+   "options": "Patient Appointment",
+   "read_only": 1
   },
   {
    "fieldname": "result_section",
@@ -133,13 +139,15 @@
    "fieldname": "queue_pooling",
    "fieldtype": "Link",
    "label": "Queue Pooling",
-   "options": "Queue Pooling"
+   "options": "Queue Pooling",
+   "read_only": 1
   },
   {
    "fieldname": "patient_encounter",
    "fieldtype": "Link",
    "label": "Patient Encounter",
-   "options": "Patient Encounter"
+   "options": "Patient Encounter",
+   "read_only": 1
   },
   {
    "fieldname": "examination_item",
@@ -151,19 +159,22 @@
    "fieldname": "dispatcher",
    "fieldtype": "Link",
    "label": "Dispatcher",
-   "options": "Dispatcher"
+   "options": "Dispatcher",
+   "read_only": 1
   },
   {
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "read_only": 1
   },
   {
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
-   "label": "Created Date"
+   "label": "Created Date",
+   "read_only": 1
   },
   {
    "default": "Started",
@@ -201,14 +212,21 @@
    "fieldname": "exam_result",
    "fieldtype": "Link",
    "label": "Exam Result",
-   "options": "Radiology Result"
+   "options": "Radiology Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checked_in_time",
+   "fieldtype": "Datetime",
+   "label": "Checked In Time",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-03 15:10:39.665901",
+ "modified": "2024-09-03 15:54:25.240954",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

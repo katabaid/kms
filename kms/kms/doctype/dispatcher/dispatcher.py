@@ -51,8 +51,7 @@ def get_queued_branch(branch):
 		LEFT JOIN `tabDispatcher Room` tdr ON thsu.name = tdr.healthcare_service_unit AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
 		LEFT JOIN `tabRoom Assignment` tra ON thsu.name = tra.healthcare_service_unit and tra.`date` = CURDATE()
 		WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0 AND thsu.custom_default_doctype IS NOT NULL
-		GROUP BY thsu.name
-		""", as_dict=True)
+		GROUP BY thsu.name""", as_dict=True)
 	return count
 
 @frappe.whitelist()
@@ -60,10 +59,13 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 	doc = frappe.get_doc('Dispatcher', dispatcher_id)
 	doc.status = 'In Room'
 	doc.room = hsu
+	related_rooms = get_related_rooms (hsu, dispatcher_id)
 	for room in doc.assignment_table:
 		if room.healthcare_service_unit == hsu:
 			room.status = 'Ongoing Examination'
 			room.reference_doctype = doctype
+			room.reference_doc = docname
+		elif room.healthcare_service_unit in related_rooms:
 			room.reference_doc = docname
 	doc.save(ignore_permissions=True)
 	return 'Checked In.'
@@ -80,18 +82,8 @@ def removed_from_room(dispatcher_id, hsu):
 	doc.save(ignore_permissions=True)
 	return 'Removed from examination room.'
 
-@frappe.whitelist()
-def finish_exam(dispatcher_id, hsu, status, doctype, docname):
-	if status == 'Removed':
-		status = 'Wait for Room Assignment'
-	doc = frappe.get_doc('Dispatcher', dispatcher_id)
-
-	room_count = 0
-	final_count = 0
-	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished']
-	target = ''
-
-	related_rooms = frappe.db.sql(f"""
+def get_related_rooms (hsu, dispatcher_id):
+	return frappe.db.sql(f"""
 		SELECT service_unit FROM `tabItem Group Service Unit` tigsu1
 		WHERE tigsu1.parentfield = 'custom_room'
 		AND 	tigsu1.parenttype = 'Item'
@@ -107,9 +99,20 @@ def finish_exam(dispatcher_id, hsu, status, doctype, docname):
 				WHERE tma.parent = '{dispatcher_id}'
 				AND 	tma.parentfield = 'package'
 				AND		tma.parenttype = 'Dispatcher'
-				AND 	tma.examination_item = tigsu.parent
-			)
-		)""", pluck = 'service_unit')
+				AND 	tma.examination_item = tigsu.parent))""", pluck = 'service_unit')
+
+@frappe.whitelist()
+def finish_exam(dispatcher_id, hsu, status, doctype, docname):
+	if status == 'Removed':
+		status = 'Wait for Room Assignment'
+	doc = frappe.get_doc('Dispatcher', dispatcher_id)
+
+	room_count = 0
+	final_count = 0
+	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished']
+	target = ''
+
+	related_rooms = get_related_rooms (hsu, dispatcher_id)
 
 	exists_to_retest = False
 	source_doc = frappe.get_doc(doctype, docname)
@@ -192,17 +195,11 @@ def create_result_doc(doc, target):
 			'doctype': target,
 			'company': doc.company,
 			'custom_branch': doc.custom_branch,
-			#'queue_pooling': doc.queue_pooling,
 			'patient': doc.patient,
 			'patient_name': doc.patient_name,
 			'patient_sex': doc.patient_sex,
 			'patient_age': doc.patient_age,
-			#'patient_encounter': doc.patient_encounter,
 			'custom_appointment': doc.custom_appointment,
-			#'dispatcher': doc.dispatcher,
-			#'service_unit': doc.service_unit,
-			#'created_date': today(),
-			#'remark': doc.remark,
 			'custom_sample_collection': doc.name
 		})
 		for item in doc.custom_sample_table:
@@ -236,8 +233,7 @@ def create_result_doc(doc, target):
 									custom_min_value,
 									custom_max_value,
 									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
-								FROM
-									`tabNormal Test Template`
+								FROM `tabNormal Test Template`
 							)
 							SELECT
 								lab_test_event,
@@ -250,14 +246,11 @@ def create_result_doc(doc, target):
 									(SELECT custom_max_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
 									(SELECT custom_max_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age < {age}))
 								) AS custom_max_value
-							FROM
-								cte c
-							WHERE
-								parent = '{exam}'
-								AND custom_sex = '{doc.patient_sex}'
+							FROM cte c
+							WHERE parent = '{exam}'
+							AND custom_sex = '{doc.patient_sex}'
 							GROUP BY
-								lab_test_event;
-						""", as_dict=True)
+								lab_test_event;""", as_dict=True)
 						for mm in minmax:
 							new_doc.append('normal_test_items', {
 								'lab_test_name': exam, 

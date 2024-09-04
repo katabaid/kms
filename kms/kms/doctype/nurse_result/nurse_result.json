@@ -42,7 +42,8 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-NE-.YYYY..MM..DD.-"
+   "options": "HLC-NE-.YYYY..MM..DD.-",
+   "read_only": 1
   },
   {
    "fieldname": "company",
@@ -50,25 +51,29 @@
    "in_list_view": 1,
    "label": "Company",
    "options": "Company",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "read_only": 1
   },
   {
    "fieldname": "queue_pooling",
    "fieldtype": "Link",
    "label": "Queue Pooling",
-   "options": "Queue Pooling"
+   "options": "Queue Pooling",
+   "read_only": 1
   },
   {
    "fieldname": "patient",
    "fieldtype": "Link",
    "label": "Patient",
    "options": "Patient",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -82,7 +87,8 @@
    "fieldname": "patient_encounter",
    "fieldtype": "Link",
    "label": "Patient Encounter",
-   "options": "Patient Encounter"
+   "options": "Patient Encounter",
+   "read_only": 1
   },
   {
    "default": "Started",
@@ -108,26 +114,30 @@
    "fieldname": "appointment",
    "fieldtype": "Link",
    "label": "Appointment",
-   "options": "Patient Appointment"
+   "options": "Patient Appointment",
+   "read_only": 1
   },
   {
    "fieldname": "dispatcher",
    "fieldtype": "Link",
    "label": "Dispatcher",
-   "options": "Dispatcher"
+   "options": "Dispatcher",
+   "read_only": 1
   },
   {
    "fieldname": "service_unit",
    "fieldtype": "Link",
    "label": "Service Unit",
    "options": "Healthcare Service Unit",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
-   "label": "Created Date"
+   "label": "Created Date",
+   "read_only": 1
   },
   {
    "default": "Today",
@@ -135,12 +145,14 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Expected Result Date",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "expected_result_time",
    "fieldtype": "Time",
-   "label": "Expected Result Time"
+   "label": "Expected Result Time",
+   "read_only": 1
   },
   {
    "fieldname": "submitted_date",
@@ -206,7 +218,8 @@
    "fieldname": "exam",
    "fieldtype": "Link",
    "label": "Exam",
-   "options": "Nurse Examination"
+   "options": "Nurse Examination",
+   "read_only": 1
   },
   {
    "fetch_from": "patient.sex",
@@ -228,7 +241,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-12 16:51:44.796080",
+ "modified": "2024-09-03 15:58:04.733344",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

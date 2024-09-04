@@ -373,6 +373,40 @@ const addSidebarUserAction = (frm) => {
 	.attr('target', '_blank')
 };
 
+const handleReadOnlyExams = (frm) => {
+  const pe_fields = ['eyes_check','left_anemic','left_icteric','eyes_left_others','right_anemic','right_icteric',
+    'eyes_right_others','ear_check','left_cerumen','left_cerumen_prop','left_tympanic','ear_left_others','right_cerumen',
+    'right_cerumen_prop','right_tympanic','ear_right_others','nose_check','deviated','left_enlarged','left_hyperemic',
+    'left_polyp','nose_left_others','right_enlarged','right_hyperemic','right_polyp','nose_right_others','throat_check',
+    'enlarged_tonsil','hyperemic_pharynx','throat_others','neck_check','enlarged_thyroid','enlarged_thyroid_details',
+    'enlarged_lymph_node','enlarged_lymph_node_details','neck_others','cardiac_check','regular_heart_sound','murmur',
+    'gallop','others','breast_check','left_enlarged_breast','left_lumps','breast_left_others','right_enlarged_breast',
+    'right_lumps','breast_right_others','resp_check','left_ronkhi','left_wheezing','resp_left_others','right_ronkhi',
+    'right_wheezing','resp_right_others','abd_check','tenderness','abd_tender_details','hepatomegaly','splenomegaly',
+    'increased_bowel_sounds','abd_others','spine_check','spine_details','genit_check','hernia','hernia_details',
+    'hemorrhoid','inguinal_nodes','genit_others','neuro_section','neuro_check','motoric_system_abnormality','motoric_details',
+    'sensory_system_abnormality','sensory_details','reflexes_abnormality','reflex_details','neuro_others'];
+  const vft_fields = ['visual_check','visual_details'];
+  const rt_fields = ['romberg_check','romberg_abnormal','romberg_others'];
+  const tt_fields = ['tinnel_check','tinnel_details'];
+  const pt_fields = ['phallen_check','phallen_details'];
+  const rect_fields = ['rectal_check','rectal_hemorrhoid','enlarged_prostate','rectal_others'];
+  const dent_fields = ['extra_oral','intra_oral','dental_detail','other_dental'];
+  const exam_list = 
+    mcu_settings
+    .filter(item => frm.doc.examination_item.filter(item => item.status === 'Finished').map(item => item.template).includes(item.value))
+    .map(item => item.field)
+    exam_list.forEach(exam=>{
+      if (exam === 'physical_examination_name') pe_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      if (exam === 'visual_field_test_name') vft_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      if (exam === 'romberg_test_name') rt_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      if (exam === 'tinnel_test_name') tt_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      if (exam === 'phallen_test_name') pt_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      if (exam === 'rectal_test_name') rect_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      if (exam === 'dental_examination_name') dent_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+    })
+};
+
 // Use the common controller with custom before_submit function for Doctor Examination
 const doctorExaminationController = kms.controller.createDocTypeController('Doctor Examination', {
   before_submit: customBeforeSubmit,
@@ -398,6 +432,7 @@ frappe.ui.form.on('Doctor Examination', {
     handleTabVisibility(frm);
     handleDentalSections(frm);
     addSidebarUserAction(frm);
+    handleReadOnlyExams(frm);
   },
 
   setup: function (frm) {
