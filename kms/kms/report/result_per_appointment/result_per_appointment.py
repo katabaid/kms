@@ -39,7 +39,7 @@ def get_columns():
 
 def get_data(filters):
 	exams = frappe.db.sql(f"""
-		SELECT tma.examination_item, tma.item_name, tma.status, tma.parent, tdr.healthcare_service_unit, tdr.reference_doctype, tdr.reference_doc 
+		SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, tma.parent, tdr.reference_doctype, tdr.reference_doc
 		FROM `tabMCU Appointment` tma, tabItem ti, `tabDispatcher Room` tdr, `tabItem Group Service Unit` tigsu 
 		WHERE EXISTS (SELECT 1 FROM `tabDispatcher` td WHERE patient_appointment = '{filters.exam_id}' AND tma.parent = td.name)
 		AND (EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.result_in_exam = 1 AND tnet.item_code = tma.examination_item)
@@ -49,6 +49,8 @@ def get_data(filters):
 		AND ti.name = tigsu.parent 
 		AND tigsu.service_unit = tdr.healthcare_service_unit 
 		AND NOT (tma.status = 'Finished' AND tdr.reference_doc IS NULL)
+		AND (EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tdr.reference_doc AND tde.docstatus != 2)
+		OR EXISTS (SELECT 1 FROM `tabNurse Examination` tne WHERE tne.name = tdr.reference_doc AND tne.docstatus != 2))
 		ORDER BY ti.custom_bundle_position""", as_dict = 1)
 	group_data = []
 	previous_exam_item = ''

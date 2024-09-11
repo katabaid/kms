@@ -26,7 +26,17 @@ frappe.ui.form.on('Nurse Examination', {
 				})
 			}
     }
-	}	
+	},
+	refresh: function (frm) {
+		frm.add_custom_button(
+			__('Result History'),
+			() => {
+				frappe.route_options = { exam_id: frm.doc.appointment, room: frm.doc.service_unit };
+				frappe.set_route('query-report', 'Nurse Examination History');
+			},
+			__('Reports')
+		)
+	}
 });
 
 frappe.ui.form.on('Nurse Examination Selective Result',{

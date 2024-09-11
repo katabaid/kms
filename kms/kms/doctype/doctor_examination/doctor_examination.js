@@ -300,10 +300,30 @@ const prepareOtherDentalOptions = (frm) => {
 }
 
 const addSidebarUserAction = (frm) => {
-	frm.sidebar
-	.add_user_action(__('Check Patient Result'))
-	.attr('href', `/app/query-report/Result per Appointment?exam_id=${frm.doc.appointment}`)
-	.attr('target', '_blank')
+  frm.add_custom_button(
+    __('Patient Result'),
+    () => {
+      frappe.route_options = { exam_id: frm.doc.appointment };
+      frappe.set_route('query-report', 'Result per Appointment');
+    },
+    __('Reports')
+  ),
+  frm.add_custom_button(
+    __('Vital Sign'),
+    () => {
+      frappe.route_options = { exam_id: frm.doc.appointment };
+      frappe.set_route('query-report', 'Vital SIgn and Anthropometry');
+    },
+    __('Reports')
+  ),
+  frm.add_custom_button(
+    __('History'),
+    () => {
+      frappe.route_options = { exam_id: frm.doc.appointment, room: frm.doc.service_unit };
+      frappe.set_route('query-report', 'Doctor Examination History');
+    },
+    __('Reports')
+  )
 };
 
 const handleReadOnlyExams = (frm) => {

@@ -382,6 +382,8 @@ def create_exam(name, room, doc_type, template_doctype):
       doc.examination_item = []
       doc.result = []
       doc.non_selective_result = []
+      doc.dental_detail = []
+      doc.other_dental = []
     else:
       if cancelled_doc.status == 'To Retest':
         doc.amended_from = cancelled_doc.name

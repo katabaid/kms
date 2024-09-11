@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:id",
+ "creation": "2024-09-07 18:49:37.468201",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "id",
+  "label",
+  "type",
+  "mandatory",
+  "option",
+  "mandatory_depend_on",
+  "gender",
+  "section",
+  "normal_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "Text\nDate\nNumber\nCheck\nSelect\nRadio",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Mandatory"
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "depends_on": "eval:!doc.mandatory",
+   "fieldname": "mandatory_depend_on",
+   "fieldtype": "Link",
+   "label": "Mandatory Depend On",
+   "options": "Questionnaire Template Detail"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "section",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Section",
+   "options": "Questionnaire Template Section"
+  },
+  {
+   "depends_on": "eval:doc.mandatory_depend_on",
+   "fieldname": "normal_value",
+   "fieldtype": "Data",
+   "label": "Normal Value",
+   "mandatory_depends_on": "eval:doc.mandatory_depend_on"
+  },
+  {
+   "depends_on": "eval:doc.type==='Select'||doc.type==='Radio'||doc.type==='Check'",
+   "fieldname": "option",
+   "fieldtype": "Small Text",
+   "label": "Option",
+   "mandatory_depends_on": "eval:doc.type==='Select'||doc.type==='Radio'||doc.type==='Check'"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-09-09 20:25:14.907246",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Questionnaire Template Detail",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
