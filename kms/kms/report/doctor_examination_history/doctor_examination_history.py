@@ -93,16 +93,16 @@ def get_data(filters):
 		name, 'Spine', NULL, IF(tde.spine_check>0, 'No Abnormality', ''),
 		tde.spine_details, 
 		NULL, NULL
-		FROM `tabDoctor Examination` tde WHERE appointment = '{filters.exam_id}' AND service_unit IN  ('Consultation 2 - JM - KMS', 'Consultation 1 - JM - KMS')
+		FROM `tabDoctor Examination` tde WHERE appointment = '{filters.exam_id}' AND service_unit IN  ('{filters.room}')
 		UNION
 		SELECT 
 		name, 'Genitourinary', NULL, IF(tde.genit_check>0, 'No Abnormality', CONCAT_WS(', ', CASE WHEN tde.hernia>0 THEN 'Hernia' END, CASE WHEN tde.hemorrhoid>0 THEN 'Hemorrhoid' END, CASE WHEN tde.inguinal_nodes>0 THEN 'Inguinal Nodes' END)),
 		tde.genit_others, 
 		NULL, NULL
-		FROM `tabDoctor Examination` tde WHERE appointment = '{filters.exam_id}' AND service_unit IN  ('Consultation 2 - JM - KMS', 'Consultation 1 - JM - KMS')
+		FROM `tabDoctor Examination` tde WHERE appointment = '{filters.exam_id}' AND service_unit IN  ('{filters.room}')
 		UNION
 		SELECT 
 		name, 'Neurological System', NULL, IF(tde.neuro_check>0, 'No Abnormality', CONCAT_WS(', ', CASE WHEN tde.motoric_system_abnormality>0 THEN 'Motoric System Abnormality' END, CASE WHEN tde.reflexes_abnormality>0 THEN 'Reflexes Abnormality' END, CASE WHEN tde.sensory_system_abnormality>0 THEN 'Sensory System Abnormality' END)),
 		tde.neuro_others, 
 		NULL, NULL
-		FROM `tabDoctor Examination` tde WHERE appointment = '{filters.exam_id}' AND service_unit IN  ('Consultation 2 - JM - KMS', 'Consultation 1 - JM - KMS')""", as_dict = 1)
+		FROM `tabDoctor Examination` tde WHERE appointment = '{filters.exam_id}' AND service_unit IN  ('{filters.room}')""", as_dict = 1)
