@@ -1,31 +1,42 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{parent}-{###}",
- "creation": "2024-09-07 21:55:03.577012",
+ "creation": "2024-09-12 08:12:00.172270",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "label"
+  "question",
+  "answer",
+  "remark"
  ],
  "fields": [
   {
-   "fieldname": "label",
+   "fieldname": "question",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Label",
-   "reqd": 1
+   "label": "Question"
+  },
+  {
+   "fieldname": "answer",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Answer"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Remark"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-11 20:22:23.168654",
+ "modified": "2024-09-12 12:59:12.733446",
  "modified_by": "Administrator",
  "module": "KMS",
- "name": "Questionnaire Template Section",
- "naming_rule": "Expression",
+ "name": "Questionnaire Detail",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

@@ -1,0 +1,186 @@
+{
+ "actions": [],
+ "allow_copy": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-09-12 07:58:45.318233",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "patient_section",
+  "naming_series",
+  "patient_name",
+  "gender",
+  "column_break_xsyhe",
+  "date_of_birth",
+  "id_number",
+  "phone_number",
+  "section_break_uizpm",
+  "questionnaire_type",
+  "company",
+  "patient",
+  "type",
+  "status",
+  "column_break_g58l2",
+  "exam_date",
+  "company_name",
+  "patient_full_name",
+  "patient_appointment",
+  "created",
+  "section_break_m6bb5",
+  "detail",
+  "remark"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "QST-.YYYY..MM.-"
+  },
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "id_number",
+   "fieldtype": "Data",
+   "label": "ID Number"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "label": "Patient",
+   "options": "Patient"
+  },
+  {
+   "fieldname": "column_break_xsyhe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_uizpm",
+   "fieldtype": "Section Break",
+   "label": "Registration"
+  },
+  {
+   "fieldname": "column_break_g58l2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "company.customer_name",
+   "fetch_if_empty": 1,
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "label": "Company Name"
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_full_name",
+   "fieldtype": "Data",
+   "label": "Patient Full Name"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "label": "Type"
+  },
+  {
+   "fieldname": "created",
+   "fieldtype": "Datetime",
+   "label": "Created"
+  },
+  {
+   "fieldname": "section_break_m6bb5",
+   "fieldtype": "Section Break",
+   "label": "Questionnaire"
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Table",
+   "label": "Detail",
+   "options": "Questionnaire Detail"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nTransferred\nArchived"
+  },
+  {
+   "fieldname": "exam_date",
+   "fieldtype": "Date",
+   "label": "Exam Date"
+  },
+  {
+   "fieldname": "patient_appointment",
+   "fieldtype": "Link",
+   "label": "Patient Appointment",
+   "options": "Patient Appointment"
+  },
+  {
+   "fieldname": "questionnaire_type",
+   "fieldtype": "Data",
+   "label": "Questionnaire Type"
+  },
+  {
+   "fieldname": "patient_section",
+   "fieldtype": "Section Break",
+   "label": "Patient"
+  },
+  {
+   "fieldname": "remark",
+   "fieldtype": "Long Text",
+   "label": "Remark"
+  }
+ ],
+ "hide_toolbar": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-09-12 13:16:27.355593",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Questionnaire",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
