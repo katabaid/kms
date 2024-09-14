@@ -59,7 +59,7 @@ async function load_branch_data(dialog, branch) {
     args: { branch: branch },
   });
   const data = r.message.map(entry => [
-    `<a href="/app/${entry.custom_default_doctype.toLowerCase().replace(/ /g, '-')}?service_unit=${entry.name}&created_date=${new Date().toISOString().split('T')[0]}">${entry.name}</a>`,
+    `<a href="/app/${entry.custom_default_doctype.toLowerCase().replace(/ /g, '-')}?${entry.custom_default_doctype === 'Sample Collection' ? 'custom_service_unit' : 'service_unit'}=${entry.name}&${entry.custom_default_doctype === 'Sample Collection' ? 'custom_document_date' : 'created_date'}=${new Date().toISOString().split('T')[0]}">${entry.name}</a>`,
     entry.user,
     entry.status_count]);
   const columns = get_columns();

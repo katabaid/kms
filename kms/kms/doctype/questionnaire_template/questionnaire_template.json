@@ -15,6 +15,7 @@
   "item_name",
   "column",
   "section_break_xkv3p",
+  "intro_text",
   "section",
   "detail"
  ],
@@ -77,11 +78,16 @@
    "fieldtype": "Table",
    "label": "Section",
    "options": "Questionnaire Template Section"
+  },
+  {
+   "fieldname": "intro_text",
+   "fieldtype": "Text Editor",
+   "label": "Intro Text"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-07 21:55:30.782184",
+ "modified": "2024-09-13 09:30:43.665211",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire Template",
