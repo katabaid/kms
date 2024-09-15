@@ -58,10 +58,18 @@ async function load_branch_data(dialog, branch) {
     freeze_message: 'Getting Queue',
     args: { branch: branch },
   });
-  const data = r.message.map(entry => [
-    `<a href="/app/${entry.custom_default_doctype.toLowerCase().replace(/ /g, '-')}?${entry.custom_default_doctype === 'Sample Collection' ? 'custom_service_unit' : 'service_unit'}=${entry.name}&${entry.custom_default_doctype === 'Sample Collection' ? 'custom_document_date' : 'created_date'}=${new Date().toISOString().split('T')[0]}">${entry.name}</a>`,
-    entry.user,
-    entry.status_count]);
+  const data = r.message.map(entry => {
+    const custom_default_doctype = entry.custom_default_doctype
+    const docType = entry.custom_default_doctype.toLowerCase().replace(/ /g, '-');
+    const queryParam = ['Sample Collection', 'Patient Encounter'].includes(custom_default_doctype) ? 'custom_service_unit' : 'service_unit';
+    const dateParam = {'Sample Collection': 'custom_document_date', 'Patient Encounter': 'encounter_date'}[custom_default_doctype] || 'created_date';
+    const date = new Date().toISOString().split('T')[0];
+    return [
+      `<a href="/app/${docType}?${queryParam}=${entry.name}&${dateParam}=${date}">${entry.name}</a>`,
+      entry.user,
+      entry.status_count
+    ];
+  });
   const columns = get_columns();
   const summaryWrapper = dialog.$wrapper.find('#summary_wrapper');
   if (!dialog.marked_emp_datatable && summaryWrapper.length) {

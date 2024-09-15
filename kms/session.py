@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import now
 
 @frappe.whitelist()
 def remove_room_assignment(login_manager):
@@ -7,7 +8,8 @@ def remove_room_assignment(login_manager):
     if room_assignments:
       for ra in room_assignments:
         doc = frappe.get_doc('Room Assignment', ra.name)
-        doc.user = ''
+        doc.time_sign_out = now()
+        doc.assigned = 0
         doc.save()
 
 def redirect_after_login(login_manager):
