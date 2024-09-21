@@ -98,5 +98,10 @@ frappe.ui.form.on('Patient Appointment', {
         }
       )
     }
+    frm.add_custom_button(
+      'Temporary Registration',
+      () => {
+        frappe.set_route('List', 'Temporary Registration', 'List')
+    });
 	}
 });

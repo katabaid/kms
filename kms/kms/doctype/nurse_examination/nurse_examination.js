@@ -1,5 +1,8 @@
+const nurseExaminationController = kms.controller.createDocTypeController('Nurse Examination', {
+  before_submit: {},
+});
 frappe.ui.form.on('Nurse Examination', {
-	...kms.controller.createDocTypeController('Nurse Examination'),
+	...nurseExaminationController,
   setup: function (frm) {
 		if(frm.doc.docstatus === 0 && frm.doc.status === 'Checked In'){
 			if (frm.doc.result) {
@@ -28,6 +31,7 @@ frappe.ui.form.on('Nurse Examination', {
     }
 	},
 	refresh: function (frm) {
+		nurseExaminationController.refresh(frm);
 		frm.add_custom_button(
 			__('Result History'),
 			() => {

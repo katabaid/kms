@@ -44,14 +44,6 @@ frappe.ui.form.on('Lab Test', {
 		}
 	},
 	setup: function (frm){
-		frm.get_field('normal_test_items').grid.editable_fields = [
-			{ fieldname: 'lab_test_name', columns: 3 },
-			{ fieldname: 'lab_test_event', columns: 2 },
-			{ fieldname: 'result_value', columns: 2 },
-			{ fieldname: 'lab_test_uom', columns: 1 },
-			{ fieldname: 'custom_min_value', columns: 1 },
-			{ fieldname: 'custom_max_value', columns: 1 }
-		];
     frm.set_query('service_unit', () => {
 			return{
 				filters: {
@@ -63,14 +55,38 @@ frappe.ui.form.on('Lab Test', {
     if(frm.doc.custom_selective_test_result&&frm.doc.docstatus===0){
 			frm.refresh_field('custom_selective_test_result');
       $.each(frm.doc.custom_selective_test_result, (key, value) => {
-				frm.fields_dict.custom_selective_test_result.grid.grid_rows[key].docfields[1].options=frm.fields_dict.custom_selective_test_result.get_value()[key].result_set;
+				frappe.meta.get_docfield('Selective Test Template', 'result', value.name).options = value.result_set;
+				frappe.meta.get_docfield('Selective Test Template', 'result', value.name).read_only = 1;
+				frappe.meta.get_docfield('Selective Test Template', 'result', value.name).reqd = 0;
+				if (value.sample_reception) {
+					frappe.meta.get_docfield('Selective Test Template', 'result', value.name).read_only = 0;
+					frappe.meta.get_docfield('Selective Test Template', 'result', value.name).reqd = 1;
+				}
       });
-      frm.refresh_field('custom_selective_test_result');
     }
 	},
 	refresh: function (frm) {
 		if (frm.doc.docstatus === 1 && frm.doc.sms_sent === 0 && frm.doc.status !== 'Rejected' ) {
 			frm.remove_custom_button(__('Send SMS'))
 		}
+		hide_standard_buttons (frm, ['custom_selective_test_result', 'normal_test_items']);
 	}
 });
+const hide_standard_buttons = (frm, fields) => {
+	fields.forEach((field) => {
+		let child = frm.fields_dict[field];
+		if (child) {
+			if (child.grid.grid_rows) {
+				child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+				child.grid.wrapper.find('.row-index').hide();
+				child.grid.grid_rows.forEach(function(row) {
+					row.wrapper.find('.btn-open-row').on('click', function() {
+						setTimeout(function() {
+							$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+						}, 100);
+					});
+				});
+			}
+		}
+	});
+}

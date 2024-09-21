@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestQuestionnaire(FrappeTestCase):
+class TestTemporaryRegistration(FrappeTestCase):
 	pass

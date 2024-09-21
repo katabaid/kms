@@ -49,18 +49,13 @@ frappe.ui.form.on('Nurse Examination Selective Result',{
 })
 
 const hide_standard_buttons = (frm, fields) => {
-	console.log(fields)
 	fields.forEach((field) => {
-		console.log(field)
 		let child = frm.fields_dict[field];
-		console.log(child)
 		if (child) {
 			if (child.grid.grid_rows) {
 				child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
 				child.grid.wrapper.find('.row-index').hide();
-				// Remove buttons from detail view dialog
 				child.grid.grid_rows.forEach(function(row) {
-					//row.wrapper.find('.row-check').hide(); // Hide the checkbox
 					row.wrapper.find('.btn-open-row').on('click', function() {
 						setTimeout(function() {
 							$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();

@@ -10,7 +10,8 @@
   "quantity",
   "uom",
   "status",
-  "status_time"
+  "status_time",
+  "sample_reception"
  ],
  "fields": [
   {
@@ -50,12 +51,19 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Status Time"
+  },
+  {
+   "fieldname": "sample_reception",
+   "fieldtype": "Link",
+   "label": "Sample Reception",
+   "options": "Sample Reception",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-22 20:01:14.744421",
+ "modified": "2024-09-16 14:30:13.806445",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Sample Collection Bulk",

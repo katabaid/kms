@@ -37,45 +37,54 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "QST-.YYYY..MM.-"
+   "options": "QST-.YYYY..MM.-",
+   "read_only": 1
   },
   {
    "fieldname": "patient_name",
    "fieldtype": "Data",
-   "label": "Patient Name"
+   "label": "Patient Name",
+   "read_only": 1
   },
   {
    "fieldname": "gender",
    "fieldtype": "Link",
    "label": "Gender",
-   "options": "Gender"
+   "options": "Gender",
+   "read_only": 1
   },
   {
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
-   "label": "Date of Birth"
+   "label": "Date of Birth",
+   "read_only": 1
   },
   {
    "fieldname": "id_number",
    "fieldtype": "Data",
-   "label": "ID Number"
+   "label": "ID Number",
+   "read_only": 1
   },
   {
    "fieldname": "phone_number",
    "fieldtype": "Data",
-   "label": "Phone Number"
+   "label": "Phone Number",
+   "read_only": 1
   },
   {
+   "fetch_from": "patient.custom_company",
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Customer"
+   "options": "Customer",
+   "read_only": 1
   },
   {
    "fieldname": "patient",
    "fieldtype": "Link",
    "label": "Patient",
-   "options": "Patient"
+   "options": "Patient",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_xsyhe",
@@ -95,23 +104,27 @@
    "fetch_if_empty": 1,
    "fieldname": "company_name",
    "fieldtype": "Data",
-   "label": "Company Name"
+   "label": "Company Name",
+   "read_only": 1
   },
   {
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_full_name",
    "fieldtype": "Data",
-   "label": "Patient Full Name"
+   "label": "Patient Full Name",
+   "read_only": 1
   },
   {
    "fieldname": "type",
    "fieldtype": "Data",
-   "label": "Type"
+   "label": "Type",
+   "read_only": 1
   },
   {
    "fieldname": "created",
    "fieldtype": "Datetime",
-   "label": "Created"
+   "label": "Created",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_m6bb5",
@@ -128,23 +141,27 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nTransferred\nArchived"
+   "options": "Draft\nPatient Created\nTransferred\nCancelled",
+   "read_only": 1
   },
   {
    "fieldname": "exam_date",
    "fieldtype": "Date",
-   "label": "Exam Date"
+   "label": "Exam Date",
+   "read_only": 1
   },
   {
    "fieldname": "patient_appointment",
    "fieldtype": "Link",
    "label": "Patient Appointment",
-   "options": "Patient Appointment"
+   "options": "Patient Appointment",
+   "read_only": 1
   },
   {
    "fieldname": "questionnaire_type",
    "fieldtype": "Data",
-   "label": "Questionnaire Type"
+   "label": "Questionnaire Type",
+   "read_only": 1
   },
   {
    "fieldname": "patient_section",
@@ -158,12 +175,13 @@
   }
  ],
  "hide_toolbar": 1,
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-12 13:16:27.355593",
+ "modified": "2024-09-18 18:33:25.657087",
  "modified_by": "Administrator",
  "module": "KMS",
- "name": "Questionnaire",
+ "name": "Temporary Registration",
  "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
@@ -182,5 +200,25 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Draft"
+  },
+  {
+   "color": "Blue",
+   "title": "Patient Created"
+  },
+  {
+   "color": "Green",
+   "title": "Transferred"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
 }

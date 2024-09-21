@@ -17,7 +17,7 @@ frappe.ui.form.on('Patient', {
 		frm.set_query('custom_company', () => {
       return{
         filters:{
-          customer_type: 'Company',
+          customer_group: 'Commercial',
         }
       };
 		});

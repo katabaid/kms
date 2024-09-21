@@ -8,7 +8,9 @@
  "field_order": [
   "event",
   "result",
-  "result_set"
+  "result_set",
+  "sample",
+  "sample_reception"
  ],
  "fields": [
   {
@@ -22,20 +24,31 @@
    "fieldname": "result",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Result",
-   "reqd": 1
+   "label": "Result"
   },
   {
    "fieldname": "result_set",
    "fieldtype": "Small Text",
    "hidden": 1,
    "label": "Result Set"
+  },
+  {
+   "fieldname": "sample",
+   "fieldtype": "Link",
+   "label": "Sample",
+   "options": "Lab Test Sample"
+  },
+  {
+   "fieldname": "sample_reception",
+   "fieldtype": "Link",
+   "label": "Sample Reception",
+   "options": "Sample Reception"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-04-28 21:15:40.949728",
+ "modified": "2024-09-16 18:42:33.266999",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Selective Test Template",

@@ -257,7 +257,8 @@ def create_result_doc(doc, target):
 								'custom_min_value': mm.custom_min_value, 
 								'custom_max_value': mm.custom_max_value, 
 								'lab_test_event': mm.lab_test_event, 
-								'lab_test_uom': mm.lab_test_uom
+								'lab_test_uom': mm.lab_test_uom,
+								'custom_sample': item.sample
 							})
 							normal_toggle = 1
 					if selective:
@@ -265,7 +266,8 @@ def create_result_doc(doc, target):
 							new_doc.append('custom_selective_test_result', {
 								'event': exam,
 								'result_set': sel.result_select, 
-								'result': sel.result_select.splitlines()[0]
+								'result': sel.result_select.splitlines()[0],
+								'sample': item.sample
 							})
 		new_doc.normal_toggle = normal_toggle
 	else:
