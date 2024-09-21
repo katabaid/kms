@@ -414,7 +414,11 @@ frappe.ui.form.on('Doctor Examination', {
 				})
 			}
     }
-	}
+	},
+
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Doctor Examination');
+  }
 });
 
 frappe.ui.form.on('Doctor Examination Selective Result',{

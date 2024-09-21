@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Nurse Result', {
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Nurse Result');
+  },
 	refresh: function (frm) {
 		frappe.require('assets/kms/js/controller/result.js', function() {
 			if (typeof kms.assign_result_dialog_setup === 'function') {

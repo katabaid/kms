@@ -2,6 +2,10 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Queue Pooling', {
+	onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Queue Pooling');
+  },
+
 	refresh(frm) {
 		if(frm.doc.status === 'Queued'&& !frm.doc.encounter){
 			const now = new Date();

@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Temporary Registration', {
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Temporary Registration');
+  },
 	setup: function(frm) {
 		frm.disable_form();
 	},

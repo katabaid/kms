@@ -1,5 +1,6 @@
 frappe.listview_settings['Dispatcher'] = {
   onload: (listview) => {
+    frappe.breadcrumbs.add('Healthcare', 'Dispatcher');
     listview.page.add_menu_item(__('Check Room Queue'), () => {
       frappe.db.get_list('Dispatcher Settings', {
         fields: ['branch'],

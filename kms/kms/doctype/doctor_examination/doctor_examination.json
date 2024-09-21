@@ -452,16 +452,19 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "eyes_left",
    "fieldtype": "Heading",
    "label": "Left"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "eyes_right",
    "fieldtype": "Heading",
    "label": "Right"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "ear_left",
    "fieldtype": "Heading",
    "label": "Left"
@@ -494,6 +497,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "ear_right",
    "fieldtype": "Heading",
    "label": "Right"
@@ -538,6 +542,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "septum",
    "fieldtype": "Heading",
    "label": "Septum"
@@ -553,11 +558,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "nose_left",
    "fieldtype": "Heading",
    "label": "Left"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "conchae_left",
    "fieldtype": "Heading",
    "label": "Conchae"
@@ -590,11 +597,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "nose_right",
    "fieldtype": "Heading",
    "label": "Right"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "conchae_right",
    "fieldtype": "Heading",
    "label": "Conchae"
@@ -764,6 +773,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "breast_left",
    "fieldtype": "Heading",
    "label": "Left"
@@ -790,6 +800,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "breast_right",
    "fieldtype": "Heading",
    "label": "Right"
@@ -828,6 +839,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "resp_left",
    "fieldtype": "Heading",
    "label": "Left"
@@ -854,6 +866,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "resp_right",
    "fieldtype": "Heading",
    "label": "Right"
@@ -1289,7 +1302,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-04 18:13:36.303629",
+ "modified": "2024-09-21 19:07:00.919089",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Nurse Examination Template', {
-	// refresh: function(frm) {
-
-	// }
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Nurse Examination Template');
+  }
 });

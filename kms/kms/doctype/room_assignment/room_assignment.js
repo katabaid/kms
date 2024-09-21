@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Room Assignment', {
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Room Assignment');
+  },
 	refresh(frm) {
 		if (!frm.is_new() && frm.doc.user === frappe.session.user) {
 			add_change_room_button (frm);

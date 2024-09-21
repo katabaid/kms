@@ -1,4 +1,8 @@
 frappe.ui.form.on('MCU Settings', {
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'MCU Settings');
+  },
+
 	setup: function (frm) {
 		const examination_fields = get_examination_fields();
 		frm.set_query('examination_group', () => ({ filters: { is_group: 0, custom_is_product_bundle_item: 1 } }));

@@ -10,7 +10,9 @@ frappe.ui.form.on('Dispatcher', {
 		addSidebarUserAction(frm);
 		frm.disable_save();
 	},
-
+	onload: function (frm) {
+		frappe.breadcrumbs.add('Healthcare', 'Dispatcher');
+	},
 	setup: function (frm) {
 		frm.set_indicator_formatter('healthcare_service_unit', (doc) => {
 			const statusColors = {

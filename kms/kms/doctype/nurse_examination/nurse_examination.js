@@ -3,6 +3,9 @@ const nurseExaminationController = kms.controller.createDocTypeController('Nurse
 });
 frappe.ui.form.on('Nurse Examination', {
 	...nurseExaminationController,
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Nurse Examination');
+  },
   setup: function (frm) {
 		if(frm.doc.docstatus === 0 && frm.doc.status === 'Checked In'){
 			if (frm.doc.result) {

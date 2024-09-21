@@ -2,6 +2,9 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Sample Reception', {
+  onload: function (frm) {
+    frappe.breadcrumbs.add('Healthcare', 'Sample Reception');
+  },
 	refresh: function(frm) {
 		frm.fields_dict['sample_reception_detail'].grid.get_field('sample_collection').get_query = function(doc, cdt, cdn) {
 			let child = locals[cdt][cdn];
