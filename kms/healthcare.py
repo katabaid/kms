@@ -103,6 +103,8 @@ def exam_retest (name, item, item_name):
   rooms = get_rooms_by_item_branch (item, disp_doc.branch)
   for room in rooms:
     temp_hsu_exist, temp_previous_doctype, temp_previous_docname = process_hsu (disp_doc, room.service_unit)
+    print(temp_previous_doctype)
+    print(temp_previous_docname)
     if temp_hsu_exist:
       if disp_doc.status != 'In Queue':
         disp_doc.statue = 'In Queue'

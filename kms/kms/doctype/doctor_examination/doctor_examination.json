@@ -42,11 +42,13 @@
   "eyes_left",
   "left_anemic",
   "left_icteric",
+  "el_others",
   "eyes_left_others",
   "column_break_kvpfb",
   "eyes_right",
   "right_anemic",
   "right_icteric",
+  "er_others",
   "eyes_right_others",
   "ear_section",
   "ear_check",
@@ -55,12 +57,14 @@
   "left_cerumen",
   "left_cerumen_prop",
   "left_tympanic",
+  "earl_others",
   "ear_left_others",
   "column_break_4gkw6",
   "ear_right",
   "right_cerumen",
   "right_cerumen_prop",
   "right_tympanic",
+  "earr_others",
   "ear_right_others",
   "nose_section",
   "nose_check",
@@ -73,6 +77,7 @@
   "left_enlarged",
   "left_hyperemic",
   "left_polyp",
+  "nl_others",
   "nose_left_others",
   "column_break_zfdqh",
   "nose_right",
@@ -80,11 +85,13 @@
   "right_enlarged",
   "right_hyperemic",
   "right_polyp",
+  "nr_others",
   "nose_right_others",
   "throat_section",
   "throat_check",
   "enlarged_tonsil",
   "hyperemic_pharynx",
+  "t_others",
   "throat_others",
   "neck_section",
   "neck_check",
@@ -95,6 +102,7 @@
   "enlarged_lymph_node",
   "enlarged_lymph_node_details",
   "column_break_ciyoy",
+  "n_others",
   "neck_others",
   "cardiac_section",
   "cardiac_check",
@@ -102,6 +110,7 @@
   "regular_heart_sound",
   "murmur",
   "gallop",
+  "c_others",
   "others",
   "breast_section",
   "breast_check",
@@ -109,11 +118,13 @@
   "breast_left",
   "left_enlarged_breast",
   "left_lumps",
+  "bl_others",
   "breast_left_others",
   "column_break_gxf7e",
   "breast_right",
   "right_enlarged_breast",
   "right_lumps",
+  "br_others",
   "breast_right_others",
   "resp_section",
   "resp_check",
@@ -121,6 +132,7 @@
   "resp_left",
   "left_ronkhi",
   "left_wheezing",
+  "r_others",
   "resp_left_others",
   "column_break_1khzo",
   "resp_right",
@@ -136,6 +148,7 @@
   "hepatomegaly",
   "splenomegaly",
   "increased_bowel_sounds",
+  "a_others",
   "abd_others",
   "spine_section",
   "spine_check",
@@ -148,6 +161,7 @@
   "column_break_0sp6b",
   "hemorrhoid",
   "inguinal_nodes",
+  "g_others",
   "genit_others",
   "neuro_section",
   "neuro_check",
@@ -161,7 +175,16 @@
   "reflexes_abnormality",
   "reflex_details",
   "column_break_ouadx",
+  "ne_others",
   "neuro_others",
+  "skin_section",
+  "skin_check",
+  "abnormal_skin",
+  "skin_psoriasis",
+  "skin_tattoo",
+  "skin_tag",
+  "sk_others",
+  "skin_others",
   "visual_field_test_tab",
   "visual_field_test_section",
   "visual_check",
@@ -186,6 +209,7 @@
   "abnormal_rectal",
   "rectal_hemorrhoid",
   "enlarged_prostate",
+  "re_others",
   "rectal_others",
   "dental_tab",
   "dental_section",
@@ -405,6 +429,7 @@
    "label": "Icteric"
   },
   {
+   "depends_on": "eval:doc.el_others",
    "fieldname": "eyes_left_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -426,6 +451,7 @@
    "label": "Icteric"
   },
   {
+   "depends_on": "eval:doc.er_others",
    "fieldname": "eyes_right_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -488,6 +514,7 @@
    "label": "Tympanic membrane intact"
   },
   {
+   "depends_on": "eval:doc.earl_others",
    "fieldname": "ear_left_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -521,6 +548,7 @@
    "label": "Tympanic membrane intact"
   },
   {
+   "depends_on": "eval:doc.earr_others",
    "fieldname": "ear_right_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -588,6 +616,7 @@
    "label": "Polyp"
   },
   {
+   "depends_on": "eval:doc.nl_others",
    "fieldname": "nose_left_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -627,6 +656,7 @@
    "label": "Polyp"
   },
   {
+   "depends_on": "eval:doc.nr_others",
    "fieldname": "nose_right_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -657,7 +687,7 @@
    "label": "Hyperemic Pharynx"
   },
   {
-   "depends_on": "eval:doc.enlarged_tonsil",
+   "depends_on": "eval:doc.t_others",
    "fieldname": "throat_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -713,6 +743,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.n_others",
    "fieldname": "neck_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -752,6 +783,7 @@
    "label": "Gallop"
   },
   {
+   "depends_on": "eval:doc.c_others",
    "fieldname": "others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -791,6 +823,7 @@
    "label": "Lumps"
   },
   {
+   "depends_on": "eval:doc.bl_others",
    "fieldname": "breast_left_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -818,6 +851,7 @@
    "label": "Lumps"
   },
   {
+   "depends_on": "eval:doc.br_others",
    "fieldname": "breast_right_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -857,6 +891,7 @@
    "label": "Wheezing"
   },
   {
+   "depends_on": "eval:doc.r_others",
    "fieldname": "resp_left_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -940,6 +975,7 @@
    "label": "Increased Bowel Sounds"
   },
   {
+   "depends_on": "eval:doc.a_others",
    "fieldname": "abd_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -1008,6 +1044,7 @@
    "label": "Inguinal Nodes"
   },
   {
+   "depends_on": "eval:doc.g_others",
    "fieldname": "genit_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -1080,6 +1117,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval:doc.ne_others",
    "fieldname": "neuro_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -1156,7 +1194,7 @@
    "fieldname": "rectal_hemorrhoid",
    "fieldtype": "Select",
    "label": "Hemorrhoid",
-   "options": "\nA\nB\nC\nD\nE"
+   "options": "\nGrade 1\nGrade 2\nGrade 3\nGrade 4"
   },
   {
    "default": "0",
@@ -1165,6 +1203,7 @@
    "label": "Enlarged Prostate"
   },
   {
+   "depends_on": "eval:doc.re_others",
    "fieldname": "rectal_others",
    "fieldtype": "Small Text",
    "label": "Others"
@@ -1296,13 +1335,155 @@
    "fieldtype": "Datetime",
    "label": "Checked In Time",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "el_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "er_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "earl_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "earr_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "nl_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "nr_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "t_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "n_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "c_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "bl_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "br_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "r_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "a_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "g_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "ne_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "re_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "fieldname": "skin_section",
+   "fieldtype": "Section Break",
+   "label": "Skin"
+  },
+  {
+   "default": "1",
+   "fieldname": "skin_check",
+   "fieldtype": "Check",
+   "label": "No Abnormality"
+  },
+  {
+   "depends_on": "eval:!doc.skin_check",
+   "fieldname": "abnormal_skin",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "skin_psoriasis",
+   "fieldtype": "Check",
+   "label": "Psoriasis"
+  },
+  {
+   "default": "0",
+   "fieldname": "skin_tattoo",
+   "fieldtype": "Check",
+   "label": "Tattoo"
+  },
+  {
+   "default": "0",
+   "fieldname": "skin_tag",
+   "fieldtype": "Check",
+   "label": "Skin Tag"
+  },
+  {
+   "default": "0",
+   "fieldname": "sk_others",
+   "fieldtype": "Check",
+   "label": "Others"
+  },
+  {
+   "depends_on": "eval:doc.sk_others",
+   "fieldname": "skin_others",
+   "fieldtype": "Small Text",
+   "label": "Others"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-21 19:07:00.919089",
+ "modified": "2024-09-22 18:50:08.935122",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
