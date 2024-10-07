@@ -35,7 +35,7 @@ const childTableButton = 'assignment_table';
 
 const addCustomButtonOnPackage = (frm) => {
 	let child_table = frm.fields_dict['package'].grid;
-	if (child_table) {
+	if (child_table && frm.doc.status !== 'Finished') {
 		// hide standard buttons
 		const customButton = child_table.add_custom_button(
 			'Retest',

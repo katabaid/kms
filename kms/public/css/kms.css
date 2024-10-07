@@ -1,3 +1,12 @@
 .filter-section {
   display: none;
 }
+/* Hide the love button in list views */
+.list-liked-by-me {
+  display: none !important;
+}
+
+/* Hide the love button in list view head (if present) */
+.list-row-like {
+  display: none !important;
+}

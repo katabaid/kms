@@ -1,4 +1,10 @@
 frappe.listview_settings['Dispatcher'] = {
+  //add_fields: ['progress'],
+  refresh: (listview) => {
+    setInterval(()=>{
+      listview.refresh()
+    }, 60000)
+  },
   onload: (listview) => {
     frappe.breadcrumbs.add('Healthcare', 'Dispatcher');
     listview.page.add_menu_item(__('Check Room Queue'), () => {
@@ -19,7 +25,20 @@ frappe.listview_settings['Dispatcher'] = {
         }
       });
     });
-  }
+  },
+  formatters: {
+    progress(value, df, doc) {
+      return `
+        <div class="progress" style="height: 20px; position: relative;">
+          <div class="progress-bar" role="progressbar" style="width: ${value}%;" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100">
+          </div>
+          <div style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: ${value > 50 ? 'white' : 'black'};">
+            ${value}%
+          </div>
+        </div>
+      `;
+    }
+  },
 };
 
 function create_dialog(branch_list, default_branch) {

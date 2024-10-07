@@ -103,8 +103,6 @@ def exam_retest (name, item, item_name):
   rooms = get_rooms_by_item_branch (item, disp_doc.branch)
   for room in rooms:
     temp_hsu_exist, temp_previous_doctype, temp_previous_docname = process_hsu (disp_doc, room.service_unit)
-    print(temp_previous_doctype)
-    print(temp_previous_docname)
     if temp_hsu_exist:
       if disp_doc.status != 'In Queue':
         disp_doc.statue = 'In Queue'
@@ -112,8 +110,6 @@ def exam_retest (name, item, item_name):
       previous_doctype = temp_previous_doctype
       previous_docname = temp_previous_docname
       hsu_exist = temp_hsu_exist
-      print(previous_doctype)
-      print(previous_docname)
     result_doctype, template_doctype = get_relationship(room.service_unit)
   sample = ''
   if template_doctype == 'Lab Test Template':
@@ -123,8 +119,6 @@ def exam_retest (name, item, item_name):
     for package_item in disp_doc.package:
       if package_item.item_name in [item for item in exam_items]:
         package_item.status = 'To Retest'
-  print(exam_items)
-  print(hsu_exist)
   if exam_items and hsu_exist:
     to_cancel_doc = get_cancelled_doc (previous_doctype, previous_docname)
     #if to_cancel_doc.docstatus == 1:
@@ -386,9 +380,20 @@ def create_exam(name, room, doc_type, template_doctype):
       doc.non_selective_result = []
       doc.dental_detail = []
       doc.other_dental = []
+      doc.questionnaire_detail = []
     else:
       if cancelled_doc.status == 'To Retest':
         doc.amended_from = cancelled_doc.name
+  if doc_type == 'Doctor Examination':
+    questionnaire = frappe.db.get_all('Temporary Registration', filters={'patient_appointment':['=', appt_doc.name]}, pluck='name')
+    questionnaire_doc = frappe.get_doc('Temporary Registration', questionnaire)
+    if questionnaire_doc.detail:
+      for detail in questionnaire_doc.detail:
+        doc.append('questionnaire_detail', {
+          'template': detail.template,
+          'question': detail.question,
+          'answer': detail.answer,
+        })
   exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")

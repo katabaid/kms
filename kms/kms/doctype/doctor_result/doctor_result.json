@@ -8,67 +8,69 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "patient",
+  "patient_name",
   "company",
   "branch",
   "queue_pooling",
-  "patient",
-  "patient_name",
-  "patient_encounter",
-  "status",
-  "doctor_examination",
+  "amended_from",
   "column_break_ydxak",
-  "queue_no",
+  "age",
+  "gender",
   "appointment",
   "dispatcher",
-  "service_unit",
   "created_date",
   "expected_result_date",
   "expected_result_time",
   "submitted_date",
-  "result_section",
-  "examination_item",
-  "result",
-  "non_selective_result",
-  "consumables_section",
-  "items",
   "remark_section",
-  "remark",
-  "mcu_tab",
-  "appoinment_type",
-  "amended_from"
+  "exam_grade",
+  "grade",
+  "grade_description",
+  "total_comment",
+  "remark"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "HLC-DE-.YYYY..MM..DD.-"
+   "options": "HLC-DE-.YYYY..MM..DD.-",
+   "read_only": 1
   },
   {
+   "fetch_from": "appointment.company",
+   "fetch_if_empty": 1,
    "fieldname": "company",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Company",
    "options": "Company",
+   "read_only": 1,
    "reqd": 1
   },
   {
+   "fetch_from": "appointment.custom_branch",
+   "fetch_if_empty": 1,
    "fieldname": "branch",
    "fieldtype": "Link",
    "label": "Branch",
-   "options": "Branch"
+   "options": "Branch",
+   "read_only": 1
   },
   {
    "fieldname": "queue_pooling",
    "fieldtype": "Link",
    "label": "Queue Pooling",
-   "options": "Queue Pooling"
+   "options": "Queue Pooling",
+   "read_only": 1
   },
   {
    "fieldname": "patient",
    "fieldtype": "Link",
    "label": "Patient",
    "options": "Patient",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -79,61 +81,29 @@
    "read_only": 1
   },
   {
-   "fieldname": "patient_encounter",
-   "fieldtype": "Link",
-   "label": "Patient Encounter",
-   "options": "Patient Encounter"
-  },
-  {
-   "default": "Started",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
-   "read_only": 1
-  },
-  {
-   "fieldname": "doctor_examination",
-   "fieldtype": "Link",
-   "label": "Doctor Examination",
-   "options": "Doctor Examination"
-  },
-  {
    "fieldname": "column_break_ydxak",
    "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "dispatcher.queue_no",
-   "fieldname": "queue_no",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Queue No",
-   "read_only": 1
   },
   {
    "fieldname": "appointment",
    "fieldtype": "Link",
    "label": "Appointment",
-   "options": "Patient Appointment"
+   "options": "Patient Appointment",
+   "read_only": 1
   },
   {
    "fieldname": "dispatcher",
    "fieldtype": "Link",
    "label": "Dispatcher",
-   "options": "Dispatcher"
-  },
-  {
-   "fieldname": "service_unit",
-   "fieldtype": "Link",
-   "label": "Service Unit",
-   "options": "Healthcare Service Unit",
-   "reqd": 1
+   "options": "Dispatcher",
+   "read_only": 1
   },
   {
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
-   "label": "Created Date"
+   "label": "Created Date",
+   "read_only": 1
   },
   {
    "default": "Today",
@@ -141,12 +111,13 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Expected Result Date",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "expected_result_time",
    "fieldtype": "Time",
-   "label": "Expected Result Time"
+   "label": "Expected Result Time",
+   "read_only": 1
   },
   {
    "fieldname": "submitted_date",
@@ -155,60 +126,14 @@
    "read_only": 1
   },
   {
-   "fieldname": "result_section",
-   "fieldtype": "Section Break",
-   "label": "Result"
-  },
-  {
-   "fieldname": "examination_item",
-   "fieldtype": "Table",
-   "label": "Examination Item",
-   "options": "Doctor Examination Request"
-  },
-  {
-   "fieldname": "result",
-   "fieldtype": "Table",
-   "label": "Result",
-   "options": "Doctor Examination Selective Result"
-  },
-  {
-   "fieldname": "non_selective_result",
-   "fieldtype": "Table",
-   "label": "Non Selective Result",
-   "options": "Doctor Examination Result"
-  },
-  {
-   "fieldname": "consumables_section",
-   "fieldtype": "Section Break",
-   "label": "Consumables"
-  },
-  {
-   "fieldname": "items",
-   "fieldtype": "Table",
-   "label": "Items",
-   "options": "Clinical Procedure Item"
-  },
-  {
    "fieldname": "remark_section",
    "fieldtype": "Section Break",
-   "label": "Remark"
+   "label": "Grade and Comment"
   },
   {
    "fieldname": "remark",
    "fieldtype": "Text Editor",
    "label": "Remark"
-  },
-  {
-   "fieldname": "mcu_tab",
-   "fieldtype": "Tab Break",
-   "label": "MCU"
-  },
-  {
-   "fetch_from": "appointment.appointment_type",
-   "fieldname": "appoinment_type",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Appoinment Type"
   },
   {
    "fieldname": "amended_from",
@@ -219,13 +144,53 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fetch_from": "appointment.patient_age",
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "appointment.patient_sex",
+   "fieldname": "gender",
+   "fieldtype": "Data",
+   "label": "Gender",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "label": "Grade",
+   "options": "MCU Grade"
+  },
+  {
+   "fieldname": "total_comment",
+   "fieldtype": "Table MultiSelect",
+   "label": "Total Comment",
+   "options": "Doctor Result Comment"
+  },
+  {
+   "fieldname": "exam_grade",
+   "fieldtype": "Table",
+   "label": "Exam Grade",
+   "options": "MCU Exam Grade"
+  },
+  {
+   "fetch_from": "grade.description",
+   "fieldname": "grade_description",
+   "fieldtype": "Data",
+   "label": "Grade Description",
+   "read_only": 1
   }
  ],
+ "hide_toolbar": 1,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-12 16:52:35.282584",
+ "modified": "2024-10-01 12:15:30.796678",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

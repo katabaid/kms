@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-26 13:29:32.128171",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "examination",
+  "examination_name",
+  "status",
+  "grade",
+  "description",
+  "gradable",
+  "normal_value",
+  "min_value",
+  "max_value"
+ ],
+ "fields": [
+  {
+   "fieldname": "examination",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Examination",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "examination_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Examination Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Grade",
+   "options": "MCU Grade"
+  },
+  {
+   "fetch_from": "grade.description",
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "gradable",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Gradable",
+   "read_only": 1
+  },
+  {
+   "fieldname": "normal_value",
+   "fieldtype": "Data",
+   "label": "Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "min_value",
+   "fieldtype": "Data",
+   "label": "Min Value"
+  },
+  {
+   "fieldname": "max_value",
+   "fieldtype": "Data",
+   "label": "Max value"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-03 14:48:00.415175",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "MCU Exam Grade",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

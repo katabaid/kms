@@ -14,7 +14,10 @@
   "age",
   "sex",
   "min_value",
-  "max_value"
+  "max_value",
+  "column_break_1i7if",
+  "gradable",
+  "formula"
  ],
  "fields": [
   {
@@ -61,11 +64,26 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Max Value"
+  },
+  {
+   "fieldname": "column_break_1i7if",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "gradable",
+   "fieldtype": "Check",
+   "label": "Gradable"
+  },
+  {
+   "fieldname": "formula",
+   "fieldtype": "Data",
+   "label": "Formula"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2024-07-10 09:09:27.845714",
+ "modified": "2024-09-27 14:31:24.709470",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Template Item",

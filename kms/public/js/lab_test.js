@@ -52,6 +52,9 @@ frappe.ui.form.on('Lab Test', {
         }
       };
     });
+		frm.doc.normal_test_items.forEach(row=>{
+			row._original_result_value = row.result_value;
+		})
     if(frm.doc.custom_selective_test_result&&frm.doc.docstatus===0){
 			frm.refresh_field('custom_selective_test_result');
       $.each(frm.doc.custom_selective_test_result, (key, value) => {
@@ -70,6 +73,44 @@ frappe.ui.form.on('Lab Test', {
 			frm.remove_custom_button(__('Send SMS'))
 		}
 		hide_standard_buttons (frm, ['custom_selective_test_result', 'normal_test_items']);
+	},
+
+	before_save: function (frm) {
+		if (frm.doc.docstatus === 0 ) {
+			if (frm.continue_save) {
+				frm.continue_save = false;
+				return true
+			}
+			if (frm.doc.normal_test_items && frm.doc.normal_test_items.length > 0) {
+				let has_out_of_range = false;
+				frm.doc.normal_test_items.forEach(row => {
+					if ((row.result_value < row.custom_min_value || row.result_value > row.custom_max_value) && row.custom_min_value != 0 && row.custom_max_value != 0 && row.result_value && row.result_value !== row._original_result_value) {
+						has_out_of_range = true;
+					}
+				});
+				if (has_out_of_range) {
+					frappe.validated = false;
+					frappe.warn(
+						'Results Outside Normal Range',
+						'One or more results are outside the normal area. Do you want to continue?',
+						() => {
+							frm.continue_save = true;
+							frappe.validated = true;
+							frm.save();
+						},
+						() => {
+							frappe.validated = false;
+						}
+					)
+				}
+			}
+		}
+	},
+
+	after_save: function (frm) {
+		frm.doc.normal_test_items.forEach(row=>{
+			row._original_result_value = row.result_value;
+		})
 	}
 });
 const hide_standard_buttons = (frm, fields) => {

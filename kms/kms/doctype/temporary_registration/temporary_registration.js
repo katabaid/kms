@@ -48,12 +48,11 @@ frappe.ui.form.on('Temporary Registration', {
 						if (frm.doc.patient) {
 							frappe.new_doc('Patient Appointment', {appointment_type: frm.doc.questionnaire_type === 'Outpatient' ? 'Dokter Consultation (GP)' : frm.doc.questionnaire_type},
 								doc => {
-									//doc.custom_branch= 'Jakarta Main Clinic'
-									doc.priority= frm.doc.questionnaire_type === 'MCU' ? '4. MCU' : '3. Outpatient'
+									doc.custom_priority= frm.doc.questionnaire_type === 'MCU' ? '4. MCU' : '3. Outpatient'
 									doc.appointment_for= frm.doc.questionnaire_type === 'MCU' ? 'MCU' : 'Department'
-									doc.department= frm.doc.questionnaire_type === 'Outpatient' ? 'General Practice' : ''
+									doc.department= frm.doc.questionnaire_type === 'Doctor Consultation' ? 'General Practice' : ''
 									doc.appointment_date= frm.doc.exam_date
-									//doc.cu= 'STD-001'
+									doc.custom_temporary_registration = frm.doc.name
 									doc.patient= frm.doc.patient
 								}
 							)
@@ -63,7 +62,7 @@ frappe.ui.form.on('Temporary Registration', {
 				);
 			}
 		}
-		if (frm.doc.status !== 'Cancelled') {
+		if (frm.doc.status !== 'Cancelled' && frm.doc.status !== 'Transferred') {
 			frm.add_custom_button(
 				'Cancel',
 				() => {

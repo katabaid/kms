@@ -13,7 +13,9 @@ app_license = "MIT"
 # include js, css files in header of desk.html
 app_include_css = "/assets/kms/css/kms.css"
 #app_include_js = "/assets/kms/js/kms.js"
-app_include_js = "/assets/kms/js/controller/examination.js"
+app_include_js = [
+  "/assets/kms/js/controller/examination.js",
+  "/assets/kms/js/common/listview.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kms/css/kms.css"

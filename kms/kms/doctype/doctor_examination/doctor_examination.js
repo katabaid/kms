@@ -13,7 +13,7 @@ const handleTabVisibility = (frm) => {
     'cardiac_section', 'breast_section', 'resp_section', 'abd_section', 'spine_section', 
     'genit_section', 'neuro_section', 'dental_section', 'teeth_section', 
     'visual_field_test_section', 'romberg_test_section', 'tinnel_test_section',
-    'phallen_test_section', 'rectal_examination_section'
+    'phallen_test_section', 'rectal_examination_section', 'skin_section'
   ];
   const visibleStatus = ['Checked In', 'Finished', 'Partial Finished'];
   const visibleRowStatus = ['Started', 'Checked In', 'Finished', 'Partial Finished'];
@@ -365,6 +365,7 @@ const doctorExaminationController = kms.controller.createDocTypeController('Doct
   before_submit: customBeforeSubmit,
 });
 let mcu_settings = [];
+let normal_values = true;
 
 // Attach the custom controller to the Doctor Examination doctype
 frappe.ui.form.on('Doctor Examination', {
@@ -386,6 +387,12 @@ frappe.ui.form.on('Doctor Examination', {
     handleDentalSections(frm);
     addSidebarUserAction(frm);
     handleReadOnlyExams(frm);
+		if (frm.doc.non_selective_result) {
+			frm.refresh_field('non_selective_result');
+			frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
+				apply_cell_styling (frm, row.doc);
+			})
+		}
   },
 
   setup: function (frm) {
@@ -418,7 +425,48 @@ frappe.ui.form.on('Doctor Examination', {
 
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Doctor Examination');
-  }
+		frm.doc.non_selective_result.forEach(row=>{
+			row._original_result_value = row.result_value;
+		})
+  },
+
+	before_save: function (frm) {
+    if (frm.doc.docstatus === 0 ) {
+      if (frm.continue_save) {
+        frm.continue_save = false;
+        return true
+      }
+      if (frm.doc.non_selective_result && frm.doc.non_selective_result.length > 0) {
+        let has_out_of_range = false;
+        frm.doc.non_selective_result.forEach(row => {
+          if ((row.result_value < row.min_value || row.result_value > row.max_value) && row.min_value != 0 && row.max_value != 0 && row.result_value && row.result_value !== row._original_result_value) {
+            has_out_of_range = true;
+          }
+        });
+        if (has_out_of_range) {
+          frappe.validated = false;
+          frappe.warn(
+            'Results Outside Normal Range',
+            'One or more results are outside the normal area. Do you want to continue?',
+            () => {
+              frm.continue_save = true;
+              frappe.validated = true;
+              frm.save();
+            },
+            () => {
+              frappe.validated = false;
+            }
+          )
+        }
+      }
+    }
+	},
+
+	after_save: function (frm) {
+		frm.doc.non_selective_result.forEach(row=>{
+			row._original_result_value = row.result_value;
+		})
+	}
 });
 
 frappe.ui.form.on('Doctor Examination Selective Result',{
@@ -441,3 +489,30 @@ frappe.ui.form.on('Other Dental',{
     })
 	}
 })
+
+frappe.ui.form.on('Doctor Examination Result',{
+	result_value(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+    apply_cell_styling (frm, row);
+	}
+})
+
+const apply_cell_styling = (frm, row) => {
+  if (row.result_value && row.min_value && row.max_value) {
+    let resultValue = parseFloat(row.result_value);
+    let minValue = parseFloat(row.min_value);
+    let maxValue = parseFloat(row.max_value);
+    let $row = $(frm.fields_dict["non_selective_result"].grid.grid_rows_by_docname[row.name].row);
+    if (resultValue < minValue || resultValue > maxValue) {
+      $row.css({
+        'font-weight': 'bold',
+        'color': 'red'
+      });
+    } else {
+      $row.css({
+        'font-weight': 'normal',
+        'color': 'black'
+      });
+    }
+  }
+}

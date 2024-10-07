@@ -4,6 +4,9 @@
 frappe.ui.form.on('Nurse Result', {
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Nurse Result');
+		frm.doc.non_selective_result.forEach(row=>{
+			row._original_result_value = row.result_value;
+		})
   },
 	refresh: function (frm) {
 		frappe.require('assets/kms/js/controller/result.js', function() {
@@ -39,7 +42,45 @@ frappe.ui.form.on('Nurse Result', {
 				})
 			}
     }
-	}	
+	},
+
+	before_save: function (frm) {
+		if (frm.doc.docstatus === 0 ) {
+			if (frm.continue_save) {
+				frm.continue_save = false;
+				return true
+			}
+			if (frm.doc.non_selective_result && frm.doc.non_selective_result.length > 0) {
+				let has_out_of_range = false;
+				frm.doc.non_selective_result.forEach(row => {
+					if ((row.result_value < row.min_value || row.result_value > row.max_value) && row.min_value != 0 && row.max_value != 0 && row.result_value && row.result_value !== row._original_result_value) {
+						has_out_of_range = true;
+					}
+				});
+				if (has_out_of_range) {
+					frappe.validated = false;
+					frappe.warn(
+						'Results Outside Normal Range',
+						'One or more results are outside the normal area. Do you want to continue?',
+						() => {
+							frm.continue_save = true;
+							frappe.validated = true;
+							frm.save();
+						},
+						() => {
+							frappe.validated = false;
+						}
+					)
+				}
+			}
+		}
+	},
+
+	after_save: function (frm) {
+		frm.doc.non_selective_result.forEach(row=>{
+			row._original_result_value = row.result_value;
+		})
+	}
 });
 
 frappe.ui.form.on('Nurse Examination Selective Result',{

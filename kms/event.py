@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import now
 
 @frappe.whitelist()
 def update_item_price(doc, method=None):
@@ -24,25 +25,25 @@ def update_item_price(doc, method=None):
         "item_code": doc.item_code,
         "currency": doc.currency,
         "price_list_rate": custom_cogs_price_list_rate,
-        "uom": doc.stock_uom})
+        "uom": doc.uom})
       sales_item_price.insert()
       frappe.msgprint(f"Item Price added for {doc.item_code} in Price List {custom_hpp_price_list}", alert=True)
     
     #Update exam items related to this raw material in its HPP price list
     values = {'item_code': doc.item_code}
-    sales_items = frappe.db.sql("""select
-                      sum(tcpi.qty*tip.price_list_rate) harga, tltt.item item
-                    from
-                      `tabClinical Procedure Item` tcpi,
-                      `tabLab Test Template` tltt,
-                      `tabItem Price` tip
-                    where
-                      tltt.name in (select parent from `tabClinical Procedure Item` tcpi where tcpi.item_code = %(item_code)s and parenttype = 'Lab Test Template')
-                      and tcpi.parenttype = 'Lab Test Template'
-                      and tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list')
-                      and tip.item_code = tcpi.item_code
-                      and tltt.name = tcpi.parent
-                    group by 2""", values=values, as_dict=1)
+    sales_items = frappe.db.sql("""
+      select sum(tcpi.qty*tip.price_list_rate) harga, tltt.item item
+      from
+        `tabClinical Procedure Item` tcpi,
+        `tabLab Test Template` tltt,
+        `tabItem Price` tip
+      where
+        tltt.name in (select parent from `tabClinical Procedure Item` tcpi where tcpi.item_code = %(item_code)s and parenttype = 'Lab Test Template')
+        and tcpi.parenttype = 'Lab Test Template'
+        and tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list')
+        and tip.item_code = tcpi.item_code
+        and tltt.name = tcpi.parent
+      group by 2""", values=values, as_dict=1)
     for sales_item in sales_items:
       exam_item_price_name = frappe.db.get_value("Item Price", {"item_code": sales_item.item, "price_list": custom_hpp_price_list}, "name")
       if exam_item_price_name:
@@ -162,6 +163,7 @@ def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
   if doc.status == 'Checked In':
     if doc.appointment_date == frappe.utils.nowdate():
+      frappe.db.set_value('Temporary Registration', doc.custom_temporary_registration, {'patient_appointment': doc.name, 'status': 'Transferred'})
       dispatcher_user = frappe.db.get_value("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, ['dispatcher'])
       if dispatcher_user and doc.appointment_type == 'MCU':
         exist_docname = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
@@ -170,11 +172,6 @@ def process_checkin(doc, method=None):
           existing_items = {item.examination_item for item in disp_doc.package}
           for entry in doc.custom_additional_mcu_items:
             if entry.examination_item not in existing_items:
-            #add_to_list = True
-            #for already_exam_item in disp_doc.package:
-            #  if entry.examination_item == already_exam_item.examination_item:
-            #    add_to_list = False
-            #if add_to_list:
               new_entry = entry.as_dict()
               new_entry.name = None
               disp_doc.append('package', new_entry)
@@ -183,9 +180,6 @@ def process_checkin(doc, method=None):
               for hsu in disp_doc.assignment_table:
                 if hsu.healthcare_service_unit in room_dict:
                   hsu.status = 'Additional or Retest Request'
-                #for room in rooms:
-                #  if hsu.healthcare_service_unit == room.service_unit:
-                #    hsu.status = 'Additional or Retest Request'
               notification_doc = frappe.new_doc('Notification Log')
               notification_doc.for_user = dispatcher_user
               notification_doc.from_user = frappe.session.user
@@ -200,9 +194,25 @@ def process_checkin(doc, method=None):
             'date': frappe.utils.today(),
             'status': 'In Queue'
           })
+          item_with_sort_order = []
           for entry in doc.custom_mcu_exam_items:
-            new_entry = entry.as_dict()
-            new_entry.name = None
+            sort_order = frappe.db.get_value('Item', entry.examination_item, 'custom_bundle_position')
+            item_with_sort_order.append({
+              'item_code': entry.examination_item,
+              'item_name': entry.item_name,
+              'item_group': entry.item_group,
+              'healthcare_service_unit': entry.healthcare_service_unit,
+              'status': entry.status,
+              'sort_order': sort_order
+            })
+          sorted_items = sorted(item_with_sort_order, key=lambda x: x['sort_order'])
+          for item in sorted_items:
+            new_entry = dict()
+            new_entry['examination_item'] = item['item_code']
+            new_entry['item_name'] = item['item_name']
+            new_entry['item_group'] = item['item_group']
+            new_entry['healthcare_service_unit'] = item['healthcare_service_unit']
+            new_entry['status'] = item['status']
             disp_doc.append('package', new_entry)
           rooms = frappe.db.sql(f"""
             SELECT distinct tigsu.service_unit, thsu.custom_default_doctype
@@ -215,7 +225,7 @@ def process_checkin(doc, method=None):
             WHERE tma.parenttype = 'Patient Appointment'
             AND tma.parent = '{doc.name}'
             AND tma.examination_item = tigsu.parent)
-            ORDER BY thsu.custom_room_number, thsu.custom_default_doctype""", as_dict=1)
+            ORDER BY thsu.custom_room, thsu.custom_default_doctype""", as_dict=1)
           for room in rooms:
             new_entry = dict()
             new_entry['name'] = None
@@ -235,7 +245,7 @@ def process_checkin(doc, method=None):
           vital_signs_note = doc.notes))
         vs_doc.insert(ignore_permissions=True)
     else:
-      frappe.throw("Appointment date must be the same as today's date.")
+      frappe.throw(title = 'Error', msg="Appointment date must be the same as today's date.", exc='ValidationError')
 
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):
@@ -282,3 +292,19 @@ def set_collector(doc, method=None):
   exam_result = frappe.db.exists('Lab Test', {'custom_sample_collection': doc.name}, 'name')
   if exam_result:
     doc.custom_lab_test = exam_result
+  for sample in doc.custom_sample_table:
+    if sample.status == 'Finished':
+      sample_reception_doc = frappe.new_doc('Sample Reception')
+      sample_reception_doc.patient = doc.patient
+      sample_reception_doc.age = doc.patient_age
+      sample_reception_doc.sample_collection = doc.name
+      sample_reception_doc.lab_test_sample = sample.sample
+      sample_reception_doc.sex = doc.patient_sex
+      sample_reception_doc.appointment = doc.custom_appointment
+      sample_reception_doc.name1 = doc.patient_name
+      sample_reception_doc.save()
+      #saved = True
+      sample.sample_reception = sample_reception_doc.name
+      sample.status_time = now()
+  #if saved:
+    #doc.save()

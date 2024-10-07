@@ -23,7 +23,8 @@
   "room_assignment_section",
   "assignment_table",
   "package_tab",
-  "package"
+  "package",
+  "progress"
  ],
  "fields": [
   {
@@ -150,12 +151,19 @@
    "fieldtype": "Data",
    "label": "Gender",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "progress",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Progress"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-26 07:36:52.369282",
+ "modified": "2024-09-28 14:44:29.570114",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",
@@ -177,6 +185,27 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Green",
+   "title": "Finished"
+  },
+  {
+   "color": "Orange",
+   "title": "In Queue"
+  },
+  {
+   "color": "Blue",
+   "title": "In Room"
+  },
+  {
+   "color": "Pink",
+   "title": "Rescheduled"
+  },
+  {
+   "color": "Purple",
+   "title": "Waiting to Finish"
+  }
+ ],
  "track_changes": 1
 }

@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_rename": 1,
  "autoname": "naming_series:",
  "creation": "2024-08-08 11:48:46.113325",
  "default_view": "List",
@@ -9,44 +8,46 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "patient",
+  "age",
+  "sample_collection",
   "lab_test_sample",
-  "status",
   "column_break_ntgbz",
+  "name1",
+  "sex",
+  "appointment",
   "collected_by",
   "collection_time",
-  "amended_from",
-  "section_break_gxxvg",
-  "sample_reception_detail"
+  "amended_from"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "SR-.YYYY.-.MM.-.DD.-"
+   "options": "SR-.YYYY.-.MM.-.DD.-",
+   "read_only": 1
   },
   {
    "fieldname": "lab_test_sample",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Lab Test Sample",
-   "options": "Lab Test Sample"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Started\nSample Received"
+   "options": "Lab Test Sample",
+   "read_only": 1
   },
   {
    "fieldname": "collected_by",
    "fieldtype": "Link",
    "label": "Collected By",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "collection_time",
    "fieldtype": "Datetime",
-   "label": "Collection Time"
+   "label": "Collection Time",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -63,20 +64,52 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_gxxvg",
-   "fieldtype": "Section Break"
+   "fieldname": "sample_collection",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sample Collection",
+   "options": "Sample Collection",
+   "read_only": 1
   },
   {
-   "fieldname": "sample_reception_detail",
-   "fieldtype": "Table",
-   "label": "Sample Reception Detail",
-   "options": "Sample Reception Detail"
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Patient",
+   "options": "Patient",
+   "read_only": 1
+  },
+  {
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "read_only": 1
+  },
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sex",
+   "fieldtype": "Data",
+   "label": "Sex",
+   "read_only": 1
+  },
+  {
+   "fieldname": "appointment",
+   "fieldtype": "Link",
+   "label": "Appointment",
+   "options": "Patient Appointment",
+   "read_only": 1
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-31 18:43:47.595519",
+ "modified": "2024-10-01 14:05:12.975633",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Sample Reception",

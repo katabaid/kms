@@ -14,7 +14,10 @@
   "age",
   "sex",
   "min_value",
-  "max_value"
+  "max_value",
+  "column_break_rpwrh",
+  "gradable",
+  "formula"
  ],
  "fields": [
   {
@@ -68,11 +71,26 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Max Value"
+  },
+  {
+   "fieldname": "column_break_rpwrh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "gradable",
+   "fieldtype": "Check",
+   "label": "Gradable"
+  },
+  {
+   "fieldname": "formula",
+   "fieldtype": "Data",
+   "label": "Formula"
   }
  ],
  "istable": 1,
  "links": [],
- "modified": "2024-08-02 17:14:40.786305",
+ "modified": "2024-09-27 14:30:52.776796",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template Item",

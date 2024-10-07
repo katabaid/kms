@@ -1,0 +1,33 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-26 13:19:58.431133",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "total_comment"
+ ],
+ "fields": [
+  {
+   "fieldname": "total_comment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Total Comment",
+   "options": "Total Comment",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-09-26 13:19:58.431133",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Doctor Result Comment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
