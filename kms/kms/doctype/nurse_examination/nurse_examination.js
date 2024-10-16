@@ -22,7 +22,8 @@ frappe.ui.form.on('Nurse Examination', {
 					const check_field = frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name);
 					const text_field = frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name);
 					check_field.options = value.result_options;
-					text_field.read_only = check_field.read_only = (value.is_finished) ? 1 : (value.result_check === value.normal_value ? 1 : 0);
+					text_field.read_only = (value.is_finished) ? 1 : (value.result_check === value.normal_value ? 1 : 0);
+					check_field.read_only = (value.is_finished) ? 1 : 0;
 					text_field.reqd = check_field.reqd = (value.is_finished) ? 0 : (value.result_check === value.mandatory_value ? 1 : 0);
 				});
 			}

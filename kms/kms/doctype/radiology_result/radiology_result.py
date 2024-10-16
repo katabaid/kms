@@ -5,4 +5,6 @@
 from frappe.model.document import Document
 
 class RadiologyResult(Document):
-	pass
+	def on_submit(self):
+		for result in self.result:
+			pass

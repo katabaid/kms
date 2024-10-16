@@ -1,57 +1,43 @@
 {
  "actions": [],
- "allow_rename": 1,
  "creation": "2024-09-26 13:29:32.128171",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "item_group",
+  "item",
+  "item_name",
   "examination",
-  "examination_name",
-  "status",
+  "result",
+  "uom",
+  "min_value",
+  "max_value",
   "grade",
   "description",
   "gradable",
-  "normal_value",
-  "min_value",
-  "max_value"
+  "hidden_item_group",
+  "hidden_item",
+  "status",
+  "document",
+  "incdec"
  ],
  "fields": [
   {
+   "columns": 1,
    "fieldname": "examination",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Examination",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "examination_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Examination Name",
    "read_only": 1
   },
   {
+   "columns": 1,
    "fieldname": "grade",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Grade",
    "options": "MCU Grade"
-  },
-  {
-   "fetch_from": "grade.description",
-   "fieldname": "description",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Description",
-   "read_only": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Data",
-   "label": "Status",
-   "read_only": 1
   },
   {
    "default": "0",
@@ -62,26 +48,108 @@
    "read_only": 1
   },
   {
-   "fieldname": "normal_value",
+   "columns": 1,
+   "fieldname": "min_value",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Min Value",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "max_value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Max Value",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "item_group",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Group",
+   "options": "Item Group",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "item.item_name",
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "grade.description",
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Result",
    "read_only": 1
   },
   {
-   "fieldname": "min_value",
-   "fieldtype": "Data",
-   "label": "Min Value"
+   "fieldname": "hidden_item_group",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Hidden Item Group",
+   "options": "Item Group"
   },
   {
-   "fieldname": "max_value",
+   "fieldname": "hidden_item",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Hidden Item",
+   "options": "Item"
+  },
+  {
+   "columns": 1,
+   "fieldname": "uom",
    "fieldtype": "Data",
-   "label": "Max value"
+   "in_list_view": 1,
+   "label": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "document",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Document",
+   "read_only": 1
+  },
+  {
+   "fieldname": "incdec",
+   "fieldtype": "Data",
+   "label": "IncDec",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-03 14:48:00.415175",
+ "modified": "2024-10-15 21:53:45.528386",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Exam Grade",

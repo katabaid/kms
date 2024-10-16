@@ -312,7 +312,7 @@ def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_st
       if not is_cancelled or item.item_code == item_code:
         result = {'item_code': item.item_code if is_cancelled else item_code}
         if is_cancelled:
-          cancelled_attr = ['item_name', 'result_line', 'result_check', 'test_name', 'test_event', 'test_uom', 'min_value', 'max_value']
+          cancelled_attr = ['item_name', 'result_line', 'result_check', 'test_name', 'test_event', 'test_uom', 'min_value', 'max_value', 'normal_value', 'result_options', 'mandatory_value']
           result.update({attr: getattr(item, attr, '') for attr in cancelled_attr})
           result.update({
             'is_finished': is_finished, 

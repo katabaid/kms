@@ -1,6 +1,7 @@
 {
  "actions": [],
- "autoname": "field:grade",
+ "allow_rename": 1,
+ "autoname": "format:{item_group}.{item_code}.{test_name}-{grade}{increase_decrease}",
  "creation": "2024-09-26 13:22:26.072074",
  "default_view": "List",
  "doctype": "DocType",
@@ -11,9 +12,11 @@
   "item_code",
   "item_name",
   "test_name",
+  "column_break_m83sg",
   "result",
   "min_value",
   "max_value",
+  "increase_decrease",
   "grade",
   "description"
  ],
@@ -23,8 +26,9 @@
    "fieldname": "grade",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Grade",
-   "unique": 1
+   "reqd": 1
   },
   {
    "columns": 2,
@@ -35,24 +39,26 @@
   },
   {
    "columns": 1,
+   "fetch_from": "item_code.item_group",
    "fieldname": "item_group",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Item Group",
-   "options": "Item Group",
-   "read_only": 1
+   "options": "Item Group"
   },
   {
    "columns": 1,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Item Code",
-   "options": "Item",
-   "read_only": 1
+   "options": "Item"
   },
   {
    "columns": 1,
+   "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -64,14 +70,13 @@
    "fieldname": "test_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Test Name",
-   "read_only": 1
+   "in_standard_filter": 1,
+   "label": "Test Name"
   },
   {
    "columns": 1,
    "fieldname": "result",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Result",
    "read_only": 1
   },
@@ -79,7 +84,6 @@
    "columns": 1,
    "fieldname": "min_value",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Min Value",
    "read_only": 1
   },
@@ -87,18 +91,30 @@
    "columns": 1,
    "fieldname": "max_value",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Max Value",
    "read_only": 1
+  },
+  {
+   "fieldname": "increase_decrease",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Increase Decrease",
+   "options": "\nIncrease\nDecrease"
+  },
+  {
+   "fieldname": "column_break_m83sg",
+   "fieldtype": "Column Break"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-01 12:19:56.886834",
+ "modified": "2024-10-15 21:10:35.172284",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Grade",
- "naming_rule": "By fieldname",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -114,7 +130,10 @@
    "write": 1
   }
  ],
+ "show_preview_popup": 1,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "grade"
 }

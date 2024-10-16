@@ -24,19 +24,22 @@
    "in_list_view": 1,
    "label": "Item Code",
    "options": "Item",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fetch_from": "item_code.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
-   "label": "Item Name"
+   "label": "Item Name",
+   "read_only": 1
   },
   {
    "fieldname": "result_line",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Result Line",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -82,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-25 14:26:54.499340",
+ "modified": "2024-10-15 21:27:44.695926",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Selective Result",
