@@ -20,7 +20,8 @@
   "hidden_item",
   "status",
   "document",
-  "incdec"
+  "incdec",
+  "incdec_category"
  ],
  "fields": [
   {
@@ -144,12 +145,18 @@
    "fieldtype": "Data",
    "label": "IncDec",
    "read_only": 1
+  },
+  {
+   "fieldname": "incdec_category",
+   "fieldtype": "Data",
+   "label": "Category",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-15 21:53:45.528386",
+ "modified": "2024-10-16 20:54:55.074431",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Exam Grade",

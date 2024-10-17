@@ -87,20 +87,24 @@ class Dispatcher(Document):
 					exams = frappe.db.sql(f"""
 						SELECT tner.idx AS idx, CONCAT_WS(': ', test_name, test_event) AS result_line, FORMAT(min_value, 2) AS min_value, 
 						FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
-						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) THEN
-						CASE WHEN result_value > max_value THEN 'Increase' WHEN result_value < min_value THEN 'Decrease' ELSE NULL END ELSE NULL END AS incdec
+						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Increase')) 
+						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = CONCAT_WS(': ', test_name, test_event) LIMIT 1), 0) AS gradable
 						FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
 						WHERE tne.name = tner.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
 						AND tner.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
 						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name)
 						UNION
-						SELECT tnesr.idx+100, result_line, NULL, NULL, result_text, result_check, tne.name, tnerq.status, NULL 
+						SELECT tnesr.idx+100, result_line, NULL, NULL, result_text, result_check, tne.name, tnerq.status, NULL, 0
 						FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
 						WHERE tne.name = tnesr.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
 						AND tnesr.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
 						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name)
 						UNION
-						SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, tnerq.status, NULL 
+						SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, tnerq.status, NULL, 0
 						FROM `tabCalculated Exam` tce, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
 						WHERE tne.name = tce.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
 						AND tce.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
@@ -108,30 +112,39 @@ class Dispatcher(Document):
 						UNION
 						SELECT tner.idx+300 AS idx, CONCAT_WS(': ', test_name, test_event) AS result_line, FORMAT(min_value, 2) AS min_value, 
 						FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, test_uom AS uom, tnr.name AS doc, tnerq.status AS status, 
-						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) THEN
-						CASE WHEN result_value > max_value THEN 'Increase' WHEN result_value < min_value THEN 'Decrease' ELSE NULL END ELSE NULL END AS incdec
+						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Increase')) 
+						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = CONCAT_WS(': ', test_name, test_event) LIMIT 1), 0) AS gradable
 						FROM `tabNurse Examination Result` tner, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
 						WHERE tnr.name = tner.parent AND tnr.appointment = '{self.patient_appointment}' AND tnr.docstatus IN (0,1)
 						AND tner.item_code = '{item.examination_item}' AND tnerq.parent = tnr.name
 						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
 						UNION
-						SELECT tnesr.idx+400, result_line, NULL, NULL, result_text, result_check, tnr.name, tnerq.status, NULL
+						SELECT tnesr.idx+400, result_line, NULL, NULL, result_text, result_check, tnr.name, tnerq.status, NULL, 0
 						FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
 						WHERE tnr.name = tnesr.parent AND tnr.appointment = '{self.patient_appointment}' AND tnr.docstatus IN (0,1)
 						AND tnesr.item_code = '{item.examination_item}' AND tnerq.parent = tnr.name 
 						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
 						ORDER BY 1""", as_dict=1)
 					for exam in exams:
+						if exam.incdec:
+							incdec = exam.incdec.split('|||')
+						else:
+							incdec = ['','']
 						doc.append('nurse_grade', {
 						'examination': exam.result_line,
-						'gradable': 0,
+						'gradable': exam.gradable,
 						'result': exam.result_text,
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
 						'uom': exam.uom,
 						'status': exam.status,
 						'document': exam.doc,
-						'incdec': exam.incdec,
+						'incdec': incdec[0],
+						'incdec_category': incdec[1] if len(incdec)>1 else '',
 						'hidden_item_group': item_group.name,
 						'hidden_item': item.examination_item})
 				previous_exam_item = item.examination_item
@@ -165,11 +178,18 @@ class Dispatcher(Document):
 					'hidden_item': item.examination_item,})
 				if previous_exam_item != item.examination_item:
 					exams = frappe.db.sql(f"""
-						SELECT idx, result_line, NULL AS min_value, NULL AS max_value, result_text , result_check AS uom FROM `tabDoctor Examination Selective Result` tdesr
+						SELECT idx, result_line, NULL AS min_value, NULL AS max_value, result_text, result_check AS uom, parent AS doc, NULL as incdec, 0 AS gradable FROM `tabDoctor Examination Selective Result` tdesr
 						WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tdesr.parent AND tde.appointment = '{self.patient_appointment}' AND docstatus = 1)
 						AND item_name = '{item.item_name}'
 						UNION
-						SELECT idx, CONCAT(test_name, ": ", test_event), min_value, max_value, result_value, test_uom FROM `tabDoctor Examination Result` tder 
+						SELECT idx, CONCAT(test_name, ": ", test_event), min_value, max_value, result_value, test_uom, parent, 
+						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Increase')) 
+						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = CONCAT_WS(': ', test_name, test_event) LIMIT 1), 0) AS gradable
+						FROM `tabDoctor Examination Result` tder 
 						WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tder.parent AND tde.appointment = '{self.patient_appointment}' AND docstatus = 1)
 						AND item_code = '{item.examination_item}'
 						UNION
@@ -184,7 +204,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.left_icteric>0 THEN 'Left Icteric' END, 
 								CASE WHEN tde.right_anemic>0 THEN 'Right Anemic' END, 
 								CASE WHEN tde.right_icteric>0 THEN 'Right Icteric' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -203,7 +223,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.right_cerumen>0 THEN 'Right Cerumen' END, 
 								CASE WHEN tde.right_cerumen_prop>0 THEN 'Right Cerumen Prop' END, 
 								CASE WHEN tde.right_tympanic>0 THEN 'Right Tympanic membrane intact' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -223,7 +243,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.right_enlarged>0 THEN 'Right Enlarged' END, 
 								CASE WHEN tde.right_hyperemic>0 THEN 'Right Hyperemic' END, 
 								CASE WHEN tde.right_polyp>0 THEN 'Right Polyp' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -233,7 +253,7 @@ class Dispatcher(Document):
 							tde.throat_check>0, 
 							'No Abnormality', 
 							CONCAT_WS(', ', CASE WHEN tde.enlarged_tonsil>0 THEN 'Enlarged Tonsil' END, CASE WHEN tde.hyperemic_pharynx>0 THEN 'Hyperemic Pharynx' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -243,7 +263,7 @@ class Dispatcher(Document):
 							tde.neck_check>0, 
 							'No Abnormality', 
 							CONCAT_WS(', ', CASE WHEN tde.enlarged_thyroid>0 THEN 'Enlarged Thyroid' END, CASE WHEN tde.enlarged_lymph_node>0 THEN 'Enlarged Lymph Node' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -256,7 +276,7 @@ class Dispatcher(Document):
 							CASE WHEN tde.regular_heart_sound>0 THEN 'Regular Heart Sound' END, 
 							CASE WHEN tde.murmur>0 THEN 'Murmur' END, 
 							CASE WHEN tde.gallop>0 THEN 'Gallop' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -273,7 +293,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.left_lumps>0 THEN 'Left Lumps' END, 
 								CASE WHEN tde.right_enlarged_breast>0 THEN 'Enlarged Right Breast Glands' END, 
 								CASE WHEN tde.right_lumps>0 THEN 'Right Lumps' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -290,7 +310,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.left_wheezing>0 THEN 'Left Wheezing' END, 
 								CASE WHEN tde.right_ronkhi>0 THEN 'Enlarged Ronkhi' END, 
 								CASE WHEN tde.right_wheezing>0 THEN 'Right Wheezing' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -304,13 +324,13 @@ class Dispatcher(Document):
 								CASE WHEN tde.hepatomegaly>0 THEN 'Hepatomegaly' END, 
 								CASE WHEN tde.splenomegaly>0 THEN 'Splenomegaly' END, 
 								CASE WHEN tde.increased_bowel_sounds>0 THEN 'Increased Bowel Sounds' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
 						UNION
 						SELECT idx, 'Spine', NULL, NULL, tde.spine_details,
-						IF(tde.spine_check>0, 'No Abnormality', '')
+						IF(tde.spine_check>0, 'No Abnormality', ''), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -323,7 +343,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.hernia>0 THEN 'Hernia' END, 
 								CASE WHEN tde.hemorrhoid>0 THEN 'Hemorrhoid' END, 
 								CASE WHEN tde.inguinal_nodes>0 THEN 'Inguinal Nodes' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -336,7 +356,7 @@ class Dispatcher(Document):
 								CASE WHEN tde.motoric_system_abnormality>0 THEN 'Motoric System Abnormality' END, 
 								CASE WHEN tde.reflexes_abnormality>0 THEN 'Reflexes Abnormality' END, 
 								CASE WHEN tde.sensory_system_abnormality>0 THEN 'Sensory System Abnormality' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
@@ -349,30 +369,30 @@ class Dispatcher(Document):
 								CASE WHEN tde.skin_psoriasis>0 THEN 'Psoriasis' END, 
 								CASE WHEN tde.skin_tattoo>0 THEN 'Tattoo' END, 
 								CASE WHEN tde.skin_tag>0 THEN 'Skin Tag' END)
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
 						UNION
-						SELECT idx, 'Visual Field Test', NULL, NULL, tde.visual_details, IF(tde.visual_check>0, 'Same As Examiner', '')
+						SELECT idx, 'Visual Field Test', NULL, NULL, tde.visual_details, IF(tde.visual_check>0, 'Same As Examiner', ''), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'visual_field_test_name' AND ts.value = tder.template))
 						UNION
 						SELECT idx, 'Romberg Test', NULL, NULL, tde.romberg_others, 
-						IF(tde.romberg_check>0, 'No Abnormality', tde.romberg_abnormal)
+						IF(tde.romberg_check>0, 'No Abnormality', tde.romberg_abnormal), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'romberg_test_name' AND ts.value = tder.template))
 						UNION
 						SELECT idx, 'Tinnel Test', NULL, NULL, tde.tinnel_details,
-						IF(tde.tinnel_check>0, 'No Abnormality', '')
+						IF(tde.tinnel_check>0, 'No Abnormality', ''), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'tinnel_test_name' AND ts.value = tder.template))
 						UNION
 						SELECT idx, 'Phallen Test', NULL, NULL, tde.phallen_details,
-						IF(tde.phallen_check>0, 'No Abnormality', '')
+						IF(tde.phallen_check>0, 'No Abnormality', ''), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'phallen_test_name' AND ts.value = tder.template))
@@ -382,44 +402,52 @@ class Dispatcher(Document):
 							tde.rectal_check>0, 
 							'No Abnormality', 
 							CONCAT_WS(', ', IF(tde.enlarged_prostate>0, 'Enlarged Prostate', ''), CONCAT('Hemorrhoid: ', tde.rectal_hemorrhoid))
-						)
+						), name, NULL, 0
 						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
 						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'rectal_test_name' AND ts.value = tder.template))
 						UNION
-						SELECT idx, result_line, min_value, max_value, result_text, uom FROM (
-						SELECT 1, idx, 'Intra Oral' AS result_line, NULL AS min_value, NULL AS max_value, GROUP_CONCAT(intra_oral) AS result_text, NULL AS uom 
+						SELECT idx, result_line, min_value, max_value, result_text, uom, doc, incdec, gradable FROM (
+						SELECT 1, idx, 'Intra Oral' AS result_line, NULL AS min_value, NULL AS max_value, GROUP_CONCAT(intra_oral) AS result_text, NULL AS uom, name AS doc, NULL AS incdec, 0 AS gradable
 						FROM `tabIntra Oral` tio WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND tio.parent = tde.name 
 						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template)))
 						HAVING GROUP_CONCAT(intra_oral) IS NOT NULL
 						UNION
-						SELECT 2, idx, 'Extra Oral', NULL, NULL, GROUP_CONCAT(extra_oral), NULL 
+						SELECT 2, idx, 'Extra Oral', NULL, NULL, GROUP_CONCAT(extra_oral), NULL, name, NULL, 0
 						FROM `tabExtra Oral` teo WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND teo.parent = tde.name 
 						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template)))
 						HAVING GROUP_CONCAT(extra_oral) IS NOT NULL
 						UNION
-						SELECT 4, idx+100, other, NULL, NULL, selective_value, value 
+						SELECT 4, idx+100, other, NULL, NULL, selective_value, value, name, NULL, 0
 						FROM `tabOther Dental` tod WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND tod.parent = tde.name 
 						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template)))
 						UNION
-						SELECT 3, idx+10, CONCAT_WS(': ', teeth_type, location, `position`), NULL, NULL, OPTIONS, OPTIONS
+						SELECT 3, idx+10, CONCAT_WS(': ', teeth_type, location), NULL, NULL, options, `position`, name, NULL, 0
 						FROM `tabDental Detail` tdd WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND tdd.parent = tde.name 
 						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template))) ORDER BY 1, 2) AS t		
 						ORDER BY 1""", as_dict=1)
 					for exam in exams:
+						if exam.incdec:
+							incdec = exam.incdec.split('|||')
+						else:
+							incdec = ['','']
 						doc.append('doctor_grade', {
 						'examination': exam.result_line,
-						'gradable': 0,
+						'gradable': exam.gradable,
 						'result': exam.result_text,
-						'uom': exam.uom,
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
+						'uom': exam.uom,
+						'status': item.status,
+						'document': exam.doc,
+						'incdec': incdec[0],
+						'incdec_category': incdec[1] if len(incdec)>1 else '',
 						'hidden_item_group': item_group.name,
-						'hidden_item': item.examination_item,})
+						'hidden_item': item.examination_item})
 				previous_exam_item = item.examination_item
 		#Radiology Result
 		item_groups = frappe.db.sql(f"""SELECT DISTINCT tig.name, tig.custom_gradable 
@@ -502,25 +530,34 @@ class Dispatcher(Document):
 					exams = frappe.db.sql(f"""
 						SELECT tntr.idx, lab_test_event AS result_line, custom_min_value AS min_value, custom_max_value AS max_value, result_value AS result_text, 
 						lab_test_uom AS uom, tlt.name AS doc, tlt.status AS status,
-						CASE WHEN custom_min_value IS NOT NULL AND custom_max_value IS NOT NULL AND (custom_min_value <> 0 OR custom_max_value <> 0) THEN
-						CASE WHEN result_value > custom_max_value THEN 'Increase' WHEN result_value < custom_min_value THEN 'Decrease' ELSE NULL END ELSE NULL END AS incdec
+						CASE WHEN custom_min_value IS NOT NULL AND custom_max_value IS NOT NULL AND (custom_min_value <> 0 OR custom_max_value <> 0) AND result_value IS NOT NULL THEN
+						CASE WHEN result_value > custom_max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = lab_test_event AND tmc.selection = 'Increase')) 
+						WHEN result_value < custom_min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = lab_test_event AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = lab_test_event LIMIT 1), 0) AS gradable
 						FROM `tabNormal Test Result` tntr, `tabLab Test` tlt WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{self.patient_appointment}' 
 						AND tlt.docstatus IN (0, 1) AND tntr.lab_test_name = '{item.item_name}'
 						UNION
-						SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, NULL
+						SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, NULL, 0
 						FROM `tabSelective Test Template` tstt, `tabLab Test` tlt WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{self.patient_appointment}' 
 						AND tlt.docstatus IN (0, 1) AND event = '{item.item_name}' ORDER BY idx""", as_dict=1)
 					for exam in exams:
+						if exam.incdec:
+							incdec = exam.incdec.split('|||')
+						else:
+							incdec = ['','']
 						doc.append('lab_test_grade', {
 						'examination': exam.result_line,
-						'gradable': 0,
+						'gradable': exam.gradable,
 						'result': exam.result_text,
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
 						'uom': exam.uom,
 						'status': exam.status,
 						'document': exam.doc,
-						'incdec': exam.incdec,
+						'incdec': incdec[0],
+						'incdec_category': incdec[1] if len(incdec)>1 else '',
 						'hidden_item_group': item_group.name,
 						'hidden_item': item.examination_item})
 				previous_exam_item = item.examination_item

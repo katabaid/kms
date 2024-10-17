@@ -159,6 +159,7 @@ doc_events = {
   },
   "Lab Test": {
     "on_update": "kms.event.warn_lab_test_exceed_max",
+    "on_submit": "kms.event.update_doctor_result",
   },
   "Patient Encounter": {
     "on_trash": "kms.event.unlink_queue_pooling_before_delete",
