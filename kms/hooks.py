@@ -264,7 +264,7 @@ fixtures = [
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Workspace'},
-  {'dt':'Workspace Link', 'filters': [['parent', '=', 'Healthcare']]},
+  #{'dt':'Workspace Link', 'filters': [['parent', '=', 'Healthcare']]},
   {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
   {'dt':'Custom HTML Block'},
   {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
