@@ -158,7 +158,6 @@ doc_events = {
     "before_save": "kms.event.update_healthcare_service_unit_branch",
   },
   "Lab Test": {
-    "on_update": "kms.event.warn_lab_test_exceed_max",
     "on_submit": "kms.event.update_doctor_result",
   },
   "Patient Encounter": {
@@ -175,6 +174,7 @@ doc_events = {
     "before_save": "kms.event.update_rate_amount_after_amend",
   },
   "Sample Collection": {
+    "before_insert": "kms.event.create_barcode",
     "after_submit": "kms.event.reset_status_after_amend",
     "before_submit": "kms.event.set_collector",
   },
@@ -263,7 +263,7 @@ fixtures = [
   {'dt':'Custom Field', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
-  {'dt':'Workspace'},
+  {'dt':'Workspace Link', 'filters': [['parent', '=', 'Healthcare']]},
   {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
   {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
 ]

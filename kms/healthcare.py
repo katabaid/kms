@@ -384,16 +384,16 @@ def create_exam(name, room, doc_type, template_doctype):
     else:
       if cancelled_doc.status == 'To Retest':
         doc.amended_from = cancelled_doc.name
-  if doc_type == 'Doctor Examination':
-    questionnaire = frappe.db.get_all('Temporary Registration', filters={'patient_appointment':['=', appt_doc.name]}, pluck='name')
-    questionnaire_doc = frappe.get_doc('Temporary Registration', questionnaire)
-    if questionnaire_doc.detail:
-      for detail in questionnaire_doc.detail:
-        doc.append('questionnaire_detail', {
-          'template': detail.template,
-          'question': detail.question,
-          'answer': detail.answer,
-        })
+  #if doc_type == 'Doctor Examination':
+  #  questionnaire = frappe.db.get_all('Temporary Registration', filters={'patient_appointment':['=', appt_doc.name]}, pluck='name')
+  #  questionnaire_doc = frappe.get_doc('Temporary Registration', questionnaire)
+  #  if questionnaire_doc.detail:
+  #    for detail in questionnaire_doc.detail:
+  #      doc.append('questionnaire_detail', {
+  #        'template': detail.template,
+  #        'question': detail.question,
+  #        'answer': detail.answer,
+  #      })
   exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")

@@ -425,6 +425,7 @@ frappe.ui.form.on('Doctor Examination', {
 
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Doctor Examination');
+    frm._show_dialog_on_change = false;
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
@@ -443,7 +444,7 @@ frappe.ui.form.on('Doctor Examination', {
             has_out_of_range = true;
           }
         });
-        if (has_out_of_range) {
+        if (has_out_of_range && frm._show_dialog_on_change) {
           frappe.validated = false;
           frappe.warn(
             'Results Outside Normal Range',
@@ -466,6 +467,7 @@ frappe.ui.form.on('Doctor Examination', {
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
+    frm._show_dialog_on_change = false;
 	}
 });
 
@@ -494,6 +496,7 @@ frappe.ui.form.on('Doctor Examination Result',{
 	result_value(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
     apply_cell_styling (frm, row);
+    frm._show_dialog_on_change = true;
 	}
 })
 

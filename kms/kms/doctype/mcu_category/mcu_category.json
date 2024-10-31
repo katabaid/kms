@@ -14,7 +14,10 @@
   "test_name",
   "column_break_bmdpt",
   "selection",
-  "description"
+  "section_break_owlc0",
+  "description",
+  "description_id",
+  "description_jp"
  ],
  "fields": [
   {
@@ -64,11 +67,25 @@
    "in_list_view": 1,
    "label": "Description",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_owlc0",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description_id",
+   "fieldtype": "Small Text",
+   "label": "Description ID"
+  },
+  {
+   "fieldname": "description_jp",
+   "fieldtype": "Small Text",
+   "label": "Description JP"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-16 20:19:58.205673",
+ "modified": "2024-10-22 13:47:53.472168",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Category",

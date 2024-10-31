@@ -31,8 +31,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         child = frm.fields_dict[field];
         if (child) {
           if (child.grid.grid_rows) {
-            child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
-            child.grid.wrapper.find('.row-index').hide();
+            child.grid.wrapper.find('.grid-add-row, .grid-remove-rows, .row-index').hide();
             // Remove buttons from detail view dialog
             child.grid.grid_rows.forEach(function(row) {
               //row.wrapper.find('.row-check').hide(); // Hide the checkbox
@@ -45,6 +44,17 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           }
         }
       });
+    },
+    disableChildsBeforeCheckin(frm, fields) {
+      if (utils.getStatus(frm)==='Checked In') {
+        fields.forEach((field) => {
+          frm.set_df_property(field, 'read_only', 0)
+        })
+      } else {
+        fields.forEach((field) => {
+          frm.set_df_property(field, 'read_only', 1)
+        })
+      }
     },
     handleCustomButtons(frm) {
       $('.add-assignment-btn').remove();
@@ -112,6 +122,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
     refresh: function (frm) {
       frm.trigger('process_custom_buttons');
+      utils.disableChildsBeforeCheckin(frm, config.childTables);
       utils.hideStandardButtons(frm, config.childTables);
       if (utils.getStatus(frm) === 'Checked In') {
         frm.trigger('setup_child_table_custom_buttons');
@@ -167,7 +178,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         }
         utils.setStatus(frm, newStatus);
         frm.dirty();
-        frm.save();
+        frm.save().then(()=>{
+          if (newStatus==='Checked In') location.reload();
+        });
       }
     }
 

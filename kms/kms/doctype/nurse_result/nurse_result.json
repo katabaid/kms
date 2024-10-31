@@ -106,7 +106,7 @@
    "fetch_from": "dispatcher.queue_no",
    "fieldname": "queue_no",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Queue No",
    "read_only": 1
   },
@@ -241,7 +241,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-03 15:58:04.733344",
+ "modified": "2024-10-29 15:37:59.174432",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

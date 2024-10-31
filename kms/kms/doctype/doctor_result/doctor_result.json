@@ -17,6 +17,7 @@
   "column_break_ydxak",
   "age",
   "gender",
+  "occupation",
   "appointment",
   "dispatcher",
   "created_date",
@@ -31,8 +32,6 @@
   "section_break_ir2li",
   "grade_html",
   "comment_section",
-  "grade",
-  "grade_description",
   "total_comment",
   "remark"
  ],
@@ -111,6 +110,7 @@
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
+   "in_standard_filter": 1,
    "label": "Created Date",
    "read_only": 1
   },
@@ -169,23 +169,11 @@
    "read_only": 1
   },
   {
-   "fieldname": "grade",
-   "fieldtype": "Link",
-   "label": "Grade",
-   "options": "MCU Grade"
-  },
-  {
    "fieldname": "total_comment",
    "fieldtype": "Table MultiSelect",
+   "hidden": 1,
    "label": "Total Comment",
    "options": "Doctor Result Comment"
-  },
-  {
-   "fetch_from": "grade.description",
-   "fieldname": "grade_description",
-   "fieldtype": "Data",
-   "label": "Grade Description",
-   "read_only": 1
   },
   {
    "fieldname": "nurse_grade",
@@ -224,13 +212,21 @@
    "fieldname": "comment_section",
    "fieldtype": "Section Break",
    "label": "Comment"
+  },
+  {
+   "fetch_from": "patient.occupation",
+   "fetch_if_empty": 1,
+   "fieldname": "occupation",
+   "fieldtype": "Data",
+   "label": "Occupation",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-15 12:05:47.391534",
+ "modified": "2024-10-29 14:19:55.224042",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

@@ -9,7 +9,7 @@ class NurseResult(Document):
 		self.status = 'Finished'
 		for non_selective_result in self.non_selective_result:
 			if not non_selective_result.result_value:
-				frappe.throw (f"""Result Value {non_selective_result.test_name} {non_selective_result.test_event} is mandatory before submitting the document.""")
+				frappe.throw (f"""Result Value {non_selective_result.test_name} is mandatory before submitting the document.""")
 		for examination_item in self.examination_item:
 			if examination_item.status == 'Started':
 				examination_item.status = 'Finished'
@@ -38,7 +38,7 @@ class NurseResult(Document):
 				'hidden_item': non_selective.item_code,
 				'hidden_item_group': item_group,
 				'parent': doctor_result_name,
-				'examination': non_selective.test_name if not non_selective.test_event else f"{non_selective.test_name}: {non_selective.test_event}"
+				'examination': non_selective.test_name
 			}, 'name')
 			incdec = ''
 			incdec_category = ''
@@ -48,7 +48,7 @@ class NurseResult(Document):
 					incdec_category = frappe.db.get_value('MCU Category', {
 						'item_group': item_group,
 						'item': non_selective.item_code,
-						'test_name': non_selective.test_name if not non_selective.test_event else f"{non_selective.test_name}: {non_selective.test_event}",
+						'test_name': non_selective.test_name,
 						'selection': incdec
 					}, 'description')
 			frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {

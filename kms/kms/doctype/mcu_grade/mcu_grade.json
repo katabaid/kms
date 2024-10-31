@@ -13,12 +13,14 @@
   "item_name",
   "test_name",
   "column_break_m83sg",
-  "result",
   "min_value",
   "max_value",
   "increase_decrease",
   "grade",
-  "description"
+  "section_break_flsmf",
+  "description",
+  "description_id",
+  "description_jp"
  ],
  "fields": [
   {
@@ -39,7 +41,6 @@
   },
   {
    "columns": 1,
-   "fetch_from": "item_code.item_group",
    "fieldname": "item_group",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -75,13 +76,6 @@
   },
   {
    "columns": 1,
-   "fieldname": "result",
-   "fieldtype": "Data",
-   "label": "Result",
-   "read_only": 1
-  },
-  {
-   "columns": 1,
    "fieldname": "min_value",
    "fieldtype": "Data",
    "label": "Min Value",
@@ -105,12 +99,26 @@
   {
    "fieldname": "column_break_m83sg",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_flsmf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "description_id",
+   "fieldtype": "Small Text",
+   "label": "Description ID"
+  },
+  {
+   "fieldname": "description_jp",
+   "fieldtype": "Small Text",
+   "label": "Description JP"
   }
  ],
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-15 21:10:35.172284",
+ "modified": "2024-10-29 14:50:47.957299",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Grade",

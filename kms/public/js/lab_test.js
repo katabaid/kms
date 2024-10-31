@@ -44,6 +44,7 @@ frappe.ui.form.on('Lab Test', {
 		}
 	},
 	setup: function (frm){
+		frm._show_dialog_on_change = false;
     frm.set_query('service_unit', () => {
 			return{
 				filters: {
@@ -73,6 +74,12 @@ frappe.ui.form.on('Lab Test', {
 			frm.remove_custom_button(__('Send SMS'))
 		}
 		hide_standard_buttons (frm, ['custom_selective_test_result', 'normal_test_items']);
+		if (frm.doc.normal_test_items) {
+			frm.refresh_field('normal_test_items');
+			frm.fields_dict['normal_test_items'].grid.grid_rows.forEach((row) =>{
+				apply_cell_styling (frm, row.doc);
+			})
+		}
 	},
 
 	before_save: function (frm) {
@@ -88,7 +95,7 @@ frappe.ui.form.on('Lab Test', {
 						has_out_of_range = true;
 					}
 				});
-				if (has_out_of_range) {
+				if (has_out_of_range && frm._show_dialog_on_change) {
 					frappe.validated = false;
 					frappe.warn(
 						'Results Outside Normal Range',
@@ -111,6 +118,7 @@ frappe.ui.form.on('Lab Test', {
 		frm.doc.normal_test_items.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
+		frm._show_dialog_on_change = false;
 	}
 });
 const hide_standard_buttons = (frm, fields) => {
@@ -118,8 +126,10 @@ const hide_standard_buttons = (frm, fields) => {
 		let child = frm.fields_dict[field];
 		if (child) {
 			if (child.grid.grid_rows) {
-				child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
-				child.grid.wrapper.find('.row-index').hide();
+				setTimeout(()=>{
+					child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+					child.grid.wrapper.find('.row-index').hide();
+				}, 150)
 				child.grid.grid_rows.forEach(function(row) {
 					row.wrapper.find('.btn-open-row').on('click', function() {
 						setTimeout(function() {
@@ -130,4 +140,32 @@ const hide_standard_buttons = (frm, fields) => {
 			}
 		}
 	});
+}
+
+frappe.ui.form.on('Normal Test Result',{
+	result_value(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+    apply_cell_styling (frm, row);
+    frm._show_dialog_on_change = true;
+	}
+})
+
+const apply_cell_styling = (frm, row) => {
+  if (row.result_value && (row.custom_min_value || row.custom_max_value)) {
+    let resultValue = parseFloat(row.result_value);
+    let minValue = parseFloat(row.custom_min_value);
+    let maxValue = parseFloat(row.custom_max_value);
+    let $row = $(frm.fields_dict["normal_test_items"].grid.grid_rows_by_docname[row.name].row);
+    if (resultValue < minValue || resultValue > maxValue) {
+      $row.css({
+        'font-weight': 'bold',
+        'color': 'red'
+      });
+    } else {
+      $row.css({
+        'font-weight': 'normal',
+        'color': 'black'
+      });
+    }
+  }
 }

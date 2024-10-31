@@ -126,15 +126,8 @@ def update_healthcare_service_unit_branch(doc, method=None):
   if doc.parent_healthcare_service_unit and doc.is_group==0:
     doc.custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
 
-@frappe.whitelist()
-def warn_lab_test_exceed_max(doc, method=None):
-  ################Doctype: Lab Test################
-  for row in doc.get("normal_test_items"):
-    if row.result_value:
-      if float(row.result_value) > float(row.custom_max_value):
-        frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which exceeds max value {row.custom_max_value}", alert=True)
-      elif float(row.result_value) < float(row.custom_min_value):
-        frappe.msgprint(f"Result value for {row.lab_test_event} is {row.result_value} which is less than min value {row.custom_min_value}", alert=True)
+def is_numeric(value):
+    return isinstance(value, (int, float, complex)) and not isinstance(value, bool)
 
 @frappe.whitelist()
 def update_doctor_result(doc, method=None):
@@ -143,43 +136,52 @@ def update_doctor_result(doc, method=None):
     'appointment': doc.custom_appointment,
     'docstatus': 0
   }, 'name')
-  for item in doc.normal_test_items:
-    item_code, item_group = frappe.db.get_value('Item', {'item_name': item.lab_test_name}, ['item_code', 'item_group'])
-    mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-      'hidden_item': item_code,
-      'hidden_item_group': item_group,
-      'parent': doctor_result_name,
-      'examination': item.lab_test_event
-    }, 'name')
-    incdec = ''
-    incdec_category = ''
-    if (item.custom_min_value != 0 or item.custom_max_value != 0) and item.custom_min_value and item.custom_max_value and item.result_value:
-      incdec = 'Increase' if item.result_value > item.custom_max_value else ('Decrease' if item.result_value < item.custom_min_value else None)
-      if incdec:
-        incdec_category = frappe.db.get_value('MCU Category', {
-          'item_group': item_group,
-          'item': item_code,
-          'test_name': item.lab_test_event,
-          'selection': incdec
-        }, 'description')
-    frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-      'result': item.result_value,
-      'incdec': incdec,
-      'incdec_category': incdec_category,
-      'status': doc.status
-    })
-  for selective in doc.custom_selective_test_result:
-    item_code, item_group = frappe.db.get_value('Item', {'item_name': selective.event}, ['item_code', 'item_group'])
-    mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-      'hidden_item': item_code,
-      'hidden_item_group': item_group,
-      'parent': doctor_result_name,
-      'examination': selective.event
-    }, 'name')
-    frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-      'result': item.result,
-      'status': doc.status
-    })
+  if doctor_result_name:
+    for item in doc.normal_test_items:
+      item_code, item_group = frappe.db.get_value('Item', {'item_name': item.lab_test_name}, ['item_code', 'item_group'])
+      mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
+        'hidden_item': item_code,
+        'hidden_item_group': item_group,
+        'parent': doctor_result_name,
+        'examination': item.lab_test_event
+      }, 'name')
+      incdec = ''
+      incdec_category = ''
+      if all([
+        (item.custom_min_value != 0 or item.custom_max_value != 0) and 
+        item.custom_min_value and 
+        item.custom_max_value and 
+        item.result_value and 
+        is_numeric(item.custom_min_value) and 
+        is_numeric(item.custom_max_value) and 
+        is_numeric(item.result_value)
+      ]):
+        incdec = 'Increase' if item.result_value > item.custom_max_value else 'Decrease' if item.result_value < item.custom_min_value else None
+        if incdec:
+          incdec_category = frappe.db.get_value('MCU Category', {
+            'item_group': item_group,
+            'item': item_code,
+            'test_name': item.lab_test_event,
+            'selection': incdec
+          }, 'description')
+      frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
+        'result': item.result_value,
+        'incdec': incdec,
+        'incdec_category': incdec_category,
+        'status': doc.status
+      })
+    for selective in doc.custom_selective_test_result:
+      item_code, item_group = frappe.db.get_value('Item', {'item_name': selective.event}, ['item_code', 'item_group'])
+      mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
+        'hidden_item': item_code,
+        'hidden_item_group': item_group,
+        'parent': doctor_result_name,
+        'examination': selective.event
+      }, 'name')
+      frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
+        'result': selective.result,
+        'status': doc.status
+      })
 
 @frappe.whitelist()
 def unlink_queue_pooling_before_delete(doc, method=None):
@@ -317,6 +319,11 @@ def update_rate_amount_after_amend(doc, method=None):
       item.rate = rate
       item.amount = item.qty * rate
 
+@frappe.whitelist()
+def create_barcode(doc, method=None):
+  ################DocType: Sample Collection################
+  doc.custom_barcode_label = doc.custom_appointment
+  
 @frappe.whitelist()
 def reset_status_after_amend(doc, method=None):
   ################DocType: Sample Collection################

@@ -75,7 +75,7 @@ def get_children(exam_id, name, item):
 		WHERE EXISTS (SELECT 1 FROM `tabNurse Examination` tde WHERE tde.name = tdesr.parent AND tde.appointment = '{exam_id}' AND docstatus = 1)
 		AND item_name = '{name}'
 		UNION
-		SELECT idx, CONCAT(test_name, ": ", test_event), min_value, max_value, result_value, test_uom FROM `tabNurse Examination Result` tder 
+		SELECT idx, test_name, min_value, max_value, result_value, test_uom FROM `tabNurse Examination Result` tder 
 		WHERE EXISTS (SELECT 1 FROM `tabNurse Examination` tde WHERE tde.name = tder.parent AND tde.appointment = '{exam_id}' AND docstatus = 1)
 		AND item_code = '{item}'
 		UNION
@@ -87,7 +87,7 @@ def get_children(exam_id, name, item):
 		WHERE EXISTS (SELECT 1 FROM `tabNurse Result` tnr WHERE tnr.name = tnesr.parent AND tnr.appointment = '{exam_id}' AND docstatus = 1)
 		AND item_name = '{name}'
 		UNION
-		SELECT idx, CONCAT(test_name, ": ", test_event), result_value, test_uom, min_value, max_value FROM `tabNurse Examination Result` tner
+		SELECT idx, test_name, result_value, test_uom, min_value, max_value FROM `tabNurse Examination Result` tner
 		WHERE EXISTS (SELECT 1 FROM `tabNurse Result` tnr WHERE tnr.name = tner.parent AND tnr.appointment = '{exam_id}' AND docstatus = 1)
 		AND item_code = '{item}'
 		UNION
@@ -95,7 +95,7 @@ def get_children(exam_id, name, item):
 		WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tdesr.parent AND tde.appointment = '{exam_id}' AND docstatus = 1)
 		AND item_name = '{name}'
 		UNION
-		SELECT idx, CONCAT(test_name, ": ", test_event), result_value, test_uom, min_value, max_value FROM `tabDoctor Examination Result` tder 
+		SELECT idx, test_name, result_value, test_uom, min_value, max_value FROM `tabDoctor Examination Result` tder 
 		WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tder.parent AND tde.appointment = '{exam_id}' AND docstatus = 1)
 		AND item_code = '{item}'
 		UNION

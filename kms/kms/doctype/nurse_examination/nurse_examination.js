@@ -5,6 +5,7 @@ frappe.ui.form.on('Nurse Examination', {
 	...nurseExaminationController,
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Nurse Examination');
+		frm._show_dialog_on_change = false;
 		if (frm.fields_dict.non_selective_result) {
 			frm.fields_dict.non_selective_result.grid.grid_setup = function() {
 				frm.doc.non_selective_result.forEach(row=>{
@@ -72,7 +73,7 @@ frappe.ui.form.on('Nurse Examination', {
 						has_out_of_range = true;
 					}
 				});
-				if (has_out_of_range) {
+				if (has_out_of_range && frm._show_dialog_on_change) {
 					frappe.validated = false;
 					frappe.warn(
 						'Results Outside Normal Range',
@@ -95,6 +96,7 @@ frappe.ui.form.on('Nurse Examination', {
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
+		frm._show_dialog_on_change = false;
 	}
 });
 
@@ -111,6 +113,7 @@ frappe.ui.form.on('Nurse Examination Result',{
 	result_value(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
     apply_cell_styling (frm, row);
+		frm._show_dialog_on_change = true;
 	}
 })
 

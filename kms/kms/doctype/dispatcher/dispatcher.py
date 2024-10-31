@@ -85,14 +85,14 @@ class Dispatcher(Document):
 					'hidden_item_name': item.examination_item})
 				if previous_exam_item != item.examination_item:
 					exams = frappe.db.sql(f"""
-						SELECT tner.idx AS idx, CONCAT_WS(': ', test_name, test_event) AS result_line, FORMAT(min_value, 2) AS min_value, 
+						SELECT tner.idx AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
 						FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
 						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
 						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Increase')) 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Increase')) 
 						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = CONCAT_WS(': ', test_name, test_event) LIMIT 1), 0) AS gradable
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND tmg.test_name = tner.test_name LIMIT 1), 0) AS gradable
 						FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
 						WHERE tne.name = tner.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
 						AND tner.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
@@ -110,14 +110,14 @@ class Dispatcher(Document):
 						AND tce.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
 						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tce.item_code AND tnerq.template = tnet.item_name)
 						UNION
-						SELECT tner.idx+300 AS idx, CONCAT_WS(': ', test_name, test_event) AS result_line, FORMAT(min_value, 2) AS min_value, 
+						SELECT tner.idx+300 AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
 						FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, test_uom AS uom, tnr.name AS doc, tnerq.status AS status, 
 						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
 						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Increase')) 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Increase')) 
 						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = CONCAT_WS(': ', test_name, test_event) LIMIT 1), 0) AS gradable
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND tmg.test_name = tner.test_name LIMIT 1), 0) AS gradable
 						FROM `tabNurse Examination Result` tner, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
 						WHERE tnr.name = tner.parent AND tnr.appointment = '{self.patient_appointment}' AND tnr.docstatus IN (0,1)
 						AND tner.item_code = '{item.examination_item}' AND tnerq.parent = tnr.name
@@ -130,16 +130,36 @@ class Dispatcher(Document):
 						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
 						ORDER BY 1""", as_dict=1)
 					for exam in exams:
+						grade = ''
+						grade_description = ''
 						if exam.incdec:
 							incdec = exam.incdec.split('|||')
 						else:
 							incdec = ['','']
+						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and exam.result_text >= exam.min_value and exam.result_text <= exam.max_value :
+							grade = 'A'
+							grade_description = frappe.db.get_value(
+								'MCU Grade', 
+								{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
+								'description')
+						if exam.result_line == 'BMI':
+							bmi_rec = frappe.db.get_all('BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
+							for bmi in bmi_rec:
+								if float(str(bmi['min_value']).replace(",", ".") if "," in str(bmi['min_value']) else bmi['min_value']) < float(str(exam.result_text).replace(",", ".") if "," in str(exam.result_text) else exam.result_text) and float(str(exam.result_text).replace(",", ".") if "," in str(exam.result_text) else exam.result_text) < float(str(bmi['max_value']).replace(",", ".") if "," in str(bmi['max_value']) else bmi['max_value']):
+									grade = bmi['grade']
+									grade_description = bmi['name']
+									break
+								else:
+									grade = ''
+									grade_description = ''
 						doc.append('nurse_grade', {
 						'examination': exam.result_line,
 						'gradable': exam.gradable,
 						'result': exam.result_text,
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
+						'grade': grade if grade else None,
+						'description': grade_description if grade_description else None,
 						'uom': exam.uom,
 						'status': exam.status,
 						'document': exam.doc,
@@ -182,13 +202,13 @@ class Dispatcher(Document):
 						WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tdesr.parent AND tde.appointment = '{self.patient_appointment}' AND docstatus = 1)
 						AND item_name = '{item.item_name}'
 						UNION
-						SELECT idx, CONCAT(test_name, ": ", test_event), min_value, max_value, result_value, test_uom, parent, 
+						SELECT idx, test_name, min_value, max_value, result_value, test_uom, parent, 
 						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
 						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Increase')) 
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Increase')) 
 						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = CONCAT_WS(': ', test_name, test_event) AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = CONCAT_WS(': ', test_name, test_event) LIMIT 1), 0) AS gradable
+						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
+						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = test_name LIMIT 1), 0) AS gradable
 						FROM `tabDoctor Examination Result` tder 
 						WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tder.parent AND tde.appointment = '{self.patient_appointment}' AND docstatus = 1)
 						AND item_code = '{item.examination_item}'
@@ -431,16 +451,26 @@ class Dispatcher(Document):
 						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template))) ORDER BY 1, 2) AS t		
 						ORDER BY 1""", as_dict=1)
 					for exam in exams:
+						grade = ''
+						grade_description = ''
 						if exam.incdec:
 							incdec = exam.incdec.split('|||')
 						else:
 							incdec = ['','']
+						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and exam.result_text >= exam.min_value and exam.result_text <= exam.max_value :
+							grade = 'A'
+							grade_description = frappe.db.get_value(
+								'MCU Grade', 
+								{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
+								'description')
 						doc.append('doctor_grade', {
 						'examination': exam.result_line,
 						'gradable': exam.gradable,
 						'result': exam.result_text,
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
+						'grade': grade if grade else None,
+						'description': grade_description if grade_description else None,
 						'uom': exam.uom,
 						'status': item.status,
 						'document': exam.doc,
@@ -543,16 +573,26 @@ class Dispatcher(Document):
 						FROM `tabSelective Test Template` tstt, `tabLab Test` tlt WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{self.patient_appointment}' 
 						AND tlt.docstatus IN (0, 1) AND event = '{item.item_name}' ORDER BY idx""", as_dict=1)
 					for exam in exams:
+						grade = ''
+						grade_description = ''
 						if exam.incdec:
 							incdec = exam.incdec.split('|||')
 						else:
 							incdec = ['','']
+						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and exam.result_text >= exam.min_value and exam.result_text <= exam.max_value :
+							grade = 'A'
+							grade_description = frappe.db.get_value(
+								'MCU Grade', 
+								{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
+								'description')
 						doc.append('lab_test_grade', {
 						'examination': exam.result_line,
 						'gradable': exam.gradable,
 						'result': exam.result_text,
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
+						'grade': grade if grade else None,
+						'description': grade_description if grade_description else None,
 						'uom': exam.uom,
 						'status': exam.status,
 						'document': exam.doc,
