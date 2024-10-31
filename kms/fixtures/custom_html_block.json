@@ -1,0 +1,26 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Custom HTML Block",
+  "html": "<h4>Front Office</h4>\n<br/>\n<p><a href='/app/patient-appointment?appointment_type=MCU'>MCU Appointment</a></p>\n<p><a href='/app/patient-appointment?appointment_type=%5B%22!%3D%22%2C%22MCU%22%5D'>Outpatient Appointment</a></p>",
+  "modified": "2024-10-31 17:53:23.117144",
+  "name": "MCU Appointment",
+  "private": 0,
+  "roles": [
+   {
+    "parent": "MCU Appointment",
+    "parentfield": "roles",
+    "parenttype": "Custom HTML Block",
+    "role": "HC Front Office"
+   },
+   {
+    "parent": "MCU Appointment",
+    "parentfield": "roles",
+    "parenttype": "Custom HTML Block",
+    "role": "System Manager"
+   }
+  ],
+  "script": null,
+  "style": ""
+ }
+]
