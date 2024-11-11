@@ -33,6 +33,7 @@
   "grade_html",
   "comment_section",
   "total_comment",
+  "copied_remark",
   "remark"
  ],
  "fields": [
@@ -141,7 +142,7 @@
   },
   {
    "fieldname": "remark",
-   "fieldtype": "Text Editor",
+   "fieldtype": "Small Text",
    "label": "Remark"
   },
   {
@@ -220,13 +221,19 @@
    "fieldtype": "Data",
    "label": "Occupation",
    "read_only": 1
+  },
+  {
+   "fieldname": "copied_remark",
+   "fieldtype": "Small Text",
+   "label": "Copied Remark",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-29 14:19:55.224042",
+ "modified": "2024-11-07 11:37:09.572457",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

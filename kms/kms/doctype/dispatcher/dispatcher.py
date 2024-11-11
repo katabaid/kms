@@ -77,6 +77,13 @@ class Dispatcher(Document):
 				ORDER BY ti.custom_bundle_position""", as_dict = 1)
 			previous_exam_item = ''
 			for item in items:
+				if item.examination_item == 'Vital Sign Blood Pressure':
+					grade = ''
+					sistolic = frappe.db.get_value(
+						'Nurse Examination Result', 
+						{},
+						'result_value'
+					)
 				doc.append('nurse_grade', {
 					'item': item.examination_item,
 					'item_name': item.item_name,

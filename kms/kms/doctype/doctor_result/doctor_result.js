@@ -42,6 +42,27 @@ frappe.ui.form.on('Doctor Result', {
 				frm.fields_dict.lab_test_grade.grid.wrapper.find('.grid-row .row-index').hide();
 			})
 		}
+    if (frm.doc.docstatus === 0) {
+      frm.add_custom_button('Copy Comment', ()=>{
+        if (frm.doc.remark) {
+          frappe.warn(
+            'There are already entries', 
+            'Do you want to overwrite?', 
+            () => {
+              frm.set_value('remark', frm.doc.copied_remark)
+           },
+            'Continue',
+            true
+          )
+        } else {
+          frm.set_value('remark', frm.doc.copied_remark)
+        }
+      })
+    }
+  },
+  before_save: function (frm) {
+    const child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade'];
+    create_total_comment(frm, child_tables)
   }
 });
 
@@ -137,4 +158,18 @@ const apply_cell_styling = (frm, row, table_name) => {
       'background-color': '#f1f5f9'
     })
   }
+}
+
+const create_total_comment = (frm, fields) => {
+  let copied_remark = '';
+  fields.forEach((field) => {
+    frm.doc[field].forEach((row) => {
+      if (row.grade && row.grade.split('-').pop() != 'A') {
+        console.log(row.grade)
+        if (copied_remark) copied_remark += '\n';
+        copied_remark += row.description;
+      }
+    })
+  })
+  frm.set_value('copied_remark', copied_remark)
 }
