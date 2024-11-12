@@ -1,0 +1,119 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:doctor_result",
+ "creation": "2024-11-12 11:11:07.077026",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "doctor_result",
+  "category",
+  "sex",
+  "user",
+  "column_break_zabo",
+  "patient",
+  "name1",
+  "age",
+  "job_position"
+ ],
+ "fields": [
+  {
+   "fieldname": "doctor_result",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Doctor Result",
+   "options": "Doctor Result",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "doctor_result.age",
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "doctor_result.patient",
+   "fetch_if_empty": 1,
+   "fieldname": "patient",
+   "fieldtype": "Data",
+   "label": "Patient",
+   "no_copy": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "doctor_result.patient_name",
+   "fetch_if_empty": 1,
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "label": "Name",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "doctor_result.gender",
+   "fetch_if_empty": 1,
+   "fieldname": "sex",
+   "fieldtype": "Data",
+   "label": "Sex",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_zabo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "doctor_result.occupation",
+   "fetch_if_empty": 1,
+   "fieldname": "job_position",
+   "fieldtype": "Data",
+   "label": "Job Position",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-11-12 11:22:09.532808",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Certificate of Fitness",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
