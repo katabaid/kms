@@ -4,36 +4,38 @@ frappe.ui.form.on('MCU Settings', {
   },
 
 	setup: function (frm) {
-		const examination_fields = get_examination_fields();
 		frm.set_query('examination_group', () => ({ filters: { is_group: 0, custom_is_product_bundle_item: 1 } }));
-		frm.set_query('dental_examination', () =>({ filteers: { is_stock_item: 0, is_sales_item: 1, custom_is_mcu_item: 1} }));
-		examination_fields.forEach(field => {
+		frm.set_query('dental_examination', () =>({ filters: { is_stock_item: 0, is_sales_item: 1, custom_is_mcu_item: 1} }));
+		get_examination_fields().forEach(field => {
 			frm.set_query(field, () => ({ filters: { item_group: frm.doc.examination_group } }));
 		});
 	},
 
 	examination_group: function (frm) {
-		const examination_fields = get_examination_fields();
-		examination_fields.forEach(field => {
+		get_examination_fields().forEach(field => {
 			frm.set_value(field, '');
 		});
 	},
 
 	refresh: function (frm) {
-		const examination_fields = get_examination_fields();
-		examination_fields.forEach(field => {
+		get_examination_fields().forEach(field => {
 			if (frm.doc[field]) {
 				get_item_name(frm, field);
 			}
 		});
 	},
 
-	physical_examination: function (frm) { handle_examination_field_change(frm, 'physical_examination'); },
+  ...get_examination_fields().reduce((handlers, field) => {
+    handlers[field] = function (frm) { handle_examination_field_change(frm, field); };
+    return handlers;
+  }, {}),	
+	/* physical_examination: function (frm) { handle_examination_field_change(frm, 'physical_examination'); },
 	visual_field_test: function (frm) { handle_examination_field_change(frm, 'visual_field_test'); },
 	romberg_test: function (frm) { handle_examination_field_change(frm, 'romberg_test'); },
 	tinnel_test: function (frm) { handle_examination_field_change(frm, 'tinnel_test'); },
 	phallen_test: function (frm) { handle_examination_field_change(frm, 'phallen_test'); },
-	rectal_test: function (frm) { handle_examination_field_change(frm, 'rectal_test'); }
+	rectal_test: function (frm) { handle_examination_field_change(frm, 'rectal_test'); },
+	certificate_of_fitness: function (frm) { handle_examination_field_change(frm, 'certificate_of_fitness'); } */
 });
 
 function get_examination_fields() {
@@ -43,7 +45,8 @@ function get_examination_fields() {
 		'romberg_test',
 		'tinnel_test',
 		'phallen_test',
-		'rectal_test'
+		'rectal_test',
+		'certificate_of_fitness'
 	];
 }
 

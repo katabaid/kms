@@ -22,6 +22,10 @@
   "tinnel_test_name",
   "phallen_test_name",
   "rectal_test_name",
+  "certificate_of_fitness_section",
+  "certificate_of_fitness",
+  "column_break_ezit",
+  "certificate_of_fitness_name",
   "dental_examination_section",
   "dental_examination",
   "column_break_npqjw",
@@ -37,7 +41,9 @@
   "relationship_tab",
   "relationship",
   "vital_sign_tab",
-  "vital_sign_templates"
+  "vital_sign_templates",
+  "column_break_lbwj",
+  "vital_sign_on_report"
  ],
  "fields": [
   {
@@ -248,11 +254,43 @@
    "fieldtype": "Table MultiSelect",
    "label": "Vital Sign Templates",
    "options": "MCU Vital SIgn"
+  },
+  {
+   "fieldname": "certificate_of_fitness_section",
+   "fieldtype": "Section Break",
+   "label": "Certificate of Fitness"
+  },
+  {
+   "fieldname": "certificate_of_fitness",
+   "fieldtype": "Link",
+   "label": "Certificate of Fitness",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_ezit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "certificate_of_fitness.item_name",
+   "fieldname": "certificate_of_fitness_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "column_break_lbwj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "List Nurse Examination Templates to be included in Physical Examination section in Doctor Result report.",
+   "fieldname": "vital_sign_on_report",
+   "fieldtype": "Table MultiSelect",
+   "label": "Vital Sign on Report",
+   "options": "MCU Vital SIgn"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2024-09-01 17:31:59.138112",
+ "modified": "2024-11-12 10:48:49.302702",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
