@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "creation": "2024-08-08 11:48:53.387929",
  "default_view": "List",
  "doctype": "DocType",
@@ -288,9 +289,10 @@
    "options": "MCU Vital SIgn"
   }
  ],
+ "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-12 10:48:49.302702",
+ "modified": "2024-11-12 11:05:37.731347",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

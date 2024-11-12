@@ -29,13 +29,6 @@ frappe.ui.form.on('MCU Settings', {
     handlers[field] = function (frm) { handle_examination_field_change(frm, field); };
     return handlers;
   }, {}),	
-	/* physical_examination: function (frm) { handle_examination_field_change(frm, 'physical_examination'); },
-	visual_field_test: function (frm) { handle_examination_field_change(frm, 'visual_field_test'); },
-	romberg_test: function (frm) { handle_examination_field_change(frm, 'romberg_test'); },
-	tinnel_test: function (frm) { handle_examination_field_change(frm, 'tinnel_test'); },
-	phallen_test: function (frm) { handle_examination_field_change(frm, 'phallen_test'); },
-	rectal_test: function (frm) { handle_examination_field_change(frm, 'rectal_test'); },
-	certificate_of_fitness: function (frm) { handle_examination_field_change(frm, 'certificate_of_fitness'); } */
 });
 
 function get_examination_fields() {
