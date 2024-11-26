@@ -208,6 +208,9 @@ def process_queue_pooling_and_dental(doc, method=None):
 @frappe.whitelist()
 def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
+  if not doc.status:
+    doc.status = 'Open'
+    doc.save()
   if doc.status == 'Checked In':
     if doc.appointment_date == frappe.utils.nowdate():
       frappe.db.set_value('Temporary Registration', doc.custom_temporary_registration, {'patient_appointment': doc.name, 'status': 'Transferred'})

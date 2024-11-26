@@ -1,9 +1,10 @@
 # Copyright (c) 2024, GIS and contributors
 # For license information, please see license.txt
 
-# import frappe
+import frappe
 from frappe.model.document import Document
 
 
 class CertificateofFitness(Document):
-	pass
+	def before_insert(self):
+		self.user = frappe.session.user

@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-11-20 18:55:17.285747",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "content",
+  "std_value",
+  "result",
+  "previous_result",
+  "last_result",
+  "uom"
+ ],
+ "fields": [
+  {
+   "fieldname": "content",
+   "fieldtype": "Data",
+   "label": "Content"
+  },
+  {
+   "fieldname": "std_value",
+   "fieldtype": "Data",
+   "label": "Std Value"
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Data",
+   "label": "Result"
+  },
+  {
+   "fieldname": "previous_result",
+   "fieldtype": "Data",
+   "label": "Previous Result"
+  },
+  {
+   "fieldname": "last_result",
+   "fieldtype": "Data",
+   "label": "Last Result"
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Data",
+   "label": "Uom"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-11-20 18:58:08.555291",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Doctor Result Other Exam",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

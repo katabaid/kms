@@ -254,7 +254,7 @@
    "fieldname": "vital_sign_templates",
    "fieldtype": "Table MultiSelect",
    "label": "Vital Sign Templates",
-   "options": "MCU Vital SIgn"
+   "options": "MCU Vital Sign"
   },
   {
    "fieldname": "certificate_of_fitness_section",
@@ -286,13 +286,13 @@
    "fieldname": "vital_sign_on_report",
    "fieldtype": "Table MultiSelect",
    "label": "Vital Sign on Report",
-   "options": "MCU Vital SIgn"
+   "options": "MCU Vital Sign"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-12 11:05:37.731347",
+ "modified": "2024-11-20 07:07:39.675929",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

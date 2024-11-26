@@ -27,7 +27,7 @@
  ],
  "fields": [
   {
-   "columns": 1,
+   "columns": 3,
    "fieldname": "examination",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -70,6 +70,7 @@
    "columns": 1,
    "fieldname": "item_group",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Item Group",
    "options": "Item Group",
@@ -78,6 +79,7 @@
   {
    "fieldname": "item",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Item",
    "options": "Item",
    "read_only": 1
@@ -87,6 +89,7 @@
    "fetch_from": "item.item_name",
    "fieldname": "item_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Item Name",
    "read_only": 1
@@ -101,6 +104,7 @@
    "read_only": 1
   },
   {
+   "columns": 1,
    "fieldname": "result",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -172,7 +176,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-29 14:06:03.659430",
+ "modified": "2024-11-15 13:56:58.527708",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Exam Grade",

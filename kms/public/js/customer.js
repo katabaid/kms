@@ -10,7 +10,7 @@ frappe.ui.form.on('Customer', {
 	},
 	validate(frm) {
     if(frm.__islocal || !frm.doc.account_manager){
-      frm.set_value('account_manager', user);
+      frm.set_value('account_manager', frappe.session.user);
     }
 	}
 });

@@ -67,6 +67,7 @@
    "fieldtype": "Select",
    "label": "Category",
    "no_copy": 1,
+   "options": "\nFit to Work\nFit with Note\nTemporary Unfit\nUnfit",
    "reqd": 1
   },
   {
@@ -93,7 +94,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-12 11:22:09.532808",
+ "modified": "2024-11-12 19:52:09.238797",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Certificate of Fitness",

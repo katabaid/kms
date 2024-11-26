@@ -43,6 +43,7 @@
   {
    "fieldname": "patient_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Patient Name",
    "read_only": 1
   },
@@ -147,6 +148,7 @@
   {
    "fieldname": "exam_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Exam Date",
    "read_only": 1
   },
@@ -160,6 +162,7 @@
   {
    "fieldname": "questionnaire_type",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Questionnaire Type",
    "read_only": 1
   },
@@ -178,7 +181,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-18 18:33:25.657087",
+ "modified": "2024-11-26 08:19:57.566472",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",

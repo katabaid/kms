@@ -4,5 +4,6 @@
 # import frappe
 from frappe.model.document import Document
 
-class MCUVitalSign(Document):
+
+class DoctorResultGroupExam(Document):
 	pass

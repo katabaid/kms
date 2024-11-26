@@ -49,7 +49,6 @@ class Dispatcher(Document):
 	def create_doctor_result(self):
 		doc = frappe.new_doc('Doctor Result')
 		doc.appointment = self.patient_appointment
-		doc.company = self.company
 		doc.patient = self.patient
 		doc.age = self.age
 		doc.gender = self.gender
@@ -65,7 +64,7 @@ class Dispatcher(Document):
 			ORDER BY tig.custom_bundle_position""", as_dict=True)
 		for item_group in item_groups:
 			doc.append('nurse_grade', {
-				'item_group': item_group.name,
+				'examination': item_group.name,
 				'gradable': item_group.custom_gradable,
 				'hidden_item_group': item_group.name,})
 			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
@@ -85,8 +84,7 @@ class Dispatcher(Document):
 						'result_value'
 					)
 				doc.append('nurse_grade', {
-					'item': item.examination_item,
-					'item_name': item.item_name,
+					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
 					'hidden_item_name': item.examination_item})
@@ -143,7 +141,7 @@ class Dispatcher(Document):
 							incdec = exam.incdec.split('|||')
 						else:
 							incdec = ['','']
-						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and exam.result_text >= exam.min_value and exam.result_text <= exam.max_value :
+						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and is_within_range(exam.result_text, exam.min_value, exam.max_value):
 							grade = 'A'
 							grade_description = frappe.db.get_value(
 								'MCU Grade', 
@@ -151,8 +149,11 @@ class Dispatcher(Document):
 								'description')
 						if exam.result_line == 'BMI':
 							bmi_rec = frappe.db.get_all('BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
+							exam_result_float = convert_to_float(exam.result_text)
 							for bmi in bmi_rec:
-								if float(str(bmi['min_value']).replace(",", ".") if "," in str(bmi['min_value']) else bmi['min_value']) < float(str(exam.result_text).replace(",", ".") if "," in str(exam.result_text) else exam.result_text) and float(str(exam.result_text).replace(",", ".") if "," in str(exam.result_text) else exam.result_text) < float(str(bmi['max_value']).replace(",", ".") if "," in str(bmi['max_value']) else bmi['max_value']):
+								min_value_float = convert_to_float(bmi['min_value'])
+								max_value_float = convert_to_float(bmi['max_value'])
+								if is_within_range(exam_result_float, min_value_float, max_value_float):
 									grade = bmi['grade']
 									grade_description = bmi['name']
 									break
@@ -185,7 +186,7 @@ class Dispatcher(Document):
 			ORDER BY tig.custom_bundle_position""", as_dict=True)
 		for item_group in doc_item_groups:
 			doc.append('doctor_grade', {
-				'item_group': item_group.name,
+				'examination': item_group.name,
 				'gradable': item_group.custom_gradable,
 				'hidden_item_group': item_group.name,})
 			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
@@ -198,8 +199,7 @@ class Dispatcher(Document):
 			previous_exam_item = ''
 			for item in items:
 				doc.append('doctor_grade', {
-					'item': item.examination_item,
-					'item_name': item.item_name,
+					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
 					'hidden_item': item.examination_item,})
@@ -496,7 +496,7 @@ class Dispatcher(Document):
 			ORDER BY tig.custom_bundle_position""", as_dict=True)
 		for item_group in item_groups:
 			doc.append('radiology_grade', {
-				'item_group': item_group.name,
+				'examination': item_group.name,
 				'gradable': item_group.custom_gradable,
 				'hidden_item_group': item_group.name,})
 			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
@@ -509,8 +509,7 @@ class Dispatcher(Document):
 			previous_exam_item = ''
 			for item in items:
 				doc.append('radiology_grade', {
-					'item': item.examination_item,
-					'item_name': item.item_name,
+					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
 					'hidden_item': item.examination_item,})
@@ -545,7 +544,7 @@ class Dispatcher(Document):
 			ORDER BY tig.custom_bundle_position""", as_dict=True)
 		for item_group in item_groups:
 			doc.append('lab_test_grade', {
-				'item_group': item_group.name,
+				'examination': item_group.name,
 				'gradable': item_group.custom_gradable,
 				'hidden_item_group': item_group.name,})
 			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
@@ -558,8 +557,7 @@ class Dispatcher(Document):
 			previous_exam_item = ''
 			for item in items:
 				doc.append('lab_test_grade', {
-					'item': item.examination_item,
-					'item_name': item.item_name,
+					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
 					'hidden_item': item.examination_item,})
@@ -616,6 +614,12 @@ class Dispatcher(Document):
 			return 0
 		else:
 			return round(mean([100 if item.status == 'Finished' else 0 for item in child_items]))
+
+def convert_to_float(value):
+	return float(str(value).replace(",", "."))
+
+def is_within_range(value, min_value, max_value):
+	return min_value < value < max_value
 
 @frappe.whitelist()
 def get_queued_branch(branch):
@@ -726,8 +730,7 @@ def finish_exam(dispatcher_id, hsu, status, doctype, docname):
 
 @frappe.whitelist()
 def update_exam_item_status(dispatcher_id, examination_item, status):
-	flag = frappe.db.sql(
-		f"""
+	flag = frappe.db.sql(f"""
 		SELECT 1 result 
 		FROM `tabMCU Appointment` tma 
 		WHERE `parent` = '{dispatcher_id}' 
@@ -799,13 +802,7 @@ def create_result_doc(doc, target):
 						minmax = frappe.db.sql(f"""
 							WITH cte AS (
 								SELECT
-									parent,
-									lab_test_event,
-									lab_test_uom,
-									custom_age,
-									custom_sex,
-									custom_min_value,
-									custom_max_value,
+									parent, lab_test_event, lab_test_uom, custom_age, custom_sex, custom_min_value, custom_max_value,
 									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
 								FROM `tabNormal Test Template`
 							)

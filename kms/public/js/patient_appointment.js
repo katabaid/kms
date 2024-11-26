@@ -23,6 +23,7 @@ frappe.ui.form.on('Patient Appointment', {
     });
 	},
 	appointment_type(frm) {
+    frm.toggle_reqd('mcu', frm.doc.appointment_type === 'MCU');
     if(frm.doc.appointment_type==='MCU') {
       frm.set_value('custom_priority', '4. MCU');
       frm.enable_save();
@@ -50,6 +51,7 @@ frappe.ui.form.on('Patient Appointment', {
     frm.remove_custom_button('Reschedule');
     frm.remove_custom_button('Patient History', 'View');
     frm.toggle_display('practitioner');
+    frm.toggle_reqd('mcu', frm.doc.appointment_type === 'MCU');
     frm.set_query('service_unit', () => {
       return { filters: {
         service_unit_type: frm.doc.appointment_type,

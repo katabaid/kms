@@ -34,7 +34,11 @@
   "comment_section",
   "total_comment",
   "copied_remark",
-  "remark"
+  "remark",
+  "hidden_section",
+  "physical_examination",
+  "other_examination",
+  "group_exam"
  ],
  "fields": [
   {
@@ -51,8 +55,7 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fetch_from": "appointment.custom_branch",
@@ -227,13 +230,42 @@
    "fieldtype": "Small Text",
    "label": "Copied Remark",
    "read_only": 1
+  },
+  {
+   "fieldname": "hidden_section",
+   "fieldtype": "Section Break",
+   "label": "Hidden"
+  },
+  {
+   "fieldname": "physical_examination",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Physical Examination",
+   "no_copy": 1,
+   "options": "Doctor Result Physical Exam"
+  },
+  {
+   "fieldname": "other_examination",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Other Examination",
+   "no_copy": 1,
+   "options": "Doctor Result Other Exam"
+  },
+  {
+   "fieldname": "group_exam",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Group Exam",
+   "no_copy": 1,
+   "options": "Doctor Result Group Exam"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-07 11:37:09.572457",
+ "modified": "2024-11-20 19:01:40.180090",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",
