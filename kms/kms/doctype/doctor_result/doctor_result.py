@@ -67,7 +67,7 @@ class DoctorResult(Document):
 				'content': result['examination'],
 				'result': result['result'],
 				'uom': result['uom'],
-				'std_value': result['std_value']
+				'std_value': result['std_value'],
 				'previous_result': previous_data.get(result['examination'], ''),
 				'last_result': last_data.get(result['examination'], ''),
 			})
