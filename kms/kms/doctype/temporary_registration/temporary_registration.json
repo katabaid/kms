@@ -173,7 +173,7 @@
   },
   {
    "fieldname": "remark",
-   "fieldtype": "Long Text",
+   "fieldtype": "Small Text",
    "label": "Remark"
   }
  ],
@@ -181,7 +181,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-11-26 08:19:57.566472",
+ "modified": "2024-11-26 12:19:52.214739",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",
