@@ -3,7 +3,7 @@ frappe.listview_settings['Dispatcher'] = {
   refresh: (listview) => {
     setInterval(()=>{
       listview.refresh()
-    }, 60000)
+    }, 15000)
   },
   onload: (listview) => {
     frappe.breadcrumbs.add('Healthcare', 'Dispatcher');

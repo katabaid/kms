@@ -69,22 +69,22 @@ frappe.ui.form.on('Doctor Result', {
 function set_grade_query_for_child_table(frm, child_table_name) {
   frm.fields_dict[child_table_name].grid.get_field('grade').get_query = function (doc, cdt, cdn) {
     let row = locals[cdt][cdn];
-    if(row.item_group && !row.item && row.gradable) {
-      return {
-        filters: [
-          ['item_group', '=', row.item_group],
-          ['item_code', '=', '']
-        ]
-      }
-    } else if (row.hidden_item_group && row.item && row.gradable) {
+    if(row.hidden_item_group && !row.hidden_item && !row.is_item && row.gradable) {
       return {
         filters: [
           ['item_group', '=', row.hidden_item_group],
-          ['item_code', '=', row.item],
+          ['item_code', '=', '']
+        ]
+      }
+    } else if (row.hidden_item_group && row.hidden_item && row.is_item && row.gradable) {
+      return {
+        filters: [
+          ['item_group', '=', row.hidden_item_group],
+          ['item_code', '=', row.hidden_item],
           ['test_name', '=', ''],
         ]
       }
-    } else if (row.hidden_item_group && row.hidden_item && row.examination && row.gradable) {
+    } else if (row.hidden_item_group && row.hidden_item && !row.is_item && row.gradable) {
       if (!row.incdec) {
         return {
           filters: [

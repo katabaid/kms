@@ -87,7 +87,8 @@ class Dispatcher(Document):
 					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
-					'hidden_item_name': item.examination_item})
+					'hidden_item': item.examination_item,
+					'is_item': 1})
 				if previous_exam_item != item.examination_item:
 					exams = frappe.db.sql(f"""
 						SELECT tner.idx AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
@@ -177,315 +178,644 @@ class Dispatcher(Document):
 						'hidden_item': item.examination_item})
 				previous_exam_item = item.examination_item
 		#Doctor Result
-		doc_item_groups = frappe.db.sql(f"""SELECT DISTINCT tig.name, tig.custom_gradable 
-			FROM `tabMCU Appointment` tma, tabItem ti, `tabItem Group` tig 
-			WHERE tma.parent = '{self.patient_appointment}'
-			AND tig.name = ti.item_group 
-			AND ti.name = tma.examination_item 
-			AND EXISTS (SELECT 1 FROM `tabDoctor Examination Template` tdet WHERE tdet.item_code = ti.name)
-			ORDER BY tig.custom_bundle_position""", as_dict=True)
-		for item_group in doc_item_groups:
-			doc.append('doctor_grade', {
-				'examination': item_group.name,
-				'gradable': item_group.custom_gradable,
-				'hidden_item_group': item_group.name,})
-			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
-				FROM `tabMCU Appointment` tma, tabItem ti
-				WHERE EXISTS (SELECT 1 FROM `tabDispatcher` td 
-				WHERE patient_appointment = '{self.patient_appointment}' AND tma.parent = td.name)
-				AND tma.examination_item = ti.name
-				AND ti.item_group = '{item_group.name}'
-				ORDER BY ti.custom_bundle_position""", as_dict = 1)
+		doctor_exam_names = frappe.get_all('Doctor Examination', {'docstatus': 1, 'appointment': self.patient_appointment})
+		for doctor_exam_name in doctor_exam_names:
+			doctor_exam = frappe.get_doc('Doctor Examination', doctor_exam_name.name)
+
+			fields = [
+				('physical_examination_name', 'physical_examination'),
+				('visual_field_test_name', 'visual_field_test'),
+				('romberg_test_name', 'romberg_test'),
+				('tinnel_test_name', 'tinnel_test'),
+				('phallen_test_name', 'phallen_test'),
+				('rectal_test_name', 'rectal_test'),
+				('dental_examination_name', 'dental_examination'),
+			]
+			single_exams = [
+				{
+					'item_code': frappe.db.get_single_value('MCU Settings', item_name),
+					'item_name': frappe.db.get_single_value('MCU Settings', field_name),
+					'code': item_name
+				}
+				for field_name, item_name in fields
+			]
+			previous_exam_item_group = ''
 			previous_exam_item = ''
-			for item in items:
-				doc.append('doctor_grade', {
-					'examination': item.item_name,
-					'gradable': item.custom_gradable,
-					'hidden_item_group': item_group.name,
-					'hidden_item': item.examination_item,})
-				if previous_exam_item != item.examination_item:
-					exams = frappe.db.sql(f"""
-						SELECT idx, result_line, NULL AS min_value, NULL AS max_value, result_text, result_check AS uom, parent AS doc, NULL as incdec, 0 AS gradable FROM `tabDoctor Examination Selective Result` tdesr
-						WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tdesr.parent AND tde.appointment = '{self.patient_appointment}' AND docstatus = 1)
-						AND item_name = '{item.item_name}'
-						UNION
-						SELECT idx, test_name, min_value, max_value, result_value, test_uom, parent, 
-						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
-						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Increase')) 
-						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = test_name LIMIT 1), 0) AS gradable
-						FROM `tabDoctor Examination Result` tder 
-						WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.name = tder.parent AND tde.appointment = '{self.patient_appointment}' AND docstatus = 1)
-						AND item_code = '{item.examination_item}'
-						UNION
-						SELECT idx, 'Eyes', NULL, NULL,
-						CONCAT_WS(', ', 
-							CASE WHEN LENGTH(tde.eyes_left_others)>0 THEN CONCAT('Left: ', tde.eyes_left_others) END, 
-							CASE WHEN LENGTH(tde.eyes_right_others)>0 THEN CONCAT('Right: ', tde.eyes_right_others) END),
-						IF(tde.eyes_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.left_anemic>0 THEN 'Left Anemic' END, 
-								CASE WHEN tde.left_icteric>0 THEN 'Left Icteric' END, 
-								CASE WHEN tde.right_anemic>0 THEN 'Right Anemic' END, 
-								CASE WHEN tde.right_icteric>0 THEN 'Right Icteric' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Ear', NULL, NULL, 
-						CONCAT_WS(', ', 
-							CASE WHEN LENGTH(tde.ear_left_others)>0 THEN CONCAT('Left: ', tde.ear_left_others) END, 
-							CASE WHEN LENGTH(tde.ear_right_others)>0 THEN CONCAT('Right: ', tde.ear_right_others) END),
-						IF(
-							tde.ear_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.left_cerumen>0 THEN 'Left Cerumen' END, 
-								CASE WHEN tde.left_cerumen_prop>0 THEN 'Left Cerumen Prop' END, 
-								CASE WHEN tde.left_tympanic>0 THEN 'Left Tympanic membrane intact' END, 
-								CASE WHEN tde.right_cerumen>0 THEN 'Right Cerumen' END, 
-								CASE WHEN tde.right_cerumen_prop>0 THEN 'Right Cerumen Prop' END, 
-								CASE WHEN tde.right_tympanic>0 THEN 'Right Tympanic membrane intact' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Nose', NULL, NULL,
-						CONCAT_WS(', ', 
-							CASE WHEN LENGTH(tde.nose_left_others)>0 THEN CONCAT('Left: ', tde.nose_left_others) END, 
-							CASE WHEN LENGTH(tde.nose_right_others)>0 THEN CONCAT('Right: ', tde.nose_right_others) END),
-						IF(
-							tde.nose_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.deviated>0 THEN 'Deviated' END, 
-								CASE WHEN tde.left_enlarged>0 THEN 'Left Enlarged' END, 
-								CASE WHEN tde.left_hyperemic>0 THEN 'Left Hyperemic' END, 
-								CASE WHEN tde.left_polyp>0 THEN 'Left Polyp' END, 
-								CASE WHEN tde.right_enlarged>0 THEN 'Right Enlarged' END, 
-								CASE WHEN tde.right_hyperemic>0 THEN 'Right Hyperemic' END, 
-								CASE WHEN tde.right_polyp>0 THEN 'Right Polyp' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Throat', NULL, NULL, tde.throat_others,
-						IF(
-							tde.throat_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', CASE WHEN tde.enlarged_tonsil>0 THEN 'Enlarged Tonsil' END, CASE WHEN tde.hyperemic_pharynx>0 THEN 'Hyperemic Pharynx' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Neck', NULL, NULL, tde.neck_others,
-						IF(
-							tde.neck_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', CASE WHEN tde.enlarged_thyroid>0 THEN 'Enlarged Thyroid' END, CASE WHEN tde.enlarged_lymph_node>0 THEN 'Enlarged Lymph Node' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Cardiac', NULL, NULL, tde.OTHERS,
-						IF(
-							tde.cardiac_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-							CASE WHEN tde.regular_heart_sound>0 THEN 'Regular Heart Sound' END, 
-							CASE WHEN tde.murmur>0 THEN 'Murmur' END, 
-							CASE WHEN tde.gallop>0 THEN 'Gallop' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Breast', NULL, NULL,
-						CONCAT_WS(', ', 
-							CASE WHEN LENGTH(tde.breast_left_others)>0 THEN CONCAT('Left: ', tde.breast_left_others) END, 
-							CASE WHEN LENGTH(tde.breast_right_others)>0 THEN CONCAT('Right: ', tde.breast_right_others) END),
-						IF(
-							tde.breast_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.left_enlarged_breast>0 THEN 'Enlarged Left Breast Glands' END, 
-								CASE WHEN tde.left_lumps>0 THEN 'Left Lumps' END, 
-								CASE WHEN tde.right_enlarged_breast>0 THEN 'Enlarged Right Breast Glands' END, 
-								CASE WHEN tde.right_lumps>0 THEN 'Right Lumps' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Respiratory System', NULL, NULL,
-						CONCAT_WS(', ', 
-							CASE WHEN LENGTH(tde.resp_left_others)>0 THEN CONCAT('Left: ', tde.resp_left_others) END, 
-							CASE WHEN LENGTH(tde.resp_right_others)>0 THEN CONCAT('Right: ', tde.resp_right_others) END),
-						IF(
-							tde.resp_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.left_ronkhi>0 THEN 'Left Ronkhi' END, 
-								CASE WHEN tde.left_wheezing>0 THEN 'Left Wheezing' END, 
-								CASE WHEN tde.right_ronkhi>0 THEN 'Enlarged Ronkhi' END, 
-								CASE WHEN tde.right_wheezing>0 THEN 'Right Wheezing' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Abdomen', NULL, NULL, tde.abd_others,
-						IF(
-							tde.abd_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.tenderness>0 THEN 'Tenderness' END, 
-								CASE WHEN tde.hepatomegaly>0 THEN 'Hepatomegaly' END, 
-								CASE WHEN tde.splenomegaly>0 THEN 'Splenomegaly' END, 
-								CASE WHEN tde.increased_bowel_sounds>0 THEN 'Increased Bowel Sounds' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Spine', NULL, NULL, tde.spine_details,
-						IF(tde.spine_check>0, 'No Abnormality', ''), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Genitourinary', NULL, NULL, tde.genit_others,
-						IF(
-							tde.genit_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.hernia>0 THEN 'Hernia' END, 
-								CASE WHEN tde.hemorrhoid>0 THEN 'Hemorrhoid' END, 
-								CASE WHEN tde.inguinal_nodes>0 THEN 'Inguinal Nodes' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Neurological System', NULL, NULL, tde.neuro_others,
-						IF(
-							tde.neuro_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.motoric_system_abnormality>0 THEN 'Motoric System Abnormality' END, 
-								CASE WHEN tde.reflexes_abnormality>0 THEN 'Reflexes Abnormality' END, 
-								CASE WHEN tde.sensory_system_abnormality>0 THEN 'Sensory System Abnormality' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Skin', NULL, NULL, tde.skin_others,
-						IF(
-							tde.skin_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', 
-								CASE WHEN tde.skin_psoriasis>0 THEN 'Psoriasis' END, 
-								CASE WHEN tde.skin_tattoo>0 THEN 'Tattoo' END, 
-								CASE WHEN tde.skin_tag>0 THEN 'Skin Tag' END)
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'physical_examination_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Visual Field Test', NULL, NULL, tde.visual_details, IF(tde.visual_check>0, 'Same As Examiner', ''), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'visual_field_test_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Romberg Test', NULL, NULL, tde.romberg_others, 
-						IF(tde.romberg_check>0, 'No Abnormality', tde.romberg_abnormal), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'romberg_test_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Tinnel Test', NULL, NULL, tde.tinnel_details,
-						IF(tde.tinnel_check>0, 'No Abnormality', ''), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'tinnel_test_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Phallen Test', NULL, NULL, tde.phallen_details,
-						IF(tde.phallen_check>0, 'No Abnormality', ''), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'phallen_test_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, 'Rectal Examination', NULL, NULL, tde.rectal_others,
-						IF(
-							tde.rectal_check>0, 
-							'No Abnormality', 
-							CONCAT_WS(', ', IF(tde.enlarged_prostate>0, 'Enlarged Prostate', ''), CONCAT('Hemorrhoid: ', tde.rectal_hemorrhoid))
-						), name, NULL, 0
-						FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND EXISTS 
-						(SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'rectal_test_name' AND ts.value = tder.template))
-						UNION
-						SELECT idx, result_line, min_value, max_value, result_text, uom, doc, incdec, gradable FROM (
-						SELECT 1, idx, 'Intra Oral' AS result_line, NULL AS min_value, NULL AS max_value, GROUP_CONCAT(intra_oral) AS result_text, NULL AS uom, name AS doc, NULL AS incdec, 0 AS gradable
-						FROM `tabIntra Oral` tio WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND tio.parent = tde.name 
-						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template)))
-						HAVING GROUP_CONCAT(intra_oral) IS NOT NULL
-						UNION
-						SELECT 2, idx, 'Extra Oral', NULL, NULL, GROUP_CONCAT(extra_oral), NULL, name, NULL, 0
-						FROM `tabExtra Oral` teo WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND teo.parent = tde.name 
-						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template)))
-						HAVING GROUP_CONCAT(extra_oral) IS NOT NULL
-						UNION
-						SELECT 4, idx+100, other, NULL, NULL, selective_value, value, name, NULL, 0
-						FROM `tabOther Dental` tod WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND tod.parent = tde.name 
-						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template)))
-						UNION
-						SELECT 3, idx+10, CONCAT_WS(': ', teeth_type, location), NULL, NULL, options, `position`, name, NULL, 0
-						FROM `tabDental Detail` tdd WHERE EXISTS (SELECT 1 FROM `tabDoctor Examination` tde WHERE tde.appointment = '{self.patient_appointment}' AND docstatus = 1 AND tdd.parent = tde.name 
-						AND EXISTS (SELECT 1 FROM `tabDoctor Examination Request` tder WHERE tde.name = tder.parent AND tder.template = '{item.item_name}' AND EXISTS 
-						(SELECT 1 FROM tabSingles ts WHERE ts.doctype = 'MCU Settings' AND ts.field = 'dental_examination_name' AND ts.value = tder.template))) ORDER BY 1, 2) AS t		
-						ORDER BY 1""", as_dict=1)
-					for exam in exams:
-						grade = ''
-						grade_description = ''
-						if exam.incdec:
-							incdec = exam.incdec.split('|||')
-						else:
-							incdec = ['','']
-						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and exam.result_text >= exam.min_value and exam.result_text <= exam.max_value :
-							grade = 'A'
-							grade_description = frappe.db.get_value(
+			temp_doc = []
+			for exam_item in doctor_exam.examination_item:
+				item = [item for item in self.package if item.item_name == exam_item.template]
+				disp_item = item[0]
+				group_gradable, group_pos = frappe.db.get_value('Item Group', disp_item.item_group, ['custom_gradable', 'custom_bundle_position'])
+				item_gradable, item_pos = frappe.db.get_value('Item', disp_item.examination_item, ['custom_gradable', 'custom_bundle_position'])
+
+				if previous_exam_item_group != disp_item.item_group:
+					previous_exam_item_group = disp_item.item_group
+					temp_doc.append({
+						'examination': disp_item.item_group,
+						'gradable': group_gradable,
+						'hidden_item_group': disp_item.item_group,
+						'position': group_pos,
+					})
+				if previous_exam_item != disp_item.examination_item:
+					previous_exam_item = disp_item.examination_item
+					temp_doc.append({
+						'examination': disp_item.item_name,
+						'gradable': item_gradable,
+						'hidden_item_group': disp_item.item_group,
+						'hidden_item': disp_item.examination_item,
+						'position': item_pos,
+						'is_item': 1,
+					})
+
+				doctor_tabs = [item for item in single_exams if item['item_code'] == disp_item.examination_item]
+				if doctor_tabs:
+					doctor_tab = doctor_tabs[0]
+					if doctor_tab['item_code'] == disp_item.examination_item:
+						if doctor_tab['code'] == 'physical_examination':
+							result_line = 'Eyes'
+							if not doctor_exam.eyes_check:
+								print(1)
+								if not doctor_exam.left_anemic and not doctor_exam.left_icteric and not doctor_exam.el_others:
+									print(2)
+									result = 'Left: No Abnormality'
+								else:
+									print(3)
+									result_list = []
+									if doctor_exam.left_anemic:
+										print(4)
+										result_list.append('Anemic')
+									if doctor_exam.left_icteric:
+										result_list.append('Icteric')
+									if doctor_exam.el_others:
+										result_list.append(f'Other ({doctor_exam.eyes_left_others})')
+									result = 'Left: ' + ','.join(result_list)
+								if not doctor_exam.right_anemic and not doctor_exam.right_icteric and not doctor_exam.er_others:
+									print(5)
+									result += '\nRight: No Abnormality'
+								else:
+									print(6)
+									result_list = []
+									if doctor_exam.right_anemic:
+										result_list.append('Anemic')
+									if doctor_exam.right_icteric:
+										result_list.append('Icteric')
+									if doctor_exam.er_others:
+										result_list.append(f'Other ({doctor_exam.eyes_right_others})')
+									result += '\nRight: ' + ','.join(result_list)
+							else:
+								print(7)
+								result = 'Left: No Abnormality \n Right: No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-01',})
+
+							result_line = 'Ear'
+							if not doctor_exam.ear_check:
+								if not doctor_exam.left_cerumen and not doctor_exam.left_cerumen_prop and not doctor_exam.left_tympanic and not doctor_exam.earl_others:
+									result = 'Left: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.left_cerumen:
+										result_list.append('Cerumen')
+									if doctor_exam.left_cerumen_prop:
+										result_list.append('Cerumen Prop')
+									if doctor_exam.left_tympanic:
+										result_list.append('Tympanic membrance intact')
+									if doctor_exam.earl_others:
+										result_list.append(f'Other ({doctor_exam.ear_left_others})')
+									result = 'Left: ' + ','.join(result_list)
+								if not doctor_exam.right_cerumen and not doctor_exam.right_cerumen_prop and not doctor_exam.right_tympanic and not doctor_exam.earr_others:
+									result += '\nRight: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.right_cerumen:
+										result_list.append('Cerumen')
+									if doctor_exam.right_cerumen_prop:
+										result_list.append('Cerumen Prop')
+									if doctor_exam.right_tympanic:
+										result_list.append('Tympanic membrance intact')
+									if doctor_exam.earl_others:
+										result_list.append(f'Other ({doctor_exam.ear_right_others})')
+									result += '\nRight: ' + ','.join(result_list)
+							else:
+								result = 'Left: No Abnormality \n Right: No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-02',})
+								
+							result_line = 'Nose'
+							if not doctor_exam.nose_check:
+								if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
+									result = 'Left: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.left_enlarged:
+										result_list.append('Enlarged')
+									if doctor_exam.left_hyperemic:
+										result_list.append('Hyperemic')
+									if doctor_exam.left_polyp:
+										result_list.append('Polyp')
+									if doctor_exam.nl_others:
+										result_list.append(f'Other ({doctor_exam.nose_left_others})')
+									result = 'Left: ' + ','.join(result_list)
+								if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
+									result += '\nRight: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.right_enlarged:
+										result_list.append('Enlarged')
+									if doctor_exam.right_hyperemic:
+										result_list.append('Hyperemic')
+									if doctor_exam.right_polyp:
+										result_list.append('Polyp')
+									if doctor_exam.nr_others:
+										result_list.append(f'Other ({doctor_exam.nose_right_others})')
+									result += '\nRight: ' + ','.join(result_list)
+								if doctor_exam.deviated:
+									if result:
+										result += '\nDeviated'
+									else:
+										result = 'Deviated'
+							else:
+								result = 'Left: No Abnormality \n Right: No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-03',})
+								
+							result_line = 'Throat'
+							if not doctor_exam.throat_check:
+								if not doctor_exam.enlarged_tonsil and not doctor_exam.hyperemic_pharynx and not doctor_exam.t_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.enlarged_tonsil:
+										result_list.append('Enlarged Tonsil')
+									if doctor_exam.hyperemic_pharynx:
+										result_list.append('Hyperemic Pharynx')
+									if doctor_exam.t_others:
+										result_list.append(f'Other ({doctor_exam.throat_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-04',})
+
+							result_line = 'Neck'
+							if not doctor_exam.neck_check:
+								if not doctor_exam.enlarged_thyroid and not doctor_exam.enlarged_lymph_node and not doctor_exam.n_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.enlarged_thyroid:
+										result_list.append(f'Enlarged Tonsil ({doctor_exam.enlarged_thyroid_details})')
+									if doctor_exam.enlarged_lymph_node:
+										result_list.append(f'Enlarged Lymph Node ({doctor_exam.enlarged_lymph_node_details})')
+									if doctor_exam.n_others:
+										result_list.append(f'Other ({doctor_exam.neck_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-05',})
+
+							result_line = 'Cardiac'
+							if not doctor_exam.cardiac_check:
+								if not doctor_exam.regular_heart_sound and not doctor_exam.murmur and not doctor_exam.gallop and not doctor_exam.c_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.regular_heart_sound:
+										result_list.append('Regular Heart Sound')
+									if doctor_exam.murmur:
+										result_list.append('Murmur')
+									if doctor_exam.gallop:
+										result_list.append('Gallop')
+									if doctor_exam.c_others:
+										result_list.append(f'Other ({doctor_exam.cardiac_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-06',})
+
+							result_line = 'Breast'
+							if not doctor_exam.breast_check:
+								if not doctor_exam.left_enlarged_breast and not doctor_exam.left_lumps and not doctor_exam.bl_others:
+									result = 'Left: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.left_enlarged_breast:
+										result_list.append('Enlarged Breast Glands')
+									if doctor_exam.left_lumps:
+										result_list.append('Lumps')
+									if doctor_exam.bl_others:
+										result_list.append(f'Other ({doctor_exam.breast_left_others})')
+									result = 'Left: ' + ','.join(result_list)
+								if not doctor_exam.right_enlarged_breast and not doctor_exam.right_lumps and not doctor_exam.br_others:
+									result += '\nRight: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.right_enlarged_breast:
+										result_list.append('Enlarged Breast Glands')
+									if doctor_exam.right_lumps:
+										result_list.append('Lumps')
+									if doctor_exam.br_others:
+										result_list.append(f'Other ({doctor_exam.breast_right_others})')
+									result += '\nRight: ' + ','.join(result_list)
+							else:
+								result = 'Left: No Abnormality \n Right: No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-07',})
+
+							result_line = 'Respiratory System'
+							if not doctor_exam.resp_check:
+								if not doctor_exam.left_ronkhi and not doctor_exam.left_wheezing and not doctor_exam.r_others:
+									result = 'Left: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.left_ronkhi:
+										result_list.append('Ronkhi')
+									if doctor_exam.left_wheezing:
+										result_list.append('Wheezing')
+									if doctor_exam.r_others:
+										result_list.append(f'Other ({doctor_exam.resp_left_others})')
+									result = 'Left: ' + ','.join(result_list)
+								if not doctor_exam.right_ronkhi and not doctor_exam.right_wheezing and not doctor_exam.rr_others:
+									result += '\nRight: No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.right_ronkhi:
+										result_list.append('Ronkhi')
+									if doctor_exam.right_wheezing:
+										result_list.append('Wheezing')
+									if doctor_exam.br_others:
+										result_list.append(f'Other ({doctor_exam.resp_right_others})')
+									result += '\nRight: ' + ','.join(result_list)
+							else:
+								result = 'Left: No Abnormality \n Right: No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-08',})
+
+							result_line = 'Abdomen'
+							if not doctor_exam.abd_check:
+								if not doctor_exam.tenderness and not doctor_exam.hepatomegaly and not doctor_exam.splenomegaly and not doctor_exam.increased_bowel_sounds and not doctor_exam.a_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.tenderness:
+										result_list.append(f'Tenderness ({doctor_exam.abd_tender_details})')
+									if doctor_exam.hepatomegaly:
+										result_list.append('Hepatomegaly')
+									if doctor_exam.splenomegaly:
+										result_list.append('Splenomegaly')
+									if doctor_exam.increased_bowel_sounds:
+										result_list.append('Increased Bowel Sounds')
+									if doctor_exam.a_others:
+										result_list.append(f'Other ({doctor_exam.abd_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-09',})
+
+							result_line = 'Spine'
+							if not doctor_exam.spine_check:
+								result = doctor_exam.spine_details
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '10',})
+
+							result_line = 'Genitourinary'
+							if not doctor_exam.genit_check:
+								if not doctor_exam.hernia and not doctor_exam.hemorrhoid and not doctor_exam.inguinal_nodes and not doctor_exam.g_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.hernia:
+										result_list.append(f'Hernia ({doctor_exam.hernia_details})')
+									if doctor_exam.hemorrhoid:
+										result_list.append('Hemorrhoid')
+									if doctor_exam.inguinal_nodes:
+										result_list.append('Inguinal Nodes')
+									if doctor_exam.g_others:
+										result_list.append(f'Other ({doctor_exam.genit_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-11',})
+
+							result_line = 'Neurological System'
+							if not doctor_exam.neuro_check:
+								if not doctor_exam.motoric_system_abnormality and not doctor_exam.sensory_system_abnormality and not doctor_exam.reflexes_abnormality and not doctor_exam.ne_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.motoric_system_abnormality:
+										result_list.append(f'Motoric System Abnormality ({doctor_exam.motoric_details})')
+									if doctor_exam.sensory_system_abnormality:
+										result_list.append(f'Sensory System Abnormality ({doctor_exam.sensory_details})')
+									if doctor_exam.reflexes_abnormality:
+										result_list.append(f'Reflexes Abnormality ({doctor_exam.reflex_details})')
+									if doctor_exam.ne_others:
+										result_list.append(f'Other ({doctor_exam.neuro_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-12',})
+								
+							result_line = 'Skin'
+							if not doctor_exam.skin_check:
+								if not doctor_exam.skin_psoriasis and not doctor_exam.skin_tattoo and not doctor_exam.skin_tag and not doctor_exam.sk_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.skin_psoriasis:
+										result_list.append('Psoriasis')
+									if doctor_exam.skin_tattoo:
+										result_list.append('Tattoo')
+									if doctor_exam.skin_tag:
+										result_list.append('Skin Tag')
+									if doctor_exam.sk_others:
+										result_list.append(f'Other ({doctor_exam.skin_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-13',})
+
+						elif doctor_tab['code'] == 'visual_field_test':
+							result_line = 'Visual Field Test'
+							if not doctor_exam.visual_check:
+								result = doctor_exam.visual_details
+							else:
+								result = 'Same As Examiner'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-01',})
+
+						elif doctor_tab['code'] == 'romberg_test':
+							result_line = 'Romberg Test'
+							if not doctor_exam.romberg_check:
+								result = '\n'.join([doctor_exam.romberg_abnormal,doctor_exam.romberg_others])
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-01',})
+
+						elif doctor_tab['code'] == 'tinnel_test':
+							result_line = 'Tinnel Test'
+							if not doctor_exam.tinnel_check:
+								result = doctor_exam.tinnel_details
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-01',})
+
+						elif doctor_tab['code'] == 'phallen_test':
+							result_line = 'Phallen Test'
+							if not doctor_exam.phallen_check:
+								result = doctor_exam.phallen_details
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-01',})
+
+						elif doctor_tab['code'] == 'rectal_test':
+							result_line = 'Rectal Test'
+							if not doctor_exam.skin_check:
+								if not doctor_exam.rectal_hemorrhoid and not doctor_exam.enlarged_prostate and not doctor_exam.re_others:
+									result = 'No Abnormality'
+								else:
+									result_list = []
+									if doctor_exam.rectal_hemorrhoid:
+										result_list.append(doctor_exam.rectal_hemorrhoid)
+									if doctor_exam.enlarged_prostate:
+										result_list.append('Enlarged Prostate')
+									if doctor_exam.re_others:
+										result_list.append(f'Other ({doctor_exam.rectal_others})')
+									result = ','.join(result_list)
+							else:
+								result = 'No Abnormality'
+							temp_doc.append({
+								'examination': result_line,
+								'gradable': 0,
+								'result': result,
+								'status': disp_item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + '-01',})
+
+						elif doctor_tab['code'] == 'dental_examination':
+							pass
+				else:
+					counter = 0
+					for selective in doctor_exam.result:
+						if selective.item_code == disp_item.examination_item:
+							counter += 1
+							temp_doc.append({
+								'examination': selective.result_line,
+								'gradable': 0,
+								'result': ': '.join([selective.result_check, selective.result_text]),
+								'status': item.status,
+								'document': doctor_exam.name,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + f'-{counter}',})
+
+					for non_selective in doctor_exam.non_selective_result:
+						if non_selective.item_code == disp_item.examination_item:
+							gradable = frappe.db.exists(
 								'MCU Grade', 
-								{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
-								'description')
-						doc.append('doctor_grade', {
-						'examination': exam.result_line,
-						'gradable': exam.gradable,
-						'result': exam.result_text,
-						'min_value': exam.min_value,
-						'max_value': exam.max_value,
-						'grade': grade if grade else None,
-						'description': grade_description if grade_description else None,
-						'uom': exam.uom,
-						'status': item.status,
-						'document': exam.doc,
-						'incdec': incdec[0],
-						'incdec_category': incdec[1] if len(incdec)>1 else '',
-						'hidden_item_group': item_group.name,
-						'hidden_item': item.examination_item})
-				previous_exam_item = item.examination_item
+								{'item_group': item_group.name, 'item_code': disp_item.examination_item, 'test_name': non_selective.test_name})
+							grade = ''
+							grade_description = ''
+							incdec = ''
+							incdec_category = ''
+							if non_selective.result_value and non_selective.min_value and non_selective.max_value:
+								if gradable and non_selective.result_value>=non_selective.min_value and non_selective.result_value<=non_selective.max_value:
+									grade = 'A'
+									grade_description = frappe.db.get_value(
+										'MCU Grade', 
+										{
+											'item_group': item_group.name, 
+											'item_code': disp_item.examination_item, 
+											'test_name': non_selective.test_name, 
+											'grade': 'A'
+										},
+										'description',
+										as_dict = 1)
+								if non_selective.result_value<non_selective.min_value:
+									incdec = 'Decrease'
+								if non_selective.result_value>non_selective.max_value:
+									incdec = 'Increase'
+								if incdec:
+									incdec_category = frappe.db.get_value(
+										'MCU Category',
+										{
+											'item_group': item_group.name, 
+											'item_code': disp_item.examination_item, 
+											'test_name': non_selective.test_name, 
+											'selection': incdec
+										},
+										description
+									)
+							counter += 1
+							temp_doc.append({
+								'examination': non_selective.test_name,
+								'gradable': 1 if gradable else 0,
+								'result': non_selective.result_value,
+								'min_value': non_selective.min_value,
+								'max_value': non_selective.max_value,
+								'grade': grade if grade else None,
+								'description': grade_description if grade_description else None,
+								'uom': non_selective.uom,
+								'status': item.status,
+								'document': doctor_exam.name,
+								'incdec': incdec if incdec else None,
+								'incdec_category': incdec_category if incdec_category else None,
+								'hidden_item_group': item_group.name,
+								'hidden_item': disp_item.examination_item,
+								'position': str(item_pos) + f'-{counter}',})
+		sorted_temp = sorted(
+			temp_doc,
+			key = lambda x:str(x['position'])
+		)
+		for ready in sorted_temp:
+			doc.append('doctor_grade', {
+				'examination': ready.get('examination'),
+				'gradable': ready.get('gradable'),
+				'result': ready.get('result'),
+				'min_value': ready.get('min_value'),
+				'max_value': ready.get('max_value'),
+				'grade': ready.get('grade'),
+				'uom': ready.get('uom'),
+				'status': ready.get('status'),
+				'document': ready.get('document'),
+				'incdec': ready.get('incdec'),
+				'incdec_category': ready.get('incdec_category'),
+				'hidden_item_group': ready.get('hidden_item_group'),
+				'hidden_item': ready.get('hidden_item'),
+				'is_item': ready.get('is_item'),
+			})
 		#Radiology Result
 		item_groups = frappe.db.sql(f"""SELECT DISTINCT tig.name, tig.custom_gradable 
 			FROM `tabMCU Appointment` tma, tabItem ti, `tabItem Group` tig 
@@ -512,7 +842,8 @@ class Dispatcher(Document):
 					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
-					'hidden_item': item.examination_item,})
+					'hidden_item': item.examination_item,
+					'is_item': 1,})
 				if previous_exam_item != item.examination_item:
 					exams = frappe.db.sql(f"""
 						SELECT trr.idx, result_line, NULL AS min_value, NULL as max_value, result_text, IF(trr.docstatus=1, result_check, NULL) AS uom, 
@@ -560,7 +891,8 @@ class Dispatcher(Document):
 					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
-					'hidden_item': item.examination_item,})
+					'hidden_item': item.examination_item,
+					'is_item': 1,})
 				if previous_exam_item != item.examination_item:
 					exams = frappe.db.sql(f"""
 						SELECT tntr.idx, lab_test_event AS result_line, custom_min_value AS min_value, custom_max_value AS max_value, result_value AS result_text, 
