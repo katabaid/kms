@@ -1,0 +1,81 @@
+{
+ "actions": [],
+ "autoname": "format:{patient_appointment}-{template}",
+ "creation": "2024-12-11 20:15:56.702801",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "patient_appointment",
+  "temporary_registration",
+  "template",
+  "status",
+  "detail"
+ ],
+ "fields": [
+  {
+   "fieldname": "patient_appointment",
+   "fieldtype": "Link",
+   "label": "Patient Appointment",
+   "options": "Patient Appointment"
+  },
+  {
+   "fieldname": "temporary_registration",
+   "fieldtype": "Link",
+   "label": "Temporary Registration",
+   "options": "Temporary Registration"
+  },
+  {
+   "fieldname": "detail",
+   "fieldtype": "Table",
+   "label": "Detail",
+   "options": "Questionnaire Detail"
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Link",
+   "label": "Template",
+   "options": "Questionnaire Template"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Status"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-12-18 14:29:20.884602",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Questionnaire",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Red",
+   "title": "Draft"
+  },
+  {
+   "color": "Green",
+   "title": "Completed"
+  }
+ ],
+ "track_changes": 1
+}

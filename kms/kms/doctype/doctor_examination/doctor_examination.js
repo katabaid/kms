@@ -11,9 +11,9 @@ const handleTabVisibility = (frm) => {
   const sectionsToHide = [
     'eyes_section', 'ear_section', 'nose_section', 'throat_section', 'neck_section', 
     'cardiac_section', 'breast_section', 'resp_section', 'abd_section', 'spine_section', 
-    'genit_section', 'neuro_section', 'dental_section', 'teeth_section', 
-    'visual_field_test_section', 'romberg_test_section', 'tinnel_test_section',
-    'phallen_test_section', 'rectal_examination_section', 'skin_section'
+    'genit_section', 'neuro_section', 'skin_section', 'measurement_section', 'dental_section', 
+    'teeth_section', 'visual_field_test_section', 'romberg_test_section', 'tinnel_test_section',
+    'phallen_test_section', 'rectal_examination_section'
   ];
   const visibleStatus = ['Checked In', 'Finished', 'Partial Finished'];
   const visibleRowStatus = ['Started', 'Checked In', 'Finished', 'Partial Finished'];
@@ -23,13 +23,13 @@ const handleTabVisibility = (frm) => {
     const matchingItems = mcu_settings.filter(item => examItems.includes(item.value));
     if (matchingItems.length > 0) {
       matchingItems.forEach(item => {
-        if (item.field === 'physical_examination_name') sectionsToHide.slice(0, 12).forEach(section => frm.set_df_property(section, 'hidden', 0));
+        if (item.field === 'physical_examination_name') sectionsToHide.slice(0, 14).forEach(section => frm.set_df_property(section, 'hidden', 0));
         if (item.field === 'visual_field_test_name') frm.set_df_property('visual_field_test_section', 'hidden', 0);
         if (item.field === 'romberg_test_name') frm.set_df_property('romberg_test_section', 'hidden', 0);
         if (item.field === 'tinnel_test_name') frm.set_df_property('tinnel_test_section', 'hidden', 0);
         if (item.field === 'phallen_test_name') frm.set_df_property('phallen_test_section', 'hidden', 0);
         if (item.field === 'rectal_test_name') frm.set_df_property('rectal_examination_section', 'hidden', 0);
-        if (item.field === 'dental_examination_name') sectionsToHide.slice(12, 14).forEach(section => frm.set_df_property(section, 'hidden', 0));
+        if (item.field === 'dental_examination_name') sectionsToHide.slice(14, 16).forEach(section => frm.set_df_property(section, 'hidden', 0));
       });
     }
   }

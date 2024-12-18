@@ -205,15 +205,76 @@ def process_queue_pooling_and_dental(doc, method=None):
     qp.healthcare_practitioner = doc.practitioner
     qp.save(ignore_permissions=True)
 
+def update_questionnaire_status(doc):
+  # Prevent recursion by checking doc.flags
+  if getattr(doc.flags, "update_called", False):
+    return
+  doc.flags.update_called = True
+  doc.set("custom_completed_questionnaire", [])
+  # Step 1: Check Questionnaire Template for matching appointment_type
+  if doc.appointment_type:
+    questionnaire_templates = frappe.get_all(
+      "Questionnaire Template",
+      filters={"appointment_type": doc.appointment_type, 'active': 1, 'internal_questionnaire': 0},
+      fields=["name", "template_name"]
+    )
+    
+    for questionnaire in questionnaire_templates:
+      # Append to custom_completed_questionnaire
+      is_completed = 0
+      if any(detail.template == questionnaire["template_name"] for detail in doc.custom_questionnaire_detail):
+        is_completed = 1
+      
+      doc.append("custom_completed_questionnaire", {
+        "template": questionnaire["template_name"],
+        "is_completed": is_completed
+      })
+  # Step 2: Search within custom_mcu_exam_items and custom_additional_mcu_items for matching examination_item
+  completed_questionnaires = []  # List to hold completed questionnaires with template and is_completed
+  child_tables = ["custom_mcu_exam_items", "custom_additional_mcu_items"]
+  for table in child_tables:
+    for row in doc.get(table):
+      if row.examination_item:
+        templates = frappe.get_all(
+          "Questionnaire Template",
+          filters={"item_code": row.examination_item, 'active': 1, 'internal_questionnaire': 0},
+          fields=["template_name"]
+        )
+        for template_data in templates:
+          is_completed = 0
+          if any(detail.template == template_data["template_name"] for detail in doc.custom_questionnaire_detail):
+            is_completed = 1
+          # Add to the completed_questionnaires list
+          completed_questionnaires.append({
+            "template": template_data["template_name"],
+            "is_completed": is_completed
+          })
+  # Append the completed_questionnaires to custom_completed_questionnaire if not already added
+  for completed in completed_questionnaires:
+    if not any(q.template == completed["template"] for q in doc.custom_completed_questionnaire):
+      doc.append("custom_completed_questionnaire", completed)
+
+def append_temporary_registration_questionnaire(doc):
+  doc.set("custom_questionnaire_detail", [])
+  if doc.custom_temporary_registration:
+    temp_regis = frappe.get_doc('Temporary Registration', doc.custom_temporary_registration)
+    for detail in temp_regis.detail:
+      doc.append('custom_questionnaire_detail', detail)
+
 @frappe.whitelist()
 def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
   if not doc.status:
     doc.status = 'Open'
-    doc.save()
   if doc.status == 'Checked In':
-    if doc.appointment_date == frappe.utils.nowdate():
-      frappe.db.set_value('Temporary Registration', doc.custom_temporary_registration, {'patient_appointment': doc.name, 'status': 'Transferred'})
+    if getattr(doc.flags, "skip_on_update", False):
+      return
+    doc.flags.skip_on_update = True
+    update_questionnaire_status(doc)
+    doc.save()
+    if str(doc.appointment_date) == frappe.utils.nowdate():
+      if doc.custom_temporary_registration:
+        frappe.db.set_value('Temporary Registration', doc.custom_temporary_registration, {'patient_appointment': doc.name, 'status': 'Transferred'})
       dispatcher_user = frappe.db.get_value("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, ['dispatcher'])
       if dispatcher_user and doc.appointment_type == 'MCU':
         exist_docname = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
@@ -227,9 +288,24 @@ def process_checkin(doc, method=None):
               disp_doc.append('package', new_entry)
               rooms = frappe.get_all('Item Group Service Unit', filters={'parent': entry.examination_item, 'branch': doc.custom_branch}, fields=['service_unit'])
               room_dict = {room.service_unit: room for room in rooms}
+              found = False
+              row_counter = 0
+              row_founder = 0
               for hsu in disp_doc.assignment_table:
+                row_counter += 1
                 if hsu.healthcare_service_unit in room_dict:
                   hsu.status = 'Additional or Retest Request'
+                  found = True
+                else:
+                  row_founder += 1
+              if found and row_founder == row_counter:
+                for room in rooms:
+                  new_entry = dict()
+                  new_entry['name'] = None
+                  new_entry['healthcare_service_unit'] = room.service_unit
+                  new_entry['status'] = 'Wait for Room Assignment'
+                  new_entry['reference_doctype'] = room.custom_default_doctype
+                  disp_doc.append('assignment_table', new_entry)
               notification_doc = frappe.new_doc('Notification Log')
               notification_doc.for_user = dispatcher_user
               notification_doc.from_user = frappe.session.user
@@ -295,12 +371,18 @@ def process_checkin(doc, method=None):
           vital_signs_note = doc.notes))
         vs_doc.insert(ignore_permissions=True)
     else:
-      frappe.throw(title = 'Error', msg="Appointment date must be the same as today's date.", exc='ValidationError')
+      frappe.throw(title = 'Error', msg=f"Appointment date {doc.appointment_date} must be the same as today's date {frappe.utils.nowdate()}.", exc='ValidationError')
+
+@frappe.whitelist()
+def after_insert_patient_appointment(doc, method=None):
+  append_temporary_registration_questionnaire(doc)
+  update_questionnaire_status(doc)
+  doc.save()
 
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):
   ################Doctype: Vital Signs################
-  if doc.signs_date == frappe.utils.nowdate():
+  if str(doc.signs_date) == frappe.utils.nowdate():
     frappe.get_doc(dict(
       doctype = 'Queue Pooling',
       vital_sign = doc.name,

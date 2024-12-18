@@ -46,8 +46,7 @@
    "fieldname": "test_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Test Name",
-   "reqd": 1
+   "label": "Test Name"
   },
   {
    "fieldname": "column_break_bmdpt",
@@ -55,11 +54,9 @@
   },
   {
    "fieldname": "selection",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Selection",
-   "options": "Increase\nDecrease",
-   "reqd": 1
+   "label": "Selection"
   },
   {
    "fieldname": "description",
@@ -85,7 +82,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-22 13:47:53.472168",
+ "modified": "2024-12-13 08:45:24.601018",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Category",
@@ -105,7 +102,9 @@
    "write": 1
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "selection"
 }

@@ -10,10 +10,12 @@
  "field_order": [
   "template_name",
   "item_code",
-  "active",
+  "appointment_type",
+  "internal_questionnaire",
   "column_break_foj9s",
   "item_name",
   "column",
+  "active",
   "section_break_xkv3p",
   "intro_text",
   "section",
@@ -83,11 +85,23 @@
    "fieldname": "intro_text",
    "fieldtype": "Text Editor",
    "label": "Intro Text"
+  },
+  {
+   "fieldname": "appointment_type",
+   "fieldtype": "Link",
+   "label": "Appointment Type",
+   "options": "Appointment Type"
+  },
+  {
+   "default": "0",
+   "fieldname": "internal_questionnaire",
+   "fieldtype": "Check",
+   "label": "Internal Questionnaire"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-13 09:30:43.665211",
+ "modified": "2024-12-18 14:06:44.621390",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire Template",

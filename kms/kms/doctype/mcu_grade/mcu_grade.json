@@ -90,11 +90,10 @@
   },
   {
    "fieldname": "increase_decrease",
-   "fieldtype": "Select",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Increase Decrease",
-   "options": "\nIncrease\nDecrease"
+   "label": "Increase Decrease"
   },
   {
    "fieldname": "column_break_m83sg",
@@ -118,7 +117,7 @@
  "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-29 14:50:47.957299",
+ "modified": "2024-12-13 08:41:06.334713",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Grade",

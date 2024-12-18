@@ -70,6 +70,22 @@ class DoctorExamination(Document):
 							'position': data['position'],
 							'location': data['location']
 						})
+		if self.dispatcher:
+			disp_doc = frappe.get_doc('Dispatcher', self.dispatcher)
+			for package in disp_doc.package:
+				is_internal = frappe.db.get_value('Questionnaire Template', package.item_name, 'internal_questionnaire')
+				template = frappe.db.get_value('Questionnaire Template', package.item_name, 'template_name')
+				if is_internal:
+					status = frappe.db.get_value(
+						'Questionnaire', 
+						{'patient_appointment': self.appointment, 'template': template},
+						'status')
+					print (template)
+					self.append('questionnaire', {
+						'template': template,
+						'is_completed': True if status == 'Completed' else False
+					})
+
 	def on_submit(self):
 		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')
 		self.db_set('submitted_date', frappe.utils.now_datetime())

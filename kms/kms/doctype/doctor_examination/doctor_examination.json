@@ -27,6 +27,7 @@
   "submitted_date",
   "result_section",
   "examination_item",
+  "questionnaire",
   "result",
   "non_selective_result",
   "consumables_section",
@@ -188,6 +189,8 @@
   "skin_tag",
   "sk_others",
   "skin_others",
+  "measurement_section",
+  "abdominal_girth",
   "visual_field_test_tab",
   "visual_field_test_section",
   "visual_check",
@@ -1517,13 +1520,29 @@
    "fieldname": "rr_others",
    "fieldtype": "Check",
    "label": "Others"
+  },
+  {
+   "fieldname": "measurement_section",
+   "fieldtype": "Section Break",
+   "label": "Measurement"
+  },
+  {
+   "fieldname": "abdominal_girth",
+   "fieldtype": "Int",
+   "label": "Abdominal Girth"
+  },
+  {
+   "fieldname": "questionnaire",
+   "fieldtype": "Table",
+   "label": "Questionnaire",
+   "options": "Questionnaire Completed"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-28 21:14:39.531042",
+ "modified": "2024-12-18 14:12:39.302907",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

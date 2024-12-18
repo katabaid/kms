@@ -7,9 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "template",
+  "line_id",
   "question",
-  "answer",
-  "remark"
+  "answer"
  ],
  "fields": [
   {
@@ -27,23 +27,27 @@
    "read_only": 1
   },
   {
-   "fieldname": "remark",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Remark"
-  },
-  {
    "fieldname": "template",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
    "label": "Template",
    "options": "Questionnaire Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "line_id",
+   "fieldtype": "Data",
+   "label": "Line ID",
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-18 18:33:40.859378",
+ "modified": "2024-12-12 10:22:11.763971",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire Detail",

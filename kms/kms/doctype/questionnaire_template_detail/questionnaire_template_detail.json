@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "field:id",
+ "autoname": "format:{parent}-{###}",
  "creation": "2024-09-07 18:49:37.468201",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -31,6 +31,7 @@
    "fieldname": "label",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_preview": 1,
    "label": "Label",
    "reqd": 1
   },
@@ -44,10 +45,8 @@
   {
    "fieldname": "id",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "ID",
-   "reqd": 1,
-   "unique": 1
+   "hidden": 1,
+   "label": "ID"
   },
   {
    "depends_on": "eval:!doc.mandatory",
@@ -80,8 +79,7 @@
    "depends_on": "eval:doc.type==='Select'||doc.type==='Radio'||doc.type==='Check'",
    "fieldname": "option",
    "fieldtype": "Small Text",
-   "label": "Option",
-   "mandatory_depends_on": "eval:doc.type==='Select'||doc.type==='Radio'||doc.type==='Check'"
+   "label": "Option"
   },
   {
    "fieldname": "default_value",
@@ -92,11 +90,11 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-09-12 18:39:47.036804",
+ "modified": "2024-12-09 18:02:10.170277",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire Template Detail",
- "naming_rule": "By fieldname",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

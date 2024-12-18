@@ -76,18 +76,44 @@ class Dispatcher(Document):
 				ORDER BY ti.custom_bundle_position""", as_dict = 1)
 			previous_exam_item = ''
 			for item in items:
-				if item.examination_item == 'Vital Sign Blood Pressure':
+				if item.examination_item == 'BASC-00003':
 					grade = ''
-					sistolic = frappe.db.get_value(
-						'Nurse Examination Result', 
-						{},
-						'result_value'
-					)
+					nurse_examinations = frappe.get_all(
+						'Nurse Examination',
+						filters = {
+							'appointment': self.patient_appointment,
+							'docstatus': 1},
+						pluck = 'name')
+					for nurse_examination in nurse_examinations:
+						sistolic = frappe.db.get_value(
+							'Nurse Examination Result', 
+							{'parent': nurse_examination, 'test_name': 'Systolic'},
+							'result_value')
+						diastolic = frappe.db.get_value(
+							'Nurse Examination Result', 
+							{'parent': nurse_examination, 'test_name': 'Diastolic'},
+							'result_value')
+						if sistolic and diastolic:
+							sistolic = int(sistolic)
+							diastolic = int(diastolic)
+							break
+					print(sistolic)
+					print(diastolic)
+					if sistolic and diastolic:
+						if sistolic < 120 and diastolic <80:
+							incdec = 'Normal'
+						if (sistolic >= 120 and sistolic <140) or (diastolic >=80 and diastolic <90):
+							incdec = 'Prehypertension'
+						if (sistolic >= 140 and sistolic <160) or (diastolic >=90 and diastolic <100):
+							incdec = 'Stage 1 Hypertension'
+						if sistolic >= 160 and diastolic >=100:
+							incdec = 'Stage 2 Hypertension'
 				doc.append('nurse_grade', {
 					'examination': item.item_name,
 					'gradable': item.custom_gradable,
 					'hidden_item_group': item_group.name,
 					'hidden_item': item.examination_item,
+					'incdec': incdec if item.examination_item == 'BASC-00003' else None,
 					'is_item': 1})
 				if previous_exam_item != item.examination_item:
 					exams = frappe.db.sql(f"""
@@ -157,6 +183,14 @@ class Dispatcher(Document):
 								if is_within_range(exam_result_float, min_value_float, max_value_float):
 									grade = bmi['grade']
 									grade_description = bmi['name']
+									category = frappe.db.get_value(
+										'MCU Category', 
+										f"""{item_group.name}.{item.examination_item}.BMI.{bmi['name']}""",
+										'description')
+									incdec = [bmi['name'], category]
+									print(incdec)
+									print(grade)
+									print(grade_description)
 									break
 								else:
 									grade = ''
@@ -179,6 +213,7 @@ class Dispatcher(Document):
 				previous_exam_item = item.examination_item
 		#Doctor Result
 		doctor_exam_names = frappe.get_all('Doctor Examination', {'docstatus': 1, 'appointment': self.patient_appointment})
+		temp_doc = []
 		for doctor_exam_name in doctor_exam_names:
 			doctor_exam = frappe.get_doc('Doctor Examination', doctor_exam_name.name)
 
@@ -201,7 +236,6 @@ class Dispatcher(Document):
 			]
 			previous_exam_item_group = ''
 			previous_exam_item = ''
-			temp_doc = []
 			for exam_item in doctor_exam.examination_item:
 				item = [item for item in self.package if item.item_name == exam_item.template]
 				disp_item = item[0]
@@ -228,6 +262,7 @@ class Dispatcher(Document):
 					})
 
 				doctor_tabs = [item for item in single_exams if item['item_code'] == disp_item.examination_item]
+				temp_doc = []
 				if doctor_tabs:
 					doctor_tab = doctor_tabs[0]
 					if doctor_tab['item_code'] == disp_item.examination_item:
@@ -653,7 +688,7 @@ class Dispatcher(Document):
 						elif doctor_tab['code'] == 'romberg_test':
 							result_line = 'Romberg Test'
 							if not doctor_exam.romberg_check:
-								result = '\n'.join([doctor_exam.romberg_abnormal,doctor_exam.romberg_others])
+								result = '\n'.join(filter(None, [doctor_exam.romberg_abnormal or '', doctor_exam.romberg_others or '']))
 							else:
 								result = 'No Abnormality'
 							temp_doc.append({
@@ -734,7 +769,7 @@ class Dispatcher(Document):
 							temp_doc.append({
 								'examination': selective.result_line,
 								'gradable': 0,
-								'result': ': '.join([selective.result_check, selective.result_text]),
+								'result': ': '.join(filter(None, [selective.result_check or '', selective.result_text or ''])),
 								'status': item.status,
 								'document': doctor_exam.name,
 								'hidden_item_group': item_group.name,
@@ -855,10 +890,10 @@ class Dispatcher(Document):
 						doc.append('radiology_grade', {
 						'examination': exam.result_line,
 						'gradable': 0,
-						'result': exam.result_text,
+						'result': '\n'.join(filter(None, [exam.uom or '', exam.result_text or ''])),
 						'min_value': exam.min_value,
 						'max_value': exam.max_value,
-						'uom': exam.uom,
+						'uom': '',
 						'status': exam.status,
 						'document': exam.doc,
 						'incdec': exam.incdec,
@@ -916,12 +951,13 @@ class Dispatcher(Document):
 							incdec = exam.incdec.split('|||')
 						else:
 							incdec = ['','']
-						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and exam.result_text >= exam.min_value and exam.result_text <= exam.max_value :
-							grade = 'A'
-							grade_description = frappe.db.get_value(
-								'MCU Grade', 
-								{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
-								'description')
+						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value:
+							if float(exam.result_text) >= float(exam.min_value) and float(exam.result_text) <= float(exam.max_value):
+								grade = 'A'
+								grade_description = frappe.db.get_value(
+									'MCU Grade', 
+									{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
+									'description')
 						doc.append('lab_test_grade', {
 						'examination': exam.result_line,
 						'gradable': exam.gradable,

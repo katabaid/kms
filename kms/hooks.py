@@ -166,6 +166,7 @@ doc_events = {
   },
   "Patient Appointment": {
     "on_update": "kms.event.process_checkin",
+    "after_insert": "kms.event.after_insert_patient_appointment",
   },
   "Vital Signs": {
     "after_submit": "kms.event.return_to_queue_pooling",

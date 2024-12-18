@@ -100,10 +100,33 @@ frappe.ui.form.on('Patient Appointment', {
         }
       )
     }
-    frm.add_custom_button(
-      'Temporary Registration',
-      () => {
-        frappe.set_route('List', 'Temporary Registration', 'List')
-    });
+    // Check if any row in custom_completed_questionnaire has is_completed != 1
+    const incompleteRow = frm.doc.custom_completed_questionnaire.find(row => row.is_completed !== 1);
+    if (incompleteRow) {
+      const template = incompleteRow.template;
+      frm.add_custom_button(
+        'Temporary Registration',
+        () => {
+          frappe.set_route('List', 'Temporary Registration', 'List')
+      });
+      const link = `https://kmsregis.netlify.app/questionnaire?source=${frm.doc.appointment_type}&template=${template||frm.doc.appointment_type}&appointment_id=${frm.doc.name}`;
+      frm.sidebar
+      .add_user_action(__('QR Code'))
+      .attr('href', `https://zxing.org/w/chart?cht=qr&chs=500x500&chld=L&choe=UTF-8&chl=${link}`)
+      .attr('target', '_blank');
+      if (frm.doc.custom_mobile) {
+        let phoneNumber;
+        if (frm.doc.custom_mobile.startsWith("08")) {
+          phoneNumber = "628" + frm.doc.custom_mobile.slice(2);
+        } else {
+          phoneNumber = frm.doc.custom_mobile;
+        }
+        const encoded = encodeURIComponent(`kunjungi untuk pendaftaran: \n> ${link}`);
+        frm.sidebar
+        .add_user_action(__('Whatsapp'))
+        .attr('href', `https://api.whatsapp.com/send/?phone=${phoneNumber}&text=${encoded}&type=phone_number&app_absent=0`)
+        .attr('target', '_blank');
+      }
+    }
 	}
 });

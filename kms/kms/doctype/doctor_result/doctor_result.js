@@ -21,27 +21,17 @@ frappe.ui.form.on('Doctor Result', {
     hide_standard_buttons (frm, child_tables);
   },
   refresh: function (frm) {
-    if (frm.doc.nurse_grade) {
-			frm.refresh_field('nurse_grade');
-			frm.fields_dict['nurse_grade'].grid.grid_rows.forEach((row) =>{
-				apply_cell_styling (frm, row.doc, row.doc.parentfield);
-				frm.fields_dict.nurse_grade.grid.wrapper.find('.grid-row .row-index').hide();
-			})
-		}
-    if (frm.doc.doctor_grade) {
-			frm.refresh_field('doctor_grade');
-			frm.fields_dict['doctor_grade'].grid.grid_rows.forEach((row) =>{
-				apply_cell_styling (frm, row.doc, row.doc.parentfield);
-				frm.fields_dict.doctor_grade.grid.wrapper.find('.grid-row .row-index').hide();
-			})
-		}
-    if (frm.doc.lab_test_grade) {
-			frm.refresh_field('lab_test_grade');
-			frm.fields_dict['lab_test_grade'].grid.grid_rows.forEach((row) =>{
-				apply_cell_styling (frm, row.doc, row.doc.parentfield);
-				frm.fields_dict.lab_test_grade.grid.wrapper.find('.grid-row .row-index').hide();
-			})
-		}
+    const processGrade = (gradeType) => {
+      if (frm.doc[gradeType]) {
+        frm.refresh_field(gradeType);
+        frm.fields_dict[gradeType].grid.grid_rows.forEach((row) => {
+          apply_cell_styling(frm, row.doc, row.doc.parentfield);
+          frm.fields_dict[gradeType].grid.wrapper.find('.grid-row .row-index').hide();
+        });
+      }
+    };
+    ['nurse_grade', 'doctor_grade', 'lab_test_grade', 'radiology_grade'].forEach(processGrade);
+    
     if (frm.doc.docstatus === 0) {
       frm.add_custom_button('Copy Comment', ()=>{
         if (frm.doc.remark) {
@@ -69,42 +59,27 @@ frappe.ui.form.on('Doctor Result', {
 function set_grade_query_for_child_table(frm, child_table_name) {
   frm.fields_dict[child_table_name].grid.get_field('grade').get_query = function (doc, cdt, cdn) {
     let row = locals[cdt][cdn];
-    if(row.hidden_item_group && !row.hidden_item && !row.is_item && row.gradable) {
-      return {
-        filters: [
-          ['item_group', '=', row.hidden_item_group],
-          ['item_code', '=', '']
-        ]
-      }
-    } else if (row.hidden_item_group && row.hidden_item && row.is_item && row.gradable) {
-      return {
-        filters: [
-          ['item_group', '=', row.hidden_item_group],
-          ['item_code', '=', row.hidden_item],
-          ['test_name', '=', ''],
-        ]
-      }
-    } else if (row.hidden_item_group && row.hidden_item && !row.is_item && row.gradable) {
-      if (!row.incdec) {
-        return {
-          filters: [
-            ['item_group', '=', row.hidden_item_group],
-            ['item_code', '=', row.hidden_item],
-            ['test_name', '=', row.examination],
-            ['increase_decrease', '=', '']
-          ]
-        }  
+    let filters = [
+      ['item_group', '=', row.hidden_item_group]
+    ];
+
+    if (row.hidden_item) {
+      filters.push(['item_code', '=', row.hidden_item]);
+    } else {
+      filters.push(['item_code', '=', '']);
+    }
+
+    if (row.is_item) {
+      filters.push(['test_name', '=', '']);
+    } else if (row.gradable) {
+      filters.push(['test_name', '=', row.examination]);
+      if (row.incdec) {
+        filters.push(['increase_decrease', '=', row.incdec]);
       } else {
-        return {
-          filters: [
-            ['item_group', '=', row.hidden_item_group],
-            ['item_code', '=', row.hidden_item],
-            ['test_name', '=', row.examination],
-            ['increase_decrease', '=', row.incdec]
-          ]
-        }
+        filters.push(['increase_decrease', '=', '']);
       }
     }
+    return { filters };
   }
 }
 
@@ -143,13 +118,13 @@ const apply_cell_styling = (frm, row, table_name) => {
     let maxValue = parseFloat(row.max_value);
     if (resultValue < minValue || resultValue > maxValue) {
 			$row.css({
-				'font-weight': 'bold',
-        'color': 'red'
+				'font-weight': 'Bold',
+        'color': 'Maroon'
       });
     } else {
       $row.css({
-        'font-weight': 'normal',
-        'color': 'black'
+        'font-weight': 'Normal',
+        'color': 'Dimgray'
       });
     }
   }
@@ -157,6 +132,18 @@ const apply_cell_styling = (frm, row, table_name) => {
     $row.css({
       'background-color': '#f1f5f9'
     })
+  }
+  if (row.hidden_item_group && !row.hidden_item) {
+    $row.css({
+      'font-weight': 'Bold',
+      'color': 'midnightblue'
+    });
+  }
+  if (row.hidden_item_group && row.hidden_item && row.is_item) {
+    $row.css({
+      'font-weight': 'normal',
+      'color': 'midnightblue'
+    });
   }
 }
 

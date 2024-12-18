@@ -40,3 +40,19 @@ class NurseExamination(Document):
 		old = self.get_doc_before_save()
 		if self.status == 'Checked In' and self.docstatus == 0 and old.status == 'Started':
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
+	
+	def before_insert(self):
+		for exam in self.examination_item:
+			item_code = frappe.db.get_value('Nurse Examination Template', exam.template, 'item_code')
+			if item_code:
+				is_internal, template = frappe.db.get_value('Questionnaire Template', item_code, ['internal_questionnaire', 'template'])
+				if is_internal:
+					status = frappe.db.get_value(
+						'Questionnaire', 
+						{'patient_appointment': self.appointment, 'template': template},
+						'status')
+					self.append('questionnaire', {
+						'template': template,
+						'is_completed': True if status == 'Completed' else False
+					})
+
