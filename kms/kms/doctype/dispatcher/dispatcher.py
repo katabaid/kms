@@ -3,7 +3,7 @@
 
 import frappe, re
 from frappe.model.document import Document
-from frappe.utils import today
+from frappe.utils import today, flt
 from frappe import _
 from statistics import mean
 
@@ -54,926 +54,19 @@ class Dispatcher(Document):
 		doc.gender = self.gender
 		doc.dispatcher = self.name
 		doc.created_date = today()
-		#Nurse Result
-		item_groups = frappe.db.sql(f"""SELECT DISTINCT tig.name, tig.custom_gradable 
-			FROM `tabMCU Appointment` tma, tabItem ti, `tabItem Group` tig 
-			WHERE tma.parent = '{self.patient_appointment}'
-			AND tig.name = ti.item_group 
-			AND ti.name = tma.examination_item 
-			AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = ti.name)
-			ORDER BY tig.custom_bundle_position""", as_dict=True)
-		for item_group in item_groups:
-			doc.append('nurse_grade', {
-				'examination': item_group.name,
-				'gradable': item_group.custom_gradable,
-				'hidden_item_group': item_group.name,})
-			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
-				FROM `tabMCU Appointment` tma, tabItem ti
-				WHERE EXISTS (SELECT 1 FROM `tabDispatcher` td 
-				WHERE patient_appointment = '{self.patient_appointment}' AND tma.parent = td.name)
-				AND tma.examination_item = ti.name
-				AND ti.item_group = '{item_group.name}'
-				ORDER BY ti.custom_bundle_position""", as_dict = 1)
-			previous_exam_item = ''
-			for item in items:
-				if item.examination_item == 'BASC-00003':
-					grade = ''
-					nurse_examinations = frappe.get_all(
-						'Nurse Examination',
-						filters = {
-							'appointment': self.patient_appointment,
-							'docstatus': 1},
-						pluck = 'name')
-					for nurse_examination in nurse_examinations:
-						sistolic = frappe.db.get_value(
-							'Nurse Examination Result', 
-							{'parent': nurse_examination, 'test_name': 'Systolic'},
-							'result_value')
-						diastolic = frappe.db.get_value(
-							'Nurse Examination Result', 
-							{'parent': nurse_examination, 'test_name': 'Diastolic'},
-							'result_value')
-						if sistolic and diastolic:
-							sistolic = int(sistolic)
-							diastolic = int(diastolic)
-							break
-					print(sistolic)
-					print(diastolic)
-					if sistolic and diastolic:
-						if sistolic < 120 and diastolic <80:
-							incdec = 'Normal'
-						if (sistolic >= 120 and sistolic <140) or (diastolic >=80 and diastolic <90):
-							incdec = 'Prehypertension'
-						if (sistolic >= 140 and sistolic <160) or (diastolic >=90 and diastolic <100):
-							incdec = 'Stage 1 Hypertension'
-						if sistolic >= 160 and diastolic >=100:
-							incdec = 'Stage 2 Hypertension'
-				doc.append('nurse_grade', {
-					'examination': item.item_name,
-					'gradable': item.custom_gradable,
-					'hidden_item_group': item_group.name,
-					'hidden_item': item.examination_item,
-					'incdec': incdec if item.examination_item == 'BASC-00003' else None,
-					'is_item': 1})
-				if previous_exam_item != item.examination_item:
-					exams = frappe.db.sql(f"""
-						SELECT tner.idx AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
-						FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
-						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
-						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Increase')) 
-						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND tmg.test_name = tner.test_name LIMIT 1), 0) AS gradable
-						FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
-						WHERE tne.name = tner.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
-						AND tner.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
-						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name)
-						UNION
-						SELECT tnesr.idx+100, result_line, NULL, NULL, result_text, result_check, tne.name, tnerq.status, NULL, 0
-						FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
-						WHERE tne.name = tnesr.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
-						AND tnesr.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
-						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name)
-						UNION
-						SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, tnerq.status, NULL, 0
-						FROM `tabCalculated Exam` tce, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
-						WHERE tne.name = tce.parent AND tne.appointment = '{self.patient_appointment}' AND tne.docstatus = 1 
-						AND tce.item_code = '{item.examination_item}' AND tnerq.parent = tne.name 
-						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tce.item_code AND tnerq.template = tnet.item_name)
-						UNION
-						SELECT tner.idx+300 AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
-						FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, test_uom AS uom, tnr.name AS doc, tnerq.status AS status, 
-						CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
-						CASE WHEN result_value > max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Increase')) 
-						WHEN result_value < min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = test_name AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND tmg.test_name = tner.test_name LIMIT 1), 0) AS gradable
-						FROM `tabNurse Examination Result` tner, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
-						WHERE tnr.name = tner.parent AND tnr.appointment = '{self.patient_appointment}' AND tnr.docstatus IN (0,1)
-						AND tner.item_code = '{item.examination_item}' AND tnerq.parent = tnr.name
-						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
-						UNION
-						SELECT tnesr.idx+400, result_line, NULL, NULL, result_text, result_check, tnr.name, tnerq.status, NULL, 0
-						FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
-						WHERE tnr.name = tnesr.parent AND tnr.appointment = '{self.patient_appointment}' AND tnr.docstatus IN (0,1)
-						AND tnesr.item_code = '{item.examination_item}' AND tnerq.parent = tnr.name 
-						AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
-						ORDER BY 1""", as_dict=1)
-					for exam in exams:
-						grade = ''
-						grade_description = ''
-						if exam.incdec:
-							incdec = exam.incdec.split('|||')
-						else:
-							incdec = ['','']
-						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value and is_within_range(exam.result_text, exam.min_value, exam.max_value):
-							grade = 'A'
-							grade_description = frappe.db.get_value(
-								'MCU Grade', 
-								{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
-								'description')
-						if exam.result_line == 'BMI':
-							bmi_rec = frappe.db.get_all('BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
-							exam_result_float = convert_to_float(exam.result_text)
-							for bmi in bmi_rec:
-								min_value_float = convert_to_float(bmi['min_value'])
-								max_value_float = convert_to_float(bmi['max_value'])
-								if is_within_range(exam_result_float, min_value_float, max_value_float):
-									grade = bmi['grade']
-									grade_description = bmi['name']
-									category = frappe.db.get_value(
-										'MCU Category', 
-										f"""{item_group.name}.{item.examination_item}.BMI.{bmi['name']}""",
-										'description')
-									incdec = [bmi['name'], category]
-									print(incdec)
-									print(grade)
-									print(grade_description)
-									break
-								else:
-									grade = ''
-									grade_description = ''
-						doc.append('nurse_grade', {
-						'examination': exam.result_line,
-						'gradable': exam.gradable,
-						'result': exam.result_text,
-						'min_value': exam.min_value,
-						'max_value': exam.max_value,
-						'grade': grade if grade else None,
-						'description': grade_description if grade_description else None,
-						'uom': exam.uom,
-						'status': exam.status,
-						'document': exam.doc,
-						'incdec': incdec[0],
-						'incdec_category': incdec[1] if len(incdec)>1 else '',
-						'hidden_item_group': item_group.name,
-						'hidden_item': item.examination_item})
-				previous_exam_item = item.examination_item
-		#Doctor Result
-		doctor_exam_names = frappe.get_all('Doctor Examination', {'docstatus': 1, 'appointment': self.patient_appointment})
-		temp_doc = []
-		for doctor_exam_name in doctor_exam_names:
-			doctor_exam = frappe.get_doc('Doctor Examination', doctor_exam_name.name)
-
-			fields = [
-				('physical_examination_name', 'physical_examination'),
-				('visual_field_test_name', 'visual_field_test'),
-				('romberg_test_name', 'romberg_test'),
-				('tinnel_test_name', 'tinnel_test'),
-				('phallen_test_name', 'phallen_test'),
-				('rectal_test_name', 'rectal_test'),
-				('dental_examination_name', 'dental_examination'),
-			]
-			single_exams = [
-				{
-					'item_code': frappe.db.get_single_value('MCU Settings', item_name),
-					'item_name': frappe.db.get_single_value('MCU Settings', field_name),
-					'code': item_name
-				}
-				for field_name, item_name in fields
-			]
-			previous_exam_item_group = ''
-			previous_exam_item = ''
-			for exam_item in doctor_exam.examination_item:
-				item = [item for item in self.package if item.item_name == exam_item.template]
-				disp_item = item[0]
-				group_gradable, group_pos = frappe.db.get_value('Item Group', disp_item.item_group, ['custom_gradable', 'custom_bundle_position'])
-				item_gradable, item_pos = frappe.db.get_value('Item', disp_item.examination_item, ['custom_gradable', 'custom_bundle_position'])
-
-				if previous_exam_item_group != disp_item.item_group:
-					previous_exam_item_group = disp_item.item_group
-					temp_doc.append({
-						'examination': disp_item.item_group,
-						'gradable': group_gradable,
-						'hidden_item_group': disp_item.item_group,
-						'position': group_pos,
-					})
-				if previous_exam_item != disp_item.examination_item:
-					previous_exam_item = disp_item.examination_item
-					temp_doc.append({
-						'examination': disp_item.item_name,
-						'gradable': item_gradable,
-						'hidden_item_group': disp_item.item_group,
-						'hidden_item': disp_item.examination_item,
-						'position': item_pos,
-						'is_item': 1,
-					})
-
-				doctor_tabs = [item for item in single_exams if item['item_code'] == disp_item.examination_item]
-				temp_doc = []
-				if doctor_tabs:
-					doctor_tab = doctor_tabs[0]
-					if doctor_tab['item_code'] == disp_item.examination_item:
-						if doctor_tab['code'] == 'physical_examination':
-							result_line = 'Eyes'
-							if not doctor_exam.eyes_check:
-								print(1)
-								if not doctor_exam.left_anemic and not doctor_exam.left_icteric and not doctor_exam.el_others:
-									print(2)
-									result = 'Left: No Abnormality'
-								else:
-									print(3)
-									result_list = []
-									if doctor_exam.left_anemic:
-										print(4)
-										result_list.append('Anemic')
-									if doctor_exam.left_icteric:
-										result_list.append('Icteric')
-									if doctor_exam.el_others:
-										result_list.append(f'Other ({doctor_exam.eyes_left_others})')
-									result = 'Left: ' + ','.join(result_list)
-								if not doctor_exam.right_anemic and not doctor_exam.right_icteric and not doctor_exam.er_others:
-									print(5)
-									result += '\nRight: No Abnormality'
-								else:
-									print(6)
-									result_list = []
-									if doctor_exam.right_anemic:
-										result_list.append('Anemic')
-									if doctor_exam.right_icteric:
-										result_list.append('Icteric')
-									if doctor_exam.er_others:
-										result_list.append(f'Other ({doctor_exam.eyes_right_others})')
-									result += '\nRight: ' + ','.join(result_list)
-							else:
-								print(7)
-								result = 'Left: No Abnormality \n Right: No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-01',})
-
-							result_line = 'Ear'
-							if not doctor_exam.ear_check:
-								if not doctor_exam.left_cerumen and not doctor_exam.left_cerumen_prop and not doctor_exam.left_tympanic and not doctor_exam.earl_others:
-									result = 'Left: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.left_cerumen:
-										result_list.append('Cerumen')
-									if doctor_exam.left_cerumen_prop:
-										result_list.append('Cerumen Prop')
-									if doctor_exam.left_tympanic:
-										result_list.append('Tympanic membrance intact')
-									if doctor_exam.earl_others:
-										result_list.append(f'Other ({doctor_exam.ear_left_others})')
-									result = 'Left: ' + ','.join(result_list)
-								if not doctor_exam.right_cerumen and not doctor_exam.right_cerumen_prop and not doctor_exam.right_tympanic and not doctor_exam.earr_others:
-									result += '\nRight: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.right_cerumen:
-										result_list.append('Cerumen')
-									if doctor_exam.right_cerumen_prop:
-										result_list.append('Cerumen Prop')
-									if doctor_exam.right_tympanic:
-										result_list.append('Tympanic membrance intact')
-									if doctor_exam.earl_others:
-										result_list.append(f'Other ({doctor_exam.ear_right_others})')
-									result += '\nRight: ' + ','.join(result_list)
-							else:
-								result = 'Left: No Abnormality \n Right: No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-02',})
-								
-							result_line = 'Nose'
-							if not doctor_exam.nose_check:
-								if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
-									result = 'Left: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.left_enlarged:
-										result_list.append('Enlarged')
-									if doctor_exam.left_hyperemic:
-										result_list.append('Hyperemic')
-									if doctor_exam.left_polyp:
-										result_list.append('Polyp')
-									if doctor_exam.nl_others:
-										result_list.append(f'Other ({doctor_exam.nose_left_others})')
-									result = 'Left: ' + ','.join(result_list)
-								if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
-									result += '\nRight: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.right_enlarged:
-										result_list.append('Enlarged')
-									if doctor_exam.right_hyperemic:
-										result_list.append('Hyperemic')
-									if doctor_exam.right_polyp:
-										result_list.append('Polyp')
-									if doctor_exam.nr_others:
-										result_list.append(f'Other ({doctor_exam.nose_right_others})')
-									result += '\nRight: ' + ','.join(result_list)
-								if doctor_exam.deviated:
-									if result:
-										result += '\nDeviated'
-									else:
-										result = 'Deviated'
-							else:
-								result = 'Left: No Abnormality \n Right: No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-03',})
-								
-							result_line = 'Throat'
-							if not doctor_exam.throat_check:
-								if not doctor_exam.enlarged_tonsil and not doctor_exam.hyperemic_pharynx and not doctor_exam.t_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.enlarged_tonsil:
-										result_list.append('Enlarged Tonsil')
-									if doctor_exam.hyperemic_pharynx:
-										result_list.append('Hyperemic Pharynx')
-									if doctor_exam.t_others:
-										result_list.append(f'Other ({doctor_exam.throat_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-04',})
-
-							result_line = 'Neck'
-							if not doctor_exam.neck_check:
-								if not doctor_exam.enlarged_thyroid and not doctor_exam.enlarged_lymph_node and not doctor_exam.n_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.enlarged_thyroid:
-										result_list.append(f'Enlarged Tonsil ({doctor_exam.enlarged_thyroid_details})')
-									if doctor_exam.enlarged_lymph_node:
-										result_list.append(f'Enlarged Lymph Node ({doctor_exam.enlarged_lymph_node_details})')
-									if doctor_exam.n_others:
-										result_list.append(f'Other ({doctor_exam.neck_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-05',})
-
-							result_line = 'Cardiac'
-							if not doctor_exam.cardiac_check:
-								if not doctor_exam.regular_heart_sound and not doctor_exam.murmur and not doctor_exam.gallop and not doctor_exam.c_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.regular_heart_sound:
-										result_list.append('Regular Heart Sound')
-									if doctor_exam.murmur:
-										result_list.append('Murmur')
-									if doctor_exam.gallop:
-										result_list.append('Gallop')
-									if doctor_exam.c_others:
-										result_list.append(f'Other ({doctor_exam.cardiac_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-06',})
-
-							result_line = 'Breast'
-							if not doctor_exam.breast_check:
-								if not doctor_exam.left_enlarged_breast and not doctor_exam.left_lumps and not doctor_exam.bl_others:
-									result = 'Left: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.left_enlarged_breast:
-										result_list.append('Enlarged Breast Glands')
-									if doctor_exam.left_lumps:
-										result_list.append('Lumps')
-									if doctor_exam.bl_others:
-										result_list.append(f'Other ({doctor_exam.breast_left_others})')
-									result = 'Left: ' + ','.join(result_list)
-								if not doctor_exam.right_enlarged_breast and not doctor_exam.right_lumps and not doctor_exam.br_others:
-									result += '\nRight: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.right_enlarged_breast:
-										result_list.append('Enlarged Breast Glands')
-									if doctor_exam.right_lumps:
-										result_list.append('Lumps')
-									if doctor_exam.br_others:
-										result_list.append(f'Other ({doctor_exam.breast_right_others})')
-									result += '\nRight: ' + ','.join(result_list)
-							else:
-								result = 'Left: No Abnormality \n Right: No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-07',})
-
-							result_line = 'Respiratory System'
-							if not doctor_exam.resp_check:
-								if not doctor_exam.left_ronkhi and not doctor_exam.left_wheezing and not doctor_exam.r_others:
-									result = 'Left: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.left_ronkhi:
-										result_list.append('Ronkhi')
-									if doctor_exam.left_wheezing:
-										result_list.append('Wheezing')
-									if doctor_exam.r_others:
-										result_list.append(f'Other ({doctor_exam.resp_left_others})')
-									result = 'Left: ' + ','.join(result_list)
-								if not doctor_exam.right_ronkhi and not doctor_exam.right_wheezing and not doctor_exam.rr_others:
-									result += '\nRight: No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.right_ronkhi:
-										result_list.append('Ronkhi')
-									if doctor_exam.right_wheezing:
-										result_list.append('Wheezing')
-									if doctor_exam.br_others:
-										result_list.append(f'Other ({doctor_exam.resp_right_others})')
-									result += '\nRight: ' + ','.join(result_list)
-							else:
-								result = 'Left: No Abnormality \n Right: No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-08',})
-
-							result_line = 'Abdomen'
-							if not doctor_exam.abd_check:
-								if not doctor_exam.tenderness and not doctor_exam.hepatomegaly and not doctor_exam.splenomegaly and not doctor_exam.increased_bowel_sounds and not doctor_exam.a_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.tenderness:
-										result_list.append(f'Tenderness ({doctor_exam.abd_tender_details})')
-									if doctor_exam.hepatomegaly:
-										result_list.append('Hepatomegaly')
-									if doctor_exam.splenomegaly:
-										result_list.append('Splenomegaly')
-									if doctor_exam.increased_bowel_sounds:
-										result_list.append('Increased Bowel Sounds')
-									if doctor_exam.a_others:
-										result_list.append(f'Other ({doctor_exam.abd_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-09',})
-
-							result_line = 'Spine'
-							if not doctor_exam.spine_check:
-								result = doctor_exam.spine_details
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '10',})
-
-							result_line = 'Genitourinary'
-							if not doctor_exam.genit_check:
-								if not doctor_exam.hernia and not doctor_exam.hemorrhoid and not doctor_exam.inguinal_nodes and not doctor_exam.g_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.hernia:
-										result_list.append(f'Hernia ({doctor_exam.hernia_details})')
-									if doctor_exam.hemorrhoid:
-										result_list.append('Hemorrhoid')
-									if doctor_exam.inguinal_nodes:
-										result_list.append('Inguinal Nodes')
-									if doctor_exam.g_others:
-										result_list.append(f'Other ({doctor_exam.genit_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-11',})
-
-							result_line = 'Neurological System'
-							if not doctor_exam.neuro_check:
-								if not doctor_exam.motoric_system_abnormality and not doctor_exam.sensory_system_abnormality and not doctor_exam.reflexes_abnormality and not doctor_exam.ne_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.motoric_system_abnormality:
-										result_list.append(f'Motoric System Abnormality ({doctor_exam.motoric_details})')
-									if doctor_exam.sensory_system_abnormality:
-										result_list.append(f'Sensory System Abnormality ({doctor_exam.sensory_details})')
-									if doctor_exam.reflexes_abnormality:
-										result_list.append(f'Reflexes Abnormality ({doctor_exam.reflex_details})')
-									if doctor_exam.ne_others:
-										result_list.append(f'Other ({doctor_exam.neuro_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-12',})
-								
-							result_line = 'Skin'
-							if not doctor_exam.skin_check:
-								if not doctor_exam.skin_psoriasis and not doctor_exam.skin_tattoo and not doctor_exam.skin_tag and not doctor_exam.sk_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.skin_psoriasis:
-										result_list.append('Psoriasis')
-									if doctor_exam.skin_tattoo:
-										result_list.append('Tattoo')
-									if doctor_exam.skin_tag:
-										result_list.append('Skin Tag')
-									if doctor_exam.sk_others:
-										result_list.append(f'Other ({doctor_exam.skin_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-13',})
-
-						elif doctor_tab['code'] == 'visual_field_test':
-							result_line = 'Visual Field Test'
-							if not doctor_exam.visual_check:
-								result = doctor_exam.visual_details
-							else:
-								result = 'Same As Examiner'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-01',})
-
-						elif doctor_tab['code'] == 'romberg_test':
-							result_line = 'Romberg Test'
-							if not doctor_exam.romberg_check:
-								result = '\n'.join(filter(None, [doctor_exam.romberg_abnormal or '', doctor_exam.romberg_others or '']))
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-01',})
-
-						elif doctor_tab['code'] == 'tinnel_test':
-							result_line = 'Tinnel Test'
-							if not doctor_exam.tinnel_check:
-								result = doctor_exam.tinnel_details
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-01',})
-
-						elif doctor_tab['code'] == 'phallen_test':
-							result_line = 'Phallen Test'
-							if not doctor_exam.phallen_check:
-								result = doctor_exam.phallen_details
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-01',})
-
-						elif doctor_tab['code'] == 'rectal_test':
-							result_line = 'Rectal Test'
-							if not doctor_exam.skin_check:
-								if not doctor_exam.rectal_hemorrhoid and not doctor_exam.enlarged_prostate and not doctor_exam.re_others:
-									result = 'No Abnormality'
-								else:
-									result_list = []
-									if doctor_exam.rectal_hemorrhoid:
-										result_list.append(doctor_exam.rectal_hemorrhoid)
-									if doctor_exam.enlarged_prostate:
-										result_list.append('Enlarged Prostate')
-									if doctor_exam.re_others:
-										result_list.append(f'Other ({doctor_exam.rectal_others})')
-									result = ','.join(result_list)
-							else:
-								result = 'No Abnormality'
-							temp_doc.append({
-								'examination': result_line,
-								'gradable': 0,
-								'result': result,
-								'status': disp_item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + '-01',})
-
-						elif doctor_tab['code'] == 'dental_examination':
-							pass
-				else:
-					counter = 0
-					for selective in doctor_exam.result:
-						if selective.item_code == disp_item.examination_item:
-							counter += 1
-							temp_doc.append({
-								'examination': selective.result_line,
-								'gradable': 0,
-								'result': ': '.join(filter(None, [selective.result_check or '', selective.result_text or ''])),
-								'status': item.status,
-								'document': doctor_exam.name,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + f'-{counter}',})
-
-					for non_selective in doctor_exam.non_selective_result:
-						if non_selective.item_code == disp_item.examination_item:
-							gradable = frappe.db.exists(
-								'MCU Grade', 
-								{'item_group': item_group.name, 'item_code': disp_item.examination_item, 'test_name': non_selective.test_name})
-							grade = ''
-							grade_description = ''
-							incdec = ''
-							incdec_category = ''
-							if non_selective.result_value and non_selective.min_value and non_selective.max_value:
-								if gradable and non_selective.result_value>=non_selective.min_value and non_selective.result_value<=non_selective.max_value:
-									grade = 'A'
-									grade_description = frappe.db.get_value(
-										'MCU Grade', 
-										{
-											'item_group': item_group.name, 
-											'item_code': disp_item.examination_item, 
-											'test_name': non_selective.test_name, 
-											'grade': 'A'
-										},
-										'description',
-										as_dict = 1)
-								if non_selective.result_value<non_selective.min_value:
-									incdec = 'Decrease'
-								if non_selective.result_value>non_selective.max_value:
-									incdec = 'Increase'
-								if incdec:
-									incdec_category = frappe.db.get_value(
-										'MCU Category',
-										{
-											'item_group': item_group.name, 
-											'item_code': disp_item.examination_item, 
-											'test_name': non_selective.test_name, 
-											'selection': incdec
-										},
-										description
-									)
-							counter += 1
-							temp_doc.append({
-								'examination': non_selective.test_name,
-								'gradable': 1 if gradable else 0,
-								'result': non_selective.result_value,
-								'min_value': non_selective.min_value,
-								'max_value': non_selective.max_value,
-								'grade': grade if grade else None,
-								'description': grade_description if grade_description else None,
-								'uom': non_selective.uom,
-								'status': item.status,
-								'document': doctor_exam.name,
-								'incdec': incdec if incdec else None,
-								'incdec_category': incdec_category if incdec_category else None,
-								'hidden_item_group': item_group.name,
-								'hidden_item': disp_item.examination_item,
-								'position': str(item_pos) + f'-{counter}',})
-		sorted_temp = sorted(
-			temp_doc,
-			key = lambda x:str(x['position'])
-		)
-		for ready in sorted_temp:
-			doc.append('doctor_grade', {
-				'examination': ready.get('examination'),
-				'gradable': ready.get('gradable'),
-				'result': ready.get('result'),
-				'min_value': ready.get('min_value'),
-				'max_value': ready.get('max_value'),
-				'grade': ready.get('grade'),
-				'uom': ready.get('uom'),
-				'status': ready.get('status'),
-				'document': ready.get('document'),
-				'incdec': ready.get('incdec'),
-				'incdec_category': ready.get('incdec_category'),
-				'hidden_item_group': ready.get('hidden_item_group'),
-				'hidden_item': ready.get('hidden_item'),
-				'is_item': ready.get('is_item'),
-			})
-		#Radiology Result
-		item_groups = frappe.db.sql(f"""SELECT DISTINCT tig.name, tig.custom_gradable 
-			FROM `tabMCU Appointment` tma, tabItem ti, `tabItem Group` tig 
-			WHERE tma.parent = '{self.patient_appointment}'
-			AND tig.name = ti.item_group 
-			AND ti.name = tma.examination_item 
-			AND EXISTS (SELECT 1 FROM `tabRadiology Result Template` trrt WHERE trrt.item_code = ti.name)
-			ORDER BY tig.custom_bundle_position""", as_dict=True)
-		for item_group in item_groups:
-			doc.append('radiology_grade', {
-				'examination': item_group.name,
-				'gradable': item_group.custom_gradable,
-				'hidden_item_group': item_group.name,})
-			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
-				FROM `tabMCU Appointment` tma, tabItem ti
-				WHERE EXISTS (SELECT 1 FROM `tabDispatcher` td 
-				WHERE patient_appointment = '{self.patient_appointment}' AND tma.parent = td.name)
-				AND tma.examination_item = ti.name
-				AND ti.item_group = '{item_group.name}'
-				ORDER BY ti.custom_bundle_position""", as_dict = 1)
-			previous_exam_item = ''
-			for item in items:
-				doc.append('radiology_grade', {
-					'examination': item.item_name,
-					'gradable': item.custom_gradable,
-					'hidden_item_group': item_group.name,
-					'hidden_item': item.examination_item,
-					'is_item': 1,})
-				if previous_exam_item != item.examination_item:
-					exams = frappe.db.sql(f"""
-						SELECT trr.idx, result_line, NULL AS min_value, NULL as max_value, result_text, IF(trr.docstatus=1, result_check, NULL) AS uom, 
-						trr.parent AS doc, trr2.workflow_state AS status, NULL AS incdec
-						FROM `tabRadiology Results` trr,  `tabRadiology Result` trr2 
-						WHERE trr.parent = trr2.name AND trr2.appointment = '{self.patient_appointment}' AND trr2.docstatus IN (0, 1)
-						AND item_code = '{item.examination_item}' ORDER BY idx""", as_dict=1)
-					for exam in exams:
-						doc.append('radiology_grade', {
-						'examination': exam.result_line,
-						'gradable': 0,
-						'result': '\n'.join(filter(None, [exam.uom or '', exam.result_text or ''])),
-						'min_value': exam.min_value,
-						'max_value': exam.max_value,
-						'uom': '',
-						'status': exam.status,
-						'document': exam.doc,
-						'incdec': exam.incdec,
-						'hidden_item_group': item_group.name,
-						'hidden_item': item.examination_item})
-				previous_exam_item = item.examination_item
-		#Lab Result
-		item_groups = frappe.db.sql(f"""SELECT DISTINCT tig.name, tig.custom_gradable 
-			FROM `tabMCU Appointment` tma, tabItem ti, `tabItem Group` tig 
-			WHERE tma.parent = '{self.patient_appointment}'
-			AND tig.name = ti.item_group 
-			AND ti.name = tma.examination_item 
-			AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.lab_test_code = ti.name)
-			ORDER BY tig.custom_bundle_position""", as_dict=True)
-		for item_group in item_groups:
-			doc.append('lab_test_grade', {
-				'examination': item_group.name,
-				'gradable': item_group.custom_gradable,
-				'hidden_item_group': item_group.name,})
-			items = frappe.db.sql(f"""SELECT DISTINCT tma.examination_item, tma.item_name, tma.status, ti.custom_gradable
-				FROM `tabMCU Appointment` tma, tabItem ti
-				WHERE EXISTS (SELECT 1 FROM `tabDispatcher` td 
-				WHERE patient_appointment = '{self.patient_appointment}' AND tma.parent = td.name)
-				AND tma.examination_item = ti.name
-				AND ti.item_group = '{item_group.name}'
-				ORDER BY ti.custom_bundle_position""", as_dict = 1)
-			previous_exam_item = ''
-			for item in items:
-				doc.append('lab_test_grade', {
-					'examination': item.item_name,
-					'gradable': item.custom_gradable,
-					'hidden_item_group': item_group.name,
-					'hidden_item': item.examination_item,
-					'is_item': 1,})
-				if previous_exam_item != item.examination_item:
-					exams = frappe.db.sql(f"""
-						SELECT tntr.idx, lab_test_event AS result_line, custom_min_value AS min_value, custom_max_value AS max_value, result_value AS result_text, 
-						lab_test_uom AS uom, tlt.name AS doc, tlt.status AS status,
-						CASE WHEN custom_min_value IS NOT NULL AND custom_max_value IS NOT NULL AND (custom_min_value <> 0 OR custom_max_value <> 0) AND result_value IS NOT NULL THEN
-						CASE WHEN result_value > custom_max_value THEN CONCAT_WS('|||', 'Increase', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = lab_test_event AND tmc.selection = 'Increase')) 
-						WHEN result_value < custom_min_value THEN CONCAT_WS('|||', 'Decrease', (SELECT tmc.description FROM `tabMCU Category` tmc 
-						WHERE tmc.item_group = '{item_group.name}' AND tmc.item = '{item.examination_item}' AND tmc.test_name = lab_test_event AND tmc.selection = 'Decrease')) ELSE NULL END ELSE NULL END AS incdec,
-						IFNULL((SELECT 1 FROM `tabMCU Grade` tmg WHERE tmg.item_group = '{item_group.name}' AND tmg.item_code = '{item.examination_item}' AND test_name = lab_test_event LIMIT 1), 0) AS gradable
-						FROM `tabNormal Test Result` tntr, `tabLab Test` tlt WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{self.patient_appointment}' 
-						AND tlt.docstatus IN (0, 1) AND tntr.lab_test_name = '{item.item_name}'
-						UNION
-						SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, NULL, 0
-						FROM `tabSelective Test Template` tstt, `tabLab Test` tlt WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{self.patient_appointment}' 
-						AND tlt.docstatus IN (0, 1) AND event = '{item.item_name}' ORDER BY idx""", as_dict=1)
-					for exam in exams:
-						grade = ''
-						grade_description = ''
-						if exam.incdec:
-							incdec = exam.incdec.split('|||')
-						else:
-							incdec = ['','']
-						if exam.gradable == 1 and exam.result_text and exam.min_value and exam.max_value:
-							if float(exam.result_text) >= float(exam.min_value) and float(exam.result_text) <= float(exam.max_value):
-								grade = 'A'
-								grade_description = frappe.db.get_value(
-									'MCU Grade', 
-									{'item_group': item_group.name, 'item_code': item.examination_item, 'test_name': exam.result_line, 'grade': 'A'}, 
-									'description')
-						doc.append('lab_test_grade', {
-						'examination': exam.result_line,
-						'gradable': exam.gradable,
-						'result': exam.result_text,
-						'min_value': exam.min_value,
-						'max_value': exam.max_value,
-						'grade': grade if grade else None,
-						'description': grade_description if grade_description else None,
-						'uom': exam.uom,
-						'status': exam.status,
-						'document': exam.doc,
-						'incdec': incdec[0],
-						'incdec_category': incdec[1] if len(incdec)>1 else '',
-						'hidden_item_group': item_group.name,
-						'hidden_item': item.examination_item})
-				previous_exam_item = item.examination_item
+		package_line = frappe.db.sql(f"""SELECT examination_item, item_name, item_group,
+			(select custom_gradable from `tabItem Group` tig where tig.name = item_group) group_gradable, 
+			(select custom_bundle_position from `tabItem Group` tig where tig.name = item_group)group_position,
+			(select custom_gradable from `tabItem` ti where ti.name = examination_item) item_gradable, 
+			(select custom_bundle_position from `tabItem` ti where ti.name = examination_item) item_position,
+			(select 1 from `tabNurse Examination Template` tnet where tnet.item_code = examination_item) nurse,
+			(select 1 from `tabDoctor Examination Template` tnet where tnet.item_code = examination_item) doctor,
+			(select 1 from `tabRadiology Result Template` tnet where tnet.item_code = examination_item) radiology,
+			(select 1 from `tabLab Test Template` tnet where tnet.lab_test_code = examination_item) lab_test
+			from `tabMCU Appointment`
+			where parent = '{self.patient_appointment}'""", as_dict = True)
+		group_result = get_examination_items(package_line)
+		process_examination_items(doc, group_result, self.package)
 		doc.insert()
 
 	def calculate_progress(self):
@@ -988,6 +81,1070 @@ def convert_to_float(value):
 
 def is_within_range(value, min_value, max_value):
 	return min_value < value < max_value
+
+def get_examination_items(sql):
+	def group_and_sort(data, key):
+		filtered_data = [row for row in data if row.get(key) is not None]
+		grouped_data = {}
+		for row in filtered_data:
+			group = row['item_group']
+			if group not in grouped_data:
+				grouped_data[group] = {
+					'item_group': group,
+					'group_gradable': row['group_gradable'],
+					'group_position': row['group_position'],
+					'items': []
+				}
+			grouped_data[group]['items'].append({
+				'examination_item': row['examination_item'],
+				'item_name': row['item_name'],
+				'item_gradable': row['item_gradable'],
+				'item_position': row['item_position'],
+			})
+		for group in grouped_data.values():
+			group['items'] = sorted(group['items'], key=lambda x: x['item_position'])
+		sorted_data = sorted(grouped_data.values(), key=lambda x: x['group_position'])
+		return sorted_data
+	nurse_array = group_and_sort(sql, 'nurse')
+	doctor_array = group_and_sort(sql, 'doctor')
+	radiology_array = group_and_sort(sql, 'radiology')
+	lab_array = group_and_sort(sql, 'lab_test')
+	return {
+		'nurse': nurse_array,
+		#'doctor': doctor_array,
+		'radiology': radiology_array,
+		'lab_test': lab_array,
+	}
+
+def process_examination_items(doc, data, package):
+	def calculate_blood_pressure(appointment):
+		exams = frappe.get_all(
+			'Nurse Examination',
+			filters = {'appointment': appointment, 'docstatus':  1},
+			pluck = 'name'
+		)
+		for exam in exams:
+			systolic = frappe.db.get_value(
+				'Nurse Examination Result', 
+				{'parent': exam, 'test_name': 'Systolic'}, 
+				'result_value'
+			)
+			diastolic = frappe.db.get_value(
+				'Nurse Examination Result', 
+				{'parent': exam, 'test_name': 'Diastolic'}, 
+				'result_value'
+			)
+			if systolic and diastolic:
+				systolic = int(systolic)
+				diastolic = int(diastolic)
+				break
+		if systolic and diastolic:
+			if systolic < 120 and diastolic <80:
+				return 'Normal'
+			if (systolic >= 120 and systolic <140) or (diastolic >=80 and diastolic <90):
+				return 'Prehypertension'
+			if (systolic >= 140 and systolic <160) or (diastolic >=90 and diastolic <100):
+				return 'Stage 1 Hypertension'
+			if systolic >= 160 and diastolic >=100:
+				return 'Stage 2 Hypertension'
+		return None
+
+	def get_radiology_result(appointment, item_code, item_name):
+		column = frappe.db.get_value('Radiology Result Template', item_name, 'diagnose_column')
+		if column:
+			exams = frappe.db.get_all(
+				'Radiology Result', 
+				filters = {'appointment': appointment, 'docstatus': 1}, 
+				pluck = 'name'
+			)
+			for exam in exams:
+				for line in exam.result:
+					if line.item_code == item_code and line.result_line == column:
+						return line.result_text
+		else:
+			return None
+
+	def append_items(category, group, item, doc, additional_data=None):
+		data = {
+			'examination': item['item_name'],
+			'gradable': item.get('custom_gradable', 0),
+			'hidden_item_group': group['item_group'],
+			'hidden_item': item['examination_item'],
+			**(additional_data or {})
+		}
+		doc.append(f"{category}_grade", data)
+
+	blood_pressure = frappe.db.get_single_value('MCU Settings', 'vital_sign_with_systolicdiastolic')
+	blood_pressure_item_code = (
+		frappe.db.get_value('Nurse Examination Template', blood_pressure, 'item_code') 
+		if blood_pressure else None)
+	for category, groups in data.items():
+		for group in groups:
+			doc.append(f"{category}_grade", {
+				'examination': group['item_group'],
+				'gradable': group['group_gradable'],
+				'hidden_item_group': group['item_group'],
+			})
+			for item in group['items']:
+				radiology_result = None
+				incdec = None
+				if blood_pressure_item_code == item['examination_item']:
+					incdec = calculate_blood_pressure(doc.appointment)
+				if category == 'radiology':
+					radiology_result = get_radiology_result(doc.appointment, item['examination_item'], item['item_name'])
+				append_items(
+					category, group, item, doc,
+					additional_data={'result': radiology_result, 'incdec': incdec, 'is_item': 1}
+				)
+				if category == 'nurse':
+					process_nurse_category(doc, group, item)
+				elif category == 'lab_test':
+					process_lab_test_category(doc, group, item)
+	process_doctor_category(doc, package)
+
+def calculate_grade(result_text, min_value, max_value, group, item_code, test_name):
+	if not (result_text and min_value and max_value):
+		return None, None
+	result_value = flt(result_text)
+	if flt(min_value) <= result_value <= flt(max_value):
+		grade = 'A'
+		grade_description = frappe.db.get_value(
+			'MCU Grade',
+			{'item_group': group, 'item_code': item_code, 'test_name': test_name, 'grade': grade},
+			'description'
+		)
+		return grade, grade_description
+	return None, None
+
+def process_nurse_category(doc, group, item):
+	nurse_grades = build_nurse_grade(group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
+	for nurse_grade in nurse_grades:
+		grade, grade_description = calculate_grade(
+			nurse_grade.result_text, nurse_grade.min_value, nurse_grade.max_value,
+			group['item_group'], item['examination_item'], nurse_grade.result_line
+		)
+		incdec = nurse_grade.incdec.split('|||') if nurse_grade.incdec else ['', '']
+		if nurse_grade.result_line == 'BMI':
+			bmi_rec = frappe.db.get_all('BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
+			exam_result_float = convert_to_float(nurse_grade.result_text)
+			for bmi in bmi_rec:
+				min_value_float = convert_to_float(bmi['min_value'])
+				max_value_float = convert_to_float(bmi['max_value'])
+				if is_within_range(exam_result_float, min_value_float, max_value_float):
+					grade = bmi['grade']
+					grade_description = bmi['name']
+					category = frappe.db.get_value(
+						'MCU Category', 
+						f"{group['item_group']}.{item['examination_item']}.BMI.{bmi['name']}",
+						'description'
+					)
+					incdec = [bmi['name'], category]
+					break
+		doc.append('nurse_grade', {
+			'examination': nurse_grade.result_line,
+			'gradable': nurse_grade.gradable,
+			'result': nurse_grade.result_text,
+			'min_value': nurse_grade.min_value,
+			'max_value': nurse_grade.max_value,
+			'grade': grade,
+			'description': grade_description,
+			'uom': nurse_grade.uom,
+			'status': nurse_grade.status,
+			'document': nurse_grade.doc,
+			'incdec': incdec[0],
+			'incdec_category': incdec[1] if len(incdec) > 1 else '',
+			'hidden_item_group': group['item_group'],
+			'hidden_item': item['examination_item']
+		})
+
+def process_doctor_category(doc, package):
+	def split_position(pos):
+		pos = str(pos)
+		return [int(part) if part.isdigit() else part for part in pos.split('-')]
+	def flatten_grades(grades):
+		flat = []
+		for grade in grades:
+			if isinstance(grade, list):
+				flat.extend(flatten_grades(grade))  # Recursively flatten
+			else:
+				flat.append(grade)
+		return flat
+	doctor_grades = build_doctor_grade(doc.appointment, package)
+	flat_grades = flatten_grades(doctor_grades)
+	sorted_temp = sorted(flat_grades, key=lambda x: split_position(x.get('position', '')))
+	for ready in sorted_temp:
+		doc.append('doctor_grade', {
+			'examination': ready.get('examination'),
+			'gradable': ready.get('gradable'),
+			'result': ready.get('result'),
+			'min_value': ready.get('min_value'),
+			'max_value': ready.get('max_value'),
+			'grade': ready.get('grade'),
+			'uom': ready.get('uom'),
+			'status': ready.get('status'),
+			'document': ready.get('document'),
+			'incdec': ready.get('incdec'),
+			'incdec_category': ready.get('incdec_category'),
+			'hidden_item_group': ready.get('hidden_item_group'),
+			'hidden_item': ready.get('hidden_item'),
+			'is_item': ready.get('is_item'),
+		})
+
+def process_lab_test_category(doc, group, item):
+	lab_test_grades = build_lab_test_grade(group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
+	for lab_test_grade in lab_test_grades:
+		grade, grade_description = calculate_grade(
+			lab_test_grade.result_text, lab_test_grade.min_value, lab_test_grade.max_value,
+			group['item_group'], item['examination_item'], lab_test_grade.result_line
+		)
+		incdec = lab_test_grade.incdec.split('|||') if lab_test_grade.incdec else ['', '']
+		doc.append( 'lab_test_grade', {
+			'examination': lab_test_grade.result_line,
+			'gradable': lab_test_grade.gradable,
+			'result': lab_test_grade.result_text,
+			'min_value': lab_test_grade.min_value,
+			'max_value': lab_test_grade.max_value,
+			'grade': grade,
+			'description': grade_description,
+			'uom': lab_test_grade.uom,
+			'status': lab_test_grade.status,
+			'document': lab_test_grade.doc,
+			'incdec': incdec[0],
+			'incdec_category': incdec[1] if len(incdec) > 1 else '',
+			'hidden_item_group': group['item_group'],
+			'hidden_item': item['examination_item']
+		})
+
+def build_lab_test_grade(item_group, item_code, item_name, appointment):
+	sql = f"""
+		SELECT 
+		tntr.idx, lab_test_event AS result_line, custom_min_value AS min_value, custom_max_value AS max_value, 
+		result_value AS result_text, lab_test_uom AS uom, tlt.name AS doc, tlt.status AS status,
+		CASE WHEN custom_min_value IS NOT NULL 
+			AND custom_max_value IS NOT NULL 
+			AND (custom_min_value <> 0 OR custom_max_value <> 0) 
+			AND result_value IS NOT NULL THEN
+			CASE WHEN result_value > custom_max_value THEN 
+				CONCAT_WS(
+					'|||', 
+					'Increase', 
+					(SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = lab_test_event 
+						AND tmc.selection = 'Increase'
+					)
+				) 
+			WHEN result_value < custom_min_value THEN 
+				CONCAT_WS(
+					'|||', 
+					'Decrease', 
+					(SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = lab_test_event 
+						AND tmc.selection = 'Decrease'
+					)
+				) 
+			ELSE NULL END 
+		ELSE NULL END AS incdec,
+		IFNULL(
+			(SELECT 1 FROM `tabMCU Grade` tmg 
+				WHERE tmg.item_group = '{item_group}' 
+				AND tmg.item_code = '{item_code}' 
+				AND test_name = lab_test_event 
+				LIMIT 1), 
+			0) AS gradable
+		FROM `tabNormal Test Result` tntr, `tabLab Test` tlt WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
+		AND tlt.docstatus IN (0, 1) AND tntr.lab_test_name = '{item_name}'
+		UNION
+		SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, NULL, 0
+		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
+		AND tlt.docstatus IN (0, 1) AND event = '{item_name}' ORDER BY idx"""
+	return frappe.db.sql(sql, as_dict = True)
+
+def build_nurse_grade(item_group, item_code, item_name, appointment):
+	sql = f"""
+		SELECT tner.idx AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, FORMAT(max_value, 2) AS max_value, 
+		FORMAT(result_value, 2) AS result_text, test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
+		CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+			CASE WHEN result_value > max_value THEN 
+				CONCAT_WS(
+					'|||', 
+					'Increase', 
+					(SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = test_name 
+						AND tmc.selection = 'Increase'
+					)
+				) 
+			WHEN result_value < min_value THEN 
+				CONCAT_WS(
+					'|||', 
+					'Decrease', 
+					(SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = test_name 
+						AND tmc.selection = 'Decrease'
+					)
+				) 
+			ELSE NULL END 
+		ELSE NULL END AS incdec,
+		IFNULL(
+			(SELECT 1 FROM `tabMCU Grade` tmg 
+				WHERE tmg.item_group = '{item_group}' 
+				AND tmg.item_code = '{item_code}' 
+				AND tmg.test_name = tner.test_name 
+				LIMIT 1
+			), 
+			0
+		) AS gradable
+		FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
+		WHERE tne.name = tner.parent AND tne.appointment = '{appointment}' AND tne.docstatus = 1 
+		AND tner.item_code = '{item_code}' AND tnerq.parent = tne.name 
+		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
+			WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name)
+		UNION
+		SELECT tnesr.idx+100, result_line, NULL, NULL, result_text, result_check, tne.name, tnerq.status, NULL, 0
+		FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
+		WHERE tne.name = tnesr.parent AND tne.appointment = '{appointment}' AND tne.docstatus = 1 
+		AND tnesr.item_code = '{item_code}' AND tnerq.parent = tne.name 
+		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
+			WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name)
+		UNION
+		SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, tnerq.status, NULL, 0
+		FROM `tabCalculated Exam` tce, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
+		WHERE tne.name = tce.parent AND tne.appointment = '{appointment}' AND tne.docstatus = 1 
+		AND tce.item_code = '{item_code}' AND tnerq.parent = tne.name 
+		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
+			WHERE tnet.item_code = tce.item_code AND tnerq.template = tnet.item_name)
+		UNION
+		SELECT tner.idx+300 AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, FORMAT(max_value, 2) AS max_value, 
+		FORMAT(result_value, 2) AS result_text, test_uom AS uom, tnr.name AS doc, tnerq.status AS status, 
+		CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+			CASE WHEN result_value > max_value THEN 
+				CONCAT_WS(
+					'|||', 
+					'Increase', 
+					(SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = test_name 
+						AND tmc.selection = 'Increase'
+					)
+				) 
+			WHEN result_value < min_value THEN 
+				CONCAT_WS(
+					'|||', 
+					'Decrease', 
+					(SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = test_name 
+						AND tmc.selection = 'Decrease'
+					)
+				) 
+			ELSE NULL END 
+		ELSE NULL END AS incdec,
+		IFNULL(
+			(SELECT 1 FROM `tabMCU Grade` tmg 
+				WHERE tmg.item_group = '{item_group}' 
+				AND tmg.item_code = '{item_code}' 
+				AND tmg.test_name = tner.test_name 
+				LIMIT 1), 
+			0) AS gradable
+		FROM `tabNurse Examination Result` tner, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
+		WHERE tnr.name = tner.parent AND tnr.appointment = '{appointment}' AND tnr.docstatus IN (0,1)
+		AND tner.item_code = '{item_code}' AND tnerq.parent = tnr.name
+		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
+			WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
+		UNION
+		SELECT tnesr.idx+400, result_line, NULL, NULL, result_text, result_check, tnr.name, tnerq.status, NULL, 0
+		FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
+		WHERE tnr.name = tnesr.parent AND tnr.appointment = '{appointment}' AND tnr.docstatus IN (0,1)
+		AND tnesr.item_code = '{item_code}' AND tnerq.parent = tnr.name 
+		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
+			WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
+		ORDER BY 1"""
+	return frappe.db.sql(sql, as_dict = True)
+
+def build_doctor_grade(appointment, package):
+	def build_single_exams():
+		fields = [
+			('physical_examination_name', 'physical_examination'),
+			('visual_field_test_name', 'visual_field_test'),
+			('romberg_test_name', 'romberg_test'),
+			('tinnel_test_name', 'tinnel_test'),
+			('phallen_test_name', 'phallen_test'),
+			('rectal_test_name', 'rectal_test'),
+			('dental_examination_name', 'dental_examination'),
+		]
+		return [{
+			'item_code': frappe.db.get_single_value('MCU Settings', item_name),
+			'item_name': frappe.db.get_single_value('MCU Settings', field_name),
+			'code': item_name} for field_name, item_name in fields]
+
+	def prepare_item_and_group(item, previous_exam_item_group, previous_exam_item):
+		temp_doc = []
+		group_gradable, group_pos = frappe.db.get_value('Item Group', item.item_group, ['custom_gradable', 'custom_bundle_position'])
+		item_gradable, item_pos = frappe.db.get_value('Item', item.examination_item, ['custom_gradable', 'custom_bundle_position'])
+
+		if previous_exam_item_group != item.item_group:
+			previous_exam_item_group = item.item_group
+			temp_doc.append({
+				'examination': item.item_group,
+				'gradable': group_gradable,
+				'hidden_item_group': item.item_group,
+				'position': group_pos,
+			})
+		if previous_exam_item != item.examination_item:
+			previous_exam_item = item.examination_item
+			temp_doc.append({
+				'examination': item.item_name,
+				'gradable': item_gradable,
+				'hidden_item_group': item.item_group,
+				'hidden_item': item.examination_item,
+				'position': item_pos,
+				'is_item': 1,
+			})
+		return temp_doc, item_pos
+
+	def process_result_tables(doctor_exam, item_group, item_code, status, pos):
+		counter = 0
+		temp_doc = []
+		for selective in doctor_exam.result:
+			if selective.item_code == item_code:
+				counter += 1
+				temp_doc.append({
+					'examination': selective.result_line,
+					'gradable': 0,
+					'result': ': '.join(filter(None, [selective.result_check or '', selective.result_text or ''])),
+					'status': status,
+					'document': doctor_exam.name,
+					'hidden_item_group': item_group,
+					'hidden_item': item_code,
+					'position': str(pos) + f'-{str(counter).zfill(2)}',})
+
+		for non_selective in doctor_exam.non_selective_result:
+			if non_selective.item_code == item_code:
+				gradable = frappe.db.exists(
+					'MCU Grade', 
+					{
+						'item_group': item_group, 
+						'item_code': item_code, 
+						'test_name': non_selective.test_name
+					})
+				grade = ''
+				grade_description = ''
+				incdec = ''
+				incdec_category = ''
+				if non_selective.result_value and non_selective.min_value and non_selective.max_value:
+					if gradable and non_selective.result_value>=non_selective.min_value and non_selective.result_value<=non_selective.max_value:
+						grade = 'A'
+						grade_description = frappe.db.get_value(
+							'MCU Grade', 
+							{
+								'item_group': item_group, 
+								'item_code': item_code, 
+								'test_name': non_selective.test_name, 
+								'grade': 'A'
+							},
+							'description',
+							as_dict = 1)
+					if non_selective.result_value<non_selective.min_value:
+						incdec = 'Decrease'
+					if non_selective.result_value>non_selective.max_value:
+						incdec = 'Increase'
+					if incdec:
+						incdec_category = frappe.db.get_value(
+							'MCU Category',
+							{
+								'item_group': item_group, 
+								'item_code': item_code, 
+								'test_name': non_selective.test_name, 
+								'selection': incdec
+							},
+							'description'
+						)
+				counter += 1
+				temp_doc.append({
+					'examination': non_selective.test_name,
+					'gradable': 1 if gradable else 0,
+					'result': non_selective.result_value,
+					'min_value': non_selective.min_value,
+					'max_value': non_selective.max_value,
+					'grade': grade if grade else None,
+					'description': grade_description if grade_description else None,
+					'uom': non_selective.uom,
+					'status': status,
+					'document': doctor_exam.name,
+					'incdec': incdec if incdec else None,
+					'incdec_category': incdec_category if incdec_category else None,
+					'hidden_item_group': item_group,
+					'hidden_item': item_code,
+					'position': str(pos) + f'-{str(counter).zfill(2)}',})
+
+	def process_doc_tabs(doctor_tab, doctor_exam, item_group, item_code, status, pos):
+		temp = []
+		if doctor_tab == 'physical_examination':
+			temp = process_physical_examination(doctor_exam, item_group, item_code, status, pos)
+		elif doctor_tab == 'visual_field_test':
+			temp = process_visual_field_test(doctor_exam, item_group, item_code, status, pos)
+		elif doctor_tab == 'romberg_test':
+			temp = process_romberg_test(doctor_exam, item_group, item_code, status, pos)
+		elif doctor_tab == 'tinnel_test':
+			temp = process_tinnel_test(doctor_exam, item_group, item_code, status, pos)
+		elif doctor_tab == 'phallen_test':
+			temp = process_phallen_test(doctor_exam, item_group, item_code, status, pos)
+		elif doctor_tab == 'rectal_test':
+			temp = process_rectal_test(doctor_exam, item_group, item_code, status, pos)
+		elif doctor_tab == 'dental_examination':
+			pass
+		return temp
+
+	single_exams = build_single_exams()
+	doctor_exam_names = frappe.get_all('Doctor Examination', {'docstatus': 1, 'appointment': appointment})
+	item_group_list = []
+	doc_tabs_list = []
+	result_tables_list = []
+	for doctor_exam_name in doctor_exam_names:
+		prev_group = prev_item = ''
+		doctor_exam = frappe.get_doc('Doctor Examination', doctor_exam_name.name)
+		for exam_item in doctor_exam.examination_item:
+			item = [item for item in package if item.item_name == exam_item.template]
+			disp_item = item[0]
+			temp_item_group, item_pos = prepare_item_and_group(disp_item, prev_group, prev_item)
+			item_group_list.append(temp_item_group)
+			doctor_tabs = [item for item in single_exams if item['item_code'] == disp_item.examination_item]
+			if doctor_tabs:
+				doctor_tab = doctor_tabs[0]
+				temp_doc_tabs = process_doc_tabs(
+					doctor_tab['code'], doctor_exam, disp_item.item_group, disp_item.examination_item, disp_item.status, item_pos)
+				doc_tabs_list.append(temp_doc_tabs)
+			else:
+				temp_result_tables = process_result_tables(
+					doctor_exam, disp_item.item_group, disp_item.examination_item, disp_item.status, item_pos)
+				result_tables_list.append(temp_result_tables)
+			prev_group = disp_item.item_group
+			prev_item = disp_item.examination_item
+	return item_group_list + result_tables_list + doc_tabs_list
+
+def process_physical_examination(doctor_exam, item_group, item_code, status, pos):
+	temp = []
+	temp.append(process_eyes(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_ears(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_nose(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_throat(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_neck(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_cardiac(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_breast(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_resp(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_abdomen(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_spine(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_genit(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_neuro(doctor_exam, item_group, item_code, status, pos))
+	temp.append(process_skin(doctor_exam, item_group, item_code, status, pos))
+	return temp
+
+def process_visual_field_test(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Visual Field Test'
+	if not doctor_exam.visual_check:
+		result = doctor_exam.visual_details
+	else:
+		result = 'Same As Examiner'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-1',}
+
+def process_romberg_test(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Romberg Test'
+	if not doctor_exam.romberg_check:
+		result = '\n'.join(filter(None, [doctor_exam.romberg_abnormal or '', doctor_exam.romberg_others or '']))
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-1',}
+
+def process_tinnel_test(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Tinnel Test'
+	if not doctor_exam.tinnel_check:
+		result = doctor_exam.tinnel_details
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-1',}
+
+def process_phallen_test(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Phallen Test'
+	if not doctor_exam.phallen_check:
+		result = doctor_exam.phallen_details
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-1',}
+
+def process_rectal_test(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Rectal Test'
+	if not doctor_exam.rectal_check:
+		if not doctor_exam.rectal_hemorrhoid and not doctor_exam.enlarged_prostate and not doctor_exam.re_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.rectal_hemorrhoid:
+				result_list.append(doctor_exam.rectal_hemorrhoid)
+			if doctor_exam.enlarged_prostate:
+				result_list.append('Enlarged Prostate')
+			if doctor_exam.re_others:
+				result_list.append(f'Other ({doctor_exam.rectal_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-1',}
+
+def process_eyes(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Eyes'
+	if not doctor_exam.eyes_check:
+		if not doctor_exam.left_anemic and not doctor_exam.left_icteric and not doctor_exam.el_others:
+			result = 'Left: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.left_anemic:
+				result_list.append('Anemic')
+			if doctor_exam.left_icteric:
+				result_list.append('Icteric')
+			if doctor_exam.el_others:
+				result_list.append(f'Other ({doctor_exam.eyes_left_others})')
+			result = 'Left: ' + ','.join(result_list)
+		if not doctor_exam.right_anemic and not doctor_exam.right_icteric and not doctor_exam.er_others:
+			result += '\nRight: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.right_anemic:
+				result_list.append('Anemic')
+			if doctor_exam.right_icteric:
+				result_list.append('Icteric')
+			if doctor_exam.er_others:
+				result_list.append(f'Other ({doctor_exam.eyes_right_others})')
+			result += '\nRight: ' + ','.join(result_list)
+	else:
+		result = 'Left: No Abnormality \n Right: No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-1',}
+
+def process_ears(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Ear'
+	if not doctor_exam.ear_check:
+		if not doctor_exam.left_cerumen and not doctor_exam.left_cerumen_prop and not doctor_exam.left_tympanic and not doctor_exam.earl_others:
+			result = 'Left: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.left_cerumen:
+				result_list.append('Cerumen')
+			if doctor_exam.left_cerumen_prop:
+				result_list.append('Cerumen Prop')
+			if doctor_exam.left_tympanic:
+				result_list.append('Tympanic membrance intact')
+			if doctor_exam.earl_others:
+				result_list.append(f'Other ({doctor_exam.ear_left_others})')
+			result = 'Left: ' + ','.join(result_list)
+		if not doctor_exam.right_cerumen and not doctor_exam.right_cerumen_prop and not doctor_exam.right_tympanic and not doctor_exam.earr_others:
+			result += '\nRight: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.right_cerumen:
+				result_list.append('Cerumen')
+			if doctor_exam.right_cerumen_prop:
+				result_list.append('Cerumen Prop')
+			if doctor_exam.right_tympanic:
+				result_list.append('Tympanic membrance intact')
+			if doctor_exam.earl_others:
+				result_list.append(f'Other ({doctor_exam.ear_right_others})')
+			result += '\nRight: ' + ','.join(result_list)
+	else:
+		result = 'Left: No Abnormality \n Right: No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-2',}
+
+def process_nose(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Nose'
+	if not doctor_exam.nose_check:
+		if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
+			result = 'Left: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.left_enlarged:
+				result_list.append('Enlarged')
+			if doctor_exam.left_hyperemic:
+				result_list.append('Hyperemic')
+			if doctor_exam.left_polyp:
+				result_list.append('Polyp')
+			if doctor_exam.nl_others:
+				result_list.append(f'Other ({doctor_exam.nose_left_others})')
+			result = 'Left: ' + ','.join(result_list)
+		if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
+			result += '\nRight: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.right_enlarged:
+				result_list.append('Enlarged')
+			if doctor_exam.right_hyperemic:
+				result_list.append('Hyperemic')
+			if doctor_exam.right_polyp:
+				result_list.append('Polyp')
+			if doctor_exam.nr_others:
+				result_list.append(f'Other ({doctor_exam.nose_right_others})')
+			result += '\nRight: ' + ','.join(result_list)
+		if doctor_exam.deviated:
+			if result:
+				result += '\nDeviated'
+			else:
+				result = 'Deviated'
+	else:
+		result = 'Left: No Abnormality \n Right: No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-3',}
+
+def process_throat(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Throat'
+	if not doctor_exam.throat_check:
+		if not doctor_exam.enlarged_tonsil and not doctor_exam.hyperemic_pharynx and not doctor_exam.t_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.enlarged_tonsil:
+				result_list.append('Enlarged Tonsil')
+			if doctor_exam.hyperemic_pharynx:
+				result_list.append('Hyperemic Pharynx')
+			if doctor_exam.t_others:
+				result_list.append(f'Other ({doctor_exam.throat_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return{
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-4',}
+
+def process_neck(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Neck'
+	if not doctor_exam.neck_check:
+		if not doctor_exam.enlarged_thyroid and not doctor_exam.enlarged_lymph_node and not doctor_exam.n_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.enlarged_thyroid:
+				result_list.append(f'Enlarged Tonsil ({doctor_exam.enlarged_thyroid_details})')
+			if doctor_exam.enlarged_lymph_node:
+				result_list.append(f'Enlarged Lymph Node ({doctor_exam.enlarged_lymph_node_details})')
+			if doctor_exam.n_others:
+				result_list.append(f'Other ({doctor_exam.neck_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-5',}
+
+def process_cardiac(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Cardiac'
+	if not doctor_exam.cardiac_check:
+		if not doctor_exam.regular_heart_sound and not doctor_exam.murmur and not doctor_exam.gallop and not doctor_exam.c_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.regular_heart_sound:
+				result_list.append('Regular Heart Sound')
+			if doctor_exam.murmur:
+				result_list.append('Murmur')
+			if doctor_exam.gallop:
+				result_list.append('Gallop')
+			if doctor_exam.c_others:
+				result_list.append(f'Other ({doctor_exam.cardiac_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return{
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-6',}
+
+def process_breast(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Breast'
+	if not doctor_exam.breast_check:
+		if not doctor_exam.left_enlarged_breast and not doctor_exam.left_lumps and not doctor_exam.bl_others:
+			result = 'Left: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.left_enlarged_breast:
+				result_list.append('Enlarged Breast Glands')
+			if doctor_exam.left_lumps:
+				result_list.append('Lumps')
+			if doctor_exam.bl_others:
+				result_list.append(f'Other ({doctor_exam.breast_left_others})')
+			result = 'Left: ' + ','.join(result_list)
+		if not doctor_exam.right_enlarged_breast and not doctor_exam.right_lumps and not doctor_exam.br_others:
+			result += '\nRight: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.right_enlarged_breast:
+				result_list.append('Enlarged Breast Glands')
+			if doctor_exam.right_lumps:
+				result_list.append('Lumps')
+			if doctor_exam.br_others:
+				result_list.append(f'Other ({doctor_exam.breast_right_others})')
+			result += '\nRight: ' + ','.join(result_list)
+	else:
+		result = 'Left: No Abnormality \n Right: No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-7',}
+
+def process_resp(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Respiratory System'
+	if not doctor_exam.resp_check:
+		if not doctor_exam.left_ronkhi and not doctor_exam.left_wheezing and not doctor_exam.r_others:
+			result = 'Left: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.left_ronkhi:
+				result_list.append('Ronkhi')
+			if doctor_exam.left_wheezing:
+				result_list.append('Wheezing')
+			if doctor_exam.r_others:
+				result_list.append(f'Other ({doctor_exam.resp_left_others})')
+			result = 'Left: ' + ','.join(result_list)
+		if not doctor_exam.right_ronkhi and not doctor_exam.right_wheezing and not doctor_exam.rr_others:
+			result += '\nRight: No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.right_ronkhi:
+				result_list.append('Ronkhi')
+			if doctor_exam.right_wheezing:
+				result_list.append('Wheezing')
+			if doctor_exam.br_others:
+				result_list.append(f'Other ({doctor_exam.resp_right_others})')
+			result += '\nRight: ' + ','.join(result_list)
+	else:
+		result = 'Left: No Abnormality \n Right: No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-8',}
+	
+def process_abdomen(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Abdomen'
+	if not doctor_exam.abd_check:
+		if not doctor_exam.tenderness and not doctor_exam.hepatomegaly and not doctor_exam.splenomegaly and not doctor_exam.increased_bowel_sounds and not doctor_exam.a_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.tenderness:
+				result_list.append(f'Tenderness ({doctor_exam.abd_tender_details})')
+			if doctor_exam.hepatomegaly:
+				result_list.append('Hepatomegaly')
+			if doctor_exam.splenomegaly:
+				result_list.append('Splenomegaly')
+			if doctor_exam.increased_bowel_sounds:
+				result_list.append('Increased Bowel Sounds')
+			if doctor_exam.a_others:
+				result_list.append(f'Other ({doctor_exam.abd_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-9',}
+
+def process_spine(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Spine'
+	if not doctor_exam.spine_check:
+		result = doctor_exam.spine_details
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-10',}
+
+def process_genit(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Genitourinary'
+	if not doctor_exam.genit_check:
+		if not doctor_exam.hernia and not doctor_exam.hemorrhoid and not doctor_exam.inguinal_nodes and not doctor_exam.g_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.hernia:
+				result_list.append(f'Hernia ({doctor_exam.hernia_details})')
+			if doctor_exam.hemorrhoid:
+				result_list.append('Hemorrhoid')
+			if doctor_exam.inguinal_nodes:
+				result_list.append('Inguinal Nodes')
+			if doctor_exam.g_others:
+				result_list.append(f'Other ({doctor_exam.genit_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-11',}
+
+def process_neuro(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Neurological System'
+	if not doctor_exam.neuro_check:
+		if not doctor_exam.motoric_system_abnormality and not doctor_exam.sensory_system_abnormality and not doctor_exam.reflexes_abnormality and not doctor_exam.ne_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.motoric_system_abnormality:
+				result_list.append(f'Motoric System Abnormality ({doctor_exam.motoric_details})')
+			if doctor_exam.sensory_system_abnormality:
+				result_list.append(f'Sensory System Abnormality ({doctor_exam.sensory_details})')
+			if doctor_exam.reflexes_abnormality:
+				result_list.append(f'Reflexes Abnormality ({doctor_exam.reflex_details})')
+			if doctor_exam.ne_others:
+				result_list.append(f'Other ({doctor_exam.neuro_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-12',}
+
+def process_skin(doctor_exam, item_group, item_code, status, pos):
+	result_line = 'Skin'
+	if not doctor_exam.skin_check:
+		if not doctor_exam.skin_psoriasis and not doctor_exam.skin_tattoo and not doctor_exam.skin_tag and not doctor_exam.sk_others:
+			result = 'No Abnormality'
+		else:
+			result_list = []
+			if doctor_exam.skin_psoriasis:
+				result_list.append('Psoriasis')
+			if doctor_exam.skin_tattoo:
+				result_list.append('Tattoo')
+			if doctor_exam.skin_tag:
+				result_list.append('Skin Tag')
+			if doctor_exam.sk_others:
+				result_list.append(f'Other ({doctor_exam.skin_others})')
+			result = ','.join(result_list)
+	else:
+		result = 'No Abnormality'
+	return {
+		'examination': result_line,
+		'gradable': 0,
+		'result': result,
+		'status': status,
+		'document': doctor_exam.name,
+		'hidden_item_group': item_group,
+		'hidden_item': item_code,
+		'position': str(pos) + '-13',}
 
 @frappe.whitelist()
 def get_queued_branch(branch):

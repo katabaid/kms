@@ -43,6 +43,7 @@
   "relationship",
   "vital_sign_tab",
   "vital_sign_templates",
+  "vital_sign_with_systolicdiastolic",
   "column_break_lbwj",
   "vital_sign_on_report"
  ],
@@ -287,12 +288,18 @@
    "fieldtype": "Table MultiSelect",
    "label": "Vital Sign on Report",
    "options": "MCU Vital Sign"
+  },
+  {
+   "fieldname": "vital_sign_with_systolicdiastolic",
+   "fieldtype": "Link",
+   "label": "Vital Sign with Systolic/Diastolic",
+   "options": "Nurse Examination Template"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-11-20 07:07:39.675929",
+ "modified": "2024-12-18 21:49:47.338039",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

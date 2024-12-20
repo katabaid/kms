@@ -12,6 +12,7 @@
   "template_name",
   "item_code",
   "item_name",
+  "diagnose_column",
   "items",
   "consumables"
  ],
@@ -50,11 +51,16 @@
    "fieldtype": "Table",
    "label": "Consumables",
    "options": "Clinical Procedure Item"
+  },
+  {
+   "fieldname": "diagnose_column",
+   "fieldtype": "Data",
+   "label": "Diagnose Column"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-25 10:32:17.712492",
+ "modified": "2024-12-18 22:32:49.026498",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result Template",

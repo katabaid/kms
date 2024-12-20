@@ -45,7 +45,10 @@ class NurseExamination(Document):
 		for exam in self.examination_item:
 			item_code = frappe.db.get_value('Nurse Examination Template', exam.template, 'item_code')
 			if item_code:
-				is_internal, template = frappe.db.get_value('Questionnaire Template', item_code, ['internal_questionnaire', 'template'])
+				try:
+					is_internal, template = frappe.db.get_value('Questionnaire Template', item_code, ['internal_questionnaire', 'template_name'])
+				except TypeError:
+					is_internal, template = None, None
 				if is_internal:
 					status = frappe.db.get_value(
 						'Questionnaire', 

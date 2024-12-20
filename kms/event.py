@@ -298,13 +298,14 @@ def process_checkin(doc, method=None):
                   found = True
                 else:
                   row_founder += 1
-              if found and row_founder == row_counter:
+              if not found and row_founder == row_counter:
                 for room in rooms:
+                  reference_doctype = frappe.db.get_value('Healthcare Service Unit', room.service_unit, 'service_unit_type')
                   new_entry = dict()
                   new_entry['name'] = None
                   new_entry['healthcare_service_unit'] = room.service_unit
                   new_entry['status'] = 'Wait for Room Assignment'
-                  new_entry['reference_doctype'] = room.custom_default_doctype
+                  new_entry['reference_doctype'] = reference_doctype if reference_doctype else None
                   disp_doc.append('assignment_table', new_entry)
               notification_doc = frappe.new_doc('Notification Log')
               notification_doc.for_user = dispatcher_user
