@@ -28,10 +28,10 @@ def get_data(filters):
 	return frappe.db.sql(f"""
 		SELECT test_name, result_value, test_uom, min_value, max_value FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne 
 		WHERE EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tner.item_code = tnet.item_code 
-		AND EXISTS (SELECT 1 FROM  `tabMCU Vital SIgn` tmvs WHERE tmvs.template = tnet.name))
+		AND EXISTS (SELECT 1 FROM  `tabMCU Vital Sign` tmvs WHERE tmvs.template = tnet.name))
 		AND tne.name = tner.parent AND tne.appointment = '{filters.exam_id}' AND tne.docstatus = 1
 		UNION
 		SELECT test_label, `result`, NULL, NULL, NULL FROM `tabCalculated Exam` tce, `tabNurse Examination` tne 
 		WHERE EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet WHERE tce.item_code = tnet.item_code 
-		AND EXISTS (SELECT 1 FROM  `tabMCU Vital SIgn` tmvs WHERE tmvs.template = tnet.name))
+		AND EXISTS (SELECT 1 FROM  `tabMCU Vital Sign` tmvs WHERE tmvs.template = tnet.name))
 		AND tne.name = tce.parent AND tne.appointment = '{filters.exam_id}' AND tne.docstatus = 1""", as_dict = 1)

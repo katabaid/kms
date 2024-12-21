@@ -206,6 +206,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
                 'Comment added successfully.'
               );
             }
+            frm.reload_doc();
           }
         }
       });

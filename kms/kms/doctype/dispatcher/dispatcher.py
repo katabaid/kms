@@ -106,7 +106,7 @@ def get_examination_items(sql):
 		sorted_data = sorted(grouped_data.values(), key=lambda x: x['group_position'])
 		return sorted_data
 	nurse_array = group_and_sort(sql, 'nurse')
-	doctor_array = group_and_sort(sql, 'doctor')
+	#doctor_array = group_and_sort(sql, 'doctor')
 	radiology_array = group_and_sort(sql, 'radiology')
 	lab_array = group_and_sort(sql, 'lab_test')
 	return {
@@ -145,7 +145,7 @@ def process_examination_items(doc, data, package):
 				return 'Prehypertension'
 			if (systolic >= 140 and systolic <160) or (diastolic >=90 and diastolic <100):
 				return 'Stage 1 Hypertension'
-			if systolic >= 160 and diastolic >=100:
+			if systolic >= 160 or diastolic >=100:
 				return 'Stage 2 Hypertension'
 		return None
 
@@ -1174,7 +1174,7 @@ def checkin_room(dispatcher_id, hsu, doctype, docname):
 	return 'Checked In.'
 
 @frappe.whitelist()
-def removed_from_room(dispatcher_id, hsu):
+def removed_from_room(dispatcher_id, hsu, doctype, docname):
 	doc = frappe.get_doc('Dispatcher', dispatcher_id)
 	doc.status = 'In Queue'
 	doc.room = ''
@@ -1182,7 +1182,19 @@ def removed_from_room(dispatcher_id, hsu):
 		if room.healthcare_service_unit == hsu:
 			room.status = 'Wait for Room Assignment'
 			room.reference_doc = ''
+	doc.add_comment('Comment', f"""Removed from {hsu} examination room.""")
 	doc.save(ignore_permissions=True)
+	dispatcher_user = frappe.db.get_value("Dispatcher Settings", {"branch": doc.branch, 'enable_date': doc.date}, ['dispatcher'])
+	notification_doc = frappe.new_doc('Notification Log')
+	notification_doc.for_user = dispatcher_user
+	notification_doc.from_user = frappe.session.user
+	notification_doc.document_type = 'Dispatcher'
+	notification_doc.document_name = doc.name
+	notification_doc.subject = f"""Patient <strong>{doc.patient}</strong> removed from {hsu} room."""
+	notification_doc.insert(ignore_permissions=True)
+	exam_doc = frappe.get_doc(doctype, docname)
+	exam_doc.db_set('docstatus', 2)
+	exam_doc.db_set('status', 'Removed')
 	return 'Removed from examination room.'
 
 def get_related_rooms (hsu, dispatcher_id):

@@ -250,7 +250,7 @@ def fetch_exam_items(name, room, branch, template_doctype):
     GROUP BY 1"""
   else:
     query = f"""
-    SELECT tma.item_name AS name, tma.examination_item AS item_code
+    SELECT tma.item_name AS name, tma.examination_item AS item_code, status
     FROM `tabMCU Appointment` tma
     INNER JOIN `tab{template_doctype}` tnet ON tnet.item_code = tma.examination_item
     {common_conditions}"""
@@ -298,25 +298,37 @@ def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None)
       else:
         doc.append('examination_item', {'template': exam_item.name})
       template_doc = frappe.get_doc(template_doctype, exam_item.name)
-      if template_doctype in ['Nurse Examination Template', 'Doctor Examination Template']:
-        if template_doctype == 'Nurse Examination Template' and not template_doc.result_in_exam:
-          continue
+      if template_doctype == 'Doctor Examination Template' or getattr(template_doc, 'result_in_exam', False):
         append_results (doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
 
 def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_status=None):
   is_cancelled = bool(cancelled_doc and assigned_status)
   is_finished = assigned_status == 'Finished' if is_cancelled else False
   for result_type in ['result', 'non_selective_result']:
-    source = cancelled_doc.get(result_type, []) if is_cancelled else template_doc.get('items' if result_type == 'result' else 'normal_items', [])
+    source_key = 'items' if result_type == 'result' else 'normal_items'
+    if is_cancelled:
+      source = cancelled_doc.get(result_type, [])
+      if not is_finished:
+        result_source = cancelled_doc.get('result', []) + cancelled_doc.get('non_selective_result', [])
+        if not any(item.item_code == item_code for item in result_source):
+          source = template_doc.get(source_key, [])
+          is_cancelled = False
+    else:
+      source = template_doc.get(source_key, [])
     for item in source:
       if not is_cancelled or item.item_code == item_code:
         result = {'item_code': item.item_code if is_cancelled else item_code}
         if is_cancelled:
-          cancelled_attr = ['item_name', 'result_line', 'result_check', 'test_name', 'test_event', 'test_uom', 'min_value', 'max_value', 'normal_value', 'result_options', 'mandatory_value']
+          cancelled_attr = ['item_name', 'result_line', 'result_check', 'test_name', 'test_event', 
+          'test_uom', 'min_value', 'max_value', 'normal_value', 'result_options', 'mandatory_value']
           result.update({attr: getattr(item, attr, '') for attr in cancelled_attr})
+          if is_finished:
+            result['result_value'] = getattr(item, 'result_value', '')
+          base_key = result_type.split('_')[0]
           result.update({
             'is_finished': is_finished, 
-            result_type.split('_')[0] + '_value': getattr(item, result_type.split('_')[0] + '_value', '') if is_finished else ''})
+            f"{base_key}_value": getattr(item, f"{base_key}_value", '') if is_finished else ''})
+            #result_type.split('_')[0] + '_value': getattr(item, result_type.split('_')[0] + '_value', '') if is_finished else ''})
         else:
           cancelled_pair = [
             ('result_line', 'result_text'),         ('normal_value', 'normal_value'), 
@@ -324,7 +336,10 @@ def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_st
             ('result_options', 'result_select'),    ('test_name', 'heading_text'), 
             ('test_event', 'lab_test_event'),       ('test_uom', 'lab_test_uom'), 
             ('min_value', 'min_value'),             ('max_value', 'max_value')] 
-          result.update({new_key: getattr(item, old_key) for new_key, old_key in cancelled_pair if hasattr(item, old_key)})
+          #result.update({new_key: getattr(item, old_key) for new_key, old_key in cancelled_pair if hasattr(item, old_key)})
+          for new_key, old_key in cancelled_pair:
+            if hasattr(item, old_key):
+              result[new_key] = getattr(item, old_key)
         doc.append(result_type, result)
 
 def update_dispatcher_room_status(doc, room, doc_type, doc_name):
@@ -365,6 +380,8 @@ def create_exam(name, room, doc_type, template_doctype):
   cancelled_doc = None
   if previous_docname:
     cancelled_doc = frappe.get_doc(doc_type, previous_docname)
+    if cancelled_doc.docstatus != 2:
+      cancelled_doc.db_set('docstatus', 2)
     if doc_type == 'Sample Collection':
       if cancelled_doc.custom_status == 'To Retest':
         doc.amended_from = cancelled_doc.name
@@ -384,16 +401,7 @@ def create_exam(name, room, doc_type, template_doctype):
     else:
       if cancelled_doc.status == 'To Retest':
         doc.amended_from = cancelled_doc.name
-  #if doc_type == 'Doctor Examination':
-  #  questionnaire = frappe.db.get_all('Temporary Registration', filters={'patient_appointment':['=', appt_doc.name]}, pluck='name')
-  #  questionnaire_doc = frappe.get_doc('Temporary Registration', questionnaire)
-  #  if questionnaire_doc.detail:
-  #    for detail in questionnaire_doc.detail:
-  #      doc.append('questionnaire_detail', {
-  #        'template': detail.template,
-  #        'question': detail.question,
-  #        'answer': detail.answer,
-  #      })
+
   exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")

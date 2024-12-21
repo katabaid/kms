@@ -223,8 +223,10 @@ const updateCustomButtonVisibility = (grid) => {
 
 const createPromiseHandler = (method) => (frm) => new Promise((resolve) => {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected();
-	if (frm.doc.room) {
-		frappe.throw(`Patient ${frm.doc.patient} is already in a queue for ${frm.doc.room} room.`);
+	if (frm.doc.room && frm.doc.status === 'In Room' && method === 'kms.healthcare.remove_from_room') {
+				frappe.throw(`Patient ${frm.doc.patient} is already in ${frm.doc.room} room.`);
+	} else if (frm.doc.room && frm.doc.status === 'In Queue' && method !== 'kms.healthcare.remove_from_room') {
+			frappe.throw(`Patient ${frm.doc.patient} is already in a queue for ${frm.doc.room} room.`);
 	} else {
 		if (selected_rows.length > 0 && selected_rows) {
 			const child = locals[frm.fields_dict['assignment_table'].grid.doctype][selected_rows];

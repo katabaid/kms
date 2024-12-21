@@ -300,7 +300,7 @@ def process_checkin(doc, method=None):
                   row_founder += 1
               if not found and row_founder == row_counter:
                 for room in rooms:
-                  reference_doctype = frappe.db.get_value('Healthcare Service Unit', room.service_unit, 'service_unit_type')
+                  reference_doctype = frappe.db.get_value('Healthcare Service Unit', room.service_unit, 'custom_default_doctype')
                   new_entry = dict()
                   new_entry['name'] = None
                   new_entry['healthcare_service_unit'] = room.service_unit
@@ -409,6 +409,13 @@ def update_rate_amount_after_amend(doc, method=None):
 def create_barcode(doc, method=None):
   ################DocType: Sample Collection################
   doc.custom_barcode_label = doc.custom_appointment
+  mcu = frappe.db.get_value('Patient Appointment', doc.custom_appointment, 'mcu')
+  if mcu:
+    pb = frappe.get_doc('Product Bundle', mcu)
+    doc.custom_yellow_tubes = pb.custom_number_of_yellow_tubes
+    doc.custom_red_tubes = pb.custom_number_of_red_tubes
+    doc.custom_purple_tubes = pb.custom_number_of_purple_tubes
+    doc.custom_blue_tubes = pb.custom_number_of_blue_tubes
   
 @frappe.whitelist()
 def reset_status_after_amend(doc, method=None):
