@@ -156,21 +156,20 @@ def create_sc(doctype, name):
       return frappe.get_doc('Patient Appointment', appt)
     else:
       return None
-
   appt_doc = get_appointment_doc(doctype, name)
 
   #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
   sus = frappe.db.sql(f"""
     SELECT DISTINCT tigsu.service_unit
-    FROM `tabItem Group Service Unit` tigsu, tabItem ti, `tabLab Prescription` tlp 
+    FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp 
     WHERE tlp.parent = '{name}' 
-    AND ti.name = tlp.custom_exam_item 
-    AND ti.item_group = tigsu.parent
+    AND tlp.custom_exam_item = tigsu.parent
     AND branch = '{appt_doc.custom_branch}'""", as_dict=True)
   
   resp = []
   
   for su in sus:
+    print(1)
     sample_doc = frappe.get_doc({
       'doctype': 'Sample Collection',
       'custom_appointment': appt_doc.name,
@@ -181,24 +180,25 @@ def create_sc(doctype, name):
       'company': appt_doc.company,
       'custom_branch': appt_doc.custom_branch,
       'custom_service_unit': su.service_unit,
-      'custom_status': 'Started'
+      'custom_status': 'Started',
+      'custom_document_date': frappe.utils.now(),
+      'custom_encounter': name
     })
     samples = frappe.db.sql(f"""
-    SELECT tltt.sample, tltt.sample_uom, sum(tltt.sample_qty) sample_qty
-    FROM `tabItem Group Service Unit` tigsu, tabItem ti, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
+    SELECT distinct tltt.sample
+    FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
     WHERE tlp.parent = '{name}' 
-    AND ti.name = tlp.custom_exam_item 
-    AND ti.item_group = tigsu.parent
+    AND tlp.custom_exam_item = tigsu.parent
     AND branch = '{appt_doc.custom_branch}'
     and tigsu.service_unit = '{su.service_unit}'
-    AND tltt.name = tlp.lab_test_name""", as_dict=True)
+    AND tltt.name = tlp.lab_test_name
+    AND tltt.sample IS NOT NULL""", as_dict=True)
     for sample in samples:
       sample_doc.append('custom_sample_table', {
         'sample': sample.sample,
-        'uom': sample.sample_uom,
-        'quantity': sample.sample_qty
       })
-    sample_doc.insert()
+    sample_doc.insert(ignore_permissions=True)
+    print(sample_doc.name)
     test_per_su = frappe.db.sql(f"""
       SELECT tlp.lab_test_name
       FROM `tabLab Prescription` tlp, `tabItem Group Service Unit` tigsu, tabItem ti 

@@ -231,5 +231,127 @@
    }
   ],
   "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "No",
+  "javascript": null,
+  "json": null,
+  "letter_head": "Kyoai",
+  "modified": "2024-12-22 14:21:24.476098",
+  "module": "KMS",
+  "name": "Medication Catalog",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Item",
+  "reference_report": null,
+  "report_name": "Medication Catalog",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Item Manager"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Stock Manager"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Stock User"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Sales User"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Purchase User"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Maintenance User"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Accounts User"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Manufacturing User"
+   },
+   {
+    "parent": "Medication Catalog",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Desk User"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": "Kyoai",
+  "modified": "2024-12-20 13:02:38.849864",
+  "module": "KMS",
+  "name": "List MCU",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Patient Appointment",
+  "reference_report": null,
+  "report_name": "List MCU",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "List MCU",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Healthcare Administrator"
+   },
+   {
+    "parent": "List MCU",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Physician"
+   },
+   {
+    "parent": "List MCU",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Nursing User"
+   }
+  ],
+  "timeout": 0
  }
 ]

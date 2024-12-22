@@ -13,6 +13,7 @@
   "item_code",
   "item_name",
   "result_in_exam",
+  "diagnose_column",
   "items",
   "normal_items",
   "calculated_exam",
@@ -71,11 +72,16 @@
    "fieldtype": "Table",
    "label": "Calculated Exam",
    "options": "Exam Calculation"
+  },
+  {
+   "fieldname": "diagnose_column",
+   "fieldtype": "Data",
+   "label": "Diagnose Column"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-25 15:12:03.274451",
+ "modified": "2024-12-21 22:19:44.880635",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template",

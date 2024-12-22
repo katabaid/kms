@@ -549,7 +549,7 @@ def create_mr_from_encounter(enc):
     mr_in_doc.custom_patient_age = encdoc.patient_age
     mr_in_doc.custom_patient_encounter = encdoc.name
     mr_in_doc.custom_healthcare_practitioner = encdoc.practitioner
-    for item in mr_external_items:
+    for item in mr_internal_items:
       stock_uom = frappe.db.get_value('Item', item.drug_code, 'stock_uom')
       mr_in_doc.append('items',{
         'item_code': item.drug_code,

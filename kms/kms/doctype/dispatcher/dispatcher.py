@@ -197,7 +197,14 @@ def process_examination_items(doc, data, package):
 					additional_data={'result': radiology_result, 'incdec': incdec, 'is_item': 1}
 				)
 				if category == 'nurse':
-					process_nurse_category(doc, group, item)
+					diagnose_column = frappe.db.get_value('Nurse Examination Template', item['examination_item'], 'diagnose_column')
+					if diagnose_column:
+						append_items(
+							category, group, item, doc,
+							additional_data={'is_item': 1}
+						)
+					else:
+						process_nurse_category(doc, group, item)
 				elif category == 'lab_test':
 					process_lab_test_category(doc, group, item)
 	process_doctor_category(doc, package)
