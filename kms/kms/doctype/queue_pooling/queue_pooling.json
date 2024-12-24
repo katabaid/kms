@@ -9,6 +9,7 @@
  "field_order": [
   "naming_series",
   "appointment",
+  "appointment_type",
   "patient",
   "date",
   "arrival_time",
@@ -20,6 +21,7 @@
   "column_break_ptjqp",
   "company",
   "service_unit",
+  "department",
   "branch",
   "encounter",
   "healthcare_practitioner",
@@ -129,8 +131,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service Unit",
-   "options": "Healthcare Service Unit",
-   "reqd": 1
+   "options": "Healthcare Service Unit"
   },
   {
    "fieldname": "healthcare_practitioner",
@@ -194,13 +195,26 @@
    "in_list_view": 1,
    "label": "Priority",
    "options": "1. Emergency\n2. VIP\n3. Outpatient\n4. MCU"
+  },
+  {
+   "fetch_from": "appointment.appointment_type",
+   "fieldname": "appointment_type",
+   "fieldtype": "Data",
+   "label": "Appointment Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Medical Department"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2024-08-12 16:53:30.851069",
+ "modified": "2024-12-24 11:59:33.503719",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Queue Pooling",

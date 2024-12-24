@@ -259,7 +259,11 @@ def append_temporary_registration_questionnaire(doc):
   if doc.custom_temporary_registration:
     temp_regis = frappe.get_doc('Temporary Registration', doc.custom_temporary_registration)
     for detail in temp_regis.detail:
-      doc.append('custom_questionnaire_detail', detail)
+      detail_dict = {
+        k: v for k, v in detail.as_dict().items() 
+        if k not in ('name', 'parent', 'parenttype', 'parentfield', 'idx')
+      }
+      doc.append('custom_questionnaire_detail', detail_dict)
 
 @frappe.whitelist()
 def process_checkin(doc, method=None):
@@ -267,10 +271,12 @@ def process_checkin(doc, method=None):
   if not doc.status:
     doc.status = 'Open'
   if doc.status == 'Checked In':
+    validate_with_today_date(doc.appointment_date)
     if getattr(doc.flags, "skip_on_update", False):
       return
     doc.flags.skip_on_update = True
     update_questionnaire_status(doc)
+    doc.appointment_time = frappe.utils.nowtime()
     doc.save()
     if str(doc.appointment_date) == frappe.utils.nowdate():
       if doc.custom_temporary_registration:
@@ -368,11 +374,9 @@ def process_checkin(doc, method=None):
           signs_date = frappe.utils.nowdate(),
           signs_time = frappe.utils.nowtime(),
           appointment = doc.name,
-          custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.service_unit, 'custom_branch'),
+          custom_branch = doc.custom_branch,
           vital_signs_note = doc.notes))
         vs_doc.insert(ignore_permissions=True)
-    else:
-      frappe.throw(title = 'Error', msg=f"Appointment date {doc.appointment_date} must be the same as today's date {frappe.utils.nowdate()}.", exc='ValidationError')
 
 @frappe.whitelist()
 def after_insert_patient_appointment(doc, method=None):
@@ -380,21 +384,51 @@ def after_insert_patient_appointment(doc, method=None):
   update_questionnaire_status(doc)
   doc.save()
 
+
+
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):
   ################Doctype: Vital Signs################
+  validate_with_today_date(doc.signs_date)
   if str(doc.signs_date) == frappe.utils.nowdate():
-    frappe.get_doc(dict(
-      doctype = 'Queue Pooling',
-      vital_sign = doc.name,
-      patient = doc.patient,
-      date = frappe.utils.nowdate(),
-      status = 'Queued',
-      appointment = doc.appointment,
-      company = doc.company,
-      branch = doc.custom_branch,
-      service_unit = frappe.db.get_value('Patient Appoinment', doc.appointment, 'service_unit'),
-      note = doc.vital_signs_note)).insert(ignore_permissions=True);
+    appt = frappe.get_doc('Patient Appointment', doc.appointment)
+    if appt.appointment_for == 'Service Unit':
+      frappe.get_doc(dict(
+        doctype = 'Queue Pooling',
+        appointment = doc.appointment,
+        appointment_type = appt.appointment_type,
+        patient = doc.patient,
+        date = frappe.utils.nowdate(),
+        arrival_time = frappe.utils.nowtime(),
+        status = 'Queued',
+        priority = appt.custom_priority,
+        vital_sign = doc.name,
+        company = doc.company,
+        service_unit = appt.service_unit,
+        branch = doc.custom_branch,
+        note = doc.vital_signs_note)).insert(ignore_permissions=True);
+    elif appt.appointment_for == 'MCU' and appt.mcu:
+      for child in ['custom_mcu_exam_items', 'custom_additional_mcu_items']:
+        if not appt.get(child):
+          continue
+        for row in doc.get(child):
+          if row.examination_item:
+            frappe.get_doc(dict(
+              doctype = 'Queue Pooling',
+              appointment = doc.appointment,
+              appointment_type = appt.appointment_type,
+              patient = doc.patient,
+              date = frappe.utils.nowdate(),
+              arrival_time = frappe.utils.nowtime(),
+              status = 'Queued',
+              priority = appt.custom_priority,
+              vital_sign = doc.name,
+              company = doc.company,
+              service_unit = row.healthcare_service_unit,
+              branch = doc.custom_branch,
+              note = doc.vital_signs_note)).insert(ignore_permissions=True);
+    elif appt.appointment_for == 'Department':
+      pass
 
 @frappe.whitelist()
 def update_rate_amount_after_amend(doc, method=None):
@@ -451,5 +485,10 @@ def set_collector(doc, method=None):
       #saved = True
       sample.sample_reception = sample_reception_doc.name
       sample.status_time = now()
-  #if saved:
-    #doc.save()
+
+def validate_with_today_date(validate_date):
+  if str(validate_date) != frappe.utils.today():
+    frappe.throw(
+      title = 'Error', 
+      msg=f"Date {validate_date} must be the same as today's date {frappe.utils.today()}.", 
+      exc='ValidationError')

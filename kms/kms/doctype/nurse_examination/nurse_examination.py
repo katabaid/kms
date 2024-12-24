@@ -43,19 +43,26 @@ class NurseExamination(Document):
 	
 	def before_insert(self):
 		for exam in self.examination_item:
-			item_code = frappe.db.get_value('Nurse Examination Template', exam.template, 'item_code')
-			if item_code:
-				try:
-					is_internal, template = frappe.db.get_value('Questionnaire Template', item_code, ['internal_questionnaire', 'template_name'])
-				except TypeError:
-					is_internal, template = None, None
-				if is_internal:
-					status = frappe.db.get_value(
-						'Questionnaire', 
-						{'patient_appointment': self.appointment, 'template': template},
-						'status')
+			is_internal = frappe.db.get_value('Questionnaire Template', exam.template, 'internal_questionnaire')
+			template = frappe.db.get_value('Questionnaire Template', exam.template, 'template_name')
+			if is_internal:
+				status = frappe.db.get_value(
+					'Questionnaire', 
+					{'patient_appointment': self.appointment, 'template': template},
+					'status')
+				name = frappe.db.get_value(
+					'Questionnaire', 
+					{'patient_appointment': self.appointment, 'template': template},
+					'name')
+				if status and name:
 					self.append('questionnaire', {
 						'template': template,
-						'is_completed': True if status == 'Completed' else False
+						'is_completed': True if status == 'Completed' else False,
+						'questionnaire': name
+					})
+				else:
+					self.append('questionnaire', {
+						'template': template,
+						'is_completed': False
 					})
 

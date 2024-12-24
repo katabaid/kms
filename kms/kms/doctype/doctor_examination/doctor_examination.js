@@ -393,6 +393,16 @@ frappe.ui.form.on('Doctor Examination', {
 				apply_cell_styling (frm, row.doc);
 			})
 		}
+    if (frm.doc.questionnaire) {
+			frm.refresh_field('questionnaire');
+			$.each(frm.doc.questionnaire, (key, value) => {
+				if (!value.is_completed) {
+					const link = `https://kmsregis.netlify.app/questionnaire?template=${value.template}&appointment_id=${frm.doc.appointment}`;
+					frm.sidebar.add_user_action(__(value.template)).attr('href', link).attr('target', '_blank');
+				}
+			})
+		}
+
   },
 
   setup: function (frm) {
