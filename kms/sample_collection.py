@@ -197,6 +197,15 @@ def create_sc(doctype, name):
       sample_doc.append('custom_sample_table', {
         'sample': sample.sample,
       })
+    if doctype == 'Patient Encounter':
+      enc_doc = frappe.get_doc('Patient Encounter', name)
+      for lab in enc_doc.lab_test_prescription:
+        entries = dict()
+        entries['template'] = lab.lab_test_code
+        entries['item_code'] = lab.custom_exam_item
+        sample_doc.append('custom_examination_item', entries)
+      
+      
     sample_doc.insert(ignore_permissions=True)
     print(sample_doc.name)
     test_per_su = frappe.db.sql(f"""

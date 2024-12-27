@@ -169,7 +169,7 @@ doc_events = {
     "after_insert": "kms.event.after_insert_patient_appointment",
   },
   "Vital Signs": {
-    "after_submit": "kms.event.return_to_queue_pooling",
+    "before_submit": "kms.event.return_to_queue_pooling",
   },
   "Quotation": {
     "before_save": "kms.event.update_rate_amount_after_amend",

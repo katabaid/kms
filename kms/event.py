@@ -1,4 +1,4 @@
-import frappe
+import frappe, re
 from frappe.utils import now
 
 @frappe.whitelist()
@@ -384,51 +384,145 @@ def after_insert_patient_appointment(doc, method=None):
   update_questionnaire_status(doc)
   doc.save()
 
+def process_mcu(doc, appt):
+  mcu = [item.examination_item for item in appt.custom_mcu_exam_items]
+  added_mcu = [item.examination_item for item in appt.custom_additional_mcu_items]
+  items_list = mcu + added_mcu
+  items = ', '.join(f'"{item}"' for item in items_list)
+  sql = f"""SELECT DISTINCT service_unit, thsu.custom_default_doctype 
+    FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
+    WHERE parenttype = 'Item' AND parentfield = 'custom_room' AND parent IN ({items})
+    AND branch = '{doc.custom_branch}'  AND tigsu.service_unit = thsu.name"""
+  rooms = frappe.db.sql(sql, as_dict = True)
+  for room in rooms:
+    sql = f"""SELECT DISTINCT parent FROM `tabItem Group Service Unit` tigsu
+      WHERE service_unit = '{room.service_unit}'
+      AND parenttype = 'Item' AND parentfield = 'custom_room'
+      AND parent IN ({items})"""
+    exam_items = frappe.db.sql(sql, as_dict = True)
+    template_doctype = frappe.db.get_value(
+      'MCU Relationship',{'examination': room.custom_default_doctype}, 'template')
+    exam_doc = frappe.new_doc(room.custom_default_doctype)
+    exam_doc.patient = doc.patient
+    exam_doc.patient_name = appt.patient_name
+    exam_doc.patient_sex = appt.patient_sex
+    exam_doc.patient_age = appt.patient_age
+    exam_doc.company = doc.company
+    if room.custom_default_doctype == 'Sample Collection':
+      exam_doc.custom_branch = doc.custom_branch
+      exam_doc.custom_status = 'Started'
+      exam_doc.custom_document_date = frappe.utils.nowdate()
+      exam_doc.custom_appointment = doc.appointment
+      exam_doc.custom_service_unit = room.service_unit
+      exam_doc.custom_queue_no = ''
+      pb = frappe.db.get_value(
+        'Product Bundle', 
+        appt.mcu, 
+        [
+          'custom_number_of_yellow_tubes', 
+          'custom_number_of_red_tubes', 
+          'custom_number_of_purple_tubes', 
+          'custom_number_of_blue_tubes'
+        ], 
+        as_dict = True)
+      exam_doc.custom_yellow_tubes = pb.custom_number_of_yellow_tubes
+      exam_doc.custom_red_tubes = pb.custom_number_of_red_tubes
+      exam_doc.custom_purple_tubes = pb.custom_number_of_purple_tubes
+      exam_doc.custom_blue_tubes = pb.custom_number_of_blue_tubes
+    else:  
+      exam_doc.branch = doc.custom_branch
+      exam_doc.status = 'Started'
+      exam_doc.queue_no = ''
+      exam_doc.appointment = doc.appointment
+      exam_doc.service_unit = room.service_unit
+      exam_doc.created_date = frappe.utils.nowdate()
+    exam_doc.examination_item = []
+    exam_doc.result = []
+    exam_doc.non_selective_result = []
+    exam_doc.custom_examination_item = []
+    exam_doc.custom_sample_table = []
+    existing_samples = []
+    for exam_item in exam_items:
+      template_name = frappe.get_all(
+        template_doctype, filters = {'item_code': exam_item.parent},  pluck = 'name')
+      template = frappe.get_doc(template_doctype, template_name[0])
+      if template:
+        if room.custom_default_doctype == 'Sample Collection':
+          entries = dict()
+          entries['template'] = template.name
+          entries['item_code'] = exam_item.parent
+          exam_doc.append('custom_examination_item', entries)
+          if template.sample not in existing_samples:
+            samples = dict()
+            samples['sample'] = template.sample
+            exam_doc.append('custom_sample_table', samples)
+            existing_samples.append(template.sample)
+        else:
+          entries = dict()
+          entries['template'] = template.name
+          entries['status'] = 'Started'
+          entries['status_time'] = frappe.utils.now()
+          exam_doc.append('examination_item', entries)
+          if (room.custom_default_doctype == 'Nurse Examination' 
+              or room.custom_default_doctype == 'Doctor Examination'):
+            if template.result_in_exam:
+              for result in template.items:
+                entries = dict()
+                entries['item_code'] = exam_item.parent
+                entries['item_name'] = template.item_name
+                entries['result_line'] = result.result_text
+                entries['normal_value'] = result.normal_value
+                entries['mandatory_value'] = result.mandatory_value
+                entries['result_options'] = result.result_select
+                exam_doc.append('result', entries)
+              for non_selective_result in template.normal_items:
+                match = re.compile(r'(\d+) Years?').match(appt.patient_age)
+                age = int(match.group(1)) if match else None
+                if appt.patient_sex == non_selective_result.sex and non_selective_result >= age:
+                  entries = dict()
+                  entries['item_code'] = exam_item.parent
+                  entries['test_name'] = non_selective_result.heading_text
+                  entries['test_event'] = non_selective_result.lab_test_event
+                  entries['test_uom'] = non_selective_result.lab_test_uom
+                  entries['min_value'] = non_selective_result.min_value
+                  entries['max_value'] = non_selective_result.max_value
+                  exam_doc.append('non_selective_result', entries)
+    exam_doc.insert(ignore_permissions=True)
+    print(exam_doc)
 
+def process_non_mcu(doc, appt, type):
+  frappe.get_doc(dict(
+    doctype = 'Queue Pooling',
+    appointment = doc.appointment,
+    appointment_type = appt.appointment_type,
+    patient = doc.patient,
+    date = frappe.utils.nowdate(),
+    arrival_time = frappe.utils.nowtime(),
+    status = 'Queued',
+    priority = appt.custom_priority,
+    vital_sign = doc.name,
+    company = doc.company,
+    department = appt.department if type == 'Department' else None,
+    service_unit = appt.service_unit if type == 'Service Unit' else None,
+    branch = doc.custom_branch,
+    note = doc.vital_signs_note)).insert(ignore_permissions=True)
 
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):
   ################Doctype: Vital Signs################
+  print('11111111111111111111111111111111111111111111111111111111111111')
   validate_with_today_date(doc.signs_date)
+  print('22222222222222222222222222222222222222222222222222222222222222')
   if str(doc.signs_date) == frappe.utils.nowdate():
     appt = frappe.get_doc('Patient Appointment', doc.appointment)
     if appt.appointment_for == 'Service Unit':
-      frappe.get_doc(dict(
-        doctype = 'Queue Pooling',
-        appointment = doc.appointment,
-        appointment_type = appt.appointment_type,
-        patient = doc.patient,
-        date = frappe.utils.nowdate(),
-        arrival_time = frappe.utils.nowtime(),
-        status = 'Queued',
-        priority = appt.custom_priority,
-        vital_sign = doc.name,
-        company = doc.company,
-        service_unit = appt.service_unit,
-        branch = doc.custom_branch,
-        note = doc.vital_signs_note)).insert(ignore_permissions=True);
+      process_non_mcu(doc, appt, 'Service Unit')
     elif appt.appointment_for == 'MCU' and appt.mcu:
-      for child in ['custom_mcu_exam_items', 'custom_additional_mcu_items']:
-        if not appt.get(child):
-          continue
-        for row in doc.get(child):
-          if row.examination_item:
-            frappe.get_doc(dict(
-              doctype = 'Queue Pooling',
-              appointment = doc.appointment,
-              appointment_type = appt.appointment_type,
-              patient = doc.patient,
-              date = frappe.utils.nowdate(),
-              arrival_time = frappe.utils.nowtime(),
-              status = 'Queued',
-              priority = appt.custom_priority,
-              vital_sign = doc.name,
-              company = doc.company,
-              service_unit = row.healthcare_service_unit,
-              branch = doc.custom_branch,
-              note = doc.vital_signs_note)).insert(ignore_permissions=True);
+      print('33333333333333333333333333333333333333333333333333333333333333')
+      process_mcu(doc, appt)
+      print('44444444444444444444444444444444444444444444444444444444444444')
     elif appt.appointment_for == 'Department':
-      pass
+      process_non_mcu(doc, appt, 'Department')
 
 @frappe.whitelist()
 def update_rate_amount_after_amend(doc, method=None):

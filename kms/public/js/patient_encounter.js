@@ -14,7 +14,7 @@ frappe.ui.form.on('Patient Encounter', {
                 filters: {
                   company: frm.doc.company,
                   branch: frm.doc.custom_branch,
-                  service_unit: frm.doc.custom_service_unit,
+                  department: frm.doc.medical_department,
                   status: 'Queued'
                 }
               };
@@ -140,7 +140,7 @@ frappe.ui.form.on('Patient Encounter', {
           },
           callback: (r => {
             console.log(JSON.stringify(r));
-            frm.refresh_field('lab_test_prescription');
+            //frm.refresh_field('lab_test_prescription');
             ////////////////////// UPDATE SAMPLE COLLECTION TABLE //////////////////////
           }),
           error: (r => { console.log(JSON.stringify(r)) }),
