@@ -1,6 +1,7 @@
 frappe.ui.form.on('Patient Encounter', {
   /****************** Event Overrides ******************/
   refresh(frm) {
+    hide_standard_buttons (frm, ['lab_test_prescription']);
     if (frm.is_new()) {
       frm.add_custom_button(
         __('Get from Queue'),
@@ -25,6 +26,26 @@ frappe.ui.form.on('Patient Encounter', {
                 frm.doc.appointment = doc.appointment;
                 frm.doc.patient = doc.patient;
                 frm.doc.appointment_type = doc.appointment_type;
+                frm.doc.custom_vital_signs = doc.vital_sign;
+                frappe.db.get_doc('Vital Signs', doc.vital_sign).then(vital_sign => {
+                  const fields = {
+                    Temperature: vital_sign.temperature,
+                    Pulse: vital_sign.pulse,
+                    "Respiratory Rate": vital_sign.respiratory_rate,
+                    "Blood Pressure": vital_sign.bp,
+                    Height: vital_sign.height,
+                    Weight: vital_sign.weight,
+                    BMI: vital_sign.bmi,
+                    "Nutrition Note": vital_sign.nutrition_note
+                  };
+                
+                  // Build string only for fields with values
+                  frm.doc.custom_objective_information = Object.entries(fields)
+                    .filter(([_, value]) => value) // Keep only non-empty values
+                    .map(([key, value]) => `${key}: ${value}`) // Format as "Key: Value"
+                    .join('\n'); // Join with newlines                  
+                  refresh_field('custom_objective_information');
+                });
                 frappe.db.get_doc('Patient Appointment', doc.appointment).then(appointment => {
                   frm.doc.patient_name = appointment.patient_name;
                   frm.doc.patient_sex = appointment.patient_sex;
@@ -37,6 +58,7 @@ frappe.ui.form.on('Patient Encounter', {
                 refresh_field('appointment');
                 refresh_field('patient');
                 refresh_field('appointment_type');
+                refresh_field('custom_vital_signs');
               });
               d.dialog.hide();
             }
@@ -74,7 +96,7 @@ frappe.ui.form.on('Patient Encounter', {
     }
   },
   /****************** Buttons ******************/
-  custom_order_test(frm) {
+  custom_pick_order(frm) {
     frappe.call({
       method: 'kms.sample_collection.get_items'
     }).then(res => {
@@ -132,7 +154,7 @@ frappe.ui.form.on('Patient Encounter', {
         
         frm.save();
 
-        frappe.call({
+        /* frappe.call({
           method: 'kms.sample_collection.create_sc',
           args: {
             'doctype': 'Patient Encounter',
@@ -144,7 +166,7 @@ frappe.ui.form.on('Patient Encounter', {
             ////////////////////// UPDATE SAMPLE COLLECTION TABLE //////////////////////
           }),
           error: (r => { console.log(JSON.stringify(r)) }),
-        })
+        }) */
         dialog.hide();
       };
 
@@ -614,3 +636,23 @@ frappe.ui.form.on('Other Dental', {
     })
   }
 });
+const hide_standard_buttons = (frm, fields) => {
+	fields.forEach((field) => {
+		let child = frm.fields_dict[field];
+		if (child) {
+			if (child.grid.grid_rows) {
+				setTimeout(()=>{
+					child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
+					child.grid.wrapper.find('.row-index').hide();
+				}, 150)
+				child.grid.grid_rows.forEach(function(row) {
+					row.wrapper.find('.btn-open-row').on('click', function() {
+						setTimeout(function() {
+							$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+						}, 100);
+					});
+				});
+			}
+		}
+	});
+}

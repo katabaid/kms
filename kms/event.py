@@ -205,6 +205,14 @@ def process_queue_pooling_and_dental(doc, method=None):
     qp.healthcare_practitioner = doc.practitioner
     qp.save(ignore_permissions=True)
 
+@frappe.whitelist()
+def process_queue_pooling_and_dental(doc, method=None):
+  ################Doctype: Patient Encounter################
+  if doc.custom_queue_pooling:
+    qp = frappe.get_doc("Queue Pooling", doc.custom_queue_pooling)
+    qp.status = "Closed"
+    qp.save(ignore_permissions=True)
+
 def update_questionnaire_status(doc):
   # Prevent recursion by checking doc.flags
   if getattr(doc.flags, "update_called", False):
@@ -451,7 +459,7 @@ def process_mcu(doc, appt):
           entries = dict()
           entries['template'] = template.name
           entries['item_code'] = exam_item.parent
-          exam_doc.append('custom_examination_item', entries)
+          exam_doc.append('custom_examination_item', entries) 
           if template.sample not in existing_samples:
             samples = dict()
             samples['sample'] = template.sample

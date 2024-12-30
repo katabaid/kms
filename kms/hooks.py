@@ -47,6 +47,7 @@ doctype_js = {
   "Lab Test": "public/js/lab_test.js",
   "Clinical Procedure": "public/js/clinical_procedure.js",
   "Patient History Settings": "public/js/patient_history_settings.js",
+  "Vital Signs": "public/js/vital_signs.js",
 }
 doctype_list_js = {
   "ToDo": "public/js/todo_list.js",
@@ -163,6 +164,7 @@ doc_events = {
   "Patient Encounter": {
     "on_trash": "kms.event.unlink_queue_pooling_before_delete",
     "after_insert": "kms.event.process_queue_pooling_and_dental",
+    "on_submit": "kms.event.update_queue_pooling_status",
   },
   "Patient Appointment": {
     "on_update": "kms.event.process_checkin",
