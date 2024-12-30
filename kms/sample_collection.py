@@ -30,17 +30,8 @@ def get_items():
   return {'item_group': item_group, 'item': item}
 
 @frappe.whitelist()
-def create_sc(doctype, name):
-  def get_appointment_doc(doctype, name):
-    if doctype == 'Patient Encounter':
-      enc_doc = frappe.get_doc('Patient Encounter', name)
-      return frappe.get_doc('Patient Appointment', enc_doc.appointment)
-    elif doctype == 'Dispatcher':
-      appt = frappe.db.get_value('Dispatcher', name, 'patient_appointment')
-      return frappe.get_doc('Patient Appointment', appt)
-    else:
-      return None
-  appt_doc = get_appointment_doc(doctype, name)
+def create_sc(name, appointment):
+  appt_doc = frappe.get_doc('Patient Appointment', appointment)
 
   #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
   sus = frappe.db.sql(f"""
@@ -53,7 +44,6 @@ def create_sc(doctype, name):
   resp = []
   
   for su in sus:
-    print(1)
     sample_doc = frappe.get_doc({
       'doctype': 'Sample Collection',
       'custom_appointment': appt_doc.name,
@@ -81,17 +71,13 @@ def create_sc(doctype, name):
       sample_doc.append('custom_sample_table', {
         'sample': sample.sample,
       })
-    if doctype == 'Patient Encounter':
       enc_doc = frappe.get_doc('Patient Encounter', name)
       for lab in enc_doc.lab_test_prescription:
         entries = dict()
         entries['template'] = lab.lab_test_code
         entries['item_code'] = lab.custom_exam_item
         sample_doc.append('custom_examination_item', entries)
-      
-      
     sample_doc.insert(ignore_permissions=True)
-    print(sample_doc.name)
     test_per_su = frappe.db.sql(f"""
       SELECT tlp.lab_test_name
       FROM `tabLab Prescription` tlp, `tabItem Group Service Unit` tigsu, tabItem ti 

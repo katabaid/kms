@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:instruction",
- "creation": "2024-12-30 08:53:50.156512",
+ "creation": "2024-12-30 13:17:27.707831",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -18,7 +18,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-30 08:54:46.778955",
+ "modified": "2024-12-30 13:18:03.680944",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dosage Instruction",

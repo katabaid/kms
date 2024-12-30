@@ -237,6 +237,18 @@ frappe.ui.form.on('Patient Encounter', {
       };
     });
   },
+  custom_order_test(frm) {
+    frappe.call({
+      method: 'kms.sample_collection.create_sc',
+      args: {
+        'name': frm.doc.name,
+        'appointment': frm.doc.appointment
+      },
+      callback: (r=>{
+        console.log(r)
+      })
+    })
+  },
   custom_order_medication(frm) {
     frappe.call({
       method: 'kms.api.create_mr_from_encounter',

@@ -32,7 +32,7 @@ frappe.ui.form.on('Doctor Result', {
     };
     ['nurse_grade', 'doctor_grade', 'lab_test_grade', 'radiology_grade'].forEach(processGrade);
     
-    if (frm.doc.docstatus === 0) {
+    /* if (frm.doc.docstatus === 0) {
       frm.add_custom_button('Copy Comment', ()=>{
         if (frm.doc.remark) {
           frappe.warn(
@@ -48,7 +48,7 @@ frappe.ui.form.on('Doctor Result', {
           frm.set_value('remark', frm.doc.copied_remark)
         }
       })
-    }
+    } */
   },
   before_save: function (frm) {
     const child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade'];

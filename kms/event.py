@@ -184,6 +184,14 @@ def update_doctor_result(doc, method=None):
       })
 
 @frappe.whitelist()
+def update_queue_pooling_status(doc, method=None):
+  ################Doctype: Patient Encounter################
+  if doc.custom_queue_pooling:
+    qp = frappe.get_doc("Queue Pooling", doc.custom_queue_pooling)
+    qp.status = "Closed"
+    qp.save(ignore_permissions=True)
+
+@frappe.whitelist()
 def unlink_queue_pooling_before_delete(doc, method=None):
   ################Doctype: Patient Encounter################
   if doc.custom_queue_pooling:
