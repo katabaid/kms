@@ -101,7 +101,9 @@ frappe.ui.form.on('Patient Encounter', {
       method: 'kms.sample_collection.get_items'
     }).then(res => {
       const itemGroups = res.message.item_group;
-      const laboratoryGroups = itemGroups.filter(group => group.parent_item_group === 'Laboratory').map(group => group.name);
+      const laboratoryGroups = itemGroups
+        .filter(group => group.parent_item_group === 'Laboratory')
+        .map(group => group.name);
       let checkedItems = [];
       let d = new frappe.ui.Dialog({
         title: 'Pick Lab Test',
@@ -141,8 +143,11 @@ frappe.ui.form.on('Patient Encounter', {
         primary_action_label: 'Pick'
       });
       d.show();
-      d.$wrapper.on('change', '[data-fieldname="item_selection"] .checkbox-options input[type="checkbox"]', function () {
-        updateCheckedItems(d, checkedItems);
+      d.$wrapper.on(
+        'change', 
+        '[data-fieldname="item_selection"] .checkbox-options input[type="checkbox"]', 
+        function () {
+          updateCheckedItems(d, checkedItems);
       });
 
       const handleDialogSubmission = (checkedItems, dialog, frm) => {
@@ -151,22 +156,7 @@ frappe.ui.form.on('Patient Encounter', {
           frappe.model.set_value(child.doctype, child.name, 'lab_test_code', item);
         });
         frm.refresh_field('lab_test_prescription');
-        
         frm.save();
-
-        /* frappe.call({
-          method: 'kms.sample_collection.create_sc',
-          args: {
-            'doctype': 'Patient Encounter',
-            'name': frm.doc.name
-          },
-          callback: (r => {
-            console.log(JSON.stringify(r));
-            //frm.refresh_field('lab_test_prescription');
-            ////////////////////// UPDATE SAMPLE COLLECTION TABLE //////////////////////
-          }),
-          error: (r => { console.log(JSON.stringify(r)) }),
-        }) */
         dialog.hide();
       };
 
@@ -280,12 +270,9 @@ frappe.ui.form.on('Patient Encounter', {
   },*/
   custom_other_add(frm, cdt, cdn) {
     let row = locals[cdt][cdn];
-    console.log('z')
     frappe.ui.form.on('Other Dental', 'other', function (frm, cdt, cdn) {
-      console.log('a')
       let child_row = locals[cdt][cdn];
       if (child_row.other) {
-        console.log('b')
         frappe.call({
           method: 'frappe.client.get',
           args: {
@@ -293,15 +280,10 @@ frappe.ui.form.on('Patient Encounter', {
             name: child_row.other
           },
           callback: function (res) {
-            console.log('1')
             let dental_other = res.message;
-            console.log('2')
             if (dental_other && dental_other.selective) {
-              console.log('3')
               let options = dental_other.selections.split('\n');
-              console.log('4')
               frm.fields_dict['custom_other'].grid.update_docfield_property('selective_value', 'options', options.join('\n'));
-              console.log('5')
               frm.fields_dict['custom_other'].grid.refresh();
             }
           }
@@ -660,7 +642,9 @@ const hide_standard_buttons = (frm, fields) => {
 				child.grid.grid_rows.forEach(function(row) {
 					row.wrapper.find('.btn-open-row').on('click', function() {
 						setTimeout(function() {
-							$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+							$('.grid-row-open')
+              .find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row')
+              .hide();
 						}, 100);
 					});
 				});

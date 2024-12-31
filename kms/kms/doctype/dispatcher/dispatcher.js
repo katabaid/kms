@@ -104,7 +104,9 @@ const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 		frm.fields_dict[field].grid.grid_rows.forEach(function(row) {
 			row.wrapper.find('.btn-open-row').on('click', function() {
 				setTimeout(function() {
-					$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+					$('.grid-row-open')
+					.find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row')
+					.hide();
 				}, 100);
 			});
 		});
