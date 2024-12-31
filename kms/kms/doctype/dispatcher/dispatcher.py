@@ -42,7 +42,8 @@ class Dispatcher(Document):
 			appointment = frappe.get_doc("Patient Appointment", self.patient_appointment)
 			if appointment.status not in {"Closed", "Checked Out"}:
 				appointment.db_set('status', 'Checked Out', commit=True)
-				frappe.msgprint(_("Patient Appointment {0} has been Checked Out.").format(self.patient_appointment))
+				frappe.msgprint(
+					_("Patient Appointment {0} has been Checked Out.").format(self.patient_appointment))
 		else:
 			frappe.msgprint(_("No linked Patient Appointment found."))
 	
@@ -55,14 +56,22 @@ class Dispatcher(Document):
 		doc.dispatcher = self.name
 		doc.created_date = today()
 		package_line = frappe.db.sql(f"""SELECT examination_item, item_name, item_group,
-			(select custom_gradable from `tabItem Group` tig where tig.name = item_group) group_gradable, 
-			(select custom_bundle_position from `tabItem Group` tig where tig.name = item_group)group_position,
-			(select custom_gradable from `tabItem` ti where ti.name = examination_item) item_gradable, 
-			(select custom_bundle_position from `tabItem` ti where ti.name = examination_item) item_position,
-			(select 1 from `tabNurse Examination Template` tnet where tnet.item_code = examination_item) nurse,
-			(select 1 from `tabDoctor Examination Template` tnet where tnet.item_code = examination_item) doctor,
-			(select 1 from `tabRadiology Result Template` tnet where tnet.item_code = examination_item) radiology,
-			(select 1 from `tabLab Test Template` tnet where tnet.lab_test_code = examination_item) lab_test
+			(select custom_gradable from `tabItem Group` tig 
+				where tig.name = item_group) group_gradable, 
+			(select custom_bundle_position from `tabItem Group` tig 
+				where tig.name = item_group) group_position,
+			(select custom_gradable from `tabItem` ti 
+				where ti.name = examination_item) item_gradable, 
+			(select custom_bundle_position from `tabItem` ti 
+				where ti.name = examination_item) item_position,
+			(select 1 from `tabNurse Examination Template` tnet 
+				where tnet.item_code = examination_item) nurse,
+			(select 1 from `tabDoctor Examination Template` tnet 
+				where tnet.item_code = examination_item) doctor,
+			(select 1 from `tabRadiology Result Template` tnet 
+				where tnet.item_code = examination_item) radiology,
+			(select 1 from `tabLab Test Template` tnet 
+				where tnet.lab_test_code = examination_item) lab_test
 			from `tabMCU Appointment`
 			where parent = '{self.patient_appointment}'""", as_dict = True)
 		group_result = get_examination_items(package_line)
@@ -70,7 +79,8 @@ class Dispatcher(Document):
 		doc.insert()
 
 	def calculate_progress(self):
-		child_items = frappe.get_all('MCU Appointment', filters={'parent': self.name}, fields=['status'])
+		child_items = frappe.get_all(
+			'MCU Appointment', filters={'parent': self.name}, fields=['status'])
 		if not child_items:
 			return 0
 		else:
@@ -106,12 +116,10 @@ def get_examination_items(sql):
 		sorted_data = sorted(grouped_data.values(), key=lambda x: x['group_position'])
 		return sorted_data
 	nurse_array = group_and_sort(sql, 'nurse')
-	#doctor_array = group_and_sort(sql, 'doctor')
 	radiology_array = group_and_sort(sql, 'radiology')
 	lab_array = group_and_sort(sql, 'lab_test')
 	return {
 		'nurse': nurse_array,
-		#'doctor': doctor_array,
 		'radiology': radiology_array,
 		'lab_test': lab_array,
 	}
@@ -191,13 +199,15 @@ def process_examination_items(doc, data, package):
 				if blood_pressure_item_code == item['examination_item']:
 					incdec = calculate_blood_pressure(doc.appointment)
 				if category == 'radiology':
-					radiology_result = get_radiology_result(doc.appointment, item['examination_item'], item['item_name'])
+					radiology_result = get_radiology_result(
+						doc.appointment, item['examination_item'], item['item_name'])
 				append_items(
 					category, group, item, doc,
 					additional_data={'result': radiology_result, 'incdec': incdec, 'is_item': 1}
 				)
 				if category == 'nurse':
-					diagnose_column = frappe.db.get_value('Nurse Examination Template', item['examination_item'], 'diagnose_column')
+					diagnose_column = frappe.db.get_value(
+						'Nurse Examination Template', item['examination_item'], 'diagnose_column')
 					if diagnose_column:
 						append_items(
 							category, group, item, doc,
@@ -224,7 +234,8 @@ def calculate_grade(result_text, min_value, max_value, group, item_code, test_na
 	return None, None
 
 def process_nurse_category(doc, group, item):
-	nurse_grades = build_nurse_grade(group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
+	nurse_grades = build_nurse_grade(
+		group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
 	for nurse_grade in nurse_grades:
 		grade, grade_description = calculate_grade(
 			nurse_grade.result_text, nurse_grade.min_value, nurse_grade.max_value,
@@ -232,7 +243,8 @@ def process_nurse_category(doc, group, item):
 		)
 		incdec = nurse_grade.incdec.split('|||') if nurse_grade.incdec else ['', '']
 		if nurse_grade.result_line == 'BMI':
-			bmi_rec = frappe.db.get_all('BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
+			bmi_rec = frappe.db.get_all(
+				'BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
 			exam_result_float = convert_to_float(nurse_grade.result_text)
 			for bmi in bmi_rec:
 				min_value_float = convert_to_float(bmi['min_value'])
@@ -298,7 +310,8 @@ def process_doctor_category(doc, package):
 		})
 
 def process_lab_test_category(doc, group, item):
-	lab_test_grades = build_lab_test_grade(group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
+	lab_test_grades = build_lab_test_grade(
+		group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
 	for lab_test_grade in lab_test_grades:
 		grade, grade_description = calculate_grade(
 			lab_test_grade.result_text, lab_test_grade.min_value, lab_test_grade.max_value,
@@ -324,9 +337,9 @@ def process_lab_test_category(doc, group, item):
 
 def build_lab_test_grade(item_group, item_code, item_name, appointment):
 	sql = f"""
-		SELECT 
-		tntr.idx, lab_test_event AS result_line, custom_min_value AS min_value, custom_max_value AS max_value, 
-		result_value AS result_text, lab_test_uom AS uom, tlt.name AS doc, tlt.status AS status,
+		SELECT tntr.idx, lab_test_event AS result_line, custom_min_value AS min_value, 
+		custom_max_value AS max_value, result_value AS result_text, lab_test_uom AS uom, 
+		tlt.name AS doc, tlt.status AS status,
 		CASE WHEN custom_min_value IS NOT NULL 
 			AND custom_max_value IS NOT NULL 
 			AND (custom_min_value <> 0 OR custom_max_value <> 0) 
@@ -362,19 +375,26 @@ def build_lab_test_grade(item_group, item_code, item_name, appointment):
 				AND test_name = lab_test_event 
 				LIMIT 1), 
 			0) AS gradable
-		FROM `tabNormal Test Result` tntr, `tabLab Test` tlt WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
+		FROM `tabNormal Test Result` tntr, `tabLab Test` tlt 
+		WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
 		AND tlt.docstatus IN (0, 1) AND tntr.lab_test_name = '{item_name}'
 		UNION
 		SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, NULL, 0
-		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
+		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt 
+		WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
 		AND tlt.docstatus IN (0, 1) AND event = '{item_name}' ORDER BY idx"""
 	return frappe.db.sql(sql, as_dict = True)
 
 def build_nurse_grade(item_group, item_code, item_name, appointment):
 	sql = f"""
-		SELECT tner.idx AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, FORMAT(max_value, 2) AS max_value, 
-		FORMAT(result_value, 2) AS result_text, test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
-		CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+		SELECT tner.idx AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
+		FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, 
+		test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
+		CASE 
+			WHEN min_value IS NOT NULL 
+			AND max_value IS NOT NULL 
+			AND (min_value <> 0 OR max_value <> 0) 
+			AND result_value IS NOT NULL THEN
 			CASE WHEN result_value > max_value THEN 
 				CONCAT_WS(
 					'|||', 
@@ -408,29 +428,38 @@ def build_nurse_grade(item_group, item_code, item_name, appointment):
 			), 
 			0
 		) AS gradable
-		FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
+		FROM `tabNurse Examination Result` tner, `tabNurse Examination` tne, 
+			`tabNurse Examination Request` tnerq
 		WHERE tne.name = tner.parent AND tne.appointment = '{appointment}' AND tne.docstatus = 1 
 		AND tner.item_code = '{item_code}' AND tnerq.parent = tne.name 
 		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
 			WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name)
 		UNION
-		SELECT tnesr.idx+100, result_line, NULL, NULL, result_text, result_check, tne.name, tnerq.status, NULL, 0
-		FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
+		SELECT tnesr.idx+100, result_line, NULL, NULL, result_text, result_check, tne.name, 
+			tnerq.status, NULL, 0
+		FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Examination` tne, 
+			`tabNurse Examination Request` tnerq
 		WHERE tne.name = tnesr.parent AND tne.appointment = '{appointment}' AND tne.docstatus = 1 
 		AND tnesr.item_code = '{item_code}' AND tnerq.parent = tne.name 
 		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
 			WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name)
 		UNION
-		SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, tnerq.status, NULL, 0
+		SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, 
+			tnerq.status, NULL, 0
 		FROM `tabCalculated Exam` tce, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
 		WHERE tne.name = tce.parent AND tne.appointment = '{appointment}' AND tne.docstatus = 1 
 		AND tce.item_code = '{item_code}' AND tnerq.parent = tne.name 
 		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
 			WHERE tnet.item_code = tce.item_code AND tnerq.template = tnet.item_name)
 		UNION
-		SELECT tner.idx+300 AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, FORMAT(max_value, 2) AS max_value, 
-		FORMAT(result_value, 2) AS result_text, test_uom AS uom, tnr.name AS doc, tnerq.status AS status, 
-		CASE WHEN min_value IS NOT NULL AND max_value IS NOT NULL AND (min_value <> 0 OR max_value <> 0) AND result_value IS NOT NULL THEN
+		SELECT tner.idx+300 AS idx, test_name AS result_line, FORMAT(min_value, 2) AS min_value, 
+			FORMAT(max_value, 2) AS max_value, FORMAT(result_value, 2) AS result_text, 
+			test_uom AS uom, tnr.name AS doc, tnerq.status AS status, 
+		CASE 
+			WHEN min_value IS NOT NULL 
+			AND max_value IS NOT NULL 
+			AND (min_value <> 0 OR max_value <> 0) 
+			AND result_value IS NOT NULL THEN
 			CASE WHEN result_value > max_value THEN 
 				CONCAT_WS(
 					'|||', 
@@ -462,18 +491,24 @@ def build_nurse_grade(item_group, item_code, item_name, appointment):
 				AND tmg.test_name = tner.test_name 
 				LIMIT 1), 
 			0) AS gradable
-		FROM `tabNurse Examination Result` tner, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
-		WHERE tnr.name = tner.parent AND tnr.appointment = '{appointment}' AND tnr.docstatus IN (0,1)
-		AND tner.item_code = '{item_code}' AND tnerq.parent = tnr.name
+		FROM `tabNurse Examination Result` tner, `tabNurse Result` tnr, 
+			`tabNurse Examination Request` tnerq
+		WHERE tnr.name = tner.parent AND tnr.appointment = '{appointment}' 
+		AND tnr.docstatus IN (0,1) AND tner.item_code = '{item_code}' AND tnerq.parent = tnr.name
 		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
-			WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
+			WHERE tnet.item_code = tner.item_code AND tnerq.template = tnet.item_name 
+			AND tnet.result_in_exam = 0)
 		UNION
-		SELECT tnesr.idx+400, result_line, NULL, NULL, result_text, result_check, tnr.name, tnerq.status, NULL, 0
-		FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Result` tnr, `tabNurse Examination Request` tnerq
-		WHERE tnr.name = tnesr.parent AND tnr.appointment = '{appointment}' AND tnr.docstatus IN (0,1)
+		SELECT tnesr.idx+400, result_line, NULL, NULL, result_text, result_check, tnr.name, 
+			tnerq.status, NULL, 0
+		FROM `tabNurse Examination Selective Result` tnesr, `tabNurse Result` tnr, 
+			`tabNurse Examination Request` tnerq
+		WHERE tnr.name = tnesr.parent AND tnr.appointment = '{appointment}' 
+		AND tnr.docstatus IN (0,1)
 		AND tnesr.item_code = '{item_code}' AND tnerq.parent = tnr.name 
 		AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
-			WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name AND tnet.result_in_exam = 0)
+			WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name 
+			AND tnet.result_in_exam = 0)
 		ORDER BY 1"""
 	return frappe.db.sql(sql, as_dict = True)
 
@@ -495,8 +530,10 @@ def build_doctor_grade(appointment, package):
 
 	def prepare_item_and_group(item, previous_exam_item_group, previous_exam_item):
 		temp_doc = []
-		group_gradable, group_pos = frappe.db.get_value('Item Group', item.item_group, ['custom_gradable', 'custom_bundle_position'])
-		item_gradable, item_pos = frappe.db.get_value('Item', item.examination_item, ['custom_gradable', 'custom_bundle_position'])
+		group_gradable, group_pos = frappe.db.get_value(
+			'Item Group', item.item_group, ['custom_gradable', 'custom_bundle_position'])
+		item_gradable, item_pos = frappe.db.get_value(
+			'Item', item.examination_item, ['custom_gradable', 'custom_bundle_position'])
 
 		if previous_exam_item_group != item.item_group:
 			previous_exam_item_group = item.item_group
@@ -527,7 +564,9 @@ def build_doctor_grade(appointment, package):
 				temp_doc.append({
 					'examination': selective.result_line,
 					'gradable': 0,
-					'result': ': '.join(filter(None, [selective.result_check or '', selective.result_text or ''])),
+					'result': ': '.join(filter(None, [
+						selective.result_check or '', 
+						selective.result_text or ''])),
 					'status': status,
 					'document': doctor_exam.name,
 					'hidden_item_group': item_group,
@@ -547,8 +586,10 @@ def build_doctor_grade(appointment, package):
 				grade_description = ''
 				incdec = ''
 				incdec_category = ''
+				is_within_range = (non_selective.result_value >= non_selective.min_value 
+					and non_selective.result_value <= non_selective.max_value)
 				if non_selective.result_value and non_selective.min_value and non_selective.max_value:
-					if gradable and non_selective.result_value>=non_selective.min_value and non_selective.result_value<=non_selective.max_value:
+					if gradable and is_within_range:
 						grade = 'A'
 						grade_description = frappe.db.get_value(
 							'MCU Grade', 
@@ -612,7 +653,8 @@ def build_doctor_grade(appointment, package):
 		return temp
 
 	single_exams = build_single_exams()
-	doctor_exam_names = frappe.get_all('Doctor Examination', {'docstatus': 1, 'appointment': appointment})
+	doctor_exam_names = frappe.get_all(
+		'Doctor Examination', {'docstatus': 1, 'appointment': appointment})
 	item_group_list = []
 	doc_tabs_list = []
 	result_tables_list = []
@@ -628,7 +670,12 @@ def build_doctor_grade(appointment, package):
 			if doctor_tabs:
 				doctor_tab = doctor_tabs[0]
 				temp_doc_tabs = process_doc_tabs(
-					doctor_tab['code'], doctor_exam, disp_item.item_group, disp_item.examination_item, disp_item.status, item_pos)
+					doctor_tab['code'], 
+					doctor_exam, 
+					disp_item.item_group, 
+					disp_item.examination_item, 
+					disp_item.status, 
+					item_pos)
 				doc_tabs_list.append(temp_doc_tabs)
 			else:
 				temp_result_tables = process_result_tables(
@@ -674,7 +721,8 @@ def process_visual_field_test(doctor_exam, item_group, item_code, status, pos):
 def process_romberg_test(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Romberg Test'
 	if not doctor_exam.romberg_check:
-		result = '\n'.join(filter(None, [doctor_exam.romberg_abnormal or '', doctor_exam.romberg_others or '']))
+		result = '\n'.join(filter(None, 
+			[doctor_exam.romberg_abnormal or '', doctor_exam.romberg_others or '']))
 	else:
 		result = 'No Abnormality'
 	return {
@@ -722,7 +770,10 @@ def process_phallen_test(doctor_exam, item_group, item_code, status, pos):
 def process_rectal_test(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Rectal Test'
 	if not doctor_exam.rectal_check:
-		if not doctor_exam.rectal_hemorrhoid and not doctor_exam.enlarged_prostate and not doctor_exam.re_others:
+		if (
+			not doctor_exam.rectal_hemorrhoid 
+			and not doctor_exam.enlarged_prostate 
+			and not doctor_exam.re_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -748,7 +799,9 @@ def process_rectal_test(doctor_exam, item_group, item_code, status, pos):
 def process_eyes(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Eyes'
 	if not doctor_exam.eyes_check:
-		if not doctor_exam.left_anemic and not doctor_exam.left_icteric and not doctor_exam.el_others:
+		if (not doctor_exam.left_anemic 
+			and not doctor_exam.left_icteric 
+			and not doctor_exam.el_others):
 			result = 'Left: No Abnormality'
 		else:
 			result_list = []
@@ -759,7 +812,9 @@ def process_eyes(doctor_exam, item_group, item_code, status, pos):
 			if doctor_exam.el_others:
 				result_list.append(f'Other ({doctor_exam.eyes_left_others})')
 			result = 'Left: ' + ','.join(result_list)
-		if not doctor_exam.right_anemic and not doctor_exam.right_icteric and not doctor_exam.er_others:
+		if (not doctor_exam.right_anemic 
+			and not doctor_exam.right_icteric 
+			and not doctor_exam.er_others):
 			result += '\nRight: No Abnormality'
 		else:
 			result_list = []
@@ -785,7 +840,10 @@ def process_eyes(doctor_exam, item_group, item_code, status, pos):
 def process_ears(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Ear'
 	if not doctor_exam.ear_check:
-		if not doctor_exam.left_cerumen and not doctor_exam.left_cerumen_prop and not doctor_exam.left_tympanic and not doctor_exam.earl_others:
+		if (not doctor_exam.left_cerumen 
+			and not doctor_exam.left_cerumen_prop 
+			and not doctor_exam.left_tympanic 
+			and not doctor_exam.earl_others):
 			result = 'Left: No Abnormality'
 		else:
 			result_list = []
@@ -798,7 +856,10 @@ def process_ears(doctor_exam, item_group, item_code, status, pos):
 			if doctor_exam.earl_others:
 				result_list.append(f'Other ({doctor_exam.ear_left_others})')
 			result = 'Left: ' + ','.join(result_list)
-		if not doctor_exam.right_cerumen and not doctor_exam.right_cerumen_prop and not doctor_exam.right_tympanic and not doctor_exam.earr_others:
+		if (not doctor_exam.right_cerumen 
+			and not doctor_exam.right_cerumen_prop 
+			and not doctor_exam.right_tympanic 
+			and not doctor_exam.earr_others):
 			result += '\nRight: No Abnormality'
 		else:
 			result_list = []
@@ -826,7 +887,10 @@ def process_ears(doctor_exam, item_group, item_code, status, pos):
 def process_nose(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Nose'
 	if not doctor_exam.nose_check:
-		if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
+		if (not doctor_exam.left_enlarged 
+			and not doctor_exam.left_hyperemic 
+			and not doctor_exam.left_polyp 
+			and not doctor_exam.nl_others):
 			result = 'Left: No Abnormality'
 		else:
 			result_list = []
@@ -839,7 +903,10 @@ def process_nose(doctor_exam, item_group, item_code, status, pos):
 			if doctor_exam.nl_others:
 				result_list.append(f'Other ({doctor_exam.nose_left_others})')
 			result = 'Left: ' + ','.join(result_list)
-		if not doctor_exam.left_enlarged and not doctor_exam.left_hyperemic and not doctor_exam.left_polyp and not doctor_exam.nl_others:
+		if (not doctor_exam.left_enlarged 
+			and not doctor_exam.left_hyperemic 
+			and not doctor_exam.left_polyp 
+			and not doctor_exam.nl_others):
 			result += '\nRight: No Abnormality'
 		else:
 			result_list = []
@@ -872,7 +939,9 @@ def process_nose(doctor_exam, item_group, item_code, status, pos):
 def process_throat(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Throat'
 	if not doctor_exam.throat_check:
-		if not doctor_exam.enlarged_tonsil and not doctor_exam.hyperemic_pharynx and not doctor_exam.t_others:
+		if (not doctor_exam.enlarged_tonsil 
+			and not doctor_exam.hyperemic_pharynx 
+			and not doctor_exam.t_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -898,7 +967,9 @@ def process_throat(doctor_exam, item_group, item_code, status, pos):
 def process_neck(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Neck'
 	if not doctor_exam.neck_check:
-		if not doctor_exam.enlarged_thyroid and not doctor_exam.enlarged_lymph_node and not doctor_exam.n_others:
+		if (not doctor_exam.enlarged_thyroid 
+			and not doctor_exam.enlarged_lymph_node 
+			and not doctor_exam.n_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -924,7 +995,10 @@ def process_neck(doctor_exam, item_group, item_code, status, pos):
 def process_cardiac(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Cardiac'
 	if not doctor_exam.cardiac_check:
-		if not doctor_exam.regular_heart_sound and not doctor_exam.murmur and not doctor_exam.gallop and not doctor_exam.c_others:
+		if (not doctor_exam.regular_heart_sound 
+			and not doctor_exam.murmur 
+			and not doctor_exam.gallop 
+			and not doctor_exam.c_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -952,7 +1026,9 @@ def process_cardiac(doctor_exam, item_group, item_code, status, pos):
 def process_breast(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Breast'
 	if not doctor_exam.breast_check:
-		if not doctor_exam.left_enlarged_breast and not doctor_exam.left_lumps and not doctor_exam.bl_others:
+		if (not doctor_exam.left_enlarged_breast 
+			and not doctor_exam.left_lumps 
+			and not doctor_exam.bl_others):
 			result = 'Left: No Abnormality'
 		else:
 			result_list = []
@@ -963,7 +1039,9 @@ def process_breast(doctor_exam, item_group, item_code, status, pos):
 			if doctor_exam.bl_others:
 				result_list.append(f'Other ({doctor_exam.breast_left_others})')
 			result = 'Left: ' + ','.join(result_list)
-		if not doctor_exam.right_enlarged_breast and not doctor_exam.right_lumps and not doctor_exam.br_others:
+		if (not doctor_exam.right_enlarged_breast 
+			and not doctor_exam.right_lumps 
+			and not doctor_exam.br_others):
 			result += '\nRight: No Abnormality'
 		else:
 			result_list = []
@@ -989,7 +1067,9 @@ def process_breast(doctor_exam, item_group, item_code, status, pos):
 def process_resp(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Respiratory System'
 	if not doctor_exam.resp_check:
-		if not doctor_exam.left_ronkhi and not doctor_exam.left_wheezing and not doctor_exam.r_others:
+		if (not doctor_exam.left_ronkhi 
+			and not doctor_exam.left_wheezing 
+			and not doctor_exam.r_others):
 			result = 'Left: No Abnormality'
 		else:
 			result_list = []
@@ -1000,7 +1080,9 @@ def process_resp(doctor_exam, item_group, item_code, status, pos):
 			if doctor_exam.r_others:
 				result_list.append(f'Other ({doctor_exam.resp_left_others})')
 			result = 'Left: ' + ','.join(result_list)
-		if not doctor_exam.right_ronkhi and not doctor_exam.right_wheezing and not doctor_exam.rr_others:
+		if (not doctor_exam.right_ronkhi 
+			and not doctor_exam.right_wheezing 
+			and not doctor_exam.rr_others):
 			result += '\nRight: No Abnormality'
 		else:
 			result_list = []
@@ -1026,7 +1108,11 @@ def process_resp(doctor_exam, item_group, item_code, status, pos):
 def process_abdomen(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Abdomen'
 	if not doctor_exam.abd_check:
-		if not doctor_exam.tenderness and not doctor_exam.hepatomegaly and not doctor_exam.splenomegaly and not doctor_exam.increased_bowel_sounds and not doctor_exam.a_others:
+		if (not doctor_exam.tenderness 
+			and not doctor_exam.hepatomegaly 
+			and not doctor_exam.splenomegaly 
+			and not doctor_exam.increased_bowel_sounds 
+			and not doctor_exam.a_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -1072,7 +1158,10 @@ def process_spine(doctor_exam, item_group, item_code, status, pos):
 def process_genit(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Genitourinary'
 	if not doctor_exam.genit_check:
-		if not doctor_exam.hernia and not doctor_exam.hemorrhoid and not doctor_exam.inguinal_nodes and not doctor_exam.g_others:
+		if (not doctor_exam.hernia 
+			and not doctor_exam.hemorrhoid 
+			and not doctor_exam.inguinal_nodes 
+			and not doctor_exam.g_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -1100,7 +1189,10 @@ def process_genit(doctor_exam, item_group, item_code, status, pos):
 def process_neuro(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Neurological System'
 	if not doctor_exam.neuro_check:
-		if not doctor_exam.motoric_system_abnormality and not doctor_exam.sensory_system_abnormality and not doctor_exam.reflexes_abnormality and not doctor_exam.ne_others:
+		if (not doctor_exam.motoric_system_abnormality 
+			and not doctor_exam.sensory_system_abnormality 
+			and not doctor_exam.reflexes_abnormality 
+			and not doctor_exam.ne_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -1128,7 +1220,10 @@ def process_neuro(doctor_exam, item_group, item_code, status, pos):
 def process_skin(doctor_exam, item_group, item_code, status, pos):
 	result_line = 'Skin'
 	if not doctor_exam.skin_check:
-		if not doctor_exam.skin_psoriasis and not doctor_exam.skin_tattoo and not doctor_exam.skin_tag and not doctor_exam.sk_others:
+		if (not doctor_exam.skin_psoriasis 
+			and not doctor_exam.skin_tattoo 
+			and not doctor_exam.skin_tag 
+			and not doctor_exam.sk_others):
 			result = 'No Abnormality'
 		else:
 			result_list = []
@@ -1156,11 +1251,18 @@ def process_skin(doctor_exam, item_group, item_code, status, pos):
 @frappe.whitelist()
 def get_queued_branch(branch):
 	count = frappe.db.sql(f"""
-		SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, tra.`user`, thsu.custom_default_doctype
+		SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, 
+			tra.`user`, thsu.custom_default_doctype
 		FROM `tabHealthcare Service Unit` thsu
-		LEFT JOIN `tabDispatcher Room` tdr ON thsu.name = tdr.healthcare_service_unit AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
-		LEFT JOIN `tabRoom Assignment` tra ON thsu.name = tra.healthcare_service_unit and tra.`date` = CURDATE()
-		WHERE thsu.custom_branch = '{branch}' and thsu.is_group = 0 AND thsu.custom_default_doctype IS NOT NULL
+		LEFT JOIN `tabDispatcher Room` tdr 
+			ON thsu.name = tdr.healthcare_service_unit 
+			AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
+		LEFT JOIN `tabRoom Assignment` tra 
+			ON thsu.name = tra.healthcare_service_unit 
+			AND tra.`date` = CURDATE()
+		WHERE thsu.custom_branch = '{branch}' 
+		AND thsu.is_group = 0 
+		AND thsu.custom_default_doctype IS NOT NULL
 		GROUP BY thsu.name""", as_dict=True)
 	return count
 
@@ -1191,7 +1293,10 @@ def removed_from_room(dispatcher_id, hsu, doctype, docname):
 			room.reference_doc = ''
 	doc.add_comment('Comment', f"""Removed from {hsu} examination room.""")
 	doc.save(ignore_permissions=True)
-	dispatcher_user = frappe.db.get_value("Dispatcher Settings", {"branch": doc.branch, 'enable_date': doc.date}, ['dispatcher'])
+	dispatcher_user = frappe.db.get_value(
+		"Dispatcher Settings", 
+		{"branch": doc.branch, 'enable_date': doc.date}, 
+		['dispatcher'])
 	notification_doc = frappe.new_doc('Notification Log')
 	notification_doc.for_user = dispatcher_user
 	notification_doc.from_user = frappe.session.user
@@ -1283,8 +1388,10 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 		SELECT 2 result 
 		FROM `tabMCU Appointment` tma 
 		WHERE `parent` = '{dispatcher_id}' 
-		AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name)
-		""", as_dict=True)
+		AND EXISTS (SELECT 1 
+			FROM `tabLab Test Template` tltt 
+			WHERE tltt.sample = '{examination_item}' 
+			AND tltt.name = tma.item_name)""", as_dict=True)
 	if flag[0].result == 1:
 		frappe.db.sql(f"""
 			UPDATE `tabMCU Appointment` 
@@ -1299,10 +1406,14 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 			SELECT name 
 			FROM `tabMCU Appointment` tma 
 			WHERE `parent` = '{dispatcher_id}' 
-			AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.sample = '{examination_item}' AND tltt.name = tma.item_name)
-			""", as_dict=True)
+			AND EXISTS (SELECT 1 
+				FROM `tabLab Test Template` tltt 
+				WHERE tltt.sample = '{examination_item}' 
+				AND tltt.name = tma.item_name)""", as_dict=True)
 		for item in items:
-			frappe.db.sql(f"""UPDATE `tabMCU Appointment` SET `status` = '{status}' WHERE name = '{item.name}'""")
+			sql_update = f"""UPDATE `tabMCU Appointment` SET `status` = '{status}'""" \
+			f"""WHERE name = '{item.name}'"""
+			frappe.db.sql(sql_update)
 	else:
 		frappe.throw(f"Examination item {examination_item} does not exist.")
 	return f"""Updated Dispatcher item: {examination_item} status to {status}."""
@@ -1346,20 +1457,64 @@ def create_result_doc(doc, target):
 						minmax = frappe.db.sql(f"""
 							WITH cte AS (
 								SELECT
-									parent, lab_test_event, lab_test_uom, custom_age, custom_sex, custom_min_value, custom_max_value,
-									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) OVER (PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC) AS max_age
+									parent, lab_test_event, lab_test_uom, custom_age, custom_sex, 
+									custom_min_value, custom_max_value,
+									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) 
+										OVER (PARTITION BY parent, lab_test_event, custom_sex 
+											ORDER BY custom_age DESC) AS max_age
 								FROM `tabNormal Test Template`
 							)
 							SELECT
 								lab_test_event,
 								lab_test_uom,
 								COALESCE(
-									(SELECT custom_min_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-									(SELECT custom_min_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age < {age}))
+									(
+										SELECT custom_min_value 
+										FROM cte 
+										WHERE parent = '{exam}' 
+										AND lab_test_event = c.lab_test_event 
+										AND custom_sex = '{doc.patient_sex}' 
+										AND max_age = {age} 
+										ORDER BY custom_age desc LIMIT 1
+									),
+									(
+										SELECT custom_min_value 
+										FROM cte 
+										WHERE parent = '{exam}' 
+										AND lab_test_event = c.lab_test_event 
+										AND custom_sex = '{doc.patient_sex}' 
+										AND custom_age = (
+											SELECT MAX(max_age) 
+											FROM cte WHERE parent = '{exam}' 
+											AND lab_test_event = c.lab_test_event 
+											AND custom_sex = '{doc.patient_sex}' 
+											AND max_age < {age}
+										)
+									)
 								) AS custom_min_value,
 								COALESCE(
-									(SELECT custom_max_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age = {age} order by custom_age desc limit 1),
-									(SELECT custom_max_value FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND custom_age = (SELECT MAX(max_age) FROM cte WHERE parent = '{exam}' AND lab_test_event = c.lab_test_event AND custom_sex = '{doc.patient_sex}' AND max_age < {age}))
+									(
+										SELECT custom_max_value 
+										FROM cte 
+										WHERE parent = '{exam}' 
+										AND lab_test_event = c.lab_test_event 
+										AND custom_sex = '{doc.patient_sex}' 
+										AND max_age = {age} ORDER BY custom_age DESC LIMIT 1
+									),
+									(
+										SELECT custom_max_value 
+										FROM cte 
+										WHERE parent = '{exam}' 
+										AND lab_test_event = c.lab_test_event 
+										AND custom_sex = '{doc.patient_sex}' 
+										AND custom_age = (
+											SELECT MAX(max_age) 
+											FROM cte WHERE parent = '{exam}' 
+											AND lab_test_event = c.lab_test_event 
+											AND custom_sex = '{doc.patient_sex}' 
+											AND max_age < {age}
+										)
+									)
 								) AS custom_max_value
 							FROM cte c
 							WHERE parent = '{exam}'
@@ -1404,7 +1559,8 @@ def create_result_doc(doc, target):
 			'exam': doc.name
 		})
 		if target == 'Nurse Result':
-			count_nurse_result = frappe.db.sql(f"""SELECT count(*) count FROM `tabNurse Examination Template` tnet
+			count_nurse_result = frappe.db.sql(f"""SELECT count(*) count 
+				FROM `tabNurse Examination Template` tnet
 				WHERE EXISTS (SELECT * FROM `tabNurse Examination Request` tner 
 				WHERE tner.parent = '{doc.name}' AND tnet.name = tner.template)
 				AND tnet.result_in_exam = 0""", as_dict = True)
@@ -1413,7 +1569,8 @@ def create_result_doc(doc, target):
 		for item in doc.examination_item:
 			if item.status == 'Finished':
 				item_status = 'Started'
-				if target == 'Nurse Result' and frappe.db.get_value('Nurse Examination Template', item.template, 'result_in_exam'):
+				if target == 'Nurse Result' and frappe.db.get_value(
+					'Nurse Examination Template', item.template, 'result_in_exam'):
 					item_status = 'Finished'
 				new_doc.append('examination_item', {
 					'status': item_status,
