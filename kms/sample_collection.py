@@ -71,22 +71,18 @@ def create_sc(name, appointment):
       sample_doc.append('custom_sample_table', {
         'sample': sample.sample,
       })
-      enc_doc = frappe.get_doc('Patient Encounter', name)
-      for lab in enc_doc.lab_test_prescription:
-        entries = dict()
-        entries['template'] = lab.lab_test_code
-        entries['item_code'] = lab.custom_exam_item
-        sample_doc.append('custom_examination_item', entries)
+    enc_doc = frappe.get_doc('Patient Encounter', name)
+    for lab in enc_doc.lab_test_prescription:
+      entries = dict()
+      entries['template'] = lab.lab_test_code
+      entries['item_code'] = lab.custom_exam_item
+      sample_doc.append('custom_examination_item', entries)
     sample_doc.insert(ignore_permissions=True)
-    test_per_su = frappe.db.sql(f"""
-      SELECT tlp.lab_test_name
-      FROM `tabLab Prescription` tlp, `tabItem Group Service Unit` tigsu, tabItem ti 
-      WHERE tlp.parent = '{name}' 
-      AND ti.name = tlp.custom_exam_item 
-      AND ti.item_group = tigsu.parent
-      AND branch = '{appt_doc.custom_branch}'
-      AND tlp.custom_sample_collection IS NULL 
-      AND tigsu.service_unit = '{su.service_unit}'""", as_dict=True)
-    for test in test_per_su:
-      resp.append({'lab_test_name': test.lab_test_name, 'service_unit': su.service_unit, 'sample_collection': sample_doc.name})
+    lab_test_prescription = enc_doc.get('lab_test_prescription', [])
+    lt = [item for item in lab_test_prescription
+      if item.get('custom_sample_collection') is None
+    ]
+    for item in lt:
+      item.set('custom_sample_collection', sample_doc.name)
+    enc_doc.save(ignore_permissions=True)
   return resp

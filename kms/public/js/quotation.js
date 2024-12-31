@@ -406,8 +406,6 @@ function updateCustomHtmlField(frm) {
         treeView: true,
         cellHeight: 30
       });
-
-      console.log('DataTable created successfully.');
     }, 250);
   }
 

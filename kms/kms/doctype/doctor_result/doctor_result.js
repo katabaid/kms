@@ -152,7 +152,6 @@ const create_total_comment = (frm, fields) => {
   fields.forEach((field) => {
     frm.doc[field].forEach((row) => {
       if (row.grade && row.grade.split('-').pop() != 'A') {
-        console.log(row.grade)
         if (copied_remark) copied_remark += '\n';
         copied_remark += row.description;
       }

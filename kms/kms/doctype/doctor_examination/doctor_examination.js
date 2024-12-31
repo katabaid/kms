@@ -1,5 +1,4 @@
 const customBeforeSubmit = (frm) => {
-  console.log('Custom before_submit logic for Doctor Examination');
   if (frm.doc.some_field === 'some_value') {
     frappe.throw('Cannot submit when some_field is some_value');
   } else {

@@ -84,23 +84,15 @@ def get_users_by_doctype(doctype):
 @frappe.whitelist()
 def create_mr_from_encounter(enc):
   encdoc = frappe.get_doc('Patient Encounter', enc)
-  
-  mr_internal_items = frappe.db.sql(f"""
-    select drug_code, drug_name, dosage, period, dosage_form, custom_compound_qty
-    from `tabDrug Prescription`
-    where parent = '{encdoc.name}' 
-    and parenttype = 'Patient Encounter' 
-    and custom_material_request is null 
-    and custom_is_internal = 1 
-    and docstatus = 0""", as_dict=True)
-  mr_external_items = frappe.db.sql(f"""
-    select drug_code, drug_name, dosage, period, dosage_form, custom_compound_qty
-    from `tabDrug Prescription`
-    where parent = '{encdoc.name}' 
-    and parenttype = 'Patient Encounter' 
-    and custom_material_request is null 
-    and custom_is_internal = 0 
-    and docstatus = 0""", as_dict=True)
+  drug_prescriptions = encdoc.get("drug_prescription", [])
+  mr_internal_items = [
+    item for item in drug_prescriptions
+    if item.get('custom_is_internal') == 1 and item.get('custom_status') == 'Created'
+  ]
+  mr_external_items = [
+    item for item in drug_prescriptions
+    if item.get('custom_is_internal') == 0 and item.get('custom_status') == 'Created'
+  ]
   pharmacy_warehouse, front_office = frappe.db.get_value(
     'Branch', 
     encdoc.custom_branch, 
@@ -139,14 +131,11 @@ def create_mr_from_encounter(enc):
         'custom_period': item.period,
         'custom_dosage_form': item.dosage_form
       })
-    mr_in_doc.insert(ignore_permissions=True);
-    update_sql = (
-      f"""update `tabDrug Prescription` set custom_material_request = '{mr_in_doc.name}'"""
-      f"""where parent = '{encdoc.name}' and parentfield = 'drug_prescription'"""
-      f"""and parenttype = 'Patient Encounter' and custom_material_request is null""" 
-      f"""and custom_is_internal = 1 and docstatus = 0"""
-    )
-    frappe.db.sql(update_sql)
+    mr_in_doc.insert(ignore_permissions=True)
+    for item in mr_internal_items:
+      item.set('custom_material_request', mr_in_doc.name)
+      item.set('custom_status', 'Ordered')
+    encdoc.save(ignore_permissions=True)
     message.append(mr_in_doc.name)
   else: 
     message.append('Empty internal')
@@ -182,14 +171,11 @@ def create_mr_from_encounter(enc):
         'custom_period': item.period,
         'custom_dosage_form': item.dosage_form
       })
-    mr_ex_doc.insert(ignore_permissions=True);
-    update_sql = (
-      f"""update `tabDrug Prescription` set custom_material_request = '{mr_ex_doc.name}' """ 
-      f"""where parent = '{encdoc.name}' and parentfield = 'drug_prescription' """ 
-      f"""and parenttype = 'Patient Encounter' and custom_material_request is null """ 
-      f"""and custom_is_internal = 0 and docstatus = 0"""
-    )
-    frappe.db.sql(update_sql)
+    mr_ex_doc.insert(ignore_permissions=True)
+    for item in mr_external_items:
+      item.set('custom_material_request', mr_in_doc.name)
+      item.set('custom_status', 'Ordered')
+    encdoc.save(ignore_permissions=True)
     message.append(mr_ex_doc.name)
   else: 
     message.append('Empty external')

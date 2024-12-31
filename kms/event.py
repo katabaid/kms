@@ -157,12 +157,12 @@ def update_customer_name(doc, method=None):
     doc.customer_name = doc.customer_type + ' ' + doc.customer_name
     doc.save()
 
-@frappe.whitelist()
-def update_healthcare_service_unit_branch(doc, method=None):
-  ################Doctype: Healthcare Service Unit################
-  if doc.parent_healthcare_service_unit and doc.is_group==0:
-    doc.custom_branch = frappe.db.get_value(
-      'Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
+#@frappe.whitelist()
+#def update_healthcare_service_unit_branch(doc, method=None):
+#  ################Doctype: Healthcare Service Unit################
+#  if doc.parent_healthcare_service_unit and doc.is_group==0:
+#    doc.custom_branch = frappe.db.get_value(
+#      'Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
 
 def is_numeric(value):
     return isinstance(value, (int, float, complex)) and not isinstance(value, bool)
@@ -564,7 +564,6 @@ def process_mcu(doc, appt):
                   entries['max_value'] = non_selective_result.max_value
                   exam_doc.append('non_selective_result', entries)
     exam_doc.insert(ignore_permissions=True)
-    print(exam_doc)
 
 def process_non_mcu(doc, appt, type):
   frappe.get_doc(dict(

@@ -3,19 +3,25 @@
 /* eslint-disable */
 
 frappe.query_reports["Vital SIgn and Anthropometry"] = {
-	"filters": [
+	filters: [
 		{
-			fieldname: 'exam_id',
-			fieldtype: 'Link',
-			label: __('Exam ID'),
-			options: 'Patient Appointment'
-		}
+			fieldname: "exam_id",
+			fieldtype: "Link",
+			label: __("Exam ID"),
+			options: "Patient Appointment",
+		},
 	],
 	formatter: function (value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
-		if (column.fieldname === 'result_value' && data.min_value && data.max_value && (data.result_value < data.min_value || data.result_value > data.max_value)) {
-			value = `<b style="color:brown">${value}</b>`
+		if (
+			column.fieldname === "result_value" &&
+			data.min_value &&
+			data.max_value &&
+			(data.result_value < data.min_value || data.result_value > data.max_value)
+		) {
+			value = `<b style="color:brown">${value}</b>`;
 		}
 		return value;
-	}
+	},
 };
+

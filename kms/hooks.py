@@ -34,19 +34,19 @@ app_include_js = [
 # include js in doctype views
 doctype_js = {
   "Blanket Order": "public/js/blanket_order.js",
-  "Sales Order": "public/js/sales_order.js",
+  "Clinical Procedure": "public/js/clinical_procedure.js",
   "Customer": "public/js/customer.js",
-  "Product Bundle": "public/js/service_package.js",
-  "Quotation": "public/js/quotation.js",
-  "Shift Type": "public/js/shift_type.js",
+  "Lab Test": "public/js/lab_test.js",
   "Leave Application": "public/js/leave_application.js",
   "Patient": "public/js/patient.js",
-  "Patient Encounter": "public/js/patient_encounter.js",
   "Patient Appointment": "public/js/patient_appointment.js",
-  "Sample Collection": "public/js/sample_collection.js",
-  "Lab Test": "public/js/lab_test.js",
-  "Clinical Procedure": "public/js/clinical_procedure.js",
+  "Patient Encounter": "public/js/patient_encounter.js",
   "Patient History Settings": "public/js/patient_history_settings.js",
+  "Product Bundle": "public/js/service_package.js",
+  "Quotation": "public/js/quotation.js",
+  "Sales Order": "public/js/sales_order.js",
+  "Sample Collection": "public/js/sample_collection.js",
+  "Shift Type": "public/js/shift_type.js",
   "Vital Signs": "public/js/vital_signs.js",
 }
 doctype_list_js = {
@@ -155,9 +155,9 @@ doc_events = {
   "Customer": {
     "after_insert": "kms.event.update_customer_name",
   },
-  "Healthcare Service Unit": {
-    "before_save": "kms.event.update_healthcare_service_unit_branch",
-  },
+  #"Healthcare Service Unit": {
+  #  "before_save": "kms.event.update_healthcare_service_unit_branch",
+  #},
   "Lab Test": {
     "on_submit": "kms.event.update_doctor_result",
   },

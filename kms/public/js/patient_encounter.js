@@ -2,6 +2,8 @@ frappe.ui.form.on('Patient Encounter', {
   /****************** Event Overrides ******************/
   refresh(frm) {
     hide_standard_buttons (frm, ['lab_test_prescription']);
+    frm.fields_dict['drug_prescription'].grid.update_docfield_property('dosage_form', 'reqd', 0);
+    frm.fields_dict['drug_prescription'].grid.update_docfield_property('period', 'reqd', 0);
     if (frm.is_new()) {
       frm.add_custom_button(
         __('Get from Queue'),
@@ -608,7 +610,7 @@ frappe.ui.form.on('Drug Prescription', {
       frappe.model.set_value(cdt, cdn, "period", frm.doc.custom_period);
       frappe.model.set_value(cdt, cdn, "custom_compound_qty", frm.doc.custom_qty);
     }
-  }
+  },
 });
 frappe.ui.form.on('Other Dental', {
   other(frm, cdt, cdn) {

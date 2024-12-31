@@ -31,7 +31,6 @@ frappe.ui.form.on('Nurse Examination', {
 			if (frm.doc.non_selective_result) {
 				frm.refresh_field('non_selective_result');
 				$.each(frm.doc.non_selective_result, (key, value) => {
-					console.log(value)
 					if (value.is_finished) {
 						frappe.meta.get_docfield('Nurse Examination Result', 'result_value', value.name).read_only = (value.is_finished) ? 1 : 0;
 						frappe.meta.get_docfield('Nurse Examination Result', 'result_value', value.name).reqd = (value.is_finished) ? 0 : 1;
