@@ -7,9 +7,16 @@ def update_item_price(doc, method=None):
   if doc.price_list == "Standard Buying":
     custom_hpp_price_list = frappe.db.get_single_value("Selling Settings", "custom_hpp_price_list")
     selling_price_list = frappe.db.get_single_value("Selling Settings", "selling_price_list")
-    custom_cogs_multiplying_factor = frappe.db.get_value("Item", doc.item_code, "custom_cogs_multiplying_factor", cache=True) or 1
+    custom_cogs_multiplying_factor = frappe.db.get_value(
+      "Item", 
+      doc.item_code, 
+      "custom_cogs_multiplying_factor", 
+      cache=True) or 1
     custom_cogs_price_list_rate = doc.price_list_rate * custom_cogs_multiplying_factor
-    sales_item_price_name = frappe.db.get_value("Item Price", {"item_code": doc.item_code, "price_list": custom_hpp_price_list}, "name")
+    sales_item_price_name = frappe.db.get_value(
+      "Item Price", 
+      {"item_code": doc.item_code, "price_list": custom_hpp_price_list}, 
+      "name")
     
     #Update HPP Price List
     if sales_item_price_name:
@@ -17,7 +24,9 @@ def update_item_price(doc, method=None):
       if sales_item_price_doc.price_list_rate < custom_cogs_price_list_rate:
         sales_item_price_doc.price_list_rate = custom_cogs_price_list_rate
         sales_item_price_doc.save()
-        frappe.msgprint(f"Item Price updated for {doc.item_code} in Price List {custom_hpp_price_list}", alert=True)
+        frappe.msgprint(
+          f"Item Price updated for {doc.item_code} in Price List {custom_hpp_price_list}", 
+          alert=True)
     else:
       sales_item_price = frappe.get_doc({
         "doctype": "Item Price",
@@ -27,7 +36,9 @@ def update_item_price(doc, method=None):
         "price_list_rate": custom_cogs_price_list_rate,
         "uom": doc.uom})
       sales_item_price.insert()
-      frappe.msgprint(f"Item Price added for {doc.item_code} in Price List {custom_hpp_price_list}", alert=True)
+      frappe.msgprint(
+        f"Item Price added for {doc.item_code} in Price List {custom_hpp_price_list}", 
+        alert=True)
     
     #Update exam items related to this raw material in its HPP price list
     values = {'item_code': doc.item_code}
@@ -38,20 +49,27 @@ def update_item_price(doc, method=None):
         `tabLab Test Template` tltt,
         `tabItem Price` tip
       where
-        tltt.name in (select parent from `tabClinical Procedure Item` tcpi where tcpi.item_code = %(item_code)s and parenttype = 'Lab Test Template')
+        tltt.name in (select parent from `tabClinical Procedure Item` tcpi 
+          where tcpi.item_code = %(item_code)s and parenttype = 'Lab Test Template')
         and tcpi.parenttype = 'Lab Test Template'
-        and tip.price_list = (select value from tabSingles ts WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list')
+        and tip.price_list = (select value from tabSingles ts 
+          WHERE ts.doctype = 'Selling Settings' and field = 'custom_hpp_price_list')
         and tip.item_code = tcpi.item_code
         and tltt.name = tcpi.parent
       group by 2""", values=values, as_dict=1)
     for sales_item in sales_items:
-      exam_item_price_name = frappe.db.get_value("Item Price", {"item_code": sales_item.item, "price_list": custom_hpp_price_list}, "name")
+      exam_item_price_name = frappe.db.get_value(
+        "Item Price", 
+        {"item_code": sales_item.item, "price_list": custom_hpp_price_list}, 
+        "name")
       if exam_item_price_name:
         exam_item_price_doc = frappe.get_doc("Item Price", exam_item_price_name)
         if exam_item_price_doc.price_list_rate < sales_item.harga:
           exam_item_price_doc.price_list_rate = sales_item.harga
           exam_item_price_doc.save()
-          frappe.msgprint(f"Item Price updated for {sales_item.item} in Price List {custom_hpp_price_list}", alert=True)
+          frappe.msgprint(
+            f"Item Price updated for {sales_item.item} in Price List {custom_hpp_price_list}", 
+            alert=True)
       else:
         exam_item_price = frappe.get_doc({
           "doctype": "Item Price", 
@@ -61,10 +79,15 @@ def update_item_price(doc, method=None):
           "price_list_rate": sales_item.harga, 
           "uom": "Unit"})
         exam_item_price.insert()
-        frappe.msgprint(f"Item Price added for {sales_item.item} in Price List {custom_hpp_price_list}", alert=True)
+        frappe.msgprint(
+          f"Item Price added for {sales_item.item} in Price List {custom_hpp_price_list}", 
+          alert=True)
       #update related product bundle to this exam item
       values = {'item_code': sales_item.item}
-      pb_items = frappe.db.sql("""SELECT item_code, rate, parent FROM `tabProduct Bundle Item` tpbi WHERE tpbi.item_code = %(item_code)s""", values=values, as_dict=True)
+      pb_items = frappe.db.sql(
+        """SELECT item_code, rate, parent FROM `tabProduct Bundle Item` tpbi WHERE tpbi.item_code = %(item_code)s""", 
+        values=values, 
+        as_dict=True)
       for pb_item in pb_items:
         pb_doc = frappe.get_doc('Product Bundle', pb_item.parent)
         total_rate = 0
@@ -78,13 +101,18 @@ def update_item_price(doc, method=None):
         pb_doc.custom_rate = total_rate + (total_rate * pb_doc.custom_margin / 100)
         pb_doc.save()
         #get hpp price list for product Bundle
-        pb_price_name = frappe.db.get_value("Item Price", {"item_code": pb_doc.name, "price_list": custom_hpp_price_list}, "name")
+        pb_price_name = frappe.db.get_value(
+          "Item Price", 
+          {"item_code": pb_doc.name, "price_list": custom_hpp_price_list}, 
+          "name")
         if pb_price_name:
           pb_price_doc = frappe.get_doc("Item Price", pb_price_name)
           if pb_price_doc.price_list_rate < total_rate:
             pb_price_doc.price_list_rate = total_rate
             pb_price_doc.save()
-            frappe.msgprint(f"Item Price updated for {pb_doc.name} in Price List {custom_hpp_price_list}", alert=True)
+            frappe.msgprint(
+              f"Item Price updated for {pb_doc.name} in Price List {custom_hpp_price_list}", 
+              alert=True)
         else:
           pb_price_doc = frappe.get_doc({
             "doctype": "Item Price", 
@@ -94,14 +122,21 @@ def update_item_price(doc, method=None):
             "price_list_rate": total_rate, 
             "uom": "Unit"})
           pb_price_doc.insert()
-          frappe.msgprint(f"Item Price added for {pb_doc.name} in Price List {custom_hpp_price_list}", alert=True)                
-        pb_selling_price_name = frappe.db.get_value("Item Price", {"item_code": pb_doc.name, "price_list": selling_price_list}, "name")
+          frappe.msgprint(
+            f"Item Price added for {pb_doc.name} in Price List {custom_hpp_price_list}", 
+            alert=True)                
+        pb_selling_price_name = frappe.db.get_value(
+          "Item Price", 
+          {"item_code": pb_doc.name, "price_list": selling_price_list}, 
+          "name")
         if pb_selling_price_name:
           pbs_price_doc = frappe.get_doc("Item Price", pb_selling_price_name)
           if pbs_price_doc.price_list_rate < total_rate + (total_rate * pb_doc.custom_margin / 100):
             pbs_price_doc.price_list_rate = total_rate + (total_rate * pb_doc.custom_margin / 100)
             pbs_price_doc.save()
-            frappe.msgprint(f"Item Price updated for {pb_doc.name} in Price List {selling_price_list}", alert=True)
+            frappe.msgprint(
+              f"Item Price updated for {pb_doc.name} in Price List {selling_price_list}", 
+              alert=True)
         else:
           pbs_price_doc = frappe.get_doc({
             "doctype": "Item Price", 
@@ -111,7 +146,9 @@ def update_item_price(doc, method=None):
             "price_list_rate": total_rate + (total_rate * pb_doc.custom_margin / 100), 
             "uom": "Unit"})
           pbs_price_doc.insert()
-          frappe.msgprint(f"Item Price added for {pb_doc.name} in Price List {selling_price_list}", alert=True)
+          frappe.msgprint(
+            f"Item Price added for {pb_doc.name} in Price List {selling_price_list}", 
+            alert=True)
 
 @frappe.whitelist()
 def update_customer_name(doc, method=None):
@@ -124,7 +161,8 @@ def update_customer_name(doc, method=None):
 def update_healthcare_service_unit_branch(doc, method=None):
   ################Doctype: Healthcare Service Unit################
   if doc.parent_healthcare_service_unit and doc.is_group==0:
-    doc.custom_branch = frappe.db.get_value('Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
+    doc.custom_branch = frappe.db.get_value(
+      'Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
 
 def is_numeric(value):
     return isinstance(value, (int, float, complex)) and not isinstance(value, bool)
@@ -138,7 +176,8 @@ def update_doctor_result(doc, method=None):
   }, 'name')
   if doctor_result_name:
     for item in doc.normal_test_items:
-      item_code, item_group = frappe.db.get_value('Item', {'item_name': item.lab_test_name}, ['item_code', 'item_group'])
+      item_code, item_group = frappe.db.get_value(
+        'Item', {'item_name': item.lab_test_name}, ['item_code', 'item_group'])
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
         'hidden_item': item_code,
         'hidden_item_group': item_group,
@@ -156,7 +195,12 @@ def update_doctor_result(doc, method=None):
         is_numeric(item.custom_max_value) and 
         is_numeric(item.result_value)
       ]):
-        incdec = 'Increase' if item.result_value > item.custom_max_value else 'Decrease' if item.result_value < item.custom_min_value else None
+        if item.result_value > item.custom_max_value:
+          incdec = 'Increase'
+        elif item.result_value < item.custom_min_value:
+          incdec = 'Decrease'
+        else:
+          None
         if incdec:
           incdec_category = frappe.db.get_value('MCU Category', {
             'item_group': item_group,
@@ -171,7 +215,8 @@ def update_doctor_result(doc, method=None):
         'status': doc.status
       })
     for selective in doc.custom_selective_test_result:
-      item_code, item_group = frappe.db.get_value('Item', {'item_name': selective.event}, ['item_code', 'item_group'])
+      item_code, item_group = frappe.db.get_value(
+        'Item', {'item_name': selective.event}, ['item_code', 'item_group'])
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
         'hidden_item': item_code,
         'hidden_item_group': item_group,
@@ -258,8 +303,10 @@ def update_questionnaire_status(doc):
         )
         for template_data in templates:
           is_completed = 0
-          if any(detail.template == template_data["template_name"] for detail in doc.custom_questionnaire_detail):
-            is_completed = 1
+          is_completed = 1 if any(
+            detail.template == template_data["template_name"] 
+            for detail in doc.custom_questionnaire_detail
+          ) else None
           # Add to the completed_questionnaires list
           completed_questionnaires.append({
             "template": template_data["template_name"],
@@ -296,10 +343,17 @@ def process_checkin(doc, method=None):
     doc.save()
     if str(doc.appointment_date) == frappe.utils.nowdate():
       if doc.custom_temporary_registration:
-        frappe.db.set_value('Temporary Registration', doc.custom_temporary_registration, {'patient_appointment': doc.name, 'status': 'Transferred'})
-      dispatcher_user = frappe.db.get_value("Dispatcher Settings", {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, ['dispatcher'])
+        frappe.db.set_value(
+          'Temporary Registration', 
+          doc.custom_temporary_registration, 
+          {'patient_appointment': doc.name, 'status': 'Transferred'})
+      dispatcher_user = frappe.db.get_value(
+        "Dispatcher Settings", 
+        {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
+        ['dispatcher'])
       if dispatcher_user and doc.appointment_type == 'MCU':
-        exist_docname = frappe.db.get_value('Dispatcher', {'patient_appointment': doc.name}, ['name'])
+        exist_docname = frappe.db.get_value(
+          'Dispatcher', {'patient_appointment': doc.name}, ['name'])
         if exist_docname: 
           disp_doc = frappe.get_doc('Dispatcher', exist_docname)
           existing_items = {item.examination_item for item in disp_doc.package}
@@ -308,7 +362,10 @@ def process_checkin(doc, method=None):
               new_entry = entry.as_dict()
               new_entry.name = None
               disp_doc.append('package', new_entry)
-              rooms = frappe.get_all('Item Group Service Unit', filters={'parent': entry.examination_item, 'branch': doc.custom_branch}, fields=['service_unit'])
+              rooms = frappe.get_all(
+                'Item Group Service Unit', 
+                filters={'parent': entry.examination_item, 'branch': doc.custom_branch}, 
+                fields=['service_unit'])
               room_dict = {room.service_unit: room for room in rooms}
               found = False
               row_counter = 0
@@ -322,7 +379,8 @@ def process_checkin(doc, method=None):
                   row_founder += 1
               if not found and row_founder == row_counter:
                 for room in rooms:
-                  reference_doctype = frappe.db.get_value('Healthcare Service Unit', room.service_unit, 'custom_default_doctype')
+                  reference_doctype = frappe.db.get_value(
+                    'Healthcare Service Unit', room.service_unit, 'custom_default_doctype')
                   new_entry = dict()
                   new_entry['name'] = None
                   new_entry['healthcare_service_unit'] = room.service_unit
@@ -334,7 +392,8 @@ def process_checkin(doc, method=None):
               notification_doc.from_user = frappe.session.user
               notification_doc.document_type = 'Dispatcher'
               notification_doc.document_name = disp_doc.name
-              notification_doc.subject = f"""Patient <strong>{doc.patient_name}</strong> has added additional MCU examination item: {entry.item_name}."""
+              notification_doc.subject = f"""Patient <strong>{doc.patient_name}</strong> has """\
+                f"""added additional MCU examination item: {entry.item_name}."""
               notification_doc.insert(ignore_permissions=True)
         else:
           disp_doc = frappe.get_doc({
@@ -345,7 +404,8 @@ def process_checkin(doc, method=None):
           })
           item_with_sort_order = []
           for entry in doc.custom_mcu_exam_items:
-            sort_order = frappe.db.get_value('Item', entry.examination_item, 'custom_bundle_position')
+            sort_order = frappe.db.get_value(
+              'Item', entry.examination_item, 'custom_bundle_position')
             item_with_sort_order.append({
               'item_code': entry.examination_item,
               'item_name': entry.item_name,
@@ -526,17 +586,13 @@ def process_non_mcu(doc, appt, type):
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):
   ################Doctype: Vital Signs################
-  print('11111111111111111111111111111111111111111111111111111111111111')
   validate_with_today_date(doc.signs_date)
-  print('22222222222222222222222222222222222222222222222222222222222222')
   if str(doc.signs_date) == frappe.utils.nowdate():
     appt = frappe.get_doc('Patient Appointment', doc.appointment)
     if appt.appointment_for == 'Service Unit':
       process_non_mcu(doc, appt, 'Service Unit')
     elif appt.appointment_for == 'MCU' and appt.mcu:
-      print('33333333333333333333333333333333333333333333333333333333333333')
       process_mcu(doc, appt)
-      print('44444444444444444444444444444444444444444444444444444444444444')
     elif appt.appointment_for == 'Department':
       process_non_mcu(doc, appt, 'Department')
 
