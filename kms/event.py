@@ -660,6 +660,6 @@ def validate_with_today_date(validate_date):
     
 def validate_vs_mandatory_fields(doc, fields):
   for field in fields:
-    label = doc.neta.get_field(field).label
+    label = doc.meta.get_field(field).label
     if not doc.get(field):
       frappe.throw(title=f"{label} is Missing", msg=f"{label} is mandatory.")
