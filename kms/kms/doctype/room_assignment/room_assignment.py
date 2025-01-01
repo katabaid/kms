@@ -9,11 +9,18 @@ class RoomAssignment(Document):
   def before_insert(self):
     self.user = frappe.session.user
   def validate(self):
-    if frappe.db.exists("Room Assignment", {"user": frappe.session.user, "date": today(), "assigned": 1}):
-      frappe.throw(f"""You already sign for room: {self.room}. Please use Change Room button to move to this room.""")
+    if frappe.db.exists(
+      "Room Assignment", 
+      {"user": frappe.session.user, "date": today(), "assigned": 1}
+    ):
+      frappe.throw(f"""You already sign for room: {self.healthcare_service_unit}. Please use Change Room button to move to this room.""")
     self.user = frappe.session.user
     self.time_sign_in = now()
     self.assigned = 1
+    frappe.defaults.set_user_default('healthcare_service_unit', self.healthcare_service_unit)
+    frappe.defaults.set_user_default(
+      'branch', 
+      frappe.db.get_value('Healthcare Service Unit', self.healthcare_service_unit, 'custom_branch'))
 
 @frappe.whitelist()
 def change_room(name, room):

@@ -15,7 +15,9 @@ app_include_css = "/assets/kms/css/kms.css"
 #app_include_js = "/assets/kms/js/kms.js"
 app_include_js = [
   "/assets/kms/js/controller/examination.js",
-  "/assets/kms/js/common/listview.js"]
+  "/assets/kms/js/common/listview.js",
+  "/assets/kms/js/redirect_after_boot.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kms/css/kms.css"
@@ -272,4 +274,4 @@ fixtures = [
   {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
 ]
 on_logout = ["kms.session.remove_room_assignment"]
-on_session_creation = ["kms.session.redirect_after_login"]
+on_session_creation = ["kms.session.add_medical_department"]
