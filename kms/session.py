@@ -40,3 +40,10 @@ def add_medical_department(login_manager):
       {'user_id': frappe.session.user}, 'department')
     if medical_department:
       frappe.defaults.set_user_default('medical_department', medical_department)
+
+def remove_user_permission(room):
+  name = frappe.db.get_all('User Permission', 
+    filters = [['user', '=', frappe.session.user], ['allow', '=', 'Healthcare Service Unit']],
+    pluck = 'name')
+  for up in name:
+    frappe.db.delete('User Permission', {'name': up})

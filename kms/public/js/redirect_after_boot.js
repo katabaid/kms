@@ -17,8 +17,6 @@ frappe.router.route = function () {
         for (let i = 0; i < message.length; i++) {
           if (message[i].fieldname === 'healthcare_service_unit') {
             healthcareServiceUnitDefault = message[i].default;
-            console.log(message[i].default)
-            console.log(healthcareServiceUnitDefault)
             break;
           }
         }

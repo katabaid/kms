@@ -257,9 +257,11 @@ def process_queue_pooling_and_dental(doc, method=None):
     qp.encounter = doc.name
     qp.healthcare_practitioner = doc.practitioner
     qp.save(ignore_permissions=True)
+    vs = doc.custom_vital_signs
+    frappe.db.set_value('Vital Signs', vs, 'encounter', doc.name)
 
 @frappe.whitelist()
-def process_queue_pooling_and_dental(doc, method=None):
+def update_queue_pooling_status(doc, method=None):
   ################Doctype: Patient Encounter################
   if doc.custom_queue_pooling:
     qp = frappe.get_doc("Queue Pooling", doc.custom_queue_pooling)
@@ -586,14 +588,12 @@ def process_non_mcu(doc, appt, type):
 def return_to_queue_pooling(doc, method=None):
   ################Doctype: Vital Signs################
   validate_with_today_date(doc.signs_date)
-  if str(doc.signs_date) == frappe.utils.nowdate():
-    appt = frappe.get_doc('Patient Appointment', doc.appointment)
-    if appt.appointment_for == 'Service Unit':
-      process_non_mcu(doc, appt, 'Service Unit')
-    elif appt.appointment_for == 'MCU' and appt.mcu:
-      process_mcu(doc, appt)
-    elif appt.appointment_for == 'Department':
-      process_non_mcu(doc, appt, 'Department')
+  appt = frappe.get_doc('Patient Appointment', doc.appointment)
+  if appt.appointment_for == 'MCU' and appt.mcu:
+    process_mcu(doc, appt)
+  else:
+    process_non_mcu(doc, appt, appt.appointment_for)
+  validate_vs_mandatory_fields(doc, ['temperature', 'pulse', 'bp_systolic', 'bp_diastolic'])
 
 @frappe.whitelist()
 def update_rate_amount_after_amend(doc, method=None):
@@ -657,3 +657,9 @@ def validate_with_today_date(validate_date):
       title = 'Error', 
       msg=f"Date {validate_date} must be the same as today's date {frappe.utils.today()}.", 
       exc='ValidationError')
+    
+def validate_vs_mandatory_fields(doc, fields):
+  for field in fields:
+    label = doc.neta.get_field(field).label
+    if not doc.get(field):
+      frappe.throw(title=f"{label} is Missing", msg=f"{label} is mandatory.")
