@@ -23,6 +23,13 @@ def remove_room_assignment(login_manager):
           'time_sign_out': now(),
           'assigned': 0
         })
+        remove_user_permission(ra.healthcare_service_unit)
+    frappe.publish_realtime(
+      event="clear_local_storage",
+      message={"user": frappe.session.user},
+      user = frappe.session.user
+    )
+
 
 @frappe.whitelist()
 def add_medical_department(login_manager):

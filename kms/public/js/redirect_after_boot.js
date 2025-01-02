@@ -10,9 +10,9 @@ frappe.router.route = function () {
     )
   ) {
     // Check localStorage for cached result
-    const cacheRoleKey = `has_allowed_role_${user}`;
+    const cacheRoleKey = `has_allowed_role_${frappe.session.user}`;
     const cachedRoleResult = localStorage.getItem(cacheRoleKey);
-    const cacheHsuKey = `hsu_def_${user}`;
+    const cacheHsuKey = `hsu_def_${frappe.session.user}`;
     const cachedHsuResult = localStorage.getItem(cacheHsuKey);
     let isRoomAssignmentRole, healthcareServiceUnitDefault;
     if (!cachedRoleResult && !cachedHsuResult) {

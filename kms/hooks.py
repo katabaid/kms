@@ -17,6 +17,7 @@ app_include_js = [
   "/assets/kms/js/controller/examination.js",
   "/assets/kms/js/common/listview.js",
   "/assets/kms/js/redirect_after_boot.js",
+  "/assets/kms/js/clear_local_storage.js",
 ]
 
 # include js, css files in header of web template
