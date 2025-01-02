@@ -68,11 +68,15 @@ const checkRoomAssignmentRole = async () => {
         doctype: "MCU Settings"
       }
     });
-
     if (response.message && response.message.room_assignment_role) {
-      return hasAllowedRole = response.message.room_assignment_role.some(
+      const hasAllowedRole = response.message.room_assignment_role.some(
         (row) => frappe.user.has_role(row.role)
       );
+      non_room_roles = ['HC Manager', 'HC Lab Manager']
+      if (non_room_roles.some(row => frappe.user.has_role(row.role))) {
+        return false;
+      }
+      return hasAllowedRole;
     }
   } catch (error) {
     console.error('Error fetching MCU Settings:', error);
