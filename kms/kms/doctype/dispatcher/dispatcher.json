@@ -157,13 +157,14 @@
    "fieldname": "progress",
    "fieldtype": "Data",
    "hidden": 1,
+   "in_list_view": 1,
    "label": "Progress"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-09-28 14:44:29.570114",
+ "modified": "2025-01-02 21:26:17.685350",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

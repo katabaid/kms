@@ -19,8 +19,11 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed'];
       if (validStatuses.includes(utils.getStatus(frm))) {
         if (utils.getDispatcher(frm)) {
-          finishExam(frm);
-          frappe.set_route('List', frm.doctype, 'List');
+          finishExam(frm).then(()=>{
+            frappe.set_route('List', frm.doctype, 'List');
+          }).catch(err=>{
+            frappe.throw(`Error finishing exam: ${err.message}`);
+          });
         }
       } else {
         frappe.throw('All examinations must have final status to submit.');
@@ -151,22 +154,27 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   controller.config = config;
 
   function finishExam(frm) {
-    frappe.call({
-      method: 'kms.kms.doctype.dispatcher.dispatcher.finish_exam',
-      args: {
-        'dispatcher_id': utils.getDispatcher(frm),
-        'hsu': utils.getHsu(frm),
-        'status': utils.getStatus(frm),
-        'doctype': frm.doc.doctype,
-        'docname': frm.doc.name
-      },
-      callback: function (r) {
-        if (r.message) {
-          if (utilsLoaded && kms.utils) {
-            kms.utils.show_alert(`${r.message.message} ${r.message.docname}`, 'green');
+    return new Promise((resolve, reject) => {
+      frappe.call({
+        method: 'kms.kms.doctype.dispatcher.dispatcher.finish_exam',
+        args: {
+          'dispatcher_id': utils.getDispatcher(frm),
+          'hsu': utils.getHsu(frm),
+          'status': utils.getStatus(frm),
+          'doctype': frm.doc.doctype,
+          'docname': frm.doc.name
+        },
+        callback: function (r) {
+          if (r.message) {
+            if (utilsLoaded && kms.utils) {
+              kms.utils.show_alert(`${r.message.message} ${r.message.docname}`, 'green');
+            }
+            resolve();
+          } else {
+            reject(new Error('No message returned from server.'));
           }
         }
-      }
+      });
     });
   }
 
