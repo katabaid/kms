@@ -19,7 +19,7 @@ class Dispatcher(Document):
 			self.update_status_if_all_rooms_finished()
 		if self.status == "Finished" and self.status_changed_to_finished():
 			self.update_patient_appointment()
-			#self.create_doctor_result()
+			self.create_doctor_result()
 	
 	def before_insert(self):
 		if frappe.db.exists(self.doctype,{
@@ -49,7 +49,7 @@ class Dispatcher(Document):
 		doc = frappe.new_doc('Doctor Result')
 		doc.appointment = self.patient_appointment
 		doc.patient = self.patient
-		doc.age = self.age
+		doc.age = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'patient_age')
 		doc.gender = self.gender
 		doc.dispatcher = self.name
 		doc.created_date = today()
@@ -249,7 +249,11 @@ def process_nurse_category(doc, group, item):
 				max_value_float = convert_to_float(bmi['max_value'])
 				if is_within_range(exam_result_float, min_value_float, max_value_float):
 					grade = bmi['grade']
-					grade_description = bmi['name']
+					grade_description = frappe.db.get_value(
+						'MCU Grade',
+						f"{group['item_group']}.{item['examination_item']}.BMI{bmi['name']}",
+						'description'
+					)
 					category = frappe.db.get_value(
 						'MCU Category', 
 						f"{group['item_group']}.{item['examination_item']}.BMI.{bmi['name']}",

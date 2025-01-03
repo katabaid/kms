@@ -24,6 +24,7 @@
    "fieldname": "item",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Item",
    "options": "Item",
    "reqd": 1
@@ -31,6 +32,8 @@
   {
    "fieldname": "item_group",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Item Group",
    "options": "Item Group",
    "reqd": 1
@@ -46,6 +49,7 @@
    "fieldname": "test_name",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Test Name"
   },
   {
@@ -56,6 +60,7 @@
    "fieldname": "selection",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Selection"
   },
   {
@@ -82,7 +87,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-13 08:45:24.601018",
+ "modified": "2025-01-03 20:41:28.646501",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Category",

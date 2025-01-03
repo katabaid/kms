@@ -14,10 +14,13 @@
   "room",
   "tab_break_taqcr",
   "patient",
-  "age",
+  "patient_name",
   "gender",
+  "patient_date_of_birth",
+  "patient_company",
   "column_break_0jucv",
   "date",
+  "company",
   "branch",
   "mcu_package",
   "room_assignment_section",
@@ -139,13 +142,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "patient_appointment.patient_age",
-   "fieldname": "age",
-   "fieldtype": "Data",
-   "label": "Age",
-   "read_only": 1
-  },
-  {
    "fetch_from": "patient.sex",
    "fieldname": "gender",
    "fieldtype": "Data",
@@ -159,12 +155,43 @@
    "hidden": 1,
    "in_list_view": 1,
    "label": "Progress"
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Patient Name",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "patient_date_of_birth",
+   "fieldtype": "Date",
+   "label": "Patient Date of Birth",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.custom_company",
+   "fetch_if_empty": 1,
+   "fieldname": "patient_company",
+   "fieldtype": "Data",
+   "label": "Patient Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient_appointment.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-02 21:26:17.685350",
+ "modified": "2025-01-03 20:31:05.233452",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

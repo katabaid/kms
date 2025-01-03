@@ -22,6 +22,7 @@
    "fieldname": "classification",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Classification",
    "no_copy": 1,
    "reqd": 1,
@@ -31,6 +32,7 @@
    "fieldname": "min_value",
    "fieldtype": "Float",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Min Value",
    "reqd": 1
   },
@@ -38,6 +40,7 @@
    "fieldname": "max_value",
    "fieldtype": "Float",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Max Value",
    "reqd": 1
   },
@@ -45,6 +48,7 @@
    "fieldname": "grade",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Grade",
    "options": "A\nB\nBF\nC\nD\nE\nF",
    "reqd": 1
@@ -71,7 +75,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-28 16:41:12.710344",
+ "modified": "2025-01-03 20:43:42.409574",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "BMI Classification",
