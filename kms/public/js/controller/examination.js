@@ -1,7 +1,14 @@
 const createDocTypeController = (doctype, customConfig = {}) => {
   // Default configuration
   const defaultConfig = {
-    childTables:      ['result', 'examination_item', 'non_selective_result'],
+    childTables:      [
+      'result', 
+      'examination_item', 
+      'non_selective_result', 
+      'calculated_result', 
+      'questionnaire', 
+      'questionnaire_detail'
+    ],
     childTableButton: 'examination_item',
     templateField:    'template',
     getStatus:        (frm) => frm.doc.status,
@@ -31,33 +38,30 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
     hideStandardButtons(frm, fields) {
       fields.forEach((field) => {
-        child = frm.fields_dict[field];
+        let child = frm.fields_dict[field];
         if (child) {
-          if (child.grid.grid_rows) {
-            child.grid.wrapper.find('.grid-add-row, .grid-remove-rows, .row-index').hide();
-            // Remove buttons from detail view dialog
-            child.grid.grid_rows.forEach(function(row) {
-              //row.wrapper.find('.row-check').hide(); // Hide the checkbox
-              row.wrapper.find('.btn-open-row').on('click', function() {
-                setTimeout(function() {
-                  $('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
-                }, 100);
+          if (child.grid && child.grid.grid_rows) {
+            setTimeout(function() {
+              child.grid.wrapper.find('.grid-add-row, .grid-remove-rows, .row-index').hide();
+              child.grid.grid_rows.forEach(function(row) {
+                //row.wrapper.find('.row-check').hide(); // Hide the checkbox
+                row.wrapper.find('.btn-open-row').on('click', function() {
+                  setTimeout(function() {
+                    $('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
+                  }, 100);
+                });
               });
-            });
+            }, 250);
           }
         }
       });
     },
     disableChildsBeforeCheckin(frm, fields) {
-      if (utils.getStatus(frm)==='Checked In') {
-        fields.forEach((field) => {
-          frm.set_df_property(field, 'read_only', 0)
-        })
-      } else {
-        fields.forEach((field) => {
-          frm.set_df_property(field, 'read_only', 1)
-        })
-      }
+      validStatuses = ['Checked In', 'Finished', 'Partial Finished'];
+      const isEditable = validStatuses.includes(utils.getStatus(frm));
+      fields.forEach((field) => {
+        frm.set_df_property(field, 'read_only', isEditable ? 0 : 1)
+      });
     },
     handleCustomButtons(frm) {
       $('.add-assignment-btn').remove();
@@ -127,7 +131,8 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       frm.trigger('process_custom_buttons');
       utils.disableChildsBeforeCheckin(frm, config.childTables);
       utils.hideStandardButtons(frm, config.childTables);
-      if (utils.getStatus(frm) === 'Checked In') {
+      validStatuses = ['Checked In', 'Finished', 'Partial Finished'];
+      if (validStatuses.includes(utils.getStatus(frm))) {
         frm.trigger('setup_child_table_custom_buttons');
       }
     },
