@@ -17,8 +17,8 @@ class Dispatcher(Document):
 		self.progress = self.calculate_progress()
 		if self.status == "In Queue":
 			self.update_status_if_all_rooms_finished()
-		#if self.status == "Finished" and self.status_changed_to_finished():
-			#self.update_patient_appointment()
+		if self.status == "Finished" and self.status_changed_to_finished():
+			self.update_patient_appointment()
 			#self.create_doctor_result()
 	
 	def before_insert(self):
@@ -39,11 +39,9 @@ class Dispatcher(Document):
 
 	def update_patient_appointment(self):
 		if self.patient_appointment:
-			appointment = frappe.get_doc("Patient Appointment", self.patient_appointment)
-			if appointment.status not in {"Closed", "Checked Out"}:
-				appointment.db_set('status', 'Checked Out', commit=True)
-				frappe.msgprint(
-					_("Patient Appointment {0} has been Checked Out.").format(self.patient_appointment))
+			status = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'status')
+			if status not in {"Closed", "Checked Out", "Ready to Check Out"}:
+				frappe.db.get_value('Patient Appointment', self.patient_appointment, 'status', 'Ready to Check Out')
 		else:
 			frappe.msgprint(_("No linked Patient Appointment found."))
 	
