@@ -210,13 +210,13 @@ def reopen_appointment(name):
     SELECT 1 FROM `tabRadiology` tvs 
       WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1)) b"""
   check = frappe.db.sql(sql, as_dict = True)
-  if check.not_eligible == 0:
+  if check[0].not_eligible != 0:
     frappe.throw('Cannot reopen appointment. There are already recorded examinations.')
   else:
-    vital_signs = frappe.db.get_value('Vital Signs', {'appointment': {name}}, 'name')
+    vital_signs = frappe.db.get_value('Vital Signs', {'appointment': name}, 'name')
     if vital_signs:
       frappe.delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
-    dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': {name}}, 'name')
+    dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': name}, 'name')
     if dispatcher:
       frappe.delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
     if vital_signs or dispatcher:

@@ -65,6 +65,7 @@ frappe.ui.form.on('Patient Appointment', {
     frm.trigger('add_additional_mcu_button');
     frm.trigger('add_questionnaire_link');
     frm.trigger('add_finish_button');
+    frm.trigger('add_reopen_button');
     // Check if any row in custom_completed_questionnaire has is_completed != 1
 	},
 
@@ -105,7 +106,8 @@ frappe.ui.form.on('Patient Appointment', {
           method: 'kms.api.check_eligibility_to_reopen',
           args: { name: frm.doc.name },
           callback: (r=>{
-            if(r.message==0) {
+            console.log(r.message[0])
+            if(r.message[0].not_eligible==0) {
               frappe.call({
                 method: 'kms.api.reopen_appointment',
                 args: {
@@ -126,7 +128,7 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_additional_mcu_button(frm) {
-    if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In') && frm.doc.mcu) {
+    if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In' || frm.doc.status === 'Ready to Check Out') && frm.doc.mcu) {
       frm.add_custom_button(
         'Additional MCU Item',
         () =>{

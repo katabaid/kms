@@ -73,11 +73,11 @@ function set_grade_query_for_child_table(frm, child_table_name) {
       filters.push(['test_name', '=', '']);
     } else if (row.hidden_item) {
       filters.push(['test_name', '=', row.examination]);
-      if (row.incdec) {
-        filters.push(['increase_decrease', '=', row.incdec]);
-      } else {
-        filters.push(['increase_decrease', '=', '']);
-      }
+    }
+    if (row.incdec) {
+      filters.push(['increase_decrease', '=', row.incdec]);
+    } else {
+      filters.push(['increase_decrease', '=', '']);
     }
     return { filters };
   }

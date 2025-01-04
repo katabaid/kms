@@ -76,10 +76,14 @@ class DoctorExamination(Document):
 				is_internal = frappe.db.get_value('Questionnaire Template', package.item_name, 'internal_questionnaire')
 				template = frappe.db.get_value('Questionnaire Template', package.item_name, 'template_name')
 				if is_internal:
-					status, name = frappe.db.get_value(
+					status = frappe.db.get_value(
 						'Questionnaire', 
 						{'patient_appointment': self.appointment, 'template': template},
-						['status', 'name'])
+						'status')
+					name = frappe.db.get_value(
+						'Questionnaire', 
+						{'patient_appointment': self.appointment, 'template': template},
+						'name')
 					if status and name:
 						self.append('questionnaire', {
 							'template': template,
