@@ -61,6 +61,19 @@ frappe.ui.form.on('Patient Appointment', {
         custom_branch: frm.doc.custom_branch
       }};
     });
+    frm.trigger('add_check_in_button');
+    frm.trigger('add_additional_mcu_button');
+    frm.trigger('add_questionnaire_link');
+    frm.trigger('add_finish_button');
+    // Check if any row in custom_completed_questionnaire has is_completed != 1
+	},
+
+//======Triggers======//
+
+  add_finish_button(frm) {
+    if(frm.doc.status === 'Checked In'){}
+  },
+  add_check_in_button(frm) {
     if(frm.doc.status === 'Open'){
       frm.add_custom_button(
         'Check In',
@@ -70,6 +83,38 @@ frappe.ui.form.on('Patient Appointment', {
           frm.save();
       });
     }
+  },
+  add_reopen_button(frm) {
+    if(frm.doc.status === 'Checked In'){
+      frm.add_custom_button(
+        'Reopen',
+        () => {frappe.call({
+          method: 'kms.api.check_eligibility_to_reopen',
+          args: {
+            name: frm.doc.name
+          },
+          callback: (r=>{
+            if(r.message==0) {
+              frappe.call({
+                method: 'kms.api.reopen_appointment',
+                args: {
+                  name: frm.doc.name
+                },
+                callback: (r=>{
+                  frm.reload_doc()
+                }),
+                error: (r=>{frappe.throw(JSON.stringify(r.message))}),
+              })
+            } else if (r.message==1) {
+              frappe.throw('Cannot reopen appointment. There are already recorded examinations.')
+            }
+          }),
+          error: (r=>{frappe.throw(JSON.stringify(r.message))}),
+        })}
+      );
+    }
+  },
+  add_additional_mcu_button(frm) {
     if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In') && frm.doc.mcu) {
       frm.add_custom_button(
         'Additional MCU Item',
@@ -103,8 +148,10 @@ frappe.ui.form.on('Patient Appointment', {
         }
       )
     }
-    // Check if any row in custom_completed_questionnaire has is_completed != 1
+  },
+  add_questionnaire_link(frm) {
     const incompleteRow = frm.doc.custom_completed_questionnaire.find(row => row.is_completed !== 1);
+    frm.sidebar.clear_user_actions();
     if (incompleteRow) {
       const template = incompleteRow.template;
       frm.add_custom_button(
@@ -131,5 +178,5 @@ frappe.ui.form.on('Patient Appointment', {
         .attr('target', '_blank');
       }
     }
-	}
+  },
 });

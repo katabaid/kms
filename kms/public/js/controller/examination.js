@@ -7,7 +7,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       'non_selective_result', 
       'calculated_result', 
       'questionnaire', 
-      'questionnaire_detail'
     ],
     childTableButton: 'examination_item',
     templateField:    'template',
@@ -38,7 +37,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
     hideStandardButtons(frm, fields) {
       fields.forEach((field) => {
-        let child = frm.fields_dict[field];
+        const child = frm.fields_dict[field];
         if (child) {
           if (child.grid && child.grid.grid_rows) {
             setTimeout(function() {

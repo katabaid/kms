@@ -180,3 +180,46 @@ def create_mr_from_encounter(enc):
   else: 
     message.append('Empty external')
   return message
+
+@frappe.whitelist()
+def check_eligibility_to_reopen(name):
+  sql = f"""SELECT IFNULL(SUM(a), 0) not_eligible FROM 
+    (SELECT 1 a FROM `tabVital Signs` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus = 1 UNION 
+    SELECT 1 FROM `tabDoctor Examination` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
+    SELECT 1 FROM `tabNurse Examination` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
+    SELECT 1 FROM `tabSample Collection` tvs 
+      WHERE tvs.custom_appointment = '{name}' AND tvs.docstatus in (0,1) UNION
+    SELECT 1 FROM `tabRadiology` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1)) b"""
+  return frappe.db.sql(sql, as_dict = True)
+
+@frappe.whitelist()
+def reopen_appointment(name):
+  sql = f"""SELECT IFNULL(SUM(a), 0) not_eligible FROM 
+    (SELECT 1 a FROM `tabVital Signs` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus = 1 UNION 
+    SELECT 1 FROM `tabDoctor Examination` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
+    SELECT 1 FROM `tabNurse Examination` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
+    SELECT 1 FROM `tabSample Collection` tvs 
+      WHERE tvs.custom_appointment = '{name}' AND tvs.docstatus in (0,1) UNION
+    SELECT 1 FROM `tabRadiology` tvs 
+      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1)) b"""
+  check = frappe.db.sql(sql, as_dict = True)
+  if check.not_eligible == 0:
+    frappe.throw('Cannot reopen appointment. There are already recorded examinations.')
+  else:
+    vital_signs = frappe.db.get_value('Vital Signs', {'appointment': {name}}, 'name')
+    if vital_signs:
+      frappe.delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
+    dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': {name}}, 'name')
+    if dispatcher:
+      frappe.delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
+    if vital_signs or dispatcher:
+      frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
+    else:
+      frappe.throw('There are no Vital Signs or Dispatcher record to delete.')

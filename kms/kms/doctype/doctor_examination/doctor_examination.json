@@ -38,10 +38,6 @@
   "remark",
   "amended_from",
   "appoinment_type",
-  "questionnaire_tab",
-  "heading_caxh",
-  "questionnaire_detail",
-  "tes",
   "pe_tab",
   "eyes_section",
   "eyes_check",
@@ -1509,17 +1505,6 @@
    "mandatory_depends_on": "eval:doc.sk_others"
   },
   {
-   "fieldname": "questionnaire_tab",
-   "fieldtype": "Tab Break",
-   "label": "Questionnaire"
-  },
-  {
-   "fieldname": "questionnaire_detail",
-   "fieldtype": "Table",
-   "label": "Questionnaire Detail",
-   "options": "Questionnaire Detail"
-  },
-  {
    "default": "0",
    "fieldname": "rr_others",
    "fieldtype": "Check",
@@ -1552,24 +1537,13 @@
    "fieldname": "patient_age",
    "fieldtype": "Data",
    "label": "Patient Age"
-  },
-  {
-   "fieldname": "heading_caxh",
-   "fieldtype": "Heading",
-   "label": "Questionnaires"
-  },
-  {
-   "fieldname": "tes",
-   "fieldtype": "Button",
-   "hidden": 1,
-   "label": "tes"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-03 22:06:27.129061",
+ "modified": "2025-01-04 07:20:17.294898",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
