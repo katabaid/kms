@@ -223,3 +223,7 @@ def reopen_appointment(name):
       frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
     else:
       frappe.throw('There are no Vital Signs or Dispatcher record to delete.')
+
+@frappe.whitelist()
+def check_out_appointment(name):
+  frappe.db.set_value('Patient Appointment', name, 'status', 'Check Out')

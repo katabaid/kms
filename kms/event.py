@@ -335,7 +335,7 @@ def process_checkin(doc, method=None):
   ################Doctype: Patient Appointment################
   if not doc.status:
     doc.status = 'Open'
-  if doc.status == 'Checked In':
+  if doc.status == 'Checked In' or doc.status == 'Ready to Check Out':
     validate_with_today_date(doc.appointment_date)
     if getattr(doc.flags, "skip_on_update", False):
       return
@@ -358,6 +358,8 @@ def process_checkin(doc, method=None):
           'Dispatcher', {'patient_appointment': doc.name}, ['name'])
         if exist_docname: 
           disp_doc = frappe.get_doc('Dispatcher', exist_docname)
+          if disp_doc.status == 'Finished':
+            disp_doc.status = 'In Queue'
           existing_items = {item.examination_item for item in disp_doc.package}
           for entry in doc.custom_additional_mcu_items:
             if entry.examination_item not in existing_items:

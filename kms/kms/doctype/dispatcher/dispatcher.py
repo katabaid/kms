@@ -19,7 +19,7 @@ class Dispatcher(Document):
 			self.update_status_if_all_rooms_finished()
 		if self.status == "Finished" and self.status_changed_to_finished():
 			self.update_patient_appointment()
-			self.create_doctor_result()
+			#self.create_doctor_result()
 	
 	def before_insert(self):
 		if frappe.db.exists(self.doctype,{

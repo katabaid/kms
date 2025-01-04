@@ -71,7 +71,20 @@ frappe.ui.form.on('Patient Appointment', {
 //======Triggers======//
 
   add_finish_button(frm) {
-    if(frm.doc.status === 'Checked In'){}
+    if(frm.doc.status === 'Ready to Check Out'){
+      frm.add_custom_button(
+        'Check Out',
+        () => {frappe.call({
+          method: 'kms.api.check_out_appointment',
+          args: { name: frm.doc.name},
+          callback: (r=>{
+            frm.reload_doc();
+            frappe.msgprint(r.message);
+          }),
+          error: (r=>{frappe.throw(JSON.stringify(r.message))}),
+        })}
+      )
+    }
   },
   add_check_in_button(frm) {
     if(frm.doc.status === 'Open'){
@@ -90,9 +103,7 @@ frappe.ui.form.on('Patient Appointment', {
         'Reopen',
         () => {frappe.call({
           method: 'kms.api.check_eligibility_to_reopen',
-          args: {
-            name: frm.doc.name
-          },
+          args: { name: frm.doc.name },
           callback: (r=>{
             if(r.message==0) {
               frappe.call({
@@ -101,7 +112,7 @@ frappe.ui.form.on('Patient Appointment', {
                   name: frm.doc.name
                 },
                 callback: (r=>{
-                  frm.reload_doc()
+                  frm.reload_doc();
                 }),
                 error: (r=>{frappe.throw(JSON.stringify(r.message))}),
               })
