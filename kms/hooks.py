@@ -275,4 +275,4 @@ fixtures = [
   {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
 ]
 on_logout = ["kms.session.remove_room_assignment"]
-on_session_creation = ["kms.session.add_medical_department"]
+on_session_creation = ["kms.session.process_login"]

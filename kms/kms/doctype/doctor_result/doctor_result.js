@@ -88,27 +88,31 @@ const hide_standard_buttons = (frm, fields) => {
 		let child = frm.fields_dict[field];
 		if (child) {
 			if (child.grid.grid_rows) {
-        setTimeout(()=>{
-          const elementsToHide = child.grid.wrapper[0].querySelectorAll('.grid-add-row, .grid-remove-rows, .row-index');
-          elementsToHide.forEach(element => {
-            element.style.display = 'none';
-          });
-        }, 200)
-				child.grid.grid_rows.forEach(function(row) {
-					row.wrapper.find('.btn-open-row').on('click', function() {
-						setTimeout(function() {
+				setTimeout(() => {
+					const elementsToHide = child.grid.wrapper[0].querySelectorAll(
+						'.grid-add-row, .grid-remove-rows, .row-index',
+					);
+					elementsToHide.forEach((element) => {
+						element.style.display = 'none';
+					});
+				}, 200);
+				child.grid.grid_rows.forEach(function (row) {
+					row.wrapper.find('.btn-open-row').on('click', function () {
+						setTimeout(function () {
 							const gridRowOpen = document.querySelector('.grid-row-open');
-              const elementsToHide = gridRowOpen.querySelectorAll('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row');
-              elementsToHide.forEach(element => {
-                  element.style.display = 'none';
-              });
+							const elementsToHide = gridRowOpen.querySelectorAll(
+								'.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row',
+							);
+							elementsToHide.forEach((element) => {
+								element.style.display = 'none';
+							});
 						}, 200);
 					});
 				});
 			}
 		}
 	});
-}
+};
 
 const apply_cell_styling = (frm, row, table_name) => {
   let $row = $(frm.fields_dict[table_name].grid.grid_rows_by_docname[row.name].row);

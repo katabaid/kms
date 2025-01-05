@@ -225,7 +225,6 @@ frappe.ui.form.on('Patient Encounter', {
             if (index !== -1) checkedItems.splice(index, 1);
           }
         });
-        console.log(checkedItems);
       };
     });
   },

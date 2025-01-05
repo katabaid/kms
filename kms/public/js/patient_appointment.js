@@ -106,7 +106,6 @@ frappe.ui.form.on('Patient Appointment', {
           method: 'kms.api.check_eligibility_to_reopen',
           args: { name: frm.doc.name },
           callback: (r=>{
-            console.log(r.message[0])
             if(r.message[0].not_eligible==0) {
               frappe.call({
                 method: 'kms.api.reopen_appointment',

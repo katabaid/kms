@@ -1,4 +1,4 @@
-// Extend the default router behavior
+/*// Extend the default router behavior
 const originalRoute = frappe.router.route;
 frappe.router.route = function () {
   // Only check if user is logged in and not already on the room assignment page
@@ -82,4 +82,27 @@ const checkRoomAssignmentRole = async () => {
     console.error('Error fetching MCU Settings:', error);
     return false
   }
-};
+};*/
+/* frappe.provide('frappe.ui.misc');
+frappe.ui.misc.on_login_callback = function() {
+  console.log('aaaaaaaaaaa')
+  frappe.call({
+    method: "kms.session.get_redirect_url",
+    callback: function(r) {
+      if (r.message) {
+        window.location.href = r.message;
+      }
+    }
+  });
+} */
+$(document).on('startup', function() {
+  // This will run when Frappe workspace loads
+  frappe.call({
+    method: "kms.session.get_redirect_url",
+    callback: function(r) {
+      if (r.message) {
+        window.location.href = r.message;
+      }
+    }
+  });
+});

@@ -6,18 +6,16 @@ from frappe.utils import today, now
 from frappe.model.document import Document
 
 class RoomAssignment(Document):
-  def validate(self):
-    if self.is_new():
-      if frappe.db.exists(
-        "Room Assignment", 
-        {"user": frappe.session.user, "date": today(), "assigned": 1}
-      ):
-        frappe.throw(f"""You already sign for room: {self.healthcare_service_unit}. Please use Change Room button to move to this room.""")
-      self.user = frappe.session.user
-      self.time_sign_in = now()
-      self.assigned = 1
-    set_session_default(self.healthcare_service_unit)
-    set_user_permisssion(self.healthcare_service_unit)
+  def before_insert(self):
+    if frappe.db.exists(
+      "Room Assignment", 
+      {"user": frappe.session.user, "date": today(), "assigned": 1}
+    ):
+      frappe.throw(f"""You already sign for room: {self.healthcare_service_unit}. Please use Change Room button to move to this room.""")
+    self.date = today()
+    self.user = frappe.session.user
+    self.time_sign_in = now()
+    self.assigned = 1
 
 @frappe.whitelist()
 def change_room(name, room):
@@ -29,7 +27,7 @@ def change_room(name, room):
   doc.time_sign_out = now()
   doc.assigned = 0
   doc.save(ignore_permissions=True)
-  remove_user_permission(room)
+  #remove_user_permission()
 
   new_doc = frappe.new_doc("Room Assignment")
   new_doc.healthcare_service_unit = room
@@ -38,6 +36,7 @@ def change_room(name, room):
   new_doc.time_sign_in = now()
   new_doc.assigned = 1
   new_doc.save(ignore_permissions=True)
+  set_session_default(room)
 
   return new_doc.name
 
@@ -86,7 +85,7 @@ def set_user_permisssion(room):
       })
     doc.insert(ignore_permissions=True)
 
-def remove_user_permission(room):
+def remove_user_permission():
   name = frappe.db.get_all('User Permission', 
     filters = [['user', '=', frappe.session.user], ['allow', '=', 'Healthcare Service Unit']],
     pluck = 'name')

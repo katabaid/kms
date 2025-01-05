@@ -52,11 +52,16 @@ class DoctorResult(Document):
 			for row in getattr(self, table, []):
 				try:
 					if row.parentfield == 'nurse_grade':
-						item_template = frappe.get_value('Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
+						item_template = frappe.get_value(
+							'Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
 					if row.hidden_item:
-						if (item_template and item_template not in vital_sign_templates()) and (row.hidden_item != physical_examination()) and row.hidden_item != 'DENS-00082':
+						if ((item_template and item_template not in vital_sign_templates())
+							and (row.hidden_item != physical_examination())
+							and row.hidden_item != 'DENS-00082'
+						):
 							counter += 1
-							bundle_position = frappe.get_value('Item', row.hidden_item, 'custom_bundle_position')
+							bundle_position = frappe.get_value(
+								'Item', row.hidden_item, 'custom_bundle_position')
 							current_results.append({
 								'examination': row.examination,
 								'result': row.result,
@@ -71,7 +76,8 @@ class DoctorResult(Document):
 							})
 					else:
 						counter += 1
-						bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
+						bundle_position = frappe.get_value(
+							'Item Group', row.hidden_item_group, 'custom_bundle_position')
 						current_results.append({
 							'examination': row.examination,
 							'bundle_position': bundle_position if bundle_position else 9999,
@@ -177,7 +183,8 @@ class DoctorResult(Document):
 	def _process_nurse_grade(self):
 		counter = 0
 		for nurse_grade in self.nurse_grade:
-			item_template = frappe.get_value('Nurse Examination Template', {'item_code':nurse_grade.hidden_item}, 'name')
+			item_template = frappe.get_value(
+				'Nurse Examination Template', {'item_code':nurse_grade.hidden_item}, 'name')
 			if item_template in vital_sign_templates() and nurse_grade.result:
 				counter += 1
 				self.append('physical_examination', {

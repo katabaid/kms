@@ -51,7 +51,7 @@
    "in_standard_filter": 1,
    "label": "User",
    "options": "User",
-   "permlevel": 1
+   "read_only": 1
   },
   {
    "fieldname": "time_sign_in",
@@ -75,7 +75,7 @@
   }
  ],
  "links": [],
- "modified": "2025-01-02 20:19:30.674658",
+ "modified": "2025-01-05 18:19:31.167562",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Room Assignment",
