@@ -2,6 +2,7 @@ frappe.ui.form.on('Patient Encounter', {
   /****************** Event Overrides ******************/
   refresh(frm) {
     hide_standard_buttons (frm, ['lab_test_prescription']);
+    checkRoomAssignment(frm);
     frm.fields_dict['drug_prescription'].grid.update_docfield_property('dosage_form', 'reqd', 0);
     frm.fields_dict['drug_prescription'].grid.update_docfield_property('period', 'reqd', 0);
     if (frm.is_new()) {
@@ -652,4 +653,24 @@ const hide_standard_buttons = (frm, fields) => {
 			}
 		}
 	});
+}
+const checkRoomAssignment = (frm) => {
+  frappe.call({
+    method: 'frappe.client.get_list',
+    args: {
+      doctype: 'Room Assignment',
+      filters: {
+        'date': frappe.datetime.get_today(),
+        'healthcare_service_unit': frm.doc.custom_service_unit,
+        'user': frappe.session.user,
+        'assigned': 1
+      }
+    },
+    callback: function(response) {
+      if(!response.message || response.message.length === 0) {
+        frm.page.btn_primary.hide();
+        frm.page.set_indicator(__('No Room Assignment for today.'), 'red');
+      }
+    }
+  })
 }

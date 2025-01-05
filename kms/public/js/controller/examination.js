@@ -134,6 +134,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       if (validStatuses.includes(utils.getStatus(frm))) {
         frm.trigger('setup_child_table_custom_buttons');
       }
+      frm.trigger('check_room_assignment');
     },
 
     before_submit: function (frm) {
@@ -150,6 +151,10 @@ const createDocTypeController = (doctype, customConfig = {}) => {
 
     setup_child_table_custom_buttons: function (frm) {
       utils.setupChildTableButtons(frm);
+    },
+
+    check_room_assignment: function (frm) {
+      checkRoomAssignment(frm);
     }
   };
 
@@ -369,6 +374,27 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         },
       });
     }
+  }
+
+  function checkRoomAssignment(frm) {
+    frappe.call({
+      method: 'frappe.client.get_list',
+      args: {
+        doctype: 'Room Assignment',
+        filters: {
+          'date': frappe.datetime.get_today(),
+          'healthcare_service_unit': config.getHsu(frm),
+          'user': frappe.session.user,
+          'assigned': 1
+        }
+      },
+      callback: function(response) {
+        if(!response.message || response.message.length === 0) {
+          frm.page.btn_primary.hide();
+          frm.page.set_indicator(__('No Room Assignment for today.'), 'red');
+        }
+      }
+    })
   }
 
   controller.utils = utils;
