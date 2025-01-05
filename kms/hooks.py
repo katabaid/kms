@@ -137,7 +137,7 @@ doctype_list_js = {
 
 override_doctype_class = {
   "Shift Request": "kms.override.shift_request.KmsShiftRequest",
-  "ToDo": "kms.override.todo.CustomToDo",
+  #"ToDo": "kms.override.todo.CustomToDo",
 }
 
 # Document Events
