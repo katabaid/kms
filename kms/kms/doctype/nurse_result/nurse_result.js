@@ -23,7 +23,7 @@ frappe.ui.form.on('Nurse Result', {
 				$.each(frm.doc.result, (key, value) => {
 					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name).options = value.result_options;
 					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).read_only = (value.result_check === value.normal_value) ? 1 : 0;
-					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).reqd = (value.result_check === value.normal_value) ? 1 : 0;
+					frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_text', value.name).reqd = (value.result_check === value.mandatory_value) ? 1 : 0;
 					if (value.is_finished) {
 						frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name).read_only = 1;
 						frappe.meta.get_docfield('Nurse Examination Selective Result', 'result_check', value.name).reqd = 0;
