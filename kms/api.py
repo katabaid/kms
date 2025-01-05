@@ -63,23 +63,28 @@ def get_users_by_doctype(doctype):
   # Fetch roles based on the target field
   roles = frappe.get_all(
     'MCU Assignment Role', filters={'parentfield': target}, fields=['role'], pluck='role')
-  user_list = []
+  excluded_users = ['Guest', 'Administrator']
+  unique_users = {}
   for role in roles:
     # Fetch users with the given role
     users = frappe.get_all(
       "Has Role",
-      filters={"role": role, "parenttype": "User"},
+      filters={"role": role, "parenttype": "User", 'parent': ['not in', excluded_users]},
       fields=["parent"],
       distinct=True
     )
     # Fetch user details and append to the user_list
     for user in users:
-      user_doc = frappe.get_doc("User", user.parent)
-      user_list.append({
-        "name": user_doc.name,
-        "full_name": user_doc.full_name
-      })
-  return user_list
+      if user.parent not in unique_users:
+        user_doc = frappe.get_doc("User", user.parent)
+        if not user_doc.enabled or user_doc.user_type != 'System User':
+          continue
+        unique_users[user.parent] = {
+          "name": user_doc.name,
+          "full_name": user_doc.full_name
+        }
+        print('muasukk')
+  return list(unique_users.values())
 
 @frappe.whitelist()
 def create_mr_from_encounter(enc):

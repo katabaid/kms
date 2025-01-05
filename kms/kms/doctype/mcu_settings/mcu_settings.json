@@ -8,6 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "doctor_examination_tab",
+  "examination_item_group_section",
   "examination_group",
   "doctor_examination_section",
   "physical_examination",
@@ -32,11 +33,14 @@
   "column_break_npqjw",
   "dental_examination_name",
   "assignment_tab",
+  "dispatcher_and_room_assignment_section",
   "dispatcher_role",
-  "nurse_result_assignment_role",
-  "lab_test_assignment_role",
   "column_break_ytemr",
   "room_assignment_role",
+  "section_break_qrmv",
+  "nurse_result_assignment_role",
+  "lab_test_assignment_role",
+  "column_break_pwgp",
   "doctor_result_assignment_role",
   "radiology_result_assignment_role",
   "relationship_tab",
@@ -294,12 +298,31 @@
    "fieldtype": "Link",
    "label": "Vital Sign with Systolic/Diastolic",
    "options": "Nurse Examination Template"
+  },
+  {
+   "fieldname": "section_break_qrmv",
+   "fieldtype": "Section Break",
+   "label": "Result Assignment"
+  },
+  {
+   "fieldname": "column_break_pwgp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dispatcher_and_room_assignment_section",
+   "fieldtype": "Section Break",
+   "label": "Dispatcher and Room Assignment"
+  },
+  {
+   "fieldname": "examination_item_group_section",
+   "fieldtype": "Section Break",
+   "label": "Examination Item Group"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-12-18 21:49:47.338039",
+ "modified": "2025-01-05 20:31:06.629355",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
