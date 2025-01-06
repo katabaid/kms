@@ -16,6 +16,9 @@ class RoomAssignment(Document):
     self.user = frappe.session.user
     self.time_sign_in = now()
     self.assigned = 1
+    healthcare_practitioner = frappe.db.get_value('Healthcare Practitioner', {'user_id': frappe.session.user},'name')
+    if healthcare_practitioner:
+      self.healthcare_practitioner = healthcare_practitioner
 
 @frappe.whitelist()
 def change_room(name, room):
