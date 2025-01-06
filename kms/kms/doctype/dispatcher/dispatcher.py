@@ -53,7 +53,7 @@ class Dispatcher(Document):
 		doc.gender = self.gender
 		doc.dispatcher = self.name
 		doc.created_date = today()
-		package_line = frappe.db.sql(f"""SELECT examination_item, item_name, item_group,
+		package_line = frappe.db.sql(f"""SELECT DISTINCT examination_item, item_name, item_group,
 			(select custom_gradable from `tabItem Group` tig 
 				where tig.name = item_group) group_gradable, 
 			(select custom_bundle_position from `tabItem Group` tig 
@@ -173,7 +173,7 @@ def process_examination_items(doc, data, package):
 	def append_items(category, group, item, doc, additional_data=None):
 		data = {
 			'examination': item['item_name'],
-			'gradable': item.get('custom_gradable', 0),
+			'gradable': item.get('item_gradable', 0),
 			'hidden_item_group': group['item_group'],
 			'hidden_item': item['examination_item'],
 			**(additional_data or {})
@@ -192,6 +192,7 @@ def process_examination_items(doc, data, package):
 				'hidden_item_group': group['item_group'],
 			})
 			for item in group['items']:
+				print(item)
 				radiology_result = None
 				incdec = None
 				if blood_pressure_item_code == item['examination_item']:
@@ -228,7 +229,8 @@ def calculate_grade(result_text, min_value, max_value, group, item_code, test_na
 			{'item_group': group, 'item_code': item_code, 'test_name': test_name, 'grade': grade},
 			'description'
 		)
-		return grade, grade_description
+		if grade_description:
+			return grade, grade_description
 	return None, None
 
 def process_nurse_category(doc, group, item):
@@ -292,7 +294,8 @@ def process_doctor_category(doc, package):
 		return flat
 	doctor_grades = build_doctor_grade(doc.appointment, package)
 	flat_grades = flatten_grades(doctor_grades)
-	sorted_temp = sorted(flat_grades, key=lambda x: split_position(x.get('position', '')))
+	filtered_grades = [grade for grade in flat_grades if grade is not None]
+	sorted_temp = sorted(filtered_grades, key=lambda x: split_position(x.get('position', '')))
 	for ready in sorted_temp:
 		doc.append('doctor_grade', {
 			'examination': ready.get('examination'),
@@ -1660,3 +1663,41 @@ def create_result_doc(doc, target):
 	if not not_created:
 		new_doc.insert(ignore_permissions=True)
 	return new_doc.name
+
+@frappe.whitelist()
+def new_doctor_result(appointment):
+	appt = frappe.get_doc('Patient Appointment', appointment)
+	dispatcher = frappe.get_all(
+		'Dispatcher', filters={'patient_appointment': appointment}, pluck='name')
+	if dispatcher:
+		disp = dispatcher[0]
+	doc = frappe.new_doc('Doctor Result')
+	doc.appointment = appt.name
+	doc.patient = appt.patient
+	doc.age = appt.patient_age
+	doc.gender = appt.patient_sex
+	doc.dispatcher = disp
+	doc.created_date = today()
+	package_line = frappe.db.sql(f"""SELECT examination_item, item_name, item_group,
+		(select custom_gradable from `tabItem Group` tig 
+			where tig.name = item_group) group_gradable, 
+		(select custom_bundle_position from `tabItem Group` tig 
+			where tig.name = item_group) group_position,
+		(select custom_gradable from `tabItem` ti 
+			where ti.name = examination_item) item_gradable, 
+		(select custom_bundle_position from `tabItem` ti 
+			where ti.name = examination_item) item_position,
+		(select 1 from `tabNurse Examination Template` tnet 
+			where tnet.item_code = examination_item) nurse,
+		(select 1 from `tabDoctor Examination Template` tnet 
+			where tnet.item_code = examination_item) doctor,
+		(select 1 from `tabRadiology Result Template` tnet 
+			where tnet.item_code = examination_item) radiology,
+		(select 1 from `tabLab Test Template` tnet 
+			where tnet.lab_test_code = examination_item) lab_test
+		from `tabMCU Appointment`
+		where parent = '{appt.name}'""", as_dict = True)
+	group_result = get_examination_items(package_line)
+	combined_items = appt.custom_mcu_exam_items + appt.custom_additional_mcu_items
+	process_examination_items(doc, group_result, combined_items)
+	doc.insert(ignore_permissions=True)

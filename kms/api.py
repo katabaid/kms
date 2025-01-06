@@ -231,4 +231,9 @@ def reopen_appointment(name):
 
 @frappe.whitelist()
 def check_out_appointment(name):
-  frappe.db.set_value('Patient Appointment', name, 'status', 'Check Out')
+  frappe.db.set_value('Patient Appointment', name, 'status', 'Checked Out')
+  mcu = frappe.db.get_value('Patient Appointment', name, 'mcu')
+  if mcu:
+    frappe.call(
+      'kms.kms.doctype.dispatcher.dispatcher.new_doctor_result',
+      appointment = name)
