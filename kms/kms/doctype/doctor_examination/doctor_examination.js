@@ -392,6 +392,10 @@ frappe.ui.form.on('Doctor Examination', {
 				apply_cell_styling (frm, row.doc);
 			})
 		}
+    frm.sidebar
+      .add_user_action(__('All Questionnaires'))
+      .attr('href', `/app/questionnaire?patient_appointment=${frm.doc.appointment}`)
+      .attr('target', '_blank');
     if (frm.doc.questionnaire) {
 			frm.refresh_field('questionnaire');
 			$.each(frm.doc.questionnaire, (key, value) => {
