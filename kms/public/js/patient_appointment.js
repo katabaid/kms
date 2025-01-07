@@ -45,6 +45,8 @@ frappe.ui.form.on('Patient Appointment', {
         });
         frm.refresh_field("custom_mcu_exam_items");
       });
+    } else {
+      frappe.throw('Branch and MCU must be entered first.')
     }
 	},
 	refresh(frm) {
@@ -174,7 +176,8 @@ frappe.ui.form.on('Patient Appointment', {
       const link = `https://kmsregis.netlify.app/questionnaire?source=${frm.doc.appointment_type}&template=${template||frm.doc.appointment_type}&appointment_id=${frm.doc.name}`;
       frm.sidebar
       .add_user_action(__('QR Code'))
-      .attr('href', `https://zxing.org/w/chart?cht=qr&chs=500x500&chld=L&choe=UTF-8&chl=${link}`)
+      //.attr('href', `https://zxing.org/w/chart?cht=qr&chs=500x500&chld=L&choe=UTF-8&chl=${link}`)
+      .attr('href', `https://barcode.tec-it.com/barcode.ashx?data=${link}&code=MobileQRUrl`)
       .attr('target', '_blank');
       if (frm.doc.custom_mobile) {
         let phoneNumber;
@@ -192,3 +195,5 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
 });
+
+//https://barcode.tec-it.com/barcode.ashx?data=https%3a%2f%2fwww.tec-it.com&code=MobileQRUrl

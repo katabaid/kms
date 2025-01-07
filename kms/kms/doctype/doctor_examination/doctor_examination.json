@@ -1243,7 +1243,7 @@
    "default": "1",
    "fieldname": "romberg_check",
    "fieldtype": "Check",
-   "label": "No Abnormality"
+   "label": "Negative (No swaying or losing balance with eyes open or closed)"
   },
   {
    "depends_on": "eval:!doc.romberg_check",
@@ -1254,7 +1254,7 @@
    "fieldname": "romberg_abnormal",
    "fieldtype": "Select",
    "label": "Abnormal",
-   "options": "Positive: Swaying or losing balance with eyes closed\nNegative: No swaying or losing balance with eyes open or close\nUndefined: Swaying or losing balance with eyes open/others"
+   "options": "Positive: Swaying or losing balance with eyes closed\nUndefined: Swaying or losing balance with eyes open/others"
   },
   {
    "depends_on": "eval:doc.romberg_abnormal==='Undefined: Swaying or losing balance with eyes open/others'",
@@ -1543,7 +1543,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-04 07:20:17.294898",
+ "modified": "2025-01-07 15:07:34.442184",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
