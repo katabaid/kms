@@ -1442,8 +1442,8 @@ def create_result_doc(doc, target):
 		for item in doc.custom_sample_table:
 			if item.status == 'Finished':
 				lab_test = frappe.db.sql(f"""
-					SELECT name
-					FROM `tabLab Test Template` tltt
+					SELECT tltt.name
+					FROM `tabLab Test Template` tltt, tabItem ti
 					WHERE tltt.sample = '{item.sample}'
 					AND EXISTS (
 					SELECT 1 
@@ -1451,7 +1451,9 @@ def create_result_doc(doc, target):
 					WHERE tltt.name = tma.item_name
 					AND tma.parent = '{doc.custom_dispatcher}'
 					AND tma.parentfield = 'package'
-					AND tma.parenttype = 'Dispatcher')""", pluck='name')
+					AND tma.parenttype = 'Dispatcher')
+					AND ti.name = tltt.lab_test_code
+					ORDER BY ti.custom_bundle_position""", pluck='name')
 				for exam in lab_test:
 					template_doc = frappe.get_doc('Lab Test Template', exam)
 					non_selective = template_doc.get('normal_test_templates')
@@ -1463,7 +1465,7 @@ def create_result_doc(doc, target):
 							WITH cte AS (
 								SELECT
 									parent, lab_test_event, lab_test_uom, custom_age, custom_sex, 
-									custom_min_value, custom_max_value,
+									custom_min_value, custom_max_value, idx,
 									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) 
 										OVER (PARTITION BY parent, lab_test_event, custom_sex 
 											ORDER BY custom_age DESC) AS max_age
@@ -1471,7 +1473,7 @@ def create_result_doc(doc, target):
 							)
 							SELECT
 								lab_test_event,
-								lab_test_uom,
+								lab_test_uom, idx,
 								COALESCE(
 									(
 										SELECT custom_min_value 
@@ -1524,8 +1526,7 @@ def create_result_doc(doc, target):
 							FROM cte c
 							WHERE parent = '{exam}'
 							AND custom_sex = '{doc.patient_sex}'
-							GROUP BY
-								lab_test_event;""", as_dict=True)
+							GROUP BY lab_test_event order by idx""", as_dict=True)
 						for mm in minmax:
 							new_doc.append('normal_test_items', {
 								'lab_test_name': exam, 
