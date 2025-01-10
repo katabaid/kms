@@ -1311,7 +1311,8 @@ def removed_from_room(dispatcher_id, hsu, doctype, docname):
 	notification_doc.insert(ignore_permissions=True)
 	exam_doc = frappe.get_doc(doctype, docname)
 	exam_doc.db_set('docstatus', 2)
-	exam_doc.db_set('status', 'Removed')
+	status = 'custom_status' if doctype == 'Sample Collection' else 'status'
+	exam_doc.db_set(status, 'Removed')
 	return 'Removed from examination room.'
 
 def get_related_rooms (hsu, dispatcher_id):

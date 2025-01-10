@@ -257,6 +257,21 @@ def fetch_exam_items(name, room, branch, template_doctype):
   return frappe.db.sql(query, (name, branch, room), as_dict=True)
 
 def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None):
+  if template_doctype == 'Lab Test Template':
+    sql = f"""
+      SELECT examination_item, tma.item_name
+      FROM `tabMCU Appointment` tma, tabItem ti
+      WHERE tma.parent = '{doc.custom_dispatcher}'
+      AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.item = tma.examination_item)
+      AND ti.name = tma.examination_item
+      ORDER BY ti.custom_bundle_position
+      """
+    items = frappe.db.sql(sql, as_dict=True)
+    for item in items:
+      doc.append('custom_examination_item', {
+        'template': item.item_name,
+        'item_code': item.examination_item,
+      })
   for exam_item in exam_items:
     if template_doctype == 'Lab Test Template':
       if cancelled_doc:
