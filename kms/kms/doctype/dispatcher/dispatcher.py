@@ -1358,16 +1358,16 @@ def finish_exam(dispatcher_id, hsu, status, doctype, docname):
 			if item.status == 'To Retest':
 				exists_to_retest = True
 
-	for room in doc.assignment_table:
-		room_count += 1
-		if room.status in final_status:
-			final_count += 1
-		if room.healthcare_service_unit == hsu:
-			room.status = 'Additional or Retest Request' if exists_to_retest else status
-		if room.healthcare_service_unit in related_rooms:
-			room.status = 'Additional or Retest Request' if exists_to_retest else status
-	doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
-	doc.room = ''
+		for room in doc.assignment_table:
+			room_count += 1
+			if room.status in final_status:
+				final_count += 1
+			if room.healthcare_service_unit == hsu:
+				room.status = 'Additional or Retest Request' if exists_to_retest else status
+			if room.healthcare_service_unit in related_rooms:
+				room.status = 'Additional or Retest Request' if exists_to_retest else status
+		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
+		doc.room = ''
 	doc.save(ignore_permissions=True)
 
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
