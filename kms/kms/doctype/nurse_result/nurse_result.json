@@ -42,7 +42,8 @@
   "items",
   "remark_section",
   "remark",
-  "amended_from"
+  "amended_from",
+  "has_attachment"
  ],
  "fields": [
   {
@@ -284,13 +285,21 @@
    "in_standard_filter": 1,
    "label": "Date of Birth",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_attachment",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Has Attachment",
+   "no_copy": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 17:05:51.406634",
+ "modified": "2025-01-11 21:16:13.587087",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

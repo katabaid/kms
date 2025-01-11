@@ -164,6 +164,23 @@ def update_customer_name(doc, method=None):
 #    doc.custom_branch = frappe.db.get_value(
 #      'Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
 
+@frappe.whitelist()
+def set_has_attachment(doc, method=None):
+  if (
+    doc.attached_to_doctype and doc.attached_to_name and 
+    (
+      doc.attached_to_doctype == 'Radiology' or 
+      doc.attached_to_doctype == 'Radiology Result' or 
+      doc.attached_to_doctype == 'Nurse Result' or 
+      doc.attached_to_doctype == 'Nurse Examination')
+  ):
+    frappe.db.set_value(
+      doc.attached_to_doctype, 
+      doc.attached_to_name,
+      'has_attachment',
+      1
+    )
+
 def is_numeric(value):
     return isinstance(value, (int, float, complex)) and not isinstance(value, bool)
 

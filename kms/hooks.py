@@ -158,6 +158,9 @@ doc_events = {
   "Customer": {
     "after_insert": "kms.event.update_customer_name",
   },
+  "File": {
+    "after_insert": "kms.event.set_has_attachment",
+  },
   #"Healthcare Service Unit": {
   #  "before_save": "kms.event.update_healthcare_service_unit_branch",
   #},

@@ -377,24 +377,27 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   }
 
   function checkRoomAssignment(frm) {
-    frappe.call({
-      method: 'frappe.client.get_list',
-      args: {
-        doctype: 'Room Assignment',
-        filters: {
-          'date': frappe.datetime.get_today(),
-          'healthcare_service_unit': config.getHsu(frm),
-          'user': frappe.session.user,
-          'assigned': 1
+    const user = frappe.session.user;
+    if (user != 'Administrator'){
+      frappe.call({
+        method: 'frappe.client.get_list',
+        args: {
+          doctype: 'Room Assignment',
+          filters: {
+            'date': frappe.datetime.get_today(),
+            'healthcare_service_unit': config.getHsu(frm),
+            'user': user,
+            'assigned': 1
+          }
+        },
+        callback: function(response) {
+          if(!response.message || response.message.length === 0) {
+            frm.page.btn_primary.hide();
+            frm.page.set_indicator(__('No Room Assignment for today.'), 'red');
+          }
         }
-      },
-      callback: function(response) {
-        if(!response.message || response.message.length === 0) {
-          frm.page.btn_primary.hide();
-          frm.page.set_indicator(__('No Room Assignment for today.'), 'red');
-        }
-      }
-    })
+      })
+    }
   }
 
   controller.utils = utils;

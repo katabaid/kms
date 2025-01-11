@@ -44,7 +44,8 @@
   "items",
   "remark_section",
   "remark",
-  "amended_from"
+  "amended_from",
+  "has_attachment"
  ],
  "fields": [
   {
@@ -295,13 +296,21 @@
   {
    "fieldname": "column_break_kqoe",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_attachment",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Has Attachment",
+   "no_copy": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 16:46:30.669610",
+ "modified": "2025-01-11 21:15:30.402149",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

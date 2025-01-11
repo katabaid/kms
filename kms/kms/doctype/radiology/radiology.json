@@ -41,7 +41,8 @@
   "items",
   "remark_section",
   "remark",
-  "amended_from"
+  "amended_from",
+  "has_attachment"
  ],
  "fields": [
   {
@@ -277,13 +278,20 @@
   {
    "fieldname": "column_break_pmac",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_attachment",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Has Attachment"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 16:44:39.345421",
+ "modified": "2025-01-11 20:56:51.160507",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",
