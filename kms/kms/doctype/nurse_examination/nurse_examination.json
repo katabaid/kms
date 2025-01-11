@@ -7,25 +7,33 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
+  "patient_section",
   "patient",
   "patient_name",
-  "company",
-  "branch",
-  "queue_pooling",
-  "patient_encounter",
-  "status",
-  "exam_result",
+  "patient_company",
   "column_break_ydxak",
   "patient_sex",
   "patient_age",
-  "queue_no",
+  "date_of_birth",
+  "section_break_asgx",
+  "naming_series",
+  "company",
+  "branch",
+  "service_unit",
+  "column_break_pxew",
   "appointment",
   "dispatcher",
-  "service_unit",
+  "queue_pooling",
+  "patient_encounter",
+  "section_break_cfvz",
+  "status",
+  "exam_result",
+  "column_break_honk",
+  "queue_no",
+  "submitted_date",
+  "column_break_kqoe",
   "created_date",
   "checked_in_time",
-  "submitted_date",
   "result_section",
   "examination_item",
   "questionnaire",
@@ -49,7 +57,6 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Company",
    "options": "Company",
    "read_only": 1,
@@ -81,6 +88,8 @@
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Patient Name",
    "read_only": 1
   },
@@ -98,6 +107,8 @@
   {
    "fieldname": "appointment",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Appointment",
    "options": "Patient Appointment",
    "read_only": 1
@@ -112,6 +123,8 @@
   {
    "fieldname": "service_unit",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Service Unit",
    "options": "Healthcare Service Unit",
    "read_only": 1,
@@ -239,13 +252,56 @@
    "fieldtype": "Table",
    "label": "Questionnaire",
    "options": "Questionnaire Completed"
+  },
+  {
+   "fieldname": "patient_section",
+   "fieldtype": "Section Break",
+   "label": "Patient"
+  },
+  {
+   "fetch_from": "patient.custom_company",
+   "fieldname": "patient_company",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date of Birth",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_asgx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_pxew",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_cfvz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_honk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_kqoe",
+   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-12-25 19:59:24.671659",
+ "modified": "2025-01-11 16:46:30.669610",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

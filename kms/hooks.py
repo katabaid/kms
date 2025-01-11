@@ -163,6 +163,7 @@ doc_events = {
   #},
   "Lab Test": {
     "on_submit": "kms.event.update_doctor_result",
+    "before_submit": "kms.event.validate_test_result",
   },
   "Patient Encounter": {
     "on_trash": "kms.event.unlink_queue_pooling_before_delete",

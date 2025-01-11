@@ -29,7 +29,7 @@
   },
   {
    "fieldname": "label",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_list_view": 1,
    "in_preview": 1,
    "label": "Label",
@@ -90,7 +90,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-09 18:02:10.170277",
+ "modified": "2025-01-11 06:39:41.470118",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire Template Detail",

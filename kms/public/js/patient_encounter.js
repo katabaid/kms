@@ -72,11 +72,17 @@ frappe.ui.form.on('Patient Encounter', {
     }
     frm.set_query("drug_code", "drug_prescription", () => {
       return {
-        filters: {
-          is_sales_item: 1,
-          is_stock_item: 1
-        }
+        filters: { is_sales_item: 1, is_stock_item: 1 }
       };
+    });
+    frappe.db.get_value('Healthcare Practitioner', frm.doc.practitioner, 'department').then(r=>{
+      frm.set_query("custom_service_unit", () => {
+        return {
+          filters: { 
+            custom_branch: frm.doc.custom_branch, 
+            custom_department: r.message.department }
+        };
+      });
     });
     if (!frm.doc.custom_compound_medicine_dosage_form) {
       frm.set_df_property('custom_compound_medicine_1', 'hidden', 1);
@@ -655,22 +661,25 @@ const hide_standard_buttons = (frm, fields) => {
 	});
 }
 const checkRoomAssignment = (frm) => {
-  frappe.call({
-    method: 'frappe.client.get_list',
-    args: {
-      doctype: 'Room Assignment',
-      filters: {
-        'date': frappe.datetime.get_today(),
-        'healthcare_service_unit': frm.doc.custom_service_unit,
-        'user': frappe.session.user,
-        'assigned': 1
+  const user = frappe.session.user;
+  if (user !== 'Administrator') {
+    frappe.call({
+      method: 'frappe.client.get_list',
+      args: {
+        doctype: 'Room Assignment',
+        filters: {
+          'date': frappe.datetime.get_today(),
+          'healthcare_service_unit': frm.doc.custom_service_unit,
+          'user': user,
+          'assigned': 1
+        }
+      },
+      callback: function(response) {
+        if(!response.message || response.message.length === 0) {
+          frm.page.btn_primary.hide();
+          frm.page.set_indicator(__('No Room Assignment for today.'), 'red');
+        }
       }
-    },
-    callback: function(response) {
-      if(!response.message || response.message.length === 0) {
-        frm.page.btn_primary.hide();
-        frm.page.set_indicator(__('No Room Assignment for today.'), 'red');
-      }
-    }
-  })
+    })
+  }
 }

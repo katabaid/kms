@@ -128,6 +128,7 @@ def exam_retest (name, item, item_name):
           frappe.db.set_value('Sample Collection Bulk', cancel_item.name, {'status': 'To Retest'})
       frappe.db.set_value(previous_doctype, previous_docname, {'docstatus': 2, 'custom_status': 'To Retest'})
       frappe.db.set_value(result_doctype, {'custom_sample_collection': previous_docname}, {'docstatus': 2})
+      frappe.db.set_value('Sample Reception', {'sample_collection': previous_docname}, {'docstatus': 2})
     else:
       for cancel_item in to_cancel_doc.examination_item:
         if cancel_item.template == exam_items[0]:

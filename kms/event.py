@@ -229,6 +229,21 @@ def update_doctor_result(doc, method=None):
       })
 
 @frappe.whitelist()
+def validate_test_result(doc, method=None):
+  passed = False
+  counter1 = counter2 = counter3 = counter4 = 0
+  for normal in doc.normal_test_items:
+    counter1 +=1
+    if normal.result_value:
+      counter2 += 1
+  for selective in doc.custom_selective_test_result:
+    counter3 += 1
+    if selective.result:
+      counter4 += 1
+  if counter1 != counter2 or counter3 != counter4:
+    frappe.throw('All results must have value before submitting.')
+
+@frappe.whitelist()
 def update_queue_pooling_status(doc, method=None):
   ################Doctype: Patient Encounter################
   if doc.custom_queue_pooling:
@@ -455,6 +470,10 @@ def process_checkin(doc, method=None):
           signs_time = frappe.utils.nowtime(),
           appointment = doc.name,
           custom_branch = doc.custom_branch,
+          custom_patient_sex = doc.patient_sex,
+          custom_patient_age = doc.patient_age,
+          custom_patient_company = doc.custom_patient_company,
+          custom_date_of_birth = doc.custom_patient_date_of_birth,
           vital_signs_note = doc.notes))
         vs_doc.insert(ignore_permissions=True)
 
@@ -545,7 +564,8 @@ def process_mcu(doc, appt):
           exam_doc.append('examination_item', entries)
           if (room.custom_default_doctype == 'Nurse Examination' 
               or room.custom_default_doctype == 'Doctor Examination'):
-            if template.result_in_exam:
+            if ((hasattr(template, 'result_in_exam') and template.result_in_exam)
+              or room.custom_default_doctype == 'Doctor Examination'):
               for result in template.items:
                 entries = dict()
                 entries['item_code'] = exam_item.parent

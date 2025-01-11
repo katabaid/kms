@@ -7,23 +7,30 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
+  "patient_section",
   "patient",
   "patient_name",
-  "company",
-  "branch",
-  "queue_pooling",
-  "amended_from",
+  "patient_company",
   "column_break_ydxak",
   "age",
   "gender",
   "occupation",
+  "date_of_birth",
+  "section_break_nxhg",
+  "naming_series",
+  "company",
+  "branch",
+  "amended_from",
+  "column_break_cqqr",
   "appointment",
   "dispatcher",
+  "queue_pooling",
+  "section_break_slts",
   "created_date",
+  "submitted_date",
+  "column_break_jqhj",
   "expected_result_date",
   "expected_result_time",
-  "submitted_date",
   "remark_section",
   "nurse_grade",
   "doctor_grade",
@@ -89,6 +96,7 @@
    "fieldname": "patient_name",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Patient Name",
    "read_only": 1
   },
@@ -259,13 +267,52 @@
    "label": "Group Exam",
    "no_copy": 1,
    "options": "Doctor Result Group Exam"
+  },
+  {
+   "fieldname": "patient_section",
+   "fieldtype": "Section Break",
+   "label": "Patient"
+  },
+  {
+   "fetch_from": "patient.custom_company",
+   "fieldname": "patient_company",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date of Birth",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_nxhg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_cqqr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_slts",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_jqhj",
+   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-11-20 19:01:40.180090",
+ "modified": "2025-01-11 16:59:20.114243",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

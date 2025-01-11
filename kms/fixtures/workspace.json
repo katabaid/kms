@@ -1268,7 +1268,7 @@
   "hide_custom": 0,
   "icon": "sell",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Selling",
   "links": [
    {
@@ -2298,7 +2298,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-07-31 21:04:52.135272",
+  "modified": "2025-01-02 20:27:25.806962",
   "module": "Selling",
   "name": "Selling",
   "number_cards": [],
@@ -15739,7 +15739,7 @@
     "description": null,
     "hidden": 0,
     "icon": null,
-    "is_query_report": 0,
+    "is_query_report": 1,
     "label": "List MCU",
     "link_count": 0,
     "link_to": "List MCU",
@@ -15749,11 +15749,11 @@
     "parent": "Healthcare",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": "Patient Appointment",
+    "report_ref_doctype": null,
     "type": "Link"
    }
   ],
-  "modified": "2024-12-22 17:48:12.199844",
+  "modified": "2025-01-03 09:37:40.354988",
   "module": "Healthcare",
   "name": "Healthcare",
   "number_cards": [],

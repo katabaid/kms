@@ -7,26 +7,33 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "patient",
+  "patient_name",
+  "patient_comapny",
+  "column_break_ydxak",
+  "patient_sex",
+  "patient_age",
+  "date_of_birth",
+  "section_break_ijmn",
   "naming_series",
   "company",
   "branch",
-  "queue_pooling",
-  "patient",
-  "patient_name",
-  "patient_sex",
-  "patient_age",
-  "patient_encounter",
-  "status",
-  "exam",
-  "column_break_ydxak",
-  "queue_no",
+  "service_unit",
+  "column_break_zxhy",
   "appointment",
   "dispatcher",
-  "service_unit",
+  "queue_pooling",
+  "patient_encounter",
+  "section_break_iyot",
+  "status",
+  "exam",
+  "column_break_catl",
+  "queue_no",
   "created_date",
+  "submitted_date",
+  "column_break_cbqq",
   "expected_result_date",
   "expected_result_time",
-  "submitted_date",
   "result_section",
   "examination_item",
   "result",
@@ -48,7 +55,6 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Company",
    "options": "Company",
    "read_only": 1,
@@ -57,6 +63,8 @@
   {
    "fieldname": "branch",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Branch",
    "options": "Branch",
    "read_only": 1
@@ -80,6 +88,8 @@
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Patient Name",
    "read_only": 1
   },
@@ -113,6 +123,8 @@
   {
    "fieldname": "appointment",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Appointment",
    "options": "Patient Appointment",
    "read_only": 1
@@ -143,7 +155,6 @@
    "default": "Today",
    "fieldname": "expected_result_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "label": "Expected Result Date",
    "read_only": 1,
    "reqd": 1
@@ -235,13 +246,51 @@
    "fieldtype": "Data",
    "label": "Patient Age",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ijmn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_zxhy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_iyot",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_catl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_cbqq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "patient.custom_company",
+   "fieldname": "patient_comapny",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient Comapny",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "patient.dob",
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date of Birth",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-29 15:37:59.174432",
+ "modified": "2025-01-11 17:05:51.406634",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",
