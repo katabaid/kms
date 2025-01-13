@@ -174,12 +174,26 @@ def set_has_attachment(doc, method=None):
       doc.attached_to_doctype == 'Nurse Result' or 
       doc.attached_to_doctype == 'Nurse Examination')
   ):
-    frappe.db.set_value(
-      doc.attached_to_doctype, 
-      doc.attached_to_name,
-      'has_attachment',
-      1
-    )
+    if method == 'after_insert':
+      frappe.db.set_value(
+        doc.attached_to_doctype, 
+        doc.attached_to_name,
+        'has_attachment',
+        1
+      )
+    elif method == 'on_trash':
+      attachments = frappe.get_all('File', filters={
+        'attached_to_doctype': doc.attached_to_doctype,
+        'attached_to_name': doc.attached_to_name,
+        'name': ['!=', doc.name]
+      })
+      has_attachment = 1 if attachments else 0
+      frappe.db.set_value(
+        doc.attached_to_doctype, 
+        doc.attached_to_name,
+        'has_attachment',
+        has_attachment
+      )
 
 def is_numeric(value):
     return isinstance(value, (int, float, complex)) and not isinstance(value, bool)

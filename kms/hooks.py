@@ -160,6 +160,7 @@ doc_events = {
   },
   "File": {
     "after_insert": "kms.event.set_has_attachment",
+    "on_trash": "kms.event.set_has_attachment",
   },
   #"Healthcare Service Unit": {
   #  "before_save": "kms.event.update_healthcare_service_unit_branch",
