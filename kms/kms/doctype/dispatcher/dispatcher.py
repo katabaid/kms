@@ -1335,41 +1335,37 @@ def get_related_rooms (hsu, dispatcher_id):
 				AND 	tma.examination_item = tigsu.parent))""", pluck = 'service_unit')
 
 @frappe.whitelist()
-def finish_exam(dispatcher_id, hsu, status, doctype, docname):
-	if status == 'Removed':
-		status = 'Wait for Room Assignment'
-	doc = frappe.get_doc('Dispatcher', dispatcher_id)
-
-	room_count = 0
-	final_count = 0
-	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished']
-	target = ''
-
-	related_rooms = get_related_rooms (hsu, dispatcher_id)
-
+def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 	exists_to_retest = False
 	source_doc = frappe.get_doc(doctype, docname)
-	if doctype == 'Sample Collection':
-		for sample in source_doc.custom_sample_table:
-			if sample.status == 'To Retest':
-				exists_to_retest = True
-	else:
-		for item in source_doc.examination_item:
-			if item.status == 'To Retest':
-				exists_to_retest = True
-
-	for room in doc.assignment_table:
-		room_count += 1
-		if room.status in final_status:
-			final_count += 1
-		if room.healthcare_service_unit == hsu:
-			room.status = 'Additional or Retest Request' if exists_to_retest else status
-		if room.healthcare_service_unit in related_rooms:
-			room.status = 'Additional or Retest Request' if exists_to_retest else status
-	doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
-	doc.room = ''
-	doc.save(ignore_permissions=True)
-
+	if dispatcher_id:
+		if status == 'Removed':
+			status = 'Wait for Room Assignment'
+		doc = frappe.get_doc('Dispatcher', dispatcher_id)
+		room_count = 0
+		final_count = 0
+		final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished']
+		target = ''
+		related_rooms = get_related_rooms (hsu, dispatcher_id)
+		if doctype == 'Sample Collection':
+			for sample in source_doc.custom_sample_table:
+				if sample.status == 'To Retest':
+					exists_to_retest = True
+		else:
+			for item in source_doc.examination_item:
+				if item.status == 'To Retest':
+					exists_to_retest = True
+		for room in doc.assignment_table:
+			room_count += 1
+			if room.status in final_status:
+				final_count += 1
+			if room.healthcare_service_unit == hsu:
+				room.status = 'Additional or Retest Request' if exists_to_retest else status
+			if room.healthcare_service_unit in related_rooms:
+				room.status = 'Additional or Retest Request' if exists_to_retest else status
+		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
+		doc.room = ''
+		doc.save(ignore_permissions=True)
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:
 			case 'Radiology':
@@ -1443,17 +1439,15 @@ def create_result_doc(doc, target):
 		for item in doc.custom_sample_table:
 			if item.status == 'Finished':
 				lab_test = frappe.db.sql(f"""
-					SELECT tltt.name
-					FROM `tabLab Test Template` tltt, tabItem ti
+					SELECT tltt.name FROM `tabLab Test Template` tltt, tabItem ti
 					WHERE tltt.sample = '{item.sample}'
-					AND EXISTS (
-					SELECT 1 
-					FROM `tabMCU Appointment` tma 
-					WHERE tltt.name = tma.item_name
-					AND tma.parent = '{doc.custom_dispatcher}'
-					AND tma.parentfield = 'package'
-					AND tma.parenttype = 'Dispatcher')
 					AND ti.name = tltt.lab_test_code
+					AND EXISTS (
+					SELECT 1 FROM `tabLab Test Request` tltr
+					WHERE tltr.item_code = tltt.item
+					AND tltr.parent = '{doc.name}'
+					AND tltr.parentfield = 'custom_examination_item'
+					AND tltr.parenttype = 'Sample Collection')
 					ORDER BY ti.custom_bundle_position""", pluck='name')
 				for exam in lab_test:
 					template_doc = frappe.get_doc('Lab Test Template', exam)

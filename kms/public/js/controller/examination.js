@@ -24,13 +24,11 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     handleBeforeSubmit(frm) {
       const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed'];
       if (validStatuses.includes(utils.getStatus(frm))) {
-        if (utils.getDispatcher(frm)) {
-          finishExam(frm).then(()=>{
-            frappe.set_route('List', frm.doctype, 'List');
-          }).catch(err=>{
-            frappe.throw(`Error finishing exam: ${err.message}`);
-          });
-        }
+        finishExam(frm).then(()=>{
+          frappe.set_route('List', frm.doctype, 'List');
+        }).catch(err=>{
+          frappe.throw(`Error finishing exam: ${err.message}`);
+        });
       } else {
         frappe.throw('All examinations must have final status to submit.');
       }
@@ -167,11 +165,11 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       frappe.call({
         method: 'kms.kms.doctype.dispatcher.dispatcher.finish_exam',
         args: {
-          'dispatcher_id': utils.getDispatcher(frm),
           'hsu': utils.getHsu(frm),
           'status': utils.getStatus(frm),
           'doctype': frm.doc.doctype,
-          'docname': frm.doc.name
+          'docname': frm.doc.name,
+          'dispatcher_id': utils.getDispatcher(frm)
         },
         callback: function (r) {
           if (r.message) {
@@ -202,30 +200,53 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }
 
     function callMethod(reason = null) {
-      const args = {
-        'dispatcher_id': utils.getDispatcher(frm),
-        'hsu': utils.getHsu(frm),
-        'doctype': frm.doc.doctype,
-        'docname': frm.doc.name
-      };
-      frappe.call({
-        method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
-        args: args,
-        callback: function (r) {
-          handleCallback(r);
-          if (reason) {
-            if (utilsLoaded && kms.utils) {
-              kms.utils.add_comment(
-                frm.doc.doctype, 
-                frm.doc.name, 
-                `${newStatus} for the reason of: ${reason}`, 
-                frappe.session.user_fullname,
-                'Comment added successfully.'
-              );
+      if (utils.getDispatcher(frm)){
+        const args = {
+          'dispatcher_id': utils.getDispatcher(frm),
+          'hsu': utils.getHsu(frm),
+          'doctype': frm.doc.doctype,
+          'docname': frm.doc.name
+        };
+        frappe.call({
+          method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
+          args: args,
+          callback: function (r) {
+            handleCallback(r);
+            if (reason) {
+              if (utilsLoaded && kms.utils) {
+                kms.utils.add_comment(
+                  frm.doc.doctype, 
+                  frm.doc.name, 
+                  `${newStatus} for the reason of: ${reason}`, 
+                  frappe.session.user_fullname,
+                  'Comment added successfully.'
+                );
+              }
+              frm.reload_doc();
             }
-            frm.reload_doc();
           }
+        });
+      } else {
+        process_non_dispatcher(reason);
+      }
+    }
+
+    function process_non_dispatcher(reason = null) {
+      if (utilsLoaded && kms.utils) {
+        if (reason) {
+          kms.utils.add_comment(
+            frm.doc.doctype, 
+            frm.doc.name, 
+            `${newStatus} for the reason of: ${reason}`, 
+            frappe.session.user_fullname,
+            'Comment added successfully.'
+          );
         }
+      }
+      utils.setStatus(frm, newStatus);
+      frm.dirty();
+      frm.save().then(()=>{
+        if (newStatus==='Checked In') location.reload();
       });
     }
 

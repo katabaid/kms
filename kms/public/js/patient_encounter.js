@@ -270,6 +270,17 @@ frappe.ui.form.on('Patient Encounter', {
       frm.set_df_property('custom_compound_medicine_1', 'hidden', 0);
     }
   },
+  custom_order_radiology_test(frm) {
+    frappe.call({
+      method: 'kms.radiology.create_exam',
+      args: {
+        'name': frm.doc.name,
+      },
+      callback: (r=>{
+        console.log(r)
+      })
+    })
+  },
   /****************** DocField on change ******************/
   /*custom_type(frm) {
     hide_field('custom_teeth_options');

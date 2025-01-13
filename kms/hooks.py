@@ -16,8 +16,8 @@ app_include_css = "/assets/kms/css/kms.css"
 app_include_js = [
   "/assets/kms/js/controller/examination.js",
   "/assets/kms/js/common/listview.js",
-  "/assets/kms/js/redirect_after_boot.js",
-  "/assets/kms/js/clear_local_storage.js",
+  "/assets/kms/js/common/redirect_after_boot.js",
+  "/assets/kms/js/common/clear_local_storage.js",
 ]
 
 # include js, css files in header of web template
@@ -41,6 +41,7 @@ doctype_js = {
   "Customer": "public/js/customer.js",
   "Lab Test": "public/js/lab_test.js",
   "Leave Application": "public/js/leave_application.js",
+  "Material Request": "public/js/material_request.js",
   "Patient": "public/js/patient.js",
   "Patient Appointment": "public/js/patient_appointment.js",
   "Patient Encounter": "public/js/patient_encounter.js",
@@ -173,6 +174,7 @@ doc_events = {
     "on_trash": "kms.event.unlink_queue_pooling_before_delete",
     "after_insert": "kms.event.process_queue_pooling_and_dental",
     "on_submit": "kms.event.update_queue_pooling_status",
+    "validate": "kms.event.validate_child_tables",
   },
   "Patient Appointment": {
     "on_update": "kms.event.process_checkin",

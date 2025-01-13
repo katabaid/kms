@@ -205,6 +205,8 @@ def update_doctor_result(doc, method=None):
     'appointment': doc.custom_appointment,
     'docstatus': 0
   }, 'name')
+  encounter = frappe.db.get_value(
+    'Sample Collection', doc.custom_sample_collection, 'custom_encounter')
   if doctor_result_name:
     for item in doc.normal_test_items:
       item_code, item_group = frappe.db.get_value(
@@ -258,6 +260,27 @@ def update_doctor_result(doc, method=None):
         'result': selective.result,
         'status': doc.status
       })
+  elif encounter:
+    for item in doc.normal_test_items:
+      lab_prescription_name = frappe.db.get_value('Lab Prescription', {
+        'lab_test_name': item.lab_test_name,
+        'docstatus': 0,
+        'parent': encounter,
+        'parentfield': 'lab_test_prescription',
+        'parenttype': 'Patient Encounter',
+        'custom_lab_test': None
+      })
+      frappe.db.set_value('Lab Prescription', lab_prescription_name, 'custom_lab_test', doc.name)
+    for selective in doc.custom_selective_test_result:
+      lab_prescription_name = frappe.db.get_value('Lab Prescription', {
+        'lab_test_name': item.event,
+        'docstatus': 0,
+        'parent': encounter,
+        'parentfield': 'lab_test_prescription',
+        'parenttype': 'Patient Encounter',
+        'custom_lab_test': None
+      })
+      frappe.db.set_value('Lab Prescription', lab_prescription_name, 'custom_lab_test', doc.name)
 
 @frappe.whitelist()
 def validate_test_result(doc, method=None):
@@ -313,6 +336,14 @@ def update_queue_pooling_status(doc, method=None):
     qp = frappe.get_doc("Queue Pooling", doc.custom_queue_pooling)
     qp.status = "Closed"
     qp.save(ignore_permissions=True)
+
+@frappe.whitelist()
+def validate_child_tables(doc, method=None):
+  ################Doctype: Patient Encounter################
+  if doc.custom_radiology:
+    for radiology in doc.custom_radiology:
+      if not radiology.status_time:
+        radiology.status_time = now()
 
 def update_questionnaire_status(doc):
   # Prevent recursion by checking doc.flags
@@ -681,6 +712,7 @@ def reset_status_after_amend(doc, method=None):
     doc.save()
 
 def set_collector(doc, method=None):
+  ################DocType: Sample Collection################
   if not doc.collected_by:
     doc.collected_by = frappe.session.user
   if not doc.collected_time:
