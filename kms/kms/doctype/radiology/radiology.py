@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.utils import now
 from frappe.model.document import Document
 
 class Radiology(Document):
@@ -14,3 +15,65 @@ class Radiology(Document):
 		old = self.get_doc_before_save()
 		if self.status == 'Checked In' and self.docstatus == 0 and old.status == 'Started':
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
+
+@frappe.whitelist()
+def create_exam(name):
+	result = []
+	enc = frappe.get_doc('Patient Encounter', name)
+	sql = f"""SELECT DISTINCT service_unit, parent
+    FROM `tabItem Group Service Unit` tigsu 
+    WHERE EXISTS (
+      SELECT 1 
+      FROM `tabRadiology Result Template` trrt 
+      WHERE trrt.item_code = tigsu.parent 
+      AND EXISTS (
+        SELECT 1 
+        FROM `tabRadiology Request` trr 
+        WHERE trr.parent = '{enc.name}' 
+        and trr.template = trrt.name
+      )
+    )
+    AND branch = '{enc.custom_branch}'"""
+	rooms = frappe.db.sql(sql, as_dict = True)
+	rooms_map = {}
+	for row in rooms:
+		room = row['service_unit']
+		parent = row['parent']
+		rooms_map.setdefault(room,[]).append(parent)
+	for room, parents in rooms_map.items():
+		doc = frappe.get_doc({
+			'doctype': 'Radiology',
+			'patient': enc.patient,
+			'patient_name': enc.patient_name,
+			'patient_sex': enc.patient_sex,
+			'patient_age': enc.patient_age,
+			'date_of_birth': enc.custom_date_of_birth,
+			'patient_company': enc.custom_patient_company,
+			'appointment': enc.appointment,
+			'patient_encounter': name,
+			'company': enc.company,
+			'branch': enc.custom_branch,
+			'service_unit': room,
+			'examination_item': []
+		})
+		result.append({'room': room, 'items': []})
+		for parent in parents:
+			template = frappe.db.get_value('Radiology Result Template', {'item_code': parent}, 'name')
+			doc.append('examination_item', {'template': template, 'status': 'Started', 'status_time': now()})
+		doc.insert(ignore_permissions=True)
+		update_radiology_requests(enc.name, doc.name, doc.examination_item)
+
+def update_radiology_requests(encounter_name, radiology_name, examination_items):
+	# Update Radiology Request records for matching templates
+	for item in examination_items:
+		template_name = item.get('template')
+		# Find the Radiology Request linked to the Patient Encounter and template
+		radiology_request = frappe.get_all(
+			'Radiology Request',
+			filters={'parent': encounter_name, 'template': template_name},
+			fields=['name']
+		)
+		for request in radiology_request:
+			frappe.db.set_value('Radiology Request', request['name'], 'radiology', radiology_name)
+			frappe.db.set_value('Radiology Request', request['name'], 'status', 'Ordered')
+			frappe.db.set_value('Radiology Request', request['name'], 'radiology', now())

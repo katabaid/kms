@@ -236,16 +236,20 @@ frappe.ui.form.on('Patient Encounter', {
     });
   },
   custom_order_test(frm) {
-    frappe.call({
-      method: 'kms.sample_collection.create_sc',
-      args: {
-        'name': frm.doc.name,
-        'appointment': frm.doc.appointment
-      },
-      callback: (r=>{
-        console.log(r)
+    if (frm.doc.lab_test_prescription.length>0){
+      frappe.call({
+        method: 'kms.sample_collection.create_sc',
+        args: {
+          'name': frm.doc.name,
+          'appointment': frm.doc.appointment
+        },
+        callback: (r=>{
+          console.log(r)
+        })
       })
-    })
+    } else {
+      frappe.throw('Please pick Lab Test first.')
+    }
   },
   custom_order_medication(frm) {
     frappe.call({
@@ -271,15 +275,19 @@ frappe.ui.form.on('Patient Encounter', {
     }
   },
   custom_order_radiology_test(frm) {
-    frappe.call({
-      method: 'kms.radiology.create_exam',
-      args: {
-        'name': frm.doc.name,
-      },
-      callback: (r=>{
-        console.log(r)
+    if (frm.doc.custom_radiology.length > 0) {
+      frappe.call({
+        method: 'kms.kms.doctype.radiology.radiology.create_exam',
+        args: {
+          'name': frm.doc.name,
+        },
+        callback: (r=>{
+          frm.fields_dict['custom_radiology'].grid.refresh();
+        })
       })
-    })
+    } else {
+      frappe.throw('Please add examination to Radiology table first.')
+    }
   },
   /****************** DocField on change ******************/
   /*custom_type(frm) {
