@@ -690,15 +690,12 @@ const setupCompoundMedication = (frm) => {
   suffixes.forEach((suffix) => {
     const medicationField = `custom_compound_medication_${suffix}`;
     if (frm.doc[medicationField] && frm.doc[medicationField].length > 0) {
-      console.log(suffix)
-      console.log(frm.doc[medicationField].length)
       frm.set_df_property(`custom_compound_medications_${suffix}`, 'hidden', false);
       frm.set_df_property(`custom_section_break_${getSectionBreakId(suffix)}`, 'hidden', false);
       frm.set_df_property(`custom_add_compound_medication_${suffix}`, 'read_only', true);
       handleAddCompoundMedication(frm, suffix)
       if (suffix !== '3') {
         const nextSuffix = (parseInt(suffix) + 1).toString();
-        console.log(`custom_add_compound_medication_${nextSuffix}`)
         frm.set_df_property(`custom_add_compound_medication_${nextSuffix}`, 'hidden', false);
       }
     }
@@ -706,31 +703,43 @@ const setupCompoundMedication = (frm) => {
 };
 
 const setupMedicationButtons = (frm) => {
-  let buttonFields = ['custom_order_medication', 'custom_order_test', 'custom_order_radiology_test'];
-  buttonFields.forEach(field => {
+  updateButtonClasses(
+    frm, 
+    [
+      'custom_order_medication', 
+      'custom_order_test', 
+      'custom_order_radiology_test'
+    ], 
+    'btn-primary');
+  updateButtonClasses(
+    frm, 
+    [
+      'custom_add_compound_medication_1', 
+      'custom_add_compound_medication_2', 
+      'custom_add_compound_medication_3', 
+      'custom_pick_order'
+    ], 
+    'btn-success');
+  updateButtonClasses(
+    frm, 
+    [
+      'custom_remove_compound_medication_1', 
+      'custom_remove_compound_medication_2', 
+      'custom_remove_compound_medication_3'
+    ], 
+    'btn-danger');
+};
+
+const updateButtonClasses = (frm, fields, newClass) => {
+  fields.forEach(field => {
     const button = frm.fields_dict[field]?.$wrapper?.find('button');
     if (button) {
-      button.removeClass('btn-default');  // Remove the default class
-      button.addClass('btn-primary');    // Add the desired class
+      button.removeClass('btn-default');
+      button.addClass(newClass);
     }
   });
-  buttonFields = ['custom_add_compound_medication_1', 'custom_add_compound_medication_2', 'custom_add_compound_medication_3'];
-  buttonFields.forEach(field => {
-    const button = frm.fields_dict[field]?.$wrapper?.find('button');
-    if (button) {
-      button.removeClass('btn-default');  // Remove the default class
-      button.addClass('btn-warning');    // Add the desired class
-    }
-  });
-  buttonFields = ['custom_remove_compound_medication_1', 'custom_remove_compound_medication_2', 'custom_remove_compound_medication_3'];
-  buttonFields.forEach(field => {
-    const button = frm.fields_dict[field]?.$wrapper?.find('button');
-    if (button) {
-      button.removeClass('btn-default');  // Remove the default class
-      button.addClass('btn-danger');    // Add the desired class
-    }
-  });
-}
+};
+
 const setupDentalSection = (frm) => {
   if (frm.doc.medical_department === 'Dental') {
     unhide_field('custom_dental');
@@ -744,6 +753,12 @@ const handleAddCompoundMedication = (frm, suffix) => {
   frm.set_df_property(`custom_section_break_${getSectionBreakId(suffix)}`, 'hidden', false);
   frm.set_df_property(`custom_add_compound_medication_${suffix}`, 'read_only', true);
   frm.set_df_property(`custom_compound_medication_${suffix}`, 'hidden', false);
+  if (suffix !== '3') {
+    const nextSuffix = (parseInt(suffix) + 1).toString();
+    frm.set_df_property(`custom_add_compound_medication_${nextSuffix}`, 'hidden', false);
+    frm.set_df_property(`custom_add_compound_medication_${nextSuffix}`, 'read_only', false);
+    updateButtonClasses(frm, [`custom_add_compound_medication_${nextSuffix}`], 'btn-success')
+  }
   frm.set_query("drug", `custom_compound_medication_${suffix}`, () => {
     return {
       filters: { is_sales_item: 1, is_stock_item: 1 }
@@ -760,6 +775,11 @@ const handleRemoveCompoundMedication = (frm, suffix) => {
   });
   frm.clear_table(`custom_compound_medication_${suffix}`);
   medicationFields.forEach(field => frm.refresh_field(field));
+  if (suffix !== '3') {
+    const nextSuffix = (parseInt(suffix) + 1).toString();
+    frm.set_df_property(`custom_add_compound_medication_${nextSuffix}`, 'hidden', true);
+    frm.set_df_property(`custom_add_compound_medication_${nextSuffix}`, 'read_only', true);
+  }
   frm.set_df_property(`custom_add_compound_medication_${suffix}`, 'read_only', false);
   frm.dirty();
 };
@@ -776,10 +796,10 @@ const getSectionBreakId = (suffix) => {
 
 const getMedicationFields = (suffix) => {
   return [
-    `custom_period_${suffix}`,
+    `custom_compound_type_${suffix}`,
     `custom_qty_${suffix}`,
     `custom_dosage_${suffix}`,
-    `custom_compound_medicine_dosage_form_${suffix}`,
+    `custom_dosage_instruction_${suffix}`,
     `custom_additional_instruction_${suffix}`,
   ];
 };
