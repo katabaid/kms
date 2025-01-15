@@ -4,8 +4,7 @@ frappe.ui.form.on('Patient Encounter', {
     hide_standard_buttons (frm, ['lab_test_prescription']);
     checkRoomAssignment(frm);
     setupCompoundMedication(frm);
-    setupCustomCompoundMedicine1(frm);
-    setupCustomCompoundMedicine2(frm);
+    setupMedicationButtons(frm);
     frm.fields_dict['drug_prescription'].grid.update_docfield_property('dosage_form', 'reqd', 0);
     frm.fields_dict['drug_prescription'].grid.update_docfield_property('period', 'reqd', 0);
     if (frm.is_new()) {
@@ -87,20 +86,10 @@ frappe.ui.form.on('Patient Encounter', {
         };
       });
     });
-    //Dental Department
-    if (frm.doc.medical_department === 'Dental') {
-      unhide_field('custom_dental');
-      frm.trigger('prepareDentalSections');
-      frm.trigger('prepareStaticDental');
-    }
+    setupDentalSection(frm);
   },
   onload(frm) {
-    //Dental Department
-    if (frm.doc.medical_department === 'Dental') {
-      unhide_field('custom_dental');
-      frm.trigger('prepareDentalSections');
-      frm.trigger('prepareStaticDental');
-    }
+    setupDentalSection(frm);
   },
   /****************** Buttons ******************/
   custom_pick_order(frm) {
@@ -265,13 +254,6 @@ frappe.ui.form.on('Patient Encounter', {
   custom_drug_dictionary(frm) {
     frappe.set_route('query-report/Medication Catalog');
   },
-  custom_compound_medicine_dosage_form(frm) {
-    if (!frm.doc.custom_compound_medicine_dosage_form) {
-      frm.set_df_property('custom_compound_medicine_1', 'hidden', 1);
-    } else {
-      frm.set_df_property('custom_compound_medicine_1', 'hidden', 0);
-    }
-  },
   custom_order_radiology_test(frm) {
     if (frm.doc.custom_radiology.length > 0) {
       frappe.call({
@@ -287,12 +269,6 @@ frappe.ui.form.on('Patient Encounter', {
       frappe.throw('Please add examination to Radiology table first.')
     }
   },
-  /****************** DocField on change ******************/
-  /*custom_type(frm) {
-    hide_field('custom_teeth_options');
-    frm.trigger('prepareDentalSections');
-    frm.trigger('prepareStaticDental');
-  },*/
   custom_other_add(frm, cdt, cdn) {
     let row = locals[cdt][cdn];
     frappe.ui.form.on('Other Dental', 'other', function (frm, cdt, cdn) {
@@ -625,64 +601,25 @@ frappe.ui.form.on('Patient Encounter', {
     }
   },
   custom_add_compound_medication_1(frm){
-    frm.set_df_property('custom_a', 'hidden', 0);
-    frm.set_df_property('custom_5', 'hidden', 0);
-    frm.set_df_property('custom_add_compound_medication_1', 'read_only', 1);
+    handleAddCompoundMedication(frm, '1');
   },
   custom_remove_compound_medication_1: function(frm) {
-    frm.set_df_property('custom_a', 'hidden', 1);
-    frm.set_df_property('custom_5', 'hidden', 1);
-    frm.doc.custom_period = '';
-    frm.doc.custom_qty = 0;
-    frm.doc.custom_dosage = '';
-    frm.doc.custom_compound_medicine_dosage_form = '';
-    frm.doc.custom_additional_instruction = '';
-    frm.clear_table('custom_compound_medicine_1');
-    frm.refresh_field('custom_compound_medicine_1');
-    frm.refresh_field('custom_period');
-    frm.refresh_field('custom_qty');
-    frm.refresh_field('custom_dosage');
-    frm.refresh_field('custom_compound_medicine_dosage_form');
-    frm.refresh_field('custom_additional_instruction');
-    frm.set_df_property('custom_add_compound_medication_1', 'read_only', 0);
-    frm.dirty();
+    handleRemoveCompoundMedication(frm, '1');
   },
   custom_add_compound_medication_2(frm){
-    frm.set_df_property('custom_compound_medications_2', 'hidden', 0);
-    frm.set_df_property('custom_section_break_bugcg', 'hidden', 0);
-    frm.set_df_property('custom_add_compound_medication_2', 'read_only', 1);
+    handleAddCompoundMedication(frm, '2');
   },
   custom_remove_compound_medication_2: function(frm) {
-    frm.set_df_property('custom_compound_medications_2', 'hidden', 1);
-    frm.set_df_property('custom_section_break_bugcg', 'hidden', 1);
-    frm.doc.custom_compound_type_2 = '';
-    frm.doc.custom_qty_2 = 0;
-    frm.doc.custom_dosage_2 = '';
-    frm.doc.custom_dosage_instructions_2 = '';
-    frm.doc.custom_additional_instruction_2 = '';
-    frm.clear_table('custom_compound_medication_2');
-    frm.refresh_field('custom_compound_medication_2');
-    frm.refresh_field('custom_compound_type_2');
-    frm.refresh_field('custom_qty_2');
-    frm.refresh_field('custom_dosage_2');
-    frm.refresh_field('custom_dosage_instructions_2');
-    frm.refresh_field('custom_additional_instruction_2');
-    frm.set_df_property('custom_add_compound_medication_2', 'read_only', 0);
-    frm.dirty();
+    handleRemoveCompoundMedication(frm, '2');
+  },
+  custom_add_compound_medication_3(frm){
+    handleAddCompoundMedication(frm, '3');
+  },
+  custom_remove_compound_medication_3: function(frm) {
+    handleRemoveCompoundMedication(frm, '3');
   },
 });
-frappe.ui.form.on('Drug Prescription', {
-  custom_compound_medicine_1_add(frm, cdt, cdn) {
-    if (frm.doc.custom_period ) {
-      frappe.model.set_value(cdt, cdn, "custom_compound_type", frm.doc.custom_period);
-    }
-  },
-  custom_compound_medication_2_add(frm, cdt, cdn) {
-    if (frm.doc.custom_compound_type_2) {
-      frappe.model.set_value(cdt, cdn, "custom_compound_type", frm.doc.custom_compound_type_2);
-    }
-  },
-});
+
 frappe.ui.form.on('Other Dental', {
   other(frm, cdt, cdn) {
     let row = frappe.get_doc(cdt, cdn);
@@ -748,69 +685,101 @@ const checkRoomAssignment = (frm) => {
     })
   }
 }
-const setupCompoundMedication = (frm) => {  
-  frm.set_df_property('custom_a', 'hidden', true);
-  frm.set_df_property('custom_5', 'hidden', true);
-  frm.set_df_property('custom_compound_medications_2', 'hidden', true);
-  frm.set_df_property('custom_section_break_bugcg', 'hidden', true);
-  frm.set_df_property('custom_add_compound_medication_1', 'read_only', false);
-  frm.set_df_property('custom_add_compound_medication_2', 'hidden', true);
-  frm.set_df_property('custom_add_compound_medication_3', 'hidden', true);
-  frm.set_df_property('custom_add_compound_medication_4', 'hidden', true);
-  frm.set_df_property('custom_add_compound_medication_5', 'hidden', true);
-  if (frm.doc.custom_compound_medicine_1 && frm.doc.custom_compound_medicine_1.length > 0) {
-    frm.set_df_property('custom_a', 'hidden', false);
-    frm.set_df_property('custom_5', 'hidden', false);
-    frm.set_df_property('custom_add_compound_medication_1', 'read_only', true);
-    frm.set_df_property('custom_add_compound_medication_2', 'hidden', false);
-  }
-  if (frm.doc.custom_compound_medication_2 && frm.doc.custom_compound_medication_2.length > 0) {
-    frm.set_df_property('custom_compound_medications_2', 'hidden', false);
-    frm.set_df_property('custom_section_break_bugcg', 'hidden', false);
-    frm.set_df_property('custom_add_compound_medication_2', 'read_only', true);
-    frm.set_df_property('custom_add_compound_medication_3', 'hidden', false);
-  }
-}
+const setupCompoundMedication = (frm) => {
+  const suffixes = ['1', '2', '3'];
+  suffixes.forEach((suffix) => {
+    const medicationField = `custom_compound_medication_${suffix}`;
+    if (frm.doc[medicationField] && frm.doc[medicationField].length > 0) {
+      console.log(suffix)
+      console.log(frm.doc[medicationField].length)
+      frm.set_df_property(`custom_compound_medications_${suffix}`, 'hidden', false);
+      frm.set_df_property(`custom_section_break_${getSectionBreakId(suffix)}`, 'hidden', false);
+      frm.set_df_property(`custom_add_compound_medication_${suffix}`, 'read_only', true);
+      handleAddCompoundMedication(frm, suffix)
+      if (suffix !== '3') {
+        const nextSuffix = (parseInt(suffix) + 1).toString();
+        console.log(`custom_add_compound_medication_${nextSuffix}`)
+        frm.set_df_property(`custom_add_compound_medication_${nextSuffix}`, 'hidden', false);
+      }
+    }
+  });
+};
 
-const setupCustomCompoundMedicine1 = (frm) => {
-  if (
-    frm.doc.custom_period &&
-    frm.doc.custom_qty &&
-    frm.doc.custom_dosage &&
-    frm.doc.custom_compound_medicine_dosage_form &&
-    frm.doc.custom_additional_instruction
-  ) {
-    frm.set_df_property('custom_compound_medicine_1', 'hidden', 0);
-  } else {
-    frm.set_df_property('custom_compound_medicine_1', 'hidden', 1);
+const setupMedicationButtons = (frm) => {
+  let buttonFields = ['custom_order_medication', 'custom_order_test', 'custom_order_radiology_test'];
+  buttonFields.forEach(field => {
+    const button = frm.fields_dict[field]?.$wrapper?.find('button');
+    if (button) {
+      button.removeClass('btn-default');  // Remove the default class
+      button.addClass('btn-primary');    // Add the desired class
+    }
+  });
+  buttonFields = ['custom_add_compound_medication_1', 'custom_add_compound_medication_2', 'custom_add_compound_medication_3'];
+  buttonFields.forEach(field => {
+    const button = frm.fields_dict[field]?.$wrapper?.find('button');
+    if (button) {
+      button.removeClass('btn-default');  // Remove the default class
+      button.addClass('btn-warning');    // Add the desired class
+    }
+  });
+  buttonFields = ['custom_remove_compound_medication_1', 'custom_remove_compound_medication_2', 'custom_remove_compound_medication_3'];
+  buttonFields.forEach(field => {
+    const button = frm.fields_dict[field]?.$wrapper?.find('button');
+    if (button) {
+      button.removeClass('btn-default');  // Remove the default class
+      button.addClass('btn-danger');    // Add the desired class
+    }
+  });
+}
+const setupDentalSection = (frm) => {
+  if (frm.doc.medical_department === 'Dental') {
+    unhide_field('custom_dental');
+    frm.trigger('prepareDentalSections');
+    frm.trigger('prepareStaticDental');
   }
-  frm.fields_dict['custom_compound_medicine_1'].grid.update_docfield_property('dosage_form', 'reqd', 0);
-  frm.fields_dict['custom_compound_medicine_1'].grid.update_docfield_property('period', 'reqd', 0);
-  frm.fields_dict['custom_compound_medicine_1'].grid.update_docfield_property('dosage', 'reqd', 0);
-  frm.set_query("drug_code", "custom_compound_medicine_1", () => {
+};
+
+const handleAddCompoundMedication = (frm, suffix) => {
+  frm.set_df_property(`custom_compound_medications_${suffix}`, 'hidden', false);
+  frm.set_df_property(`custom_section_break_${getSectionBreakId(suffix)}`, 'hidden', false);
+  frm.set_df_property(`custom_add_compound_medication_${suffix}`, 'read_only', true);
+  frm.set_df_property(`custom_compound_medication_${suffix}`, 'hidden', false);
+  frm.set_query("drug", `custom_compound_medication_${suffix}`, () => {
     return {
       filters: { is_sales_item: 1, is_stock_item: 1 }
     };
   });
-}
-const setupCustomCompoundMedicine2 = (frm) => {
-  if (
-    frm.doc.custom_compound_type_2 &&
-    frm.doc.custom_qty_2 &&
-    frm.doc.custom_dosage_2 &&
-    frm.doc.custom_dosage_instructions_2 &&
-    frm.doc.custom_additional_instruction_2
-  ) {
-    frm.set_df_property('custom_compound_medication_2', 'hidden', 0);
-  } else {
-    frm.set_df_property('custom_compound_medication_2', 'hidden', 1);
-  }
-  frm.fields_dict['custom_compound_medication_2'].grid.update_docfield_property('dosage_form', 'reqd', 0);
-  frm.fields_dict['custom_compound_medication_2'].grid.update_docfield_property('period', 'reqd', 0);
-  frm.fields_dict['custom_compound_medication_2'].grid.update_docfield_property('dosage', 'reqd', 0);
-  frm.set_query("drug_code", "custom_compound_medication_2", () => {
-    return {
-      filters: { is_sales_item: 1, is_stock_item: 1 }
-    };
+};
+
+const handleRemoveCompoundMedication = (frm, suffix) => {
+  frm.set_df_property(`custom_compound_medications_${suffix}`, 'hidden', true);
+  frm.set_df_property(`custom_section_break_${getSectionBreakId(suffix)}`, 'hidden', true);
+  const medicationFields = getMedicationFields(suffix);
+  medicationFields.forEach(field => {
+    frm.doc[field] = '';
   });
-}
+  frm.clear_table(`custom_compound_medication_${suffix}`);
+  medicationFields.forEach(field => frm.refresh_field(field));
+  frm.set_df_property(`custom_add_compound_medication_${suffix}`, 'read_only', false);
+  frm.dirty();
+};
+
+const getSectionBreakId = (suffix) => {
+  // Assuming a pattern for section break IDs based on suffix
+  const sectionBreakIds = {
+    '1': 'deg5v',
+    '2': 'bugcg',
+    '3': 'yrftv',
+  };
+  return sectionBreakIds[suffix] || '';
+};
+
+const getMedicationFields = (suffix) => {
+  return [
+    `custom_period_${suffix}`,
+    `custom_qty_${suffix}`,
+    `custom_dosage_${suffix}`,
+    `custom_compound_medicine_dosage_form_${suffix}`,
+    `custom_additional_instruction_${suffix}`,
+  ];
+};

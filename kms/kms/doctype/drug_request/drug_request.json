@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-01-15 17:10:08.755935",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "drug",
+  "description",
+  "qty",
+  "dosage",
+  "dosage_intruction",
+  "additional_instruction",
+  "column_break_plia",
+  "compound_type",
+  "pharmacy_order",
+  "status",
+  "is_internal"
+ ],
+ "fields": [
+  {
+   "fieldname": "drug",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Drug",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "drug.item_name",
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Qty",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "dosage",
+   "fieldtype": "Link",
+   "label": "Dosage",
+   "options": "Prescription Dosage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dosage_intruction",
+   "fieldtype": "Link",
+   "label": "Dosage Intruction",
+   "options": "Dosage Instruction",
+   "read_only": 1
+  },
+  {
+   "fieldname": "additional_instruction",
+   "fieldtype": "Link",
+   "label": "Additional Instruction",
+   "options": "Dosage Form",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_plia",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "compound_type",
+   "fieldtype": "Link",
+   "label": "Compound Type",
+   "options": "Prescription Duration",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pharmacy_order",
+   "fieldtype": "Link",
+   "label": "Pharmacy Order",
+   "options": "Material Request",
+   "read_only": 1
+  },
+  {
+   "default": "Created",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Created\nOrdered\nOn Process\nFinished\nCancelled",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_internal",
+   "fieldtype": "Check",
+   "label": "Is Internal",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-15 18:56:12.950047",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Drug Request",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
