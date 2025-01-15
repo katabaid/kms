@@ -9,6 +9,9 @@ frappe.ui.form.on('Room Assignment', {
 		if (!frm.is_new() && frm.doc.user === frappe.session.user && frm.doc.assigned) {
 			add_change_room_button (frm);
 		}
+		if (frm.is_new()) {
+			add_cancel_button(frm);
+		}
 	},
 	setup(frm) {
 		const medical_department = frappe.defaults.get_user_default('medical_department');
@@ -22,6 +25,11 @@ frappe.ui.form.on('Room Assignment', {
 			frm.set_value('user', frappe.session.user);
 		}
 	},
+	after_save(frm){
+		if (frm.is_new()) {
+			frappe.set_route('/app/healthcare');
+		}
+	}
 });
 
 function add_change_room_button(frm) {
@@ -71,4 +79,10 @@ function add_change_room_button(frm) {
 			},
 		});
 	});
+}
+
+function add_cancel_button(frm) {
+	frm.add_custom_button('Cancel', () => {
+		frappe.set_route('/app/healthcare');
+	})
 }
