@@ -80,6 +80,7 @@ def create_sc(name, appointment):
         entries['item_code'] = lab.custom_exam_item
         sample_doc.append('custom_examination_item', entries)
       sample_doc.insert(ignore_permissions=True)
+      resp.append(sample_doc.name)
       lab_test_prescription = enc_doc.get('lab_test_prescription', [])
       lt = [item for item in lab_test_prescription
         if item.get('custom_sample_collection') is None
@@ -89,4 +90,4 @@ def create_sc(name, appointment):
       enc_doc.save(ignore_permissions=True)
   else:
     frappe.throw('Lab Test already prescribed.')
-  return resp
+  return f'Sample Collection {', '.join(resp)} created.'

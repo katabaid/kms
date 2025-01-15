@@ -231,7 +231,9 @@ frappe.ui.form.on('Patient Encounter', {
           'appointment': frm.doc.appointment
         },
         callback: (r=>{
-          console.log(r)
+          frm.reload_doc();
+          console.log(r.message);
+          frappe.msgprint(r.message);
         })
       })
     } else {
