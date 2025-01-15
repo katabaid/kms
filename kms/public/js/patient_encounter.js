@@ -3,6 +3,9 @@ frappe.ui.form.on('Patient Encounter', {
   refresh(frm) {
     hide_standard_buttons (frm, ['lab_test_prescription']);
     checkRoomAssignment(frm);
+    setupCompoundMedication(frm);
+    setupCustomCompoundMedicine1(frm);
+    setupCustomCompoundMedicine2(frm);
     frm.fields_dict['drug_prescription'].grid.update_docfield_property('dosage_form', 'reqd', 0);
     frm.fields_dict['drug_prescription'].grid.update_docfield_property('period', 'reqd', 0);
     if (frm.is_new()) {
@@ -84,11 +87,6 @@ frappe.ui.form.on('Patient Encounter', {
         };
       });
     });
-    if (!frm.doc.custom_compound_medicine_dosage_form) {
-      frm.set_df_property('custom_compound_medicine_1', 'hidden', 1);
-    } else {
-      frm.set_df_property('custom_compound_medicine_1', 'hidden', 0);
-    }
     //Dental Department
     if (frm.doc.medical_department === 'Dental') {
       unhide_field('custom_dental');
@@ -626,14 +624,62 @@ frappe.ui.form.on('Patient Encounter', {
       frm.static_dental_datatable.refresh(data, columns);
     }
   },
+  custom_add_compound_medication_1(frm){
+    frm.set_df_property('custom_a', 'hidden', 0);
+    frm.set_df_property('custom_5', 'hidden', 0);
+    frm.set_df_property('custom_add_compound_medication_1', 'read_only', 1);
+  },
+  custom_remove_compound_medication_1: function(frm) {
+    frm.set_df_property('custom_a', 'hidden', 1);
+    frm.set_df_property('custom_5', 'hidden', 1);
+    frm.doc.custom_period = '';
+    frm.doc.custom_qty = 0;
+    frm.doc.custom_dosage = '';
+    frm.doc.custom_compound_medicine_dosage_form = '';
+    frm.doc.custom_additional_instruction = '';
+    frm.clear_table('custom_compound_medicine_1');
+    frm.refresh_field('custom_compound_medicine_1');
+    frm.refresh_field('custom_period');
+    frm.refresh_field('custom_qty');
+    frm.refresh_field('custom_dosage');
+    frm.refresh_field('custom_compound_medicine_dosage_form');
+    frm.refresh_field('custom_additional_instruction');
+    frm.set_df_property('custom_add_compound_medication_1', 'read_only', 0);
+    frm.dirty();
+  },
+  custom_add_compound_medication_2(frm){
+    frm.set_df_property('custom_compound_medications_2', 'hidden', 0);
+    frm.set_df_property('custom_section_break_bugcg', 'hidden', 0);
+    frm.set_df_property('custom_add_compound_medication_2', 'read_only', 1);
+  },
+  custom_remove_compound_medication_2: function(frm) {
+    frm.set_df_property('custom_compound_medications_2', 'hidden', 1);
+    frm.set_df_property('custom_section_break_bugcg', 'hidden', 1);
+    frm.doc.custom_compound_type_2 = '';
+    frm.doc.custom_qty_2 = 0;
+    frm.doc.custom_dosage_2 = '';
+    frm.doc.custom_dosage_instructions_2 = '';
+    frm.doc.custom_additional_instruction_2 = '';
+    frm.clear_table('custom_compound_medication_2');
+    frm.refresh_field('custom_compound_medication_2');
+    frm.refresh_field('custom_compound_type_2');
+    frm.refresh_field('custom_qty_2');
+    frm.refresh_field('custom_dosage_2');
+    frm.refresh_field('custom_dosage_instructions_2');
+    frm.refresh_field('custom_additional_instruction_2');
+    frm.set_df_property('custom_add_compound_medication_2', 'read_only', 0);
+    frm.dirty();
+  },
 });
 frappe.ui.form.on('Drug Prescription', {
   custom_compound_medicine_1_add(frm, cdt, cdn) {
-    if (frm.doc.custom_compound_medicine_dosage_form) {
-      frappe.model.set_value(cdt, cdn, "dosage_form", frm.doc.custom_compound_medicine_dosage_form);
-      frappe.model.set_value(cdt, cdn, "dosage", frm.doc.custom_dosage);
-      frappe.model.set_value(cdt, cdn, "period", frm.doc.custom_period);
-      frappe.model.set_value(cdt, cdn, "custom_compound_qty", frm.doc.custom_qty);
+    if (frm.doc.custom_period ) {
+      frappe.model.set_value(cdt, cdn, "custom_compound_type", frm.doc.custom_period);
+    }
+  },
+  custom_compound_medication_2_add(frm, cdt, cdn) {
+    if (frm.doc.custom_compound_type_2) {
+      frappe.model.set_value(cdt, cdn, "custom_compound_type", frm.doc.custom_compound_type_2);
     }
   },
 });
@@ -701,4 +747,70 @@ const checkRoomAssignment = (frm) => {
       }
     })
   }
+}
+const setupCompoundMedication = (frm) => {  
+  frm.set_df_property('custom_a', 'hidden', true);
+  frm.set_df_property('custom_5', 'hidden', true);
+  frm.set_df_property('custom_compound_medications_2', 'hidden', true);
+  frm.set_df_property('custom_section_break_bugcg', 'hidden', true);
+  frm.set_df_property('custom_add_compound_medication_1', 'read_only', false);
+  frm.set_df_property('custom_add_compound_medication_2', 'hidden', true);
+  frm.set_df_property('custom_add_compound_medication_3', 'hidden', true);
+  frm.set_df_property('custom_add_compound_medication_4', 'hidden', true);
+  frm.set_df_property('custom_add_compound_medication_5', 'hidden', true);
+  if (frm.doc.custom_compound_medicine_1 && frm.doc.custom_compound_medicine_1.length > 0) {
+    frm.set_df_property('custom_a', 'hidden', false);
+    frm.set_df_property('custom_5', 'hidden', false);
+    frm.set_df_property('custom_add_compound_medication_1', 'read_only', true);
+    frm.set_df_property('custom_add_compound_medication_2', 'hidden', false);
+  }
+  if (frm.doc.custom_compound_medication_2 && frm.doc.custom_compound_medication_2.length > 0) {
+    frm.set_df_property('custom_compound_medications_2', 'hidden', false);
+    frm.set_df_property('custom_section_break_bugcg', 'hidden', false);
+    frm.set_df_property('custom_add_compound_medication_2', 'read_only', true);
+    frm.set_df_property('custom_add_compound_medication_3', 'hidden', false);
+  }
+}
+
+const setupCustomCompoundMedicine1 = (frm) => {
+  if (
+    frm.doc.custom_period &&
+    frm.doc.custom_qty &&
+    frm.doc.custom_dosage &&
+    frm.doc.custom_compound_medicine_dosage_form &&
+    frm.doc.custom_additional_instruction
+  ) {
+    frm.set_df_property('custom_compound_medicine_1', 'hidden', 0);
+  } else {
+    frm.set_df_property('custom_compound_medicine_1', 'hidden', 1);
+  }
+  frm.fields_dict['custom_compound_medicine_1'].grid.update_docfield_property('dosage_form', 'reqd', 0);
+  frm.fields_dict['custom_compound_medicine_1'].grid.update_docfield_property('period', 'reqd', 0);
+  frm.fields_dict['custom_compound_medicine_1'].grid.update_docfield_property('dosage', 'reqd', 0);
+  frm.set_query("drug_code", "custom_compound_medicine_1", () => {
+    return {
+      filters: { is_sales_item: 1, is_stock_item: 1 }
+    };
+  });
+}
+const setupCustomCompoundMedicine2 = (frm) => {
+  if (
+    frm.doc.custom_compound_type_2 &&
+    frm.doc.custom_qty_2 &&
+    frm.doc.custom_dosage_2 &&
+    frm.doc.custom_dosage_instructions_2 &&
+    frm.doc.custom_additional_instruction_2
+  ) {
+    frm.set_df_property('custom_compound_medication_2', 'hidden', 0);
+  } else {
+    frm.set_df_property('custom_compound_medication_2', 'hidden', 1);
+  }
+  frm.fields_dict['custom_compound_medication_2'].grid.update_docfield_property('dosage_form', 'reqd', 0);
+  frm.fields_dict['custom_compound_medication_2'].grid.update_docfield_property('period', 'reqd', 0);
+  frm.fields_dict['custom_compound_medication_2'].grid.update_docfield_property('dosage', 'reqd', 0);
+  frm.set_query("drug_code", "custom_compound_medication_2", () => {
+    return {
+      filters: { is_sales_item: 1, is_stock_item: 1 }
+    };
+  });
 }

@@ -180,6 +180,9 @@ doc_events = {
     "on_update": "kms.event.process_checkin",
     "after_insert": "kms.event.after_insert_patient_appointment",
   },
+  "Prescription Duration": {
+    "autoname": "kms.event.prescription_duration_autoname",
+  },
   "Vital Signs": {
     "before_submit": "kms.event.return_to_queue_pooling",
   },

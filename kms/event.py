@@ -668,6 +668,10 @@ def process_non_mcu(doc, appt, type):
     branch = doc.custom_branch,
     note = doc.vital_signs_note)).insert(ignore_permissions=True)
 
+def prescription_duration_autoname(doc, method=None):
+  ################Doctype: Prescription Duration################
+  doc.name = 'Mix ' + doc.custom_uom + ' ' + str(doc.number)
+
 @frappe.whitelist()
 def return_to_queue_pooling(doc, method=None):
   ################Doctype: Vital Signs################
