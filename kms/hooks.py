@@ -283,6 +283,7 @@ fixtures = [
   {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
   {'dt':'Custom HTML Block'},
   {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
+  {'dt':'Print Format', 'filters': [["custom_format", "=", 1]]},
 ]
 on_logout = ["kms.session.remove_room_assignment"]
 on_session_creation = ["kms.session.process_login"]
