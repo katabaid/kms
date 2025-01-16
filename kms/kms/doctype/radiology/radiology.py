@@ -30,7 +30,8 @@ def create_exam(name):
         SELECT 1 
         FROM `tabRadiology Request` trr 
         WHERE trr.parent = '{enc.name}' 
-        and trr.template = trrt.name
+        AND trr.template = trrt.name
+				AND trr.radiology IS NULL
       )
     )
     AND branch = '{enc.custom_branch}'"""
@@ -41,27 +42,37 @@ def create_exam(name):
 		parent = row['parent']
 		rooms_map.setdefault(room,[]).append(parent)
 	for room, parents in rooms_map.items():
-		doc = frappe.get_doc({
-			'doctype': 'Radiology',
-			'patient': enc.patient,
-			'patient_name': enc.patient_name,
-			'patient_sex': enc.patient_sex,
-			'patient_age': enc.patient_age,
-			'date_of_birth': enc.custom_date_of_birth,
-			'patient_company': enc.custom_patient_company,
-			'appointment': enc.appointment,
-			'patient_encounter': name,
-			'company': enc.company,
-			'branch': enc.custom_branch,
-			'service_unit': room,
-			'examination_item': []
-		})
-		result.append({'room': room, 'items': []})
+		existing_doc = frappe.db.get_all('Radiology',
+			filters={'appointment': enc.appointment, 'docstatus': 0, 'service_unit': room},
+			pluck='name')
+		if existing_doc:
+			doc = frappe.get_doc('Radiology', existing_doc[0])
+			print('1111111111111111111111')
+		else:
+			doc = frappe.get_doc({
+				'doctype': 'Radiology',
+				'patient': enc.patient,
+				'patient_name': enc.patient_name,
+				'patient_sex': enc.patient_sex,
+				'patient_age': enc.patient_age,
+				'date_of_birth': enc.custom_date_of_birth,
+				'patient_company': enc.custom_patient_company,
+				'appointment': enc.appointment,
+				'patient_encounter': name,
+				'company': enc.company,
+				'branch': enc.custom_branch,
+				'service_unit': room,
+				'examination_item': []
+			})
+			print('22222222222222222222222222')
+		#result.append({'room': room, 'items': []})
 		for parent in parents:
 			template = frappe.db.get_value('Radiology Result Template', {'item_code': parent}, 'name')
 			doc.append('examination_item', {'template': template, 'status': 'Started', 'status_time': now()})
-		doc.insert(ignore_permissions=True)
+		doc.save(ignore_permissions=True)
+		result.append(doc.name)
 		update_radiology_requests(enc.name, doc.name, doc.examination_item)
+	return f'Radiology {', '.join(result)} ordered.'
 
 def update_radiology_requests(encounter_name, radiology_name, examination_items):
 	# Update Radiology Request records for matching templates
@@ -76,4 +87,4 @@ def update_radiology_requests(encounter_name, radiology_name, examination_items)
 		for request in radiology_request:
 			frappe.db.set_value('Radiology Request', request['name'], 'radiology', radiology_name)
 			frappe.db.set_value('Radiology Request', request['name'], 'status', 'Ordered')
-			frappe.db.set_value('Radiology Request', request['name'], 'radiology', now())
+			frappe.db.set_value('Radiology Request', request['name'], 'status_time', now())

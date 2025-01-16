@@ -33,6 +33,9 @@ def get_items():
 def create_sc(name, appointment):
   appt_doc = frappe.get_doc('Patient Appointment', appointment)
 
+  sample_collections = frappe.db.get_all('Sample Collection',
+    filters = {'custom_appointment': appointment, 'docstatus': 0},
+    pluck = 'name')
   #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
   sus = frappe.db.sql(f"""
     SELECT DISTINCT tigsu.service_unit
@@ -46,20 +49,28 @@ def create_sc(name, appointment):
   
   if sus:
     for su in sus:
-      sample_doc = frappe.get_doc({
-        'doctype': 'Sample Collection',
-        'custom_appointment': appt_doc.name,
-        'patient': appt_doc.patient,
-        'patient_name': appt_doc.patient_name,
-        'patient_age': appt_doc.patient_age,
-        'patient_sex': appt_doc.patient_sex,
-        'company': appt_doc.company,
-        'custom_branch': appt_doc.custom_branch,
-        'custom_service_unit': su.service_unit,
-        'custom_status': 'Started',
-        'custom_document_date': frappe.utils.now(),
-        'custom_encounter': name
-      })
+      sample_doc = None
+      if sample_collections:
+        for sample_collection in sample_collections:
+          existing_doc = frappe.get_doc('Sample Collection', sample_collection)
+          if existing_doc.custom_service_unit == su.service_unit:
+            sample_doc = existing_doc
+            break
+      if not sample_doc:  
+        sample_doc = frappe.get_doc({
+          'doctype': 'Sample Collection',
+          'custom_appointment': appt_doc.name,
+          'patient': appt_doc.patient,
+          'patient_name': appt_doc.patient_name,
+          'patient_age': appt_doc.patient_age,
+          'patient_sex': appt_doc.patient_sex,
+          'company': appt_doc.company,
+          'custom_branch': appt_doc.custom_branch,
+          'custom_service_unit': su.service_unit,
+          'custom_status': 'Started',
+          'custom_document_date': frappe.utils.now(),
+          'custom_encounter': name
+        })
       samples = frappe.db.sql(f"""
       SELECT distinct tltt.sample
       FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
@@ -68,18 +79,22 @@ def create_sc(name, appointment):
       AND branch = '{appt_doc.custom_branch}'
       and tigsu.service_unit = '{su.service_unit}'
       AND tltt.name = tlp.lab_test_name
-      AND tltt.sample IS NOT NULL""", as_dict=True)
+      AND tltt.sample IS NOT NULL
+      AND custom_sample_collection IS NULL""", as_dict=True)
+      existing_samples = {row.sample for row in sample_doc.get('custom_sample_table', [])}
       for sample in samples:
-        sample_doc.append('custom_sample_table', {
-          'sample': sample.sample,
-        })
+        if sample.sample not in existing_samples:
+          sample_doc.append('custom_sample_table', {
+            'sample': sample.sample,
+          })
       enc_doc = frappe.get_doc('Patient Encounter', name)
       for lab in enc_doc.lab_test_prescription:
         entries = dict()
-        entries['template'] = lab.lab_test_code
-        entries['item_code'] = lab.custom_exam_item
-        sample_doc.append('custom_examination_item', entries)
-      sample_doc.insert(ignore_permissions=True)
+        if not lab.custom_sample_collection: 
+          entries['template'] = lab.lab_test_code
+          entries['item_code'] = lab.custom_exam_item
+          sample_doc.append('custom_examination_item', entries)
+      sample_doc.save(ignore_permissions=True)
       resp.append(sample_doc.name)
       lab_test_prescription = enc_doc.get('lab_test_prescription', [])
       lt = [item for item in lab_test_prescription

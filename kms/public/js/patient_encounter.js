@@ -1,3 +1,4 @@
+let isProcessing = false;
 frappe.ui.form.on('Patient Encounter', {
   /****************** Event Overrides ******************/
   refresh(frm) {
@@ -257,15 +258,23 @@ frappe.ui.form.on('Patient Encounter', {
     frappe.set_route('query-report/Medication Catalog');
   },
   custom_order_radiology_test(frm) {
+    if (isProcessing) return;
+    isProcessing = true;
     if (frm.doc.custom_radiology.length > 0) {
       frappe.call({
         method: 'kms.kms.doctype.radiology.radiology.create_exam',
         args: {
           'name': frm.doc.name,
         },
-        callback: (r=>{
-          frm.fields_dict['custom_radiology'].grid.refresh();
-        })
+        callback: (r)=>{
+          frm.reload_doc();
+          console.log(r.message);
+          frappe.msgprint(r.message);
+          isProcessing = false;
+        },
+        error: () =>{
+          isProcessing = false;
+        }
       })
     } else {
       frappe.throw('Please add examination to Radiology table first.')
