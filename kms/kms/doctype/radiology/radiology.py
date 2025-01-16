@@ -47,7 +47,6 @@ def create_exam(name):
 			pluck='name')
 		if existing_doc:
 			doc = frappe.get_doc('Radiology', existing_doc[0])
-			print('1111111111111111111111')
 		else:
 			doc = frappe.get_doc({
 				'doctype': 'Radiology',
@@ -64,8 +63,6 @@ def create_exam(name):
 				'service_unit': room,
 				'examination_item': []
 			})
-			print('22222222222222222222222222')
-		#result.append({'room': room, 'items': []})
 		for parent in parents:
 			template = frappe.db.get_value('Radiology Result Template', {'item_code': parent}, 'name')
 			doc.append('examination_item', {'template': template, 'status': 'Started', 'status_time': now()})

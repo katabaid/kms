@@ -83,7 +83,6 @@ def get_users_by_doctype(doctype):
           "name": user_doc.name,
           "full_name": user_doc.full_name
         }
-        print('muasukk')
   return list(unique_users.values())
 
 @frappe.whitelist()
