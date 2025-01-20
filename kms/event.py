@@ -273,7 +273,7 @@ def update_doctor_result(doc, method=None):
       frappe.db.set_value('Lab Prescription', lab_prescription_name, 'custom_lab_test', doc.name)
     for selective in doc.custom_selective_test_result:
       lab_prescription_name = frappe.db.get_value('Lab Prescription', {
-        'lab_test_name': item.event,
+        'lab_test_name': selective.event,
         'docstatus': 0,
         'parent': encounter,
         'parentfield': 'lab_test_prescription',
