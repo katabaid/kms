@@ -247,10 +247,10 @@ frappe.ui.form.on('Patient Encounter', {
       args: {
         'enc': frm.doc.name
       },
-      callback: (r => {
-        frappe.msgprint(JSON.stringify(r.message));
-        frm.refresh();
-      }),
+      callback: (r) => {
+        frappe.msgprint(r.message);
+        frm.reload_doc();
+      },
       error: (r => { frappe.throw(JSON.stringify(r.message)) }),
     });
   },
@@ -651,6 +651,22 @@ frappe.ui.form.on('Other Dental', {
     })
   }
 });
+
+frappe.ui.form.on('Drug Request',{
+  custom_compound_medication_1_add (frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    row.compound_type = frm.doc.custom_compound_type_1;
+  },
+  custom_compound_medication_2_add (frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    row.compound_type = frm.doc.custom_compound_type_2;
+  },
+  custom_compound_medication_3_add (frm, cdt, cdn) {
+    let row = locals[cdt][cdn];
+    row.compound_type = frm.doc.custom_compound_type_3;
+  },
+});
+
 const hide_standard_buttons = (frm, fields) => {
 	fields.forEach((field) => {
 		let child = frm.fields_dict[field];

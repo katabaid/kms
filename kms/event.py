@@ -284,7 +284,7 @@ def update_doctor_result(doc, method=None):
 
 @frappe.whitelist()
 def validate_test_result(doc, method=None):
-  passed = False
+  ################Doctype: Lab Test################
   counter1 = counter2 = counter3 = counter4 = 0
   for normal in doc.normal_test_items:
     counter1 +=1
@@ -296,6 +296,22 @@ def validate_test_result(doc, method=None):
       counter4 += 1
   if counter1 != counter2 or counter3 != counter4:
     frappe.throw('All results must have value before submitting.')
+
+def on_submit_material_request(doc, method=None):
+  ################Doctype: Material Request################
+  if doc.material_request_type == 'Medication Prescription':
+    if doc.custom_patient_encounter:
+      pe = frappe.get_doc('Patient Encounter', doc.custom_patient_encounter)
+      if pe.docstatus == 0:
+        items_dict = {item.item_code: item for item in doc.items}
+        updated_rows = 0
+        for dp in pe.drug_prescription:
+          if dp.drug_code in items_dict:
+            dp.custom_status = 'On Process'
+            updated_rows += 1
+        if updated_rows > 0:
+          pe.save(ignore_permissions=True)
+          frappe.msgprint(f"{updated_rows} rows in drug_prescription updated to 'On Process'.")
 
 @frappe.whitelist()
 def update_queue_pooling_status(doc, method=None):

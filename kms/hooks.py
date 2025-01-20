@@ -170,6 +170,9 @@ doc_events = {
     "on_submit": "kms.event.update_doctor_result",
     "before_submit": "kms.event.validate_test_result",
   },
+  "Material Request": {
+    "on_submit": "kms.event.on_submit_material_request",
+  },
   "Patient Encounter": {
     "on_trash": "kms.event.unlink_queue_pooling_before_delete",
     "after_insert": "kms.event.process_queue_pooling_and_dental",

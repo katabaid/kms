@@ -1,4 +1,5 @@
 import frappe, re
+from frappe.utils import today, getdate
 import json
 
 @frappe.whitelist()
@@ -87,103 +88,138 @@ def get_users_by_doctype(doctype):
 
 @frappe.whitelist()
 def create_mr_from_encounter(enc):
+  message = []
   encdoc = frappe.get_doc('Patient Encounter', enc)
   drug_prescriptions = encdoc.get("drug_prescription", [])
-  mr_internal_items = [
-    item for item in drug_prescriptions
-    if item.get('custom_is_internal') == 1 and item.get('custom_status') == 'Created'
-  ]
-  mr_external_items = [
-    item for item in drug_prescriptions
-    if item.get('custom_is_internal') == 0 and item.get('custom_status') == 'Created'
-  ]
-  pharmacy_warehouse, front_office = frappe.db.get_value(
+  def filter_items(internal):
+    return [
+      item for item in drug_prescriptions
+      if item.get('custom_is_internal') == internal and item.get('custom_status') == 'Created'
+    ]
+  def filter_compound_items(index):
+    if encdoc.get(f'custom_compound_type_{index}'):
+      drug_prescriptions = encdoc.get(f'custom_compound_medication_{index}')
+      if drug_prescriptions:
+        items = []
+        items.append({
+          'drug_code': encdoc.get(f'custom_linked_item_{index}'),
+          'drug_name': encdoc.get(f'custom_compound_type_{index}'),
+          'custom_compound_qty': encdoc.get(f'custom_qty_{index}'),
+          'dosage': encdoc.get(f'custom_dosage_{index}'),
+          'period': encdoc.get(f'custom_dosage_instruction_{index}'),
+          'dosage_form': encdoc.get(f'custom_additional_instruction_{index}'),
+          'indication': encdoc.get(f'custom_indication_{index}'),
+          'custom_serving_qty': encdoc.get(f'custom_serving_qty_{index}'),
+          'custom_serving_unit_of_measure': encdoc.get(f'custom_serving_unit_of_measure_{index}'),
+        })
+        for drug in drug_prescriptions:
+          if drug.status == 'Created':
+            items.append({
+              'drug_code': drug.drug_code,
+              'drug_name': drug.drug_name,
+              'custom_compound_qty': drug.qty,
+              'compound_type': drug.compound_type,
+            })
+        return items
+      else:
+        return None
+    else:
+      return None
+  mr_internal_items = filter_items(1)
+  mr_external_items = filter_items(0)
+  compound_items_1 = filter_compound_items(1)
+  compound_items_2 = filter_compound_items(2)
+  compound_items_3 = filter_compound_items(3)
+
+  pharmacy_warehouse, target_warehouse = frappe.db.get_value(
     'Branch', 
     encdoc.custom_branch, 
     ['custom_default_pharmacy_warehouse', 'custom_default_front_office'])
-  message =[pharmacy_warehouse, front_office]
-  if(mr_internal_items):
-    warehouse = frappe.db.get_value(
-      'Healthcare Service Unit', encdoc.custom_service_unit, 'warehouse')
-    mr_in_doc = frappe.new_doc('Material Request')
-    mr_in_doc.transaction_date = frappe.utils.today()
-    mr_in_doc.material_request_type= 'Medication Prescription'
-    mr_in_doc.schedule_date = frappe.utils.today()
-    mr_in_doc.set_from_warehouse = pharmacy_warehouse
-    mr_in_doc.set_warehouse = warehouse
-    mr_in_doc.custom_appointment = encdoc.appointment,
-    mr_in_doc.custom_patient = encdoc.patient
-    mr_in_doc.custom_patient_name = encdoc.patient_name
-    mr_in_doc.custom_patient_sex = encdoc.patient_sex
-    mr_in_doc.custom_patient_age = encdoc.patient_age
-    mr_in_doc.custom_patient_encounter = encdoc.name
-    mr_in_doc.custom_healthcare_practitioner = encdoc.practitioner
-    for item in mr_internal_items:
-      stock_uom = frappe.db.get_value('Item', item.drug_code, 'stock_uom')
-      mr_in_doc.append('items',{
-        'item_code': item.drug_code,
-        'item_name': item.drug_name,
-        'schedule_date': frappe.utils.today(),
-        'description': item.drug_name,
-        'qty': item.custom_compound_qty,
+  def create_or_update_mr(items, internal=True):
+    if not items:
+      return None
+    if internal:
+      target_warehouse = frappe.db.get_value(
+        'Healthcare Service Unit', encdoc.custom_service_unit, 'warehouse')
+    existing_mr = frappe.db.get_all(
+      'Material Request', 
+      {
+        'docstatus': 0, 
+        'custom_patient_encounter': enc, 
+        'set_warehouse': target_warehouse
+      }, 
+      'name'
+    )
+    if existing_mr:
+      mr_doc = frappe.get_doc('Material Request', existing_mr[0])
+    else:
+      mr_doc = frappe.new_doc('Material Request')
+      mr_doc.transaction_date = getdate(today())
+      mr_doc.material_request_type = 'Medication Prescription'
+      mr_doc.schedule_date = getdate(today())
+      mr_doc.set_from_warehouse = pharmacy_warehouse
+      mr_doc.set_warehouse = target_warehouse
+      mr_doc.custom_appointment = encdoc.appointment
+      mr_doc.custom_patient = encdoc.patient
+      mr_doc.custom_patient_name = encdoc.patient_name
+      mr_doc.custom_patient_sex = encdoc.patient_sex
+      mr_doc.custom_patient_age = encdoc.patient_age
+      mr_doc.custom_patient_encounter = encdoc.name
+      mr_doc.custom_healthcare_practitioner = encdoc.practitioner
+    for item in items:
+      print(item)
+      print(type(item))
+      stock_uom = frappe.db.get_value('Item', item.get('drug_code'), 'stock_uom')
+      if item.get('indication'):
+        custom_indication = item.get('indication')
+      else:
+        custom_indication = frappe.db.get_value('Item', item.get('drug_code'), 'custom_indication')
+      if item.get('custom_serving_unit_of_measure'):
+        custom_serving_unit_of_measure = item.get('custom_serving_unit_of_measure')
+      else:
+        custom_serving_unit_of_measure = frappe.db.get_value(
+          'Item', item.get('drug_code'), 'custom_serving_unit_of_measure')
+      mr_doc.append('items', {
+        'item_code': item.get('drug_code'),
+        'item_name': item.get('drug_name'),
+        'schedule_date': getdate(today()),
+        'description': item.get('drug_name'),
+        'qty': item.get('custom_compound_qty'),
         'uom': stock_uom,
         'stock_uom': stock_uom, 
         'conversion_factor': 1,
         'from_warehouse': pharmacy_warehouse,
-        'warehouse': warehouse,
-        'custom_dosage': item.dosage,
-        'custom_period': item.period,
-        'custom_dosage_form': item.dosage_form
+        'warehouse': target_warehouse,
+        'custom_dosage': item.get('dosage'),
+        'custom_period': item.get('period'),
+        'custom_dosage_form': item.get('dosage_form'),
+        'custom_indication': custom_indication,
+        'custom_serving_qty': item.get('custom_serving_qty') or 1,
+        'custom_serving_unit_of_measure': custom_serving_unit_of_measure or stock_uom,
+        'custom_compound_type': item.get('compound_type')
       })
-    mr_in_doc.insert(ignore_permissions=True)
-    for item in mr_internal_items:
-      item.set('custom_material_request', mr_in_doc.name)
-      item.set('custom_status', 'Ordered')
+    mr_doc.save(ignore_permissions=True)
+    message.append(mr_doc.name)
+    for item in items:
+      if not isinstance(item, dict):
+        item.set('custom_material_request', mr_doc.name)
+        item.set('custom_status', 'Ordered')
+      if encdoc.custom_compound_type_1:
+        encdoc.custom_pharmacy_order_1 = mr_doc.name
+      if encdoc.custom_compound_type_2:
+        encdoc.custom_pharmacy_order_2 = mr_doc.name
+      if encdoc.custom_compound_type_3:
+        encdoc.custom_pharmacy_order_3 = mr_doc.name
     encdoc.save(ignore_permissions=True)
-    message.append(mr_in_doc.name)
+  create_or_update_mr(mr_internal_items)
+  create_or_update_mr(mr_external_items, internal=False)
+  create_or_update_mr(compound_items_1)
+  create_or_update_mr(compound_items_2)
+  create_or_update_mr(compound_items_3)
+  if message:
+    return f'Pharmacy Order {', '.join(message)} created.'
   else: 
-    message.append('Empty internal')
-
-  if(mr_external_items):
-    mr_ex_doc = frappe.new_doc('Material Request')
-    mr_ex_doc.transaction_date = frappe.utils.today()
-    mr_ex_doc.material_request_type= 'Medication Prescription'
-    mr_ex_doc.schedule_date = frappe.utils.today()
-    mr_ex_doc.set_from_warehouse = pharmacy_warehouse
-    mr_ex_doc.set_warehouse = front_office
-    mr_ex_doc.custom_appointment = encdoc.appointment,
-    mr_ex_doc.custom_patient = encdoc.patient
-    mr_ex_doc.custom_patient_name = encdoc.patient_name
-    mr_ex_doc.custom_patient_sex = encdoc.patient_sex
-    mr_ex_doc.custom_patient_age = encdoc.patient_age
-    mr_ex_doc.custom_patient_encounter = encdoc.name
-    mr_ex_doc.custom_healthcare_practitioner = encdoc.practitioner
-    for item in mr_external_items:
-      stock_uom = frappe.db.get_value('Item', item.drug_code, 'stock_uom')
-      mr_ex_doc.append('items',{
-        'item_code': item.drug_code,
-        'item_name': item.drug_name,
-        'schedule_date': frappe.utils.today(),
-        'description': item.drug_name,
-        'qty': item.custom_compound_qty,
-        'uom': stock_uom,
-        'stock_uom': stock_uom, 
-        'conversion_factor': 1,
-        'from_warehouse': pharmacy_warehouse,
-        'warehouse': front_office,
-        'custom_dosage': item.dosage,
-        'custom_period': item.period,
-        'custom_dosage_form': item.dosage_form
-      })
-    mr_ex_doc.insert(ignore_permissions=True)
-    for item in mr_external_items:
-      item.set('custom_material_request', mr_in_doc.name)
-      item.set('custom_status', 'Ordered')
-    encdoc.save(ignore_permissions=True)
-    message.append(mr_ex_doc.name)
-  else: 
-    message.append('Empty external')
-  return message
+    return 'No Pharmacy Order created.'
 
 @frappe.whitelist()
 def check_eligibility_to_reopen(name):

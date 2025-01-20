@@ -6,8 +6,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "drug",
-  "description",
+  "drug_code",
+  "drug_name",
   "qty",
   "dosage",
   "dosage_intruction",
@@ -19,22 +19,6 @@
   "is_internal"
  ],
  "fields": [
-  {
-   "fieldname": "drug",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Drug",
-   "options": "Item",
-   "reqd": 1
-  },
-  {
-   "fetch_from": "drug.item_name",
-   "fieldname": "description",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Description",
-   "read_only": 1
-  },
   {
    "fieldname": "qty",
    "fieldtype": "Int",
@@ -96,12 +80,28 @@
    "fieldtype": "Check",
    "label": "Is Internal",
    "read_only": 1
+  },
+  {
+   "fieldname": "drug_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Drug",
+   "link_filters": "[[\"Item\",\"is_stock_item\",\"=\",1],[\"Item\",\"is_purchase_item\",\"=\",1],[\"Item\",\"is_sales_item\",\"=\",1]]",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "drug_code.item_name",
+   "fieldname": "drug_name",
+   "fieldtype": "Data",
+   "label": "Description",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-15 18:56:12.950047",
+ "modified": "2025-01-17 09:20:24.218460",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Drug Request",
