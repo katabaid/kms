@@ -25,6 +25,7 @@
   "naming_series",
   "sample_collection",
   "company",
+  "healthcare_service_unit",
   "column_break_yaro",
   "appointment",
   "branch",
@@ -171,13 +172,21 @@
    "label": "Branch",
    "options": "Branch",
    "read_only": 1
+  },
+  {
+   "fieldname": "healthcare_service_unit",
+   "fieldtype": "Link",
+   "label": "Healthcare Service Unit",
+   "link_filters": "[[\"Healthcare Service Unit\",\"service_unit_type\",\"=\",\"Sample Reception\"]]",
+   "options": "Healthcare Service Unit",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 07:05:36.946912",
+ "modified": "2025-01-22 10:00:35.209989",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Sample Reception",

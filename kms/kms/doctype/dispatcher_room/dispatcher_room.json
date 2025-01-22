@@ -26,7 +26,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Wait for Room Assignment\nWaiting to Enter the Room\nOngoing Examination\nRefused\nFinished\nRescheduled\nPartial Finished\nAdditional or Retest Request",
+   "options": "Wait for Room Assignment\nWaiting to Enter the Room\nOngoing Examination\nRefused\nFinished\nRescheduled\nPartial Finished\nAdditional or Retest Request\nWait for Sample\nFinished Collection",
    "read_only": 1,
    "reqd": 1
   },
@@ -50,7 +50,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-29 21:04:49.285719",
+ "modified": "2025-01-22 07:49:57.454283",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher Room",

@@ -29,7 +29,7 @@ class Dispatcher(Document):
 			frappe.throw(_("Patient already in Dispatcher's queue."))
 
 	def update_status_if_all_rooms_finished(self):
-		finished_statuses = {'Refused', 'Finished', 'Rescheduled', 'Partial Finished'}
+		finished_statuses = {'Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection'}
 		if all(room.status in finished_statuses for room in self.assignment_table):
 			self.status = 'Waiting to Finish'
 

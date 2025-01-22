@@ -521,16 +521,17 @@ def process_checkin(doc, method=None):
             new_entry['status'] = item['status']
             disp_doc.append('package', new_entry)
           rooms = frappe.db.sql(f"""
-            SELECT distinct tigsu.service_unit, thsu.custom_default_doctype
+            SELECT distinct tigsu.service_unit, 
+            thsu.custom_default_doctype, thsu.custom_collection_room
             FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
             WHERE tigsu.branch = '{doc.custom_branch}'
             AND tigsu.parenttype = 'Item'
             AND tigsu.service_unit = thsu.name 
             AND EXISTS (
-            SELECT 1 FROM `tabMCU Appointment` tma
-            WHERE tma.parenttype = 'Patient Appointment'
-            AND tma.parent = '{doc.name}'
-            AND tma.examination_item = tigsu.parent)
+              SELECT 1 FROM `tabMCU Appointment` tma
+              WHERE tma.parenttype = 'Patient Appointment'
+              AND tma.parent = '{doc.name}'
+              AND tma.examination_item = tigsu.parent)
             ORDER BY thsu.custom_room, thsu.custom_default_doctype""", as_dict=1)
           for room in rooms:
             new_entry = dict()
@@ -539,6 +540,13 @@ def process_checkin(doc, method=None):
             new_entry['status'] = 'Wait for Room Assignment'
             new_entry['reference_doctype'] = room.custom_default_doctype
             disp_doc.append('assignment_table', new_entry)
+            if room.custom_default_doctype == 'Sample Collection':
+              if not any(row.get('healthcare_service_unit') == room.custom_default_doctype for row in disp_doc.assignment_table):
+                new_entry = dict()
+                new_entry['name'] = None
+                new_entry['healthcare_service_unit'] = room.custom_collection_room
+                new_entry['status'] = 'Wait for Sample'
+                disp_doc.append('assignment_table', new_entry)
         disp_doc.save(ignore_permissions=True)
       else:
         vs_doc = frappe.get_doc(dict(
@@ -741,6 +749,9 @@ def set_collector(doc, method=None):
   exam_result = frappe.db.exists('Lab Test', {'custom_sample_collection': doc.name}, 'name')
   if exam_result:
     doc.custom_lab_test = exam_result
+  room = frappe.db.get_value('Healthcare Service Unit', doc.custom_service_unit, 'custom_reception_room')
+  if not room:
+    frappe.throw('Set the Sample Reception Room for this Sample Collection first.')
   for sample in doc.custom_sample_table:
     if sample.status == 'Finished':
       sample_reception_doc = frappe.new_doc('Sample Reception')
@@ -751,10 +762,12 @@ def set_collector(doc, method=None):
       sample_reception_doc.sex = doc.patient_sex
       sample_reception_doc.appointment = doc.custom_appointment
       sample_reception_doc.name1 = doc.patient_name
+      sample_reception_doc.healthcare_service_unit = room
       sample_reception_doc.save()
       #saved = True
       sample.sample_reception = sample_reception_doc.name
       sample.status_time = now()
+      sample.reception_status = sample_reception_doc.docstatus
 
 def validate_with_today_date(validate_date):
   if str(validate_date) != frappe.utils.today():
