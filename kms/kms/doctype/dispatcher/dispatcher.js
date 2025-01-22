@@ -162,6 +162,8 @@ const updateChildStatus = async (frm, grid, button, reason = null) => {
 	const selectedRows = grid.get_selected();
 	if (selectedRows.length === 1) {
 		let next = false;
+		console.log(frm.doc.status)
+		if (frm.doc.status == 'Meal Time') frappe.throw('Cannot modify room assignment. Patient is still on meal time break.');
 		if (button.label === 'Assign') next = await assign_to_room(frm);
 		else if (button.label === 'Remove from Room') next = await remove_from_room(frm);
 		else if (button.label === 'Retest') next = await retest(frm);
