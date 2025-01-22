@@ -17,7 +17,12 @@ frappe.ui.form.on('Room Assignment', {
 		const medical_department = frappe.defaults.get_user_default('medical_department');
 		frm.set_query('healthcare_service_unit', () => {
 			return { filters: 
-				[[ 'is_group', '=', 0 ], ['custom_department', '=', medical_department]] };
+				[
+					[ 'is_group', '=', 0 ], 
+					['custom_department', '=', medical_department],
+					['name', 'not in', get_already_assigned_rooms(frm)]
+				] 
+			};
 		});
 	},
 	before_load(frm) {
@@ -83,4 +88,26 @@ function add_cancel_button(frm) {
 	frm.add_custom_button('Cancel', () => {
 		frappe.set_route('/app/healthcare');
 	})
+}
+
+function get_already_assigned_rooms(frm) {
+	let rooms = [];
+	if (!frm.doc.date) {
+			frappe.msgprint(__('Please enter a date before selecting a room.'));
+			return rooms;
+	}
+	
+	frappe.call({
+			method: 'kms.api.get_assigned_room',
+			args: {
+					date: frm.doc.date,
+			},
+			async: false, // Ensures this call finishes before returning
+			callback: function(response) {
+					if (response && response.message) {
+							rooms = response.message;
+					}
+			}
+	});
+	return rooms;
 }

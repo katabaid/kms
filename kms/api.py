@@ -272,3 +272,7 @@ def check_out_appointment(name):
     frappe.call(
       'kms.kms.doctype.dispatcher.dispatcher.new_doctor_result',
       appointment = name)
+
+@frappe.whitelist()
+def get_assigned_room(date):
+  return frappe.db.get_all('Room Assignment', filters = {'date': date, 'assigned': 1}, pluck='healthcare_service_unit')
