@@ -43,6 +43,10 @@
   "column_break_pwgp",
   "doctor_result_assignment_role",
   "radiology_result_assignment_role",
+  "section_break_kcub",
+  "meal_time",
+  "column_break_dpux",
+  "required_exam",
   "relationship_tab",
   "relationship",
   "vital_sign_tab",
@@ -317,12 +321,33 @@
    "fieldname": "examination_item_group_section",
    "fieldtype": "Section Break",
    "label": "Examination Item Group"
+  },
+  {
+   "fieldname": "section_break_kcub",
+   "fieldtype": "Section Break",
+   "label": "Meal"
+  },
+  {
+   "description": "In minutes",
+   "fieldname": "meal_time",
+   "fieldtype": "Int",
+   "label": "Meal Time"
+  },
+  {
+   "fieldname": "column_break_dpux",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "required_exam",
+   "fieldtype": "Table MultiSelect",
+   "label": "Required Exam",
+   "options": "MCU Pre Meal"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-01-05 20:31:06.629355",
+ "modified": "2025-01-22 11:00:50.276578",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

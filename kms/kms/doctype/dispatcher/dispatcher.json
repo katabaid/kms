@@ -12,6 +12,8 @@
   "patient_appointment",
   "status",
   "room",
+  "had_meal",
+  "meal_time",
   "tab_break_taqcr",
   "patient",
   "patient_name",
@@ -71,7 +73,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "In Queue\nIn Room\nWaiting to Finish\nFinished\nRescheduled",
+   "options": "In Queue\nIn Room\nWaiting to Finish\nFinished\nRescheduled\nMeal Time",
    "read_only": 1,
    "reqd": 1
   },
@@ -186,12 +188,25 @@
    "label": "Company",
    "options": "Company",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "had_meal",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Had Meal"
+  },
+  {
+   "fieldname": "meal_time",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "label": "Meal Time"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-03 20:31:05.233452",
+ "modified": "2025-01-22 19:23:02.747710",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

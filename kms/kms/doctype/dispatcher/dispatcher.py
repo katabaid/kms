@@ -2,8 +2,10 @@
 # For license information, please see license.txt
 
 import frappe, re
+import json
+from datetime import timedelta
 from frappe.model.document import Document
-from frappe.utils import today, flt
+from frappe.utils import today, flt, now, add_to_date
 from frappe import _
 from statistics import mean
 
@@ -1335,6 +1337,30 @@ def get_related_rooms (hsu, dispatcher_id):
 				AND 	tma.examination_item = tigsu.parent))""", pluck = 'service_unit')
 
 @frappe.whitelist()
+def is_meal_time(dispatcher_id):
+	dispatcher_doc = frappe.get_doc('Dispatcher', dispatcher_id)
+	if dispatcher_doc.had_meal == False:
+		mcu_setting = frappe.get_single('MCU Settings')
+		required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
+		unmatched_items = []
+		for row in dispatcher_doc.package:
+			if row.examination_item in required_exams and row.status in ['Started', 'To Retest']:
+				unmatched_items.append(row.examination_item)
+		if not unmatched_items:
+			return True
+		else:
+			print('111111111111111111111')
+			return False
+	else:
+		print('222222222222222222222222222')
+		return False
+
+def set_meal_time(doc):
+	doc.status = 'Meal Time'
+	doc.had_meal = True
+	doc.meal_time = add_to_date(now(), minutes=15)
+
+@frappe.whitelist()
 def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 	exists_to_retest = False
 	source_doc = frappe.get_doc(doctype, docname)
@@ -1365,6 +1391,8 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 				room.status = 'Additional or Retest Request' if exists_to_retest else status
 		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
 		doc.room = ''
+		if is_meal_time(dispatcher_id):
+			set_meal_time(doc)
 		doc.save(ignore_permissions=True)
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:

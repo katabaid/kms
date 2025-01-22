@@ -26,9 +26,7 @@ frappe.ui.form.on('Room Assignment', {
 		}
 	},
 	after_save(frm){
-		if (frm.is_new()) {
-			frappe.set_route('/app/healthcare');
-		}
+		window.location = '/app/healthcare';
 	}
 });
 

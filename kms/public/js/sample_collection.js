@@ -18,6 +18,29 @@ frappe.ui.form.on('Sample Collection', {
 		if(!frm.doc.custom_barcode_image){
 			generateBarcode(frm);
 		}
+		if(frm.doc.custom_dispatcher && frm.doc.docstatus==0){
+      frappe.call({
+        method: 'kms.kms.doctype.dispatcher.dispatcher.is_meal_time',
+        args: {
+          dispatcher_id: frm.doc.custom_dispatcher
+        },
+        callback: (r) => {
+          console.log(r.message)
+          if (r.message === true) {
+            const message = 'Patient can have their meal break after this examination.';
+            frm.page.set_indicator(__(message), 'red');
+            frappe.show_alert({
+              message: message,
+              indicator: 'red'
+            }, 15);
+          
+          }
+        },
+        error: (r) => {
+          console.log(r)
+        }
+      })
+    }
 	}
 });
 

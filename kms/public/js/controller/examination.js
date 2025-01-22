@@ -397,7 +397,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }
   }
 
-  function checkRoomAssignment(frm) {
+  function checkRoomAssignment(frm) {         
     const user = frappe.session.user;
     if (user != 'Administrator'){
       frappe.call({

@@ -768,6 +768,8 @@ def set_collector(doc, method=None):
       sample.sample_reception = sample_reception_doc.name
       sample.status_time = now()
       sample.reception_status = sample_reception_doc.docstatus
+    if sample.status == 'Rescheduled' or sample.status == 'Refused':
+      sample.reception_status = 1
 
 def validate_with_today_date(validate_date):
   if str(validate_date) != frappe.utils.today():
