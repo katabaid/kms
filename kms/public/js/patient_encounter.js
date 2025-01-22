@@ -233,7 +233,6 @@ frappe.ui.form.on('Patient Encounter', {
         },
         callback: (r=>{
           frm.reload_doc();
-          console.log(r.message);
           frappe.msgprint(r.message);
         })
       })
@@ -268,7 +267,6 @@ frappe.ui.form.on('Patient Encounter', {
         },
         callback: (r)=>{
           frm.reload_doc();
-          console.log(r.message);
           frappe.msgprint(r.message);
           isProcessing = false;
         },

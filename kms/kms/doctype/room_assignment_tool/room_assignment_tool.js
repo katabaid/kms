@@ -112,7 +112,6 @@ frappe.ui.form.on('Room Assignment Tool', {
 		const $wrapper = frm.get_field("rooms_html").$wrapper;
 		$wrapper.empty();
 		const room_wrapper = $(`<div class="room_wrapper">`).appendTo($wrapper);
-		console.log(JSON.stringify(unassigned_rooms));
 		frm.rooms_multicheck = frappe.ui.form.make_control({
 			parent: room_wrapper,
 			df: {
@@ -191,9 +190,7 @@ frappe.ui.form.on('Room Assignment Tool', {
 			if (doc.message) {
 				frm.set_value('assigned_room', doc.message.healthcare_service_unit);
 				frm.set_value('room_assignment_id', doc.message.name);
-			} else {
-				console.log('aaaa')
-			}
+			} 
 		})
 	}
 });

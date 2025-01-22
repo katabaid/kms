@@ -194,7 +194,6 @@ def process_examination_items(doc, data, package):
 				'hidden_item_group': group['item_group'],
 			})
 			for item in group['items']:
-				print(item)
 				radiology_result = None
 				incdec = None
 				if blood_pressure_item_code == item['examination_item']:
@@ -1349,10 +1348,8 @@ def is_meal_time(dispatcher_id):
 		if not unmatched_items:
 			return True
 		else:
-			print('111111111111111111111')
 			return False
 	else:
-		print('222222222222222222222222222')
 		return False
 
 def set_meal_time(doc):

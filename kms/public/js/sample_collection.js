@@ -25,7 +25,6 @@ frappe.ui.form.on('Sample Collection', {
           dispatcher_id: frm.doc.custom_dispatcher
         },
         callback: (r) => {
-          console.log(r.message)
           if (r.message === true) {
             const message = 'Patient can have their meal break after this examination.';
             frm.page.set_indicator(__(message), 'red');
@@ -37,7 +36,7 @@ frappe.ui.form.on('Sample Collection', {
           }
         },
         error: (r) => {
-          console.log(r)
+          frappe.msgprint(r)
         }
       })
     }

@@ -167,8 +167,6 @@ def create_mr_from_encounter(enc):
       mr_doc.custom_patient_encounter = encdoc.name
       mr_doc.custom_healthcare_practitioner = encdoc.practitioner
     for item in items:
-      print(item)
-      print(type(item))
       stock_uom = frappe.db.get_value('Item', item.get('drug_code'), 'stock_uom')
       if item.get('indication'):
         custom_indication = item.get('indication')
