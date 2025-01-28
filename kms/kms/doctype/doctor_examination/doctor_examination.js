@@ -386,6 +386,7 @@ frappe.ui.form.on('Doctor Examination', {
     handleDentalSections(frm);
     addSidebarUserAction(frm);
     handleReadOnlyExams(frm);
+    handleQuestionnaire(frm);
 		if (frm.doc.non_selective_result) {
 			frm.refresh_field('non_selective_result');
 			frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
@@ -530,5 +531,89 @@ const apply_cell_styling = (frm, row) => {
         'color': 'black'
       });
     }
+  }
+}
+
+const handleQuestionnaire = (frm) => {
+  const grid = frm.fields_dict['questionnaire'].grid;
+  const buttons = [
+    {label: 'Create', class: 'btn-primary', statuses: 'Started', status: 'Completed'},
+    {label: 'Approve', class: 'btn-info', statuses: 'Completed,Pending', status: 'Approved'},
+    {label: 'Reject', class: 'btn-danger', statuses: 'Completed,Pending', status: 'Rejected'},
+    {label: 'Pending', class: 'btn-warning', statuses: 'Completed', status: 'Pending'},
+  ];
+  grid.wrapper.find('.grid-footer').find('.btn-custom').hide();
+  buttons.forEach(button=>{
+    const customButton = grid.add_custom_button(__(button.label), function() {
+      updateQChildStatus(frm, grid, button.status);
+    }, 'btn-custom');
+    customButton.removeClass("btn-default btn-secondary").addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
+    customButton.hide();
+  });
+  setupQRowSelector(grid);
+}
+
+const updateQChildStatus = (frm, grid, newStatus) => {
+  const selectedRows = grid.get_selected();
+  if (selectedRows.length !== 1) return;
+  const child = locals[grid.doctype][selectedRows[0]];
+  if (newStatus === 'Completed') {
+    window.open(`http://localhost:5173/questionnaire?template=${child.template}&appointment_id=${frm.doc.appointment}`, '_blank');
+  }
+  /* try {
+    console.log(child.doctype)
+    console.log(child.name)
+    console.log(newStatus)
+    frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
+    grid.refresh();
+    frm.save();
+  } catch (error) {
+    frappe.msgprint(__('Error updating status: {0}', [error.message]));
+  } */
+};
+
+const setupQRowSelector = (grid) => {
+  grid.row_selector = function (e) {
+    if (e.target.classList.contains('grid-row-check')) {
+      const $row = $(e.target).closest('.grid-row');
+      const docname = $row.attr('data-name');
+      if (this.selected_row && this.selected_row === docname) {
+        $row.removeClass('grid-row-selected');
+        $row.find('.grid-row-check').prop('checked', false);
+        this.selected_row = null;
+      } else {
+        this.$rows.removeClass('grid-row-selected');
+        this.$rows.find('.grid-row-check').prop('checked', false);
+        $row.addClass('grid-row-selected');
+        $row.find('.grid-row-check').prop('checked', true);
+        this.selected_row = docname;
+      }
+      this.refresh_remove_rows_button();
+      updateQCustomButtonVisibility(grid);
+    }
+  };
+  grid.wrapper.on('click', '.grid-row', function () {
+    updateQCustomButtonVisibility(grid);
+  });
+};
+
+const updateQCustomButtonVisibility = (grid) => {
+  const selectedRows = grid.get_selected();
+  const buttons = grid.wrapper.find('.grid-footer').find('.btn-custom');
+  if (selectedRows && selectedRows.length === 1) {
+    const child = locals[grid.doctype][selectedRows[0]];
+    buttons.each((index, button) => {
+      const $button = $(button);
+      const buttonStatuses = $button.data('statuses');
+      console.log(buttonStatuses)
+      if (buttonStatuses) {
+        const statuses = buttonStatuses.split(',');
+        $button.toggle(statuses.includes(child.status));
+      } else {
+        $button.toggle(child.status === 'Started');
+      }
+    });
+  } else {
+    buttons.hide();
   }
 }

@@ -70,31 +70,11 @@ class DoctorExamination(Document):
 							'position': data['position'],
 							'location': data['location']
 						})
-		if self.dispatcher:
-			disp_doc = frappe.get_doc('Dispatcher', self.dispatcher)
-			for package in disp_doc.package:
-				is_internal = frappe.db.get_value('Questionnaire Template', package.item_name, 'internal_questionnaire')
-				template = frappe.db.get_value('Questionnaire Template', package.item_name, 'template_name')
-				if is_internal:
-					status = frappe.db.get_value(
-						'Questionnaire', 
-						{'patient_appointment': self.appointment, 'template': template},
-						'status')
-					name = frappe.db.get_value(
-						'Questionnaire', 
-						{'patient_appointment': self.appointment, 'template': template},
-						'name')
-					if status and name:
-						self.append('questionnaire', {
-							'template': template,
-							'is_completed': True if status == 'Completed' else False,
-							'questionnaire': name
-						})
-					else:
-						self.append('questionnaire', {
-							'template': template,
-							'is_completed': False
-						})
+		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
+		for package in pa_doc.custom_mcu_exam_items:
+			setup_questionnaire_table(self, package)
+		for package in pa_doc.custom_additional_mcu_items:
+			setup_questionnaire_table(self, package)
 
 	def on_submit(self):
 		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')
@@ -105,3 +85,27 @@ class DoctorExamination(Document):
 		old = self.get_doc_before_save()
 		if self.status == 'Checked In' and self.docstatus == 0 and old.status == 'Started':
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
+
+def setup_questionnaire_table(self, item):
+	is_internal = frappe.db.get_value('Questionnaire Template', item.item_name, 'internal_questionnaire')
+	template = frappe.db.get_value('Questionnaire Template', item.item_name, 'template_name')
+	if is_internal:
+		status = frappe.db.get_value(
+			'Questionnaire', 
+			{'patient_appointment': self.appointment, 'template': template},
+			'status')
+		name = frappe.db.get_value(
+			'Questionnaire', 
+			{'patient_appointment': self.appointment, 'template': template},
+			'name')
+		if status and name:
+			self.append('questionnaire', {
+				'template': template,
+				'is_completed': True if status == 'Completed' else False,
+				'questionnaire': name
+			})
+		else:
+			self.append('questionnaire', {
+				'template': template,
+				'is_completed': False
+			})

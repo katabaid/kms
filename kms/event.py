@@ -366,6 +366,7 @@ def update_questionnaire_status(doc):
   if getattr(doc.flags, "update_called", False):
     return
   doc.flags.update_called = True
+  print('=========================aaaaaaaaaaaaaa=============')
   doc.set("custom_completed_questionnaire", [])
   # Step 1: Check Questionnaire Template for matching appointment_type
   if doc.appointment_type:
@@ -433,9 +434,15 @@ def process_checkin(doc, method=None):
     if getattr(doc.flags, "skip_on_update", False):
       return
     doc.flags.skip_on_update = True
-    update_questionnaire_status(doc)
-    doc.appointment_time = frappe.utils.nowtime()
-    doc.save()
+    previous_doc = doc.get_doc_before_save()
+    if not previous_doc:
+      return
+    previous_row_count = len(previous_doc.custom_additional_mcu_items)
+    current_row_count = len(doc.custom_additional_mcu_items)
+    if current_row_count > previous_row_count:
+      update_questionnaire_status(doc)
+      doc.appointment_time = frappe.utils.nowtime()
+      doc.save()
     if str(doc.appointment_date) == frappe.utils.nowdate():
       if doc.custom_temporary_registration:
         frappe.db.set_value(
