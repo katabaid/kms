@@ -11,66 +11,17 @@ frappe.ui.form.on('Patient Encounter', {
     if (frm.is_new()) {
       frm.add_custom_button(
         __('Get from Queue'),
-        () => {
-          const d = new frappe.ui.form.MultiSelectDialog({
-            doctype: 'Queue Pooling',
-            target: frm,
-            setters: { patient: null, appointment: null },
-            get_query() {
-              return {
-                filters: {
-                  company: frm.doc.company,
-                  branch: frm.doc.custom_branch,
-                  department: frm.doc.medical_department,
-                  status: 'Queued'
-                }
-              };
-            },
-            action(selections) {
-              frappe.db.get_doc('Queue Pooling', selections[0]).then(doc => {
-                frm.doc.custom_queue_pooling = doc.name;
-                frm.doc.appointment = doc.appointment;
-                frm.doc.patient = doc.patient;
-                frm.doc.appointment_type = doc.appointment_type;
-                frm.doc.custom_vital_signs = doc.vital_sign;
-                frappe.db.get_doc('Vital Signs', doc.vital_sign).then(vital_sign => {
-                  const fields = {
-                    Temperature: vital_sign.temperature,
-                    Pulse: vital_sign.pulse,
-                    "Respiratory Rate": vital_sign.respiratory_rate,
-                    "Blood Pressure": vital_sign.bp,
-                    Height: vital_sign.height,
-                    Weight: vital_sign.weight,
-                    BMI: vital_sign.bmi,
-                    "Nutrition Note": vital_sign.nutrition_note
-                  };
-                
-                  // Build string only for fields with values
-                  frm.doc.custom_objective_information = Object.entries(fields)
-                    .filter(([_, value]) => value) // Keep only non-empty values
-                    .map(([key, value]) => `${key}: ${value}`) // Format as "Key: Value"
-                    .join('\n'); // Join with newlines                  
-                  refresh_field('custom_objective_information');
-                });
-                frappe.db.get_doc('Patient Appointment', doc.appointment).then(appointment => {
-                  frm.doc.patient_name = appointment.patient_name;
-                  frm.doc.patient_sex = appointment.patient_sex;
-                  frm.doc.patient_age = appointment.patient_age;
-                  refresh_field('patient_name');
-                  refresh_field('patient_sex');
-                  refresh_field('patient_age');
-                });
-                refresh_field('custom_queue_pooling');
-                refresh_field('appointment');
-                refresh_field('patient');
-                refresh_field('appointment_type');
-                refresh_field('custom_vital_signs');
-              });
-              d.dialog.hide();
-            }
-          });
-          return d;
-        }
+        () => { get_from_queue(frm);}
+      );
+    }
+    if (frm.doc.docstatus == 0) {
+      frm.remove_custom_button('Clinical Procedure', 'Create');
+      frm.remove_custom_button('Nursing Tasks', 'Create');
+      frm.remove_custom_button('Medical Record', 'Create');
+      frm.add_custom_button(
+        __('Clinical Procedure'),
+        () => { create_clinical_procedure(frm);},
+        'Create'
       );
     }
     frm.set_query("drug_code", "drug_prescription", () => {
@@ -828,3 +779,80 @@ const getMedicationFields = (suffix) => {
     `custom_additional_instruction_${suffix}`,
   ];
 };
+
+const get_from_queue = (frm) => {
+  const d = new frappe.ui.form.MultiSelectDialog({
+    doctype: 'Queue Pooling',
+    target: frm,
+    setters: { patient: null, appointment: null },
+    get_query() {
+      return {
+        filters: {
+          company: frm.doc.company,
+          branch: frm.doc.custom_branch,
+          department: frm.doc.medical_department,
+          status: 'Queued'
+        }
+      };
+    },
+    action(selections) {
+      frappe.db.get_doc('Queue Pooling', selections[0]).then(doc => {
+        frm.doc.custom_queue_pooling = doc.name;
+        frm.doc.appointment = doc.appointment;
+        frm.doc.patient = doc.patient;
+        frm.doc.appointment_type = doc.appointment_type;
+        frm.doc.custom_vital_signs = doc.vital_sign;
+        frappe.db.get_doc('Vital Signs', doc.vital_sign).then(vital_sign => {
+          const fields = {
+            Temperature: vital_sign.temperature,
+            Pulse: vital_sign.pulse,
+            "Respiratory Rate": vital_sign.respiratory_rate,
+            "Blood Pressure": vital_sign.bp,
+            Height: vital_sign.height,
+            Weight: vital_sign.weight,
+            BMI: vital_sign.bmi,
+            "Nutrition Note": vital_sign.nutrition_note
+          };
+        
+          // Build string only for fields with values
+          frm.doc.custom_objective_information = Object.entries(fields)
+            .filter(([_, value]) => value) // Keep only non-empty values
+            .map(([key, value]) => `${key}: ${value}`) // Format as "Key: Value"
+            .join('\n'); // Join with newlines                  
+          refresh_field('custom_objective_information');
+        });
+        frappe.db.get_doc('Patient Appointment', doc.appointment).then(appointment => {
+          frm.doc.patient_name = appointment.patient_name;
+          frm.doc.patient_sex = appointment.patient_sex;
+          frm.doc.patient_age = appointment.patient_age;
+          refresh_field('patient_name');
+          refresh_field('patient_sex');
+          refresh_field('patient_age');
+        });
+        refresh_field('custom_queue_pooling');
+        refresh_field('appointment');
+        refresh_field('patient');
+        refresh_field('appointment_type');
+        refresh_field('custom_vital_signs');
+      });
+      d.dialog.hide();
+    }
+  });
+  return d;
+}
+const create_clinical_procedure = (frm) => {
+  if (!frm.doc.patient) {
+    frappe.throw(__('Please select patient first.'))
+  };
+  frappe.route_options = {
+    'patient': frm.doc.patient,
+    'appointment': frm.doc.appointment,
+    'company': frm.doc.company,
+    'custom_branch': frm.doc.custom_branch,
+    'service_unit': frm.doc.custom_service_unit,
+    'medical_department': frm.doc.medical_department,
+    'practitioner': frm.doc.practitioner,
+    'custom_patient_encounter': frm.doc.name
+  };
+  frappe.new_doc('Clinical Procedure');
+}

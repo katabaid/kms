@@ -24,7 +24,7 @@ class NurseExamination(Document):
 								formula = calc.formula
 								for key, value in results_dict.items():
 									formula = formula.replace(f"{{{{{key}}}}}", str(value))
-									if not str(value) or str(value) == 'None':
+									if not str(value) or str(value) == 'None' or str(value) == '0':
 										is_try = False
 								if is_try:
 									try:

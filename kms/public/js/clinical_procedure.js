@@ -8,7 +8,6 @@ frappe.ui.form.on('Clinical Procedure', {
 					name: frm.doc.procedure_template
 				},
 				callback: function (data) {
-					frm.set_value('medical_department', data.message.medical_department);
 					frm.set_value('consume_stock', data.message.consume_stock);
 					frm.events.set_warehouse(frm);
 					frm.events.set_procedure_consumables(frm);
