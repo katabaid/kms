@@ -10,7 +10,7 @@ frappe.ui.form.on('Room Assignment', {
 			add_change_room_button (frm);
 		}
 		if (frm.is_new()) {
-			add_cancel_button(frm);
+			frm.set_df_property('section_break_jasf', 'hidden', 1);
 		}
 	},
 	setup(frm) {
@@ -18,7 +18,7 @@ frappe.ui.form.on('Room Assignment', {
 		frm.set_query('healthcare_service_unit', () => {
 			return { filters: 
 				[
-					[ 'is_group', '=', 0 ], 
+					['is_group', '=', 0], 
 					['custom_department', '=', medical_department],
 					['name', 'not in', get_already_assigned_rooms(frm)]
 				] 
@@ -32,6 +32,15 @@ frappe.ui.form.on('Room Assignment', {
 	},
 	after_save(frm){
 		window.location = '/app/healthcare';
+	},
+	mcu(frm) {
+		frm.set_df_property('section_break_jasf', 'hidden', 0);
+	},
+	outpatient(frm) {
+		if(frappe.user_roles.includes('HC Dokter Internal'))
+			frm.set_df_property('section_break_jasf', 'hidden', 0);
+		else
+			window.location = '/app/healthcare';
 	}
 });
 
@@ -82,12 +91,6 @@ function add_change_room_button(frm) {
 			},
 		});
 	});
-}
-
-function add_cancel_button(frm) {
-	frm.add_custom_button('Cancel', () => {
-		frappe.set_route('/app/healthcare');
-	})
 }
 
 function get_already_assigned_rooms(frm) {

@@ -98,8 +98,7 @@
   },
   {
    "fieldname": "section_break_jasf",
-   "fieldtype": "Section Break",
-   "hidden": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "outpatient",
@@ -112,7 +111,7 @@
   }
  ],
  "links": [],
- "modified": "2025-01-29 15:04:03.206220",
+ "modified": "2025-01-29 15:15:17.948024",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Room Assignment",
