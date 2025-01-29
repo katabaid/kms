@@ -7,14 +7,19 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "mcu",
+  "column_break_irhr",
+  "outpatient",
+  "section_break_jasf",
   "naming_series",
   "date",
   "healthcare_service_unit",
-  "user",
   "time_sign_in",
+  "column_break_zehi",
+  "user",
+  "healthcare_practitioner",
   "time_sign_out",
-  "assigned",
-  "healthcare_practitioner"
+  "assigned"
  ],
  "fields": [
   {
@@ -81,10 +86,33 @@
    "label": "Healthcare Practitioner",
    "options": "Healthcare Practitioner",
    "read_only": 1
+  },
+  {
+   "fieldname": "mcu",
+   "fieldtype": "Button",
+   "label": "MCU"
+  },
+  {
+   "fieldname": "column_break_irhr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jasf",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "outpatient",
+   "fieldtype": "Button",
+   "label": "Outpatient"
+  },
+  {
+   "fieldname": "column_break_zehi",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "modified": "2025-01-06 09:56:05.739312",
+ "modified": "2025-01-29 15:04:03.206220",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Room Assignment",

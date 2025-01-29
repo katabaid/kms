@@ -366,14 +366,14 @@ def update_questionnaire_status(doc):
   if getattr(doc.flags, "update_called", False):
     return
   doc.flags.update_called = True
-  print('=========================aaaaaaaaaaaaaa=============')
   doc.set("custom_completed_questionnaire", [])
   # Step 1: Check Questionnaire Template for matching appointment_type
   if doc.appointment_type:
     questionnaire_templates = frappe.get_all(
       "Questionnaire Template",
       filters={"appointment_type": doc.appointment_type, 'active': 1, 'internal_questionnaire': 0},
-      fields=["name", "template_name"]
+      fields=["name", "template_name"],
+      order_by='priority'
     )
     
     for questionnaire in questionnaire_templates:
