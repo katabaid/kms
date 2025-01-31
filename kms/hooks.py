@@ -10,9 +10,12 @@ app_license = "MIT"
 # Includes in <head>
 # ------------------
 
+website_content = {
+  'splash_image': '/assets/kms/images/logo.png',
+  'favicon': '/assets/kms/images/logo.png',
+}
 # include js, css files in header of desk.html
 app_include_css = "/assets/kms/css/kms.css"
-#app_include_js = "/assets/kms/js/kms.js"
 app_include_js = [
   "/assets/kms/js/controller/examination.js",
   "/assets/kms/js/common/listview.js",
