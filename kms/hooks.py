@@ -10,7 +10,7 @@ app_license = "MIT"
 # Includes in <head>
 # ------------------
 
-website_content = {
+website_context = {
   'splash_image': '/assets/kms/images/logo.png',
   'favicon': '/assets/kms/images/logo.png',
 }
