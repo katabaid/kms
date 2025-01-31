@@ -38,9 +38,9 @@ frappe.ui.form.on('Room Assignment', {
 	},
 	outpatient(frm) {
 		if(frappe.user_roles.includes('HC Dokter Internal'))
-			frm.set_df_property('section_break_jasf', 'hidden', 0);
-		else
 			window.location = '/app/healthcare';
+		else
+			frm.set_df_property('section_break_jasf', 'hidden', 0);
 	}
 });
 
