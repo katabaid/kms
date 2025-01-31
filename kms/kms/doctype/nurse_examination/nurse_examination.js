@@ -57,6 +57,10 @@ frappe.ui.form.on('Nurse Examination', {
 				frm.fields_dict.non_selective_result.grid.wrapper.find('.grid-row .row-index').hide();
 			})
 		}
+    frm.sidebar
+      .add_user_action(__('Exam Notes per Appointment'))
+      .attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.appointment}`)
+      .attr('target', '_blank');
 		if (frm.doc.questionnaire) {
 			frm.refresh_field('questionnaire');
 			$.each(frm.doc.questionnaire, (key, value) => {

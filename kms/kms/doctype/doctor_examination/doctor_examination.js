@@ -394,6 +394,10 @@ frappe.ui.form.on('Doctor Examination', {
 			})
 		}
     frm.sidebar
+      .add_user_action(__('Exam Notes per Appointment'))
+      .attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.appointment}`)
+      .attr('target', '_blank');
+    frm.sidebar
       .add_user_action(__('All Questionnaires'))
       .attr('href', `/app/questionnaire?patient_appointment=${frm.doc.appointment}`)
       .attr('target', '_blank');
@@ -406,7 +410,6 @@ frappe.ui.form.on('Doctor Examination', {
 				}
 			})
 		}
-
   },
 
   setup: function (frm) {

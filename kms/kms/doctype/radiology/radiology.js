@@ -10,6 +10,10 @@ frappe.ui.form.on('Radiology', {
   },
   refresh: function (frm) {
     radiologyController.refresh(frm);
+    frm.sidebar
+      .add_user_action(__('Exam Notes per Appointment'))
+      .attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.appointment}`)
+      .attr('target', '_blank');
     if(frm.doc.dispatcher && frm.doc.docstatus==0){
       frappe.call({
         method: 'kms.kms.doctype.dispatcher.dispatcher.is_meal_time',

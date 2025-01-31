@@ -46,6 +46,8 @@
   "remark",
   "amended_from",
   "appoinment_type",
+  "exam_note_section",
+  "exam_note",
   "pe_tab",
   "eyes_section",
   "eyes_check",
@@ -1593,13 +1595,23 @@
   {
    "fieldname": "column_break_tiqn",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exam_note_section",
+   "fieldtype": "Section Break",
+   "label": "Exam Note"
+  },
+  {
+   "fieldname": "exam_note",
+   "fieldtype": "Small Text",
+   "label": "Exam Note"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 16:52:52.249449",
+ "modified": "2025-01-31 18:52:56.565243",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

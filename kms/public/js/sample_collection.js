@@ -18,6 +18,10 @@ frappe.ui.form.on('Sample Collection', {
 		if(!frm.doc.custom_barcode_image){
 			generateBarcode(frm);
 		}
+    frm.sidebar
+      .add_user_action(__('Exam Notes per Appointment'))
+      .attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.custom_appointment}`)
+      .attr('target', '_blank');
 		if(frm.doc.custom_dispatcher && frm.doc.docstatus==0){
       frappe.call({
         method: 'kms.kms.doctype.dispatcher.dispatcher.is_meal_time',

@@ -42,7 +42,9 @@
   "remark_section",
   "remark",
   "amended_from",
-  "has_attachment"
+  "has_attachment",
+  "exam_note_section",
+  "exam_note"
  ],
  "fields": [
   {
@@ -286,13 +288,23 @@
    "hidden": 1,
    "label": "Has Attachment",
    "no_copy": 1
+  },
+  {
+   "fieldname": "exam_note_section",
+   "fieldtype": "Section Break",
+   "label": "Exam Note"
+  },
+  {
+   "fieldname": "exam_note",
+   "fieldtype": "Small Text",
+   "label": "Exam Note"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 22:36:41.405391",
+ "modified": "2025-01-31 18:53:41.376236",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",
