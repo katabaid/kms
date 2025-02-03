@@ -562,17 +562,18 @@ const updateQChildStatus = (frm, grid, newStatus) => {
   const child = locals[grid.doctype][selectedRows[0]];
   if (newStatus === 'Completed') {
     window.open(`http://localhost:5173/questionnaire?template=${child.template}&appointment_id=${frm.doc.appointment}`, '_blank');
+  } else {
+    frappe.call({
+      method: 'kms.kms.doctype.questionnaire.questionnaire.set_status',
+      freeze: true,
+      freeze_message: 'Getting Queue',
+      args: { name: child.questionnaire, status: newStatus },
+      callback: (r) => {
+        frm.reload_doc()
+      },
+      error: (err) => { console.log(err) }
+    })
   }
-  /* try {
-    console.log(child.doctype)
-    console.log(child.name)
-    console.log(newStatus)
-    frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
-    grid.refresh();
-    frm.save();
-  } catch (error) {
-    frappe.msgprint(__('Error updating status: {0}', [error.message]));
-  } */
 };
 
 const setupQRowSelector = (grid) => {
