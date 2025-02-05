@@ -1367,7 +1367,7 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 		doc = frappe.get_doc('Dispatcher', dispatcher_id)
 		room_count = 0
 		final_count = 0
-		final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished']
+		final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing']
 		target = ''
 		related_rooms = get_related_rooms (hsu, dispatcher_id)
 		if doctype == 'Sample Collection':

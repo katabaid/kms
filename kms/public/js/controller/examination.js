@@ -292,6 +292,11 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       await updateParentStatus(frm);
       await frm.save();
       updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
+      if (newStatus === 'Finished') {
+        if (!checkQuestionnaire(frm)) {
+          frappe.throw('Questionnaire must be approved to continue.')
+        };
+      };
       if (utilsLoaded && kms.utils) {
         kms.utils.show_alert(`Updated status to ${newStatus} Successfully.`, newStatus === 'Refused' ? 'red' : 'green');
       }
@@ -395,6 +400,13 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         },
       });
     }
+  }
+
+  function checkQuestionnaire(frm) {
+    if(!frm.fields_dict.questionnaire) {
+      return true
+    }
+    return frm.doc.questionnaire.every(row => row.status === 'Approved')
   }
 
   function checkRoomAssignment(frm) {         
