@@ -540,15 +540,26 @@ const apply_cell_styling = (frm, row) => {
 const handleQuestionnaire = (frm) => {
   const grid = frm.fields_dict['questionnaire'].grid;
   const buttons = [
-    {label: 'Create', class: 'btn-primary', statuses: 'Started', status: 'Completed'},
-    {label: 'Approve', class: 'btn-info', statuses: 'Completed,Pending', status: 'Approved'},
-    {label: 'Reject', class: 'btn-danger', statuses: 'Completed,Pending', status: 'Rejected'},
-    {label: 'Pending', class: 'btn-warning', statuses: 'Completed', status: 'Pending'},
+    {label: 'Create', class: 'btn-primary', statuses: 'Started', status: 'Completed', prompt: false},
+    {label: 'Approve', class: 'btn-info', statuses: 'Completed,Pending', status: 'Approved', prompt: false},
+    {label: 'Reject', class: 'btn-danger', statuses: 'Completed,Pending', status: 'Rejected', prompt: true},
+    {label: 'Pending', class: 'btn-warning', statuses: 'Completed', status: 'Pending', prompt: false},
   ];
   grid.wrapper.find('.grid-footer').find('.btn-custom').hide();
   buttons.forEach(button=>{
     const customButton = grid.add_custom_button(__(button.label), function() {
-      updateQChildStatus(frm, grid, button.status);
+      if (button.prompt){
+        frappe.prompt({
+          fieldname: 'reason',
+          label: 'Reason',
+          fieldtype: 'Small Text',
+          reqd: 1
+        }, (values) => {
+          updateQChildStatus(frm, grid, button.status, values.reason);
+        }, __('Provide a Reason'), __('Submit'))
+      } else {
+        updateQChildStatus(frm, grid, button.status, null);
+      }
     }, 'btn-custom');
     customButton.removeClass("btn-default btn-secondary").addClass(`${button.class} btn-sm`).attr('data-statuses', button.statuses);
     customButton.hide();
@@ -556,7 +567,7 @@ const handleQuestionnaire = (frm) => {
   setupQRowSelector(grid);
 }
 
-const updateQChildStatus = (frm, grid, newStatus) => {
+const updateQChildStatus = (frm, grid, newStatus, reason) => {
   const selectedRows = grid.get_selected();
   if (selectedRows.length !== 1) return;
   const child = locals[grid.doctype][selectedRows[0]];
@@ -567,7 +578,13 @@ const updateQChildStatus = (frm, grid, newStatus) => {
       method: 'kms.kms.doctype.questionnaire.questionnaire.set_status',
       freeze: true,
       freeze_message: 'Getting Queue',
-      args: { name: child.questionnaire, status: newStatus },
+      args: { 
+        name: child.questionnaire, 
+        status: newStatus,
+        doctype: frm.doctype,
+        docname: frm.doc.name,
+        reason: reason
+       },
       callback: (r) => {
         frm.reload_doc()
       },

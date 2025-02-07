@@ -9,7 +9,8 @@
   "healthcare_service_unit",
   "status",
   "reference_doctype",
-  "reference_doc"
+  "reference_doc",
+  "notes"
  ],
  "fields": [
   {
@@ -45,12 +46,18 @@
    "label": "Reference Doc",
    "options": "reference_doctype",
    "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes from Room",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-02-04 18:37:37.880620",
+ "modified": "2025-02-07 15:01:05.114490",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher Room",

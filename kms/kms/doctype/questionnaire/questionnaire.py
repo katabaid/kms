@@ -99,11 +99,33 @@ class Questionnaire(Document):
 				for su in disp.assignment_table:
 					if(su.healthcare_service_unit in service_unit):
 						if(su.status in ['Wait for Room Assignment', 'Rescheduled']):
-							su.status = 'Uneligible for Test'
+							su.status = 'Ineligible for Testing'
 				disp.save(ignore_permissions=True)
 
 @frappe.whitelist()
-def set_status(name, status):
+def set_status(name, status, doctype, docname, reason):
+	print(f'------111---------')
 	q = frappe.get_doc('Questionnaire', name)
 	q.status = status
 	q.save(ignore_permissions=True)
+	d = frappe.db.get_all('Dispatcher', filters={'patient_appointment': q.patient_appointment}, pluck='name')
+	if d:
+		print(f'------222---------')
+		branch = frappe.db.get_value('Patient Appointment', q.patient_appointment, 'custom_branch')
+		item = frappe.db.get_value('Questionnaire Template', q.template, 'item_code')
+		item_doc = frappe.get_doc('Item', item)
+		service_unit = []
+		for room in item_doc.custom_room:
+			if room.branch == branch:
+				service_unit.append(room.service_unit)
+		if service_unit:
+			disp = frappe.get_doc('Dispatcher', d[0])
+			for su in disp.assignment_table:
+				if(su.healthcare_service_unit in service_unit):
+					if su.notes:
+						print(f'------333---------')
+						su.notes = su.notes + '\n' + f'{doctype} {docname}: {reason}'
+					else:
+						print(f'------444---------')
+						su.notes = f'{doctype} {docname}: {reason}'
+			disp.save(ignore_permissions=True)

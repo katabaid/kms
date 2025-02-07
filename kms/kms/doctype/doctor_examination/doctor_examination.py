@@ -101,11 +101,11 @@ def setup_questionnaire_table(self, item):
 		if status and name:
 			self.append('questionnaire', {
 				'template': template,
-				'is_completed': True if status == 'Completed' else False,
+				'status': status,
 				'questionnaire': name
 			})
 		else:
 			self.append('questionnaire', {
 				'template': template,
-				'is_completed': False
+				'status': 'Started'
 			})
