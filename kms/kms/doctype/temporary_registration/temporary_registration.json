@@ -23,6 +23,7 @@
   "patient",
   "type",
   "status",
+  "appointment_type",
   "column_break_g58l2",
   "exam_date",
   "patient_full_name",
@@ -179,13 +180,19 @@
    "fieldname": "remark",
    "fieldtype": "Small Text",
    "label": "Remark"
+  },
+  {
+   "fieldname": "appointment_type",
+   "fieldtype": "Link",
+   "label": "Appointment Type",
+   "options": "Appointment Type"
   }
  ],
  "hide_toolbar": 1,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-10 17:11:45.422100",
+ "modified": "2025-02-09 21:02:32.018265",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",

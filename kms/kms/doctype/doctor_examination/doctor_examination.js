@@ -300,26 +300,37 @@ const prepareOtherDentalOptions = (frm) => {
 
 const addSidebarUserAction = (frm) => {
   frm.add_custom_button(
+    __('Exam Notes'),
+    () => {
+      window.open(`/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.appointment}`, '_blank');
+    },
+    __('Reports')
+  ),
+  frm.add_custom_button(
+    __('Questionnaires'),
+    () => {
+      window.open(`/app/questionnaire?patient_appointment=${frm.doc.appointment}`, '_blank');
+    },
+    __('Reports')
+  ),
+  frm.add_custom_button(
     __('Patient Result'),
     () => {
-      frappe.route_options = { exam_id: frm.doc.appointment };
-      frappe.set_route('query-report', 'Result per Appointment');
+      window.open(`/app/query-report/Result per Appointment?exam_id=${frm.doc.appointment}`, '_blank');
     },
     __('Reports')
   ),
   frm.add_custom_button(
     __('Vital Sign'),
     () => {
-      frappe.route_options = { exam_id: frm.doc.appointment };
-      frappe.set_route('query-report', 'Vital SIgn and Anthropometry');
+      window.open(`/app/query-report/Vital SIgn and Anthropometry?exam_id=${frm.doc.appointment}`, '_blank');
     },
     __('Reports')
   ),
   frm.add_custom_button(
     __('History'),
     () => {
-      frappe.route_options = { exam_id: frm.doc.appointment, room: frm.doc.service_unit };
-      frappe.set_route('query-report', 'Doctor Examination History');
+      window.open(`/app/query-report/Doctor Examination History?exam_id=${frm.doc.appointment}&room=${frm.doc.service_unit}`, '_blank');
     },
     __('Reports')
   )
@@ -391,23 +402,6 @@ frappe.ui.form.on('Doctor Examination', {
 			frm.refresh_field('non_selective_result');
 			frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
 				apply_cell_styling (frm, row.doc);
-			})
-		}
-    frm.sidebar
-      .add_user_action(__('Exam Notes per Appointment'))
-      .attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.appointment}`)
-      .attr('target', '_blank');
-    frm.sidebar
-      .add_user_action(__('All Questionnaires'))
-      .attr('href', `/app/questionnaire?patient_appointment=${frm.doc.appointment}`)
-      .attr('target', '_blank');
-    if (frm.doc.questionnaire) {
-			frm.refresh_field('questionnaire');
-			$.each(frm.doc.questionnaire, (key, value) => {
-				if (!value.is_completed) {
-					const link = `https://kmsregis.netlify.app/questionnaire?template=${value.template}&appointment_id=${frm.doc.appointment}`;
-					frm.sidebar.add_user_action(__(value.template)).attr('href', link).attr('target', '_blank');
-				}
 			})
 		}
   },

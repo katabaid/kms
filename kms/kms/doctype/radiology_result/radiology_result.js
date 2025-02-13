@@ -2,31 +2,17 @@ frappe.ui.form.on('Radiology Result', {
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Radiology Result');
   },
-	refresh: function (frm) {
+	refresh: function(frm) {
 		frappe.require('assets/kms/js/controller/result.js', function() {
 			if (typeof kms.assign_result_dialog_setup === 'function') {
 				kms.assign_result_dialog_setup(frm);
 			}
 		});
-		hideStandardButtonOnChildTable(frm, childTables)
-	},
-	setup: function (frm) {
-		if(frm.doc.docstatus === 0){
-			if (frm.doc.result) {
-				frm.refresh_field('result');
-				$.each(frm.doc.result, (key, value) => {
-					frappe.meta.get_docfield('Radiology Results', 'result_check', value.name).options = value.result_options;
-					frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).read_only = (value.result_check === value.normal_value) ? 1 : 0;
-					frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).reqd = (value.result_check === value.mandatory_value) ? 1 : 0;
-					if (value.is_finished) {
-						frappe.meta.get_docfield('Radiology Results', 'result_check', value.name).read_only = 1;
-						frappe.meta.get_docfield('Radiology Results', 'result_check', value.name).reqd = 0;
-						frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).read_only = 1;
-						frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).reqd = 0;
-					}
-				});
-			}
-    }
+		hideStandardButtonOnChildTable(frm, childTables);
+		if (frm.doc.result&&frm.doc.docstatus === 0) {
+			setTimeout(()=>{updateOptions(frm)}, 500);
+			frm.refresh_field('result');
+		}
 	}
 });
 
@@ -55,3 +41,55 @@ const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 		});
 	});
 };
+
+const updateOptions = (frm) => {
+	frm.fields_dict.result.grid.grid_rows.forEach(row => {
+		//frappe.meta.get_docfield('Radiology Results', 'result_text', row.doc.name).read_only = (row.doc.result_check === row.doc.normal_value) ? 1 : 0;
+    //frappe.meta.get_docfield('Radiology Results', 'result_text', row.doc.name).reqd = (row.doc.result_check === row.doc.mandatory_value) ? 1 : 0;
+		row.toggle_reqd('result_text', row.doc.result_check === row.doc.mandatory_value)
+		row.toggle_editable('result_text', row.doc.result_check !== row.doc.normal_value)
+		row.refresh();
+
+		const $cell = $(row.row).find('[data-fieldname="result_check"]');
+		if (!$cell.find('select').length) {  // Only add if select doesn't exist
+			const rowDoc = locals[row.doc.doctype][row.doc.name];
+			const options = (rowDoc.result_options || '').split('\n').filter(o => o.trim());
+			
+			// Create select element
+			const $select = $('<select>')
+				.addClass('form-control')
+				.css('height', '28px')
+				.css('padding', '2px');
+					
+			// Add options
+			options.forEach(opt => {
+				$select.append($('<option>')
+					.val(opt)
+					.text(opt)
+					.prop('selected', rowDoc.result_check === opt)
+				);
+			});
+			
+			// Handle change event
+			$select.on('change', function() {
+				const value = $(this).val();
+				frappe.model.set_value(row.doc.doctype, row.doc.name, 'result_check', value);
+				let grid_row = frm.fields_dict["result"].grid.get_row(row.doc.name);
+
+				// Set read_only and reqd dynamically for this row only
+				let is_read_only = (value === rowDoc.normal_value) ? 1 : 0;
+				let is_required = (value === rowDoc.mandatory_value) ? 1 : 0;
+
+				grid_row.get_field("result_text").df.read_only = is_read_only;
+				grid_row.get_field("result_text").df.reqd = is_required;
+				
+				// Refresh the field for changes to take effect
+				grid_row.refresh();
+			});
+			
+			// Replace cell content with select
+			$cell.html($select);
+			row.refresh();
+		}
+	});
+}

@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import now
 
 class Questionnaire(Document):
 	def after_insert(self):
@@ -124,8 +125,8 @@ def set_status(name, status, doctype, docname, reason):
 				if(su.healthcare_service_unit in service_unit):
 					if su.notes:
 						print(f'------333---------')
-						su.notes = su.notes + '\n' + f'{doctype} {docname}: {reason}'
+						su.notes = su.notes + '\n' + f'<{now()}>{doctype} {docname}: {reason}'
 					else:
 						print(f'------444---------')
-						su.notes = f'{doctype} {docname}: {reason}'
+						su.notes = f'<{now()}>{doctype} {docname}: {reason}'
 			disp.save(ignore_permissions=True)
