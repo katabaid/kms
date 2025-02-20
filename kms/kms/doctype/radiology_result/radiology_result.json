@@ -41,6 +41,7 @@
   "items",
   "remark_section",
   "remark",
+  "conclusion",
   "amended_from",
   "has_attachment"
  ],
@@ -187,6 +188,7 @@
   {
    "fieldname": "consumables_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Consumables"
   },
   {
@@ -272,13 +274,19 @@
    "hidden": 1,
    "label": "Has Attachment",
    "no_copy": 1
+  },
+  {
+   "fieldname": "conclusion",
+   "fieldtype": "Table",
+   "label": "Conclusion",
+   "options": "Radiology Conclusion Table"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 22:36:21.363214",
+ "modified": "2025-02-18 14:32:25.054126",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",

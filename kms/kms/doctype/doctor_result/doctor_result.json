@@ -261,6 +261,7 @@
    "options": "Doctor Result Other Exam"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "group_exam",
    "fieldtype": "Table",
    "hidden": 1,
@@ -312,7 +313,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-11 16:59:20.114243",
+ "modified": "2025-02-19 21:46:33.061769",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

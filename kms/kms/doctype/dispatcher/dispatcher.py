@@ -254,7 +254,7 @@ def process_nurse_category(doc, group, item):
 					grade = bmi['grade']
 					grade_description = frappe.db.get_value(
 						'MCU Grade',
-						f"{group['item_group']}.{item['examination_item']}.BMI{bmi['name']}",
+						f"{group['item_group']}.{item['examination_item']}.BMI-{bmi['grade']}{bmi['name']}",
 						'description'
 					)
 					category = frappe.db.get_value(

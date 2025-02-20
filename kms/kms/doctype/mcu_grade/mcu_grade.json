@@ -17,6 +17,7 @@
   "max_value",
   "increase_decrease",
   "grade",
+  "grade_on_report",
   "section_break_flsmf",
   "description",
   "description_id",
@@ -112,11 +113,16 @@
    "fieldname": "description_jp",
    "fieldtype": "Small Text",
    "label": "Description JP"
+  },
+  {
+   "fieldname": "grade_on_report",
+   "fieldtype": "Data",
+   "label": "Grade on Report"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-02 14:42:46.879760",
+ "modified": "2025-02-18 13:33:09.911102",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Grade",

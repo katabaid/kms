@@ -37,6 +37,71 @@ frappe.ui.form.on('Temporary Registration', {
 			frm.add_custom_button(
 				'Create from Existing Patient',
 				() => {
+					let d = new frappe.ui.Dialog({
+						title: 'Select a Patient',
+						fields:[
+							{
+								label: 'Patient',
+								fieldname: 'patient',
+								fieldtype: 'Link',
+								options: 'Patient',
+								reqd: 1
+							},
+							{
+								label: 'Name',
+								fieldname: 'name',
+								fieldtype: 'Data',
+								read_only: 1
+							},
+							{
+								label: 'Date of Birth',
+								fieldname: 'dob',
+								fieldtype: 'Date',
+								read_only: 1
+							},
+							{
+								label: 'Gender',
+								fieldname: 'gender',
+								fieldtype: 'Data',
+								read_only: 1
+							},
+							{
+								label: 'ID',
+								fieldname: 'id',
+								fieldtype: 'Data',
+								read_only: 1
+							},
+							{
+								label: 'Company',
+								fieldname: 'company',
+								fieldtype: 'Data',
+								read_only: 1
+							},
+						],
+						primary_action_label: 'Pick',
+						primary_action(values) {
+							frm.set_value('patient', values.patient)
+							d.hide();
+							frm.refresh_field('patient');	
+						}
+					});
+					d.fields_dict.patient.df.onchange = function() {
+						const patient_id = d.get_value('patient');
+						if(patient_id){
+							frappe.db
+							.get_value('Patient', patient_id, ['patient_name', 'sex', 'uid', 'dob', 'custom_company'])
+							.then(r=>{
+								if(r.message) {
+									d.set_value('name', r.message.patient_name||'');
+									d.set_value('gender', r.message.sex||'');
+									d.set_value('id', r.message.uid||'');
+									d.set_value('dob', r.message.dob||'');
+									d.set_value('company', r.message.custom_company||'');
+								}
+							})
+						}
+					};
+					d.show();
 				},
 				'Process'
 			);
@@ -46,7 +111,7 @@ frappe.ui.form.on('Temporary Registration', {
 					'Create Appointment',
 					() => {
 						if (frm.doc.patient) {
-							frappe.new_doc('Patient Appointment', {appointment_type: frm.doc.questionnaire_type === 'Outpatient' ? 'Dokter Consultation (GP)' : frm.doc.questionnaire_type},
+							frappe.new_doc('Patient Appointment', {appointment_type: frm.doc.questionnaire_type === 'Outpatient' ? 'Dokter Consultation (GP)' : frm.doc.appointment_type},
 								doc => {
 									doc.custom_priority= frm.doc.questionnaire_type === 'MCU' ? '4. MCU' : '3. Outpatient'
 									doc.appointment_for= frm.doc.questionnaire_type === 'MCU' ? 'MCU' : 'Department'

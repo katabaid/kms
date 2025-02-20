@@ -479,7 +479,171 @@ frappe.ui.form.on('Doctor Examination', {
 			row._original_result_value = row.result_value;
 		})
     frm._show_dialog_on_change = false;
-	}
+	},
+  eyes_check: function(frm){
+    if(frm.doc.eyes_check){
+      frm.set_value('left_anemic', 0);
+      frm.set_value('left_icteric', 0);
+      frm.set_value('el_others', 0);
+      frm.set_value('right_anemic', 0);
+      frm.set_value('right_icteric', 0);
+      frm.set_value('er_others', 0);
+      frm.set_value('eyes_left_others', '');
+      frm.set_value('eyes_right_others', '');
+    }
+  },
+  ear_check: function(frm){
+    if(frm.doc.ear_check){
+      frm.set_value('left_cerumen', 0);
+      frm.set_value('left_cerumen_prop', 0);
+      frm.set_value('left_tympanic', 0);
+      frm.set_value('earl_others', 0);
+      frm.set_value('right_cerumen', 0);
+      frm.set_value('right_cerumen_prop', 0);
+      frm.set_value('right_tympanic', 0);
+      frm.set_value('earr_others', 0);
+      frm.set_value('ear_left_others', '');
+      frm.set_value('ear_right_others', '');  
+    }
+  },
+  nose_check: function(frm){
+    if(frm.doc.nose_check){
+      frm.set_value('deviated', 0);
+      frm.set_value('left_enlarged', 0);
+      frm.set_value('left_hyperemic', 0);
+      frm.set_value('left_polyp', 0);
+      frm.set_value('nl_others', 0);
+      frm.set_value('right_enlarged', 0);
+      frm.set_value('right_hyperemic', 0);
+      frm.set_value('right_polyp', 0);
+      frm.set_value('nr_others', 0);
+      frm.set_value('nose_left_others', '');
+      frm.set_value('nose_right_others', '');
+    }
+  },
+  throat_check: function(frm){
+    if(frm.doc.throat_check){
+      frm.set_value('enlarged_tonsil', 0);
+      frm.set_value('hyperemic_pharynx', 0);
+      frm.set_value('t_others', 0);
+      frm.set_value('throat_others', '');  
+    }
+  },
+  neck_check: function(frm){
+    if(frm.doc.neck_check){
+      frm.set_value('enlarged_thyroid', 0);
+      frm.set_value('enlarged_lymph_node', 0);
+      frm.set_value('enlarged_thyroid', 0);
+      frm.set_value('enlarged_thyroid_details', '');
+      frm.set_value('enlarged_lymph_node_details', '');
+      frm.set_value('neck_others', '');  
+    }
+  },
+  cardiac_check: function(frm) {
+    if(frm.doc.cardiac_check){
+      frm.set_value('regular_heart_sound', 0);
+      frm.set_value('murmur', 0);
+      frm.set_value('gallop', 0);
+      frm.set_value('c_others', 0);
+      frm.set_value('others', '');  
+    }
+  },
+  breast_check: function(frm){
+    if(frm.doc.breast_check){
+      frm.set_value('left_enlarged_breast', 0);
+      frm.set_value('left_lumps', 0);
+      frm.set_value('bl_others', 0);
+      frm.set_value('right_enlarged_breast', 0);
+      frm.set_value('right_lumps', 0);
+      frm.set_value('br_others', 0);
+      frm.set_value('breast_left_others', '');
+      frm.set_value('breast_right_others', '');
+    }
+  },
+  resp_check: function(frm){
+    if(frm.doc.resp_check){
+      frm.set_value('left_ronkhi', 0);
+      frm.set_value('left_wheezing', 0);
+      frm.set_value('r_others', 0);
+      frm.set_value('right_ronkhi', 0);
+      frm.set_value('right_wheezing', 0);
+      frm.set_value('rr_others', 0);
+      frm.set_value('resp_left_others', '');
+      frm.set_value('resp_right_others', '');
+    }
+  },
+  abd_check: function(frm){
+    if(frm.doc.abd_check){
+      frm.set_value('tenderness', 0);
+      frm.set_value('hepatomegaly', 0);
+      frm.set_value('splenomegaly', 0);
+      frm.set_value('increased_bowel_sounds', 0);
+      frm.set_value('a_others', 0);
+      frm.set_value('abd_tender_details', '');
+      frm.set_value('abd_others', '');
+    }
+  },
+  spine_check: function(frm){
+    if(frm.doc.spine_check){
+      frm.set_value('spine_details', '');    
+    }
+  },
+  genit_check: function(frm){
+    if(frm.doc.genit_check){
+      frm.set_value('hernia', 0);
+      frm.set_value('hemorrhoid', 0);
+      frm.set_value('inguinal_nodes', 0);
+      frm.set_value('g_others', 0);
+      frm.set_value('hernia_details', '');
+      frm.set_value('genit_others', '');
+    }
+  },
+  neuro_check: function(frm){
+    if(frm.doc.neuro_check){
+      frm.set_value('motoric_system_abnormality', 0);
+      frm.set_value('motoric_details', '');
+      frm.set_value('sensory_system_abnormality', 0);
+      frm.set_value('sensory_details', '');
+      frm.set_value('reflexes_abnormality', 0);
+      frm.set_value('reflex_details', '');
+      frm.set_value('ne_others', 0);
+      frm.set_value('neuro_others', '');
+    }
+  },
+  skin_check: function(frm){
+    if(frm.doc.skin_check){
+      frm.set_value('skin_psoriasis', 0);
+      frm.set_value('skin_tattoo', 0);
+      frm.set_value('skin_tag', 0);
+      frm.set_value('sk_others', 0);
+      frm.set_value('motoric_details', '');
+    }
+  },
+  visual_check: function(frm){
+    if(frm.doc.visual_check){
+      frm.set_value('visual_details', '');
+    }
+  },
+  romberg_check: function(frm){
+    if(frm.doc.romberg_check){
+      frm.set_value('romberg_abnormal','');
+      frm.set_value('romberg_others','');
+    }
+  },
+  tinnel_check: function(frm){
+    if(frm.doc.tinnel_check){
+      frm.set_value('tinnel_details', '');
+    }
+  },
+  rectal_check: function(frm){
+    if(frm.doc.rectal_check){
+      frm.set_value('re_others', 0);
+      frm.set_value('enlarged_prostate', 0);
+      frm.set_value('rectal_hemorrhoid', '');
+      frm.set_value('rectal_hemorrhoid', '');
+      frm.set_value('rectal_others', '');
+    }
+  }
 });
 
 frappe.ui.form.on('Doctor Examination Selective Result',{

@@ -8,9 +8,9 @@ class DoctorResult(Document):
 	def before_submit(self):
 		if not self.validate_before_submit():
 			frappe.throw('All results must be submitted, and all gradable must be graded.')
+		self.process_auto_grading()
 		self.process_physical_exam()
-		self.process_other_exam()
-		self.process_group_exam()
+		self.process_other_exam()		
 	
 # Server Script: before_submit for DoctorResult
 	def validate_before_submit(self):
@@ -39,6 +39,13 @@ class DoctorResult(Document):
 			validate_child_table(self.get(table)) for table in child_tables if self.get(table)
 		)
 
+	def on_update_after_submit(self):
+		self.process_group_exam()
+
+	def process_auto_grading(self):
+		self._process_item_grade()
+		self._process_group_grade()
+
 	def process_physical_exam(self):
 		self._process_nurse_grade()
 		self._process_doctor_grade()
@@ -63,7 +70,10 @@ class DoctorResult(Document):
 							bundle_position = frappe.get_value(
 								'Item', row.hidden_item, 'custom_bundle_position')
 							current_results.append({
-								'examination': row.examination,
+								'examination': (
+									row.hidden_item_group if not row.hidden_item and row.hidden_item_group else 
+									row.hidden_item if row.hidden_item and row.hidden_item_group and row.is_item else 
+									row.examination),
 								'result': row.result,
 								'bundle_position': bundle_position if bundle_position else 9999,
 								'idx': counter,
@@ -79,12 +89,11 @@ class DoctorResult(Document):
 						bundle_position = frappe.get_value(
 							'Item Group', row.hidden_item_group, 'custom_bundle_position')
 						current_results.append({
-							'examination': row.examination,
+							'examination': row.hidden_item_group,
 							'bundle_position': bundle_position if bundle_position else 9999,
 							'idx': counter,
 							'header': 'Group'
 						})
-
 				except Exception as e:
 					frappe.log_error(f"Error processing {table} row: {e}")
 		
@@ -138,9 +147,10 @@ class DoctorResult(Document):
 						counter += 1
 						bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
 						grade = frappe.get_value('MCU Grade', row.grade, 'grade')
+						grade_on_report = frappe.get_value('MCU Grade', row.grade, 'grade_on_report')
 						current_results.append({
-							'contents': row.examination,
-							'result': grade,
+							'contents': row.hidden_item_group,
+							'result': grade if not grade_on_report else grade_on_report,
 							'bundle_position': bundle_position if bundle_position else 9999,
 							'idx': counter,
 						})
@@ -180,6 +190,7 @@ class DoctorResult(Document):
 				'previous_result': previous_data.get(result['contents'], '') if result['result'] else None,
 				'last_result': last_data.get(result['contents'], '') if result['result'] else None,
 			})
+
 	def _process_nurse_grade(self):
 		counter = 0
 		for nurse_grade in self.nurse_grade:
@@ -203,6 +214,18 @@ class DoctorResult(Document):
 					'item_input': doctor_grade.examination,
 					'result': doctor_grade.result,
 				})
+
+	def _process_item_grade(self):
+		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
+		for table in grade_tables:
+			for row in getattr(self, table, []):
+				pass
+
+	def _process_group_grade(self):
+		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
+		for table in grade_tables:
+			for row in getattr(self, table, []):
+				pass
 
 def format_floats_and_combine(a, b):
 	def safe_float(value):
