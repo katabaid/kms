@@ -784,7 +784,6 @@ const updateQCustomButtonVisibility = (grid) => {
     buttons.each((index, button) => {
       const $button = $(button);
       const buttonStatuses = $button.data('statuses');
-      console.log(buttonStatuses)
       if (buttonStatuses) {
         const statuses = buttonStatuses.split(',');
         $button.toggle(statuses.includes(child.status));

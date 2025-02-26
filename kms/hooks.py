@@ -21,6 +21,7 @@ app_include_js = [
   "/assets/kms/js/common/listview.js",
   "/assets/kms/js/common/redirect_after_boot.js",
   "/assets/kms/js/common/clear_local_storage.js",
+  "/assets/kms/node_modules/qrcodejs/qrcode.min.js",
 ]
 
 # include js, css files in header of web template

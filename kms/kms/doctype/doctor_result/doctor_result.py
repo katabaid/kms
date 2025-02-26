@@ -82,7 +82,9 @@ class DoctorResult(Document):
 								'header': (
 									'Group' if not row.hidden_item and row.hidden_item_group else 
 									'Item' if row.hidden_item and row.hidden_item_group and row.is_item else 
-									None)
+									None),
+								'item_group': row.hidden_item_group,
+								'item': row.hidden_item
 							})
 					else:
 						counter += 1
@@ -124,7 +126,16 @@ class DoctorResult(Document):
 				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
 				last_data = {d.content: d.result for d in last_doc.other_examination}
 
+		row_index = 0
+
 		for result in sorted_results:
+			row_index += 1
+			if row_index>1 and (row_index-1)%15 == 0:
+				if result.get('header') is None:
+					self.append('other_examination', {
+						'content': result.get('item'),
+						'header': 'Item'
+					})
 			self.append('other_examination', {
 				'content': result.get('examination'),
 				'result': result.get('result'),

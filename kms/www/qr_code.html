@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan to Continue</title>
+    <script src="/qr_code.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #qrcode {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>QR Code Generator</h2>
+    <div id="qrcode"></div>
+    <img/>
+
+    <script type="module">
+        // Function to get query parameters
+        function getQueryParam(param) {
+            let urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Retrieve data from query parameter
+        let data = getQueryParam("data") || "https://default-url.com";
+
+        // Generate the QR code
+        import QrCode from 'https://danielgjackson.github.io/qrcodejs/qrcode.mjs';
+        const matrix = QrCode.generate(data);
+        const uri = QrCode.render('svg-uri', matrix);
+        document.querySelector("img").src = uri;
+    </script>
+</body>
+</html>

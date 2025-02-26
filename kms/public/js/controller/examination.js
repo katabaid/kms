@@ -406,8 +406,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     if(!frm.fields_dict.questionnaire) {
       return true
     }
-    console.log(template)
-    console.log(frm.doc.questionnaire.filter(row=>row.template==template))
     return frm.doc.questionnaire.filter(row=>row.template==template).every(row => row.status === 'Approved')
   }
 

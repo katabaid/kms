@@ -456,17 +456,14 @@ def process_checkin(doc, method=None):
       if dispatcher_user and doc.appointment_type == 'MCU':
         exist_docname = frappe.db.get_value(
           'Dispatcher', {'patient_appointment': doc.name}, ['name'])
-        print('ABBBBBBBAAAAAAAAAAAAAAAAAAAAABBBBBBB')
         if exist_docname: 
           disp_doc = frappe.get_doc('Dispatcher', exist_docname)
           if disp_doc.status == 'Finished':
             disp_doc.status = 'In Queue'
           existing_items = {item.examination_item for item in disp_doc.package}
-          print('AAAAAAAAAAAAAAAAAAAAAABBBBBBB')
           for entry in doc.custom_additional_mcu_items:
             if entry.examination_item not in existing_items:
               new_entry = entry.as_dict()
-              print('AAAAAAAAAAAAAAAAAAAAAA')
               new_entry.name = None
               disp_doc.append('package', new_entry)
               rooms = frappe.get_all(

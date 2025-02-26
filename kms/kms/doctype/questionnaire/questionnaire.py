@@ -32,16 +32,10 @@ class Questionnaire(Document):
 			pa_doc.append('custom_questionnaire_detail', detail_dict)
 		for pa_q in pa_doc.custom_completed_questionnaire:
 			if pa_q.template == self.template:
-				print(f"Match found for template: {self.template}")
 				pa_q.questionnaire = self.name
 				pa_q.status = 'Completed'
-				print(f"Updated questionnaire: {pa_q.questionnaire}, status: {pa_q.status}")
-		#pa_doc.save(ignore_permissions=True)
-		print(f"Before save: {pa_doc.as_dict()}")
 		try:
 			pa_doc.save(ignore_permissions=True)
-			print("Patient Appointment saved successfully.")
-			print(f"After save: {pa_doc.as_dict()}")
 		except Exception as e:
 			print(f"Error saving Patient Appointment: {e}")
 
@@ -105,13 +99,11 @@ class Questionnaire(Document):
 
 @frappe.whitelist()
 def set_status(name, status, doctype, docname, reason):
-	print(f'------111---------')
 	q = frappe.get_doc('Questionnaire', name)
 	q.status = status
 	q.save(ignore_permissions=True)
 	d = frappe.db.get_all('Dispatcher', filters={'patient_appointment': q.patient_appointment}, pluck='name')
 	if d:
-		print(f'------222---------')
 		branch = frappe.db.get_value('Patient Appointment', q.patient_appointment, 'custom_branch')
 		item = frappe.db.get_value('Questionnaire Template', q.template, 'item_code')
 		item_doc = frappe.get_doc('Item', item)
@@ -124,9 +116,7 @@ def set_status(name, status, doctype, docname, reason):
 			for su in disp.assignment_table:
 				if(su.healthcare_service_unit in service_unit):
 					if su.notes:
-						print(f'------333---------')
 						su.notes = su.notes + '\n' + f'<{now()}>{doctype} {docname}: {reason}'
 					else:
-						print(f'------444---------')
 						su.notes = f'<{now()}>{doctype} {docname}: {reason}'
 			disp.save(ignore_permissions=True)
