@@ -47,36 +47,36 @@ class Dispatcher(Document):
 		else:
 			frappe.msgprint(_("No linked Patient Appointment found."))
 	
-	def create_doctor_result(self):
-		doc = frappe.new_doc('Doctor Result')
-		doc.appointment = self.patient_appointment
-		doc.patient = self.patient
-		doc.age = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'patient_age')
-		doc.gender = self.gender
-		doc.dispatcher = self.name
-		doc.created_date = today()
-		package_line = frappe.db.sql(f"""SELECT DISTINCT examination_item, item_name, item_group,
-			(select custom_gradable from `tabItem Group` tig 
-				where tig.name = item_group) group_gradable, 
-			(select custom_bundle_position from `tabItem Group` tig 
-				where tig.name = item_group) group_position,
-			(select custom_gradable from `tabItem` ti 
-				where ti.name = examination_item) item_gradable, 
-			(select custom_bundle_position from `tabItem` ti 
-				where ti.name = examination_item) item_position,
-			(select 1 from `tabNurse Examination Template` tnet 
-				where tnet.item_code = examination_item) nurse,
-			(select 1 from `tabDoctor Examination Template` tnet 
-				where tnet.item_code = examination_item) doctor,
-			(select 1 from `tabRadiology Result Template` tnet 
-				where tnet.item_code = examination_item) radiology,
-			(select 1 from `tabLab Test Template` tnet 
-				where tnet.lab_test_code = examination_item) lab_test
-			from `tabMCU Appointment`
-			where parent = '{self.patient_appointment}'""", as_dict = True)
-		group_result = get_examination_items(package_line)
-		process_examination_items(doc, group_result, self.package)
-		doc.insert()
+	#def create_doctor_result(self):
+	#	doc = frappe.new_doc('Doctor Result')
+	#	doc.appointment = self.patient_appointment
+	#	doc.patient = self.patient
+	#	doc.age = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'patient_age')
+	#	doc.gender = self.gender
+	#	doc.dispatcher = self.name
+	#	doc.created_date = today()
+	#	package_line = frappe.db.sql(f"""SELECT DISTINCT examination_item, item_name, item_group,
+	#		(select custom_gradable from `tabItem Group` tig 
+	#			where tig.name = item_group) group_gradable, 
+	#		(select custom_bundle_position from `tabItem Group` tig 
+	#			where tig.name = item_group) group_position,
+	#		(select custom_gradable from `tabItem` ti 
+	#			where ti.name = examination_item) item_gradable, 
+	#		(select custom_bundle_position from `tabItem` ti 
+	#			where ti.name = examination_item) item_position,
+	#		(select 1 from `tabNurse Examination Template` tnet 
+	#			where tnet.item_code = examination_item) nurse,
+	#		(select 1 from `tabDoctor Examination Template` tnet 
+	#			where tnet.item_code = examination_item) doctor,
+	#		(select 1 from `tabRadiology Result Template` tnet 
+	#			where tnet.item_code = examination_item) radiology,
+	#		(select 1 from `tabLab Test Template` tnet 
+	#			where tnet.lab_test_code = examination_item) lab_test
+	#		from `tabMCU Appointment`
+	#		where parent = '{self.patient_appointment}'""", as_dict = True)
+	#	group_result = get_examination_items(package_line)
+	#	process_examination_items(doc, group_result, self.package)
+	#	doc.insert()
 
 	def calculate_progress(self):
 		child_items = frappe.get_all(
