@@ -21,7 +21,6 @@ class Dispatcher(Document):
 			self.update_status_if_all_rooms_finished()
 		if self.status == "Finished" and self.status_changed_to_finished():
 			self.update_patient_appointment()
-			#self.create_doctor_result()
 	
 	def before_insert(self):
 		if frappe.db.exists(self.doctype,{
@@ -47,37 +46,6 @@ class Dispatcher(Document):
 		else:
 			frappe.msgprint(_("No linked Patient Appointment found."))
 	
-	#def create_doctor_result(self):
-	#	doc = frappe.new_doc('Doctor Result')
-	#	doc.appointment = self.patient_appointment
-	#	doc.patient = self.patient
-	#	doc.age = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'patient_age')
-	#	doc.gender = self.gender
-	#	doc.dispatcher = self.name
-	#	doc.created_date = today()
-	#	package_line = frappe.db.sql(f"""SELECT DISTINCT examination_item, item_name, item_group,
-	#		(select custom_gradable from `tabItem Group` tig 
-	#			where tig.name = item_group) group_gradable, 
-	#		(select custom_bundle_position from `tabItem Group` tig 
-	#			where tig.name = item_group) group_position,
-	#		(select custom_gradable from `tabItem` ti 
-	#			where ti.name = examination_item) item_gradable, 
-	#		(select custom_bundle_position from `tabItem` ti 
-	#			where ti.name = examination_item) item_position,
-	#		(select 1 from `tabNurse Examination Template` tnet 
-	#			where tnet.item_code = examination_item) nurse,
-	#		(select 1 from `tabDoctor Examination Template` tnet 
-	#			where tnet.item_code = examination_item) doctor,
-	#		(select 1 from `tabRadiology Result Template` tnet 
-	#			where tnet.item_code = examination_item) radiology,
-	#		(select 1 from `tabLab Test Template` tnet 
-	#			where tnet.lab_test_code = examination_item) lab_test
-	#		from `tabMCU Appointment`
-	#		where parent = '{self.patient_appointment}'""", as_dict = True)
-	#	group_result = get_examination_items(package_line)
-	#	process_examination_items(doc, group_result, self.package)
-	#	doc.insert()
-
 	def calculate_progress(self):
 		child_items = frappe.get_all(
 			'MCU Appointment', filters={'parent': self.name}, fields=['status'])
@@ -157,20 +125,22 @@ def process_examination_items(doc, data, package):
 				return 'Stage 2 Hypertension'
 		return None
 
-	def get_radiology_result(appointment, item_code, item_name):
-		column = frappe.db.get_value('Radiology Result Template', item_name, 'diagnose_column')
-		if column:
-			exams = frappe.db.get_all(
-				'Radiology Result', 
-				filters = {'appointment': appointment, 'docstatus': 1}, 
-				pluck = 'name'
-			)
-			for exam in exams:
-				for line in exam.result:
-					if line.item_code == item_code and line.result_line == column:
-						return line.result_text
-		else:
-			return None
+	def get_conclusion_result(appointment, doctype, item_name):
+		exams = frappe.db.get_all(
+			doctype, 
+			filters = {'appointment': appointment, 'docstatus': 1}, 
+			pluck = 'name'
+		)
+		for exam in exams:
+			result_doc = frappe.get_doc(doctype, exam)
+			for exam in result_doc.examination_item:
+				if exam.template == item_name:
+					conclusion_texts = [row.conclusion for row in result_doc.conclusion if row.conclusion]
+					if conclusion_texts:
+						return ", ".join(conclusion_texts), exam.parent
+					return None, exam.parent
+				return None, None
+		return None, None
 
 	def append_items(category, group, item, doc, additional_data=None):
 		data = {
@@ -183,6 +153,7 @@ def process_examination_items(doc, data, package):
 		doc.append(f"{category}_grade", data)
 
 	blood_pressure = frappe.db.get_single_value('MCU Settings', 'vital_sign_with_systolicdiastolic')
+	dental_examination = frappe.db.get_single_value('MCU Settings', 'dental_examination')
 	blood_pressure_item_code = (
 		frappe.db.get_value('Nurse Examination Template', blood_pressure, 'item_code') 
 		if blood_pressure else None)
@@ -194,24 +165,48 @@ def process_examination_items(doc, data, package):
 				'hidden_item_group': group['item_group'],
 			})
 			for item in group['items']:
-				radiology_result = None
+				conclusion_result = incdec = doc_no = doc_type = None
 				incdec = None
+				incdec_category = None
 				if blood_pressure_item_code == item['examination_item']:
 					incdec = calculate_blood_pressure(doc.appointment)
+					incdec_category = frappe.db.get_value(
+						'MCU Category', 
+						f'{group['item_group']}.{blood_pressure_item_code}..{incdec}', 
+						'description'
+					)
+				if dental_examination == item['examination_item']:
+					conclusion_result, doc_no = get_conclusion_result(
+						doc.appointment, 'Doctor Examination', item['item_name']
+					)
+					doc_type = 'Doctor Examination'
 				if category == 'radiology':
-					radiology_result = get_radiology_result(
-						doc.appointment, item['examination_item'], item['item_name'])
+					doc_type = 'Radiology Result'
+					conclusion_result, doc_no = get_conclusion_result(
+						doc.appointment, 'Radiology Result', item['item_name'])
 				append_items(
 					category, group, item, doc,
-					additional_data={'result': radiology_result, 'incdec': incdec, 'is_item': 1}
+					additional_data={
+						'result': conclusion_result, 
+						'incdec': incdec, 
+						'incdec_category': incdec_category, 
+						'is_item': 1, 
+						'document_type': doc_type, 
+						'document_name': doc_no}
 				)
 				if category == 'nurse':
-					diagnose_column = frappe.db.get_value(
-						'Nurse Examination Template', item['examination_item'], 'diagnose_column')
-					if diagnose_column:
+					result_in_exam = frappe.db.get_value(
+						'Nurse Examination Template', item['item_name'], 'result_in_exam')
+					if not result_in_exam or result_in_exam == 0:
+						conclusion_result, doc_no = get_conclusion_result(
+							doc.appointment, 'Nurse Result', item['item_name'])
 						append_items(
 							category, group, item, doc,
-							additional_data={'is_item': 1}
+							additional_data={
+								'result': conclusion_result, 
+								'is_item': 1, 
+								'document_type': 'Nurse Result', 
+								'document_name': doc_no}
 						)
 					else:
 						process_nurse_category(doc, group, item)
@@ -219,19 +214,25 @@ def process_examination_items(doc, data, package):
 					process_lab_test_category(doc, group, item)
 	process_doctor_category(doc, package)
 
+@frappe.whitelist()
 def calculate_grade(result_text, min_value, max_value, group, item_code, test_name):
 	if not (result_text and min_value and max_value):
 		return None, None
 	result_value = flt(result_text)
 	if flt(min_value) <= result_value <= flt(max_value):
 		grade = 'A'
-		grade_description = frappe.db.get_value(
+		grade_name = frappe.db.get_value(
 			'MCU Grade',
 			{'item_group': group, 'item_code': item_code, 'test_name': test_name, 'grade': grade},
+			'name'
+		)
+		grade_description = frappe.db.get_value(
+			'MCU Grade',
+			grade_name,
 			'description'
 		)
-		if grade_description:
-			return grade, grade_description
+		if grade_name:
+			return grade_name, grade_description
 	return None, None
 
 def process_nurse_category(doc, group, item):
@@ -251,7 +252,7 @@ def process_nurse_category(doc, group, item):
 				min_value_float = convert_to_float(bmi['min_value'])
 				max_value_float = convert_to_float(bmi['max_value'])
 				if is_within_range(exam_result_float, min_value_float, max_value_float):
-					grade = bmi['grade']
+					grade = group['item_group']+'.'+item['examination_item']+'.BMI-'+bmi['grade']+bmi['name']
 					grade_description = frappe.db.get_value(
 						'MCU Grade',
 						f"{group['item_group']}.{item['examination_item']}.BMI-{bmi['grade']}{bmi['name']}",
@@ -263,6 +264,7 @@ def process_nurse_category(doc, group, item):
 						'description'
 					)
 					incdec = [bmi['name'], category]
+					nurse_grade.gradable = 1
 					break
 		doc.append('nurse_grade', {
 			'examination': nurse_grade.result_line,
@@ -1272,49 +1274,6 @@ def get_queued_branch(branch):
 		GROUP BY thsu.name""", as_dict=True)
 	return count
 
-@frappe.whitelist()
-def checkin_room(dispatcher_id, hsu, doctype, docname):
-	doc = frappe.get_doc('Dispatcher', dispatcher_id)
-	doc.status = 'In Room'
-	doc.room = hsu
-	related_rooms = get_related_rooms (hsu, dispatcher_id)
-	for room in doc.assignment_table:
-		if room.healthcare_service_unit == hsu:
-			room.status = 'Ongoing Examination'
-			room.reference_doctype = doctype
-			room.reference_doc = docname
-		elif room.healthcare_service_unit in related_rooms:
-			room.reference_doc = docname
-	doc.save(ignore_permissions=True)
-	return 'Checked In.'
-
-@frappe.whitelist()
-def removed_from_room(dispatcher_id, hsu, doctype, docname):
-	doc = frappe.get_doc('Dispatcher', dispatcher_id)
-	doc.status = 'In Queue'
-	doc.room = ''
-	for room in doc.assignment_table:
-		if room.healthcare_service_unit == hsu:
-			room.status = 'Wait for Room Assignment'
-			room.reference_doc = ''
-	doc.add_comment('Comment', f"""Removed from {hsu} examination room.""")
-	doc.save(ignore_permissions=True)
-	dispatcher_user = frappe.db.get_value(
-		"Dispatcher Settings", 
-		{"branch": doc.branch, 'enable_date': doc.date}, 
-		['dispatcher'])
-	notification_doc = frappe.new_doc('Notification Log')
-	notification_doc.for_user = dispatcher_user
-	notification_doc.from_user = frappe.session.user
-	notification_doc.document_type = 'Dispatcher'
-	notification_doc.document_name = doc.name
-	notification_doc.subject = f"""Patient <strong>{doc.patient}</strong> removed from {hsu} room."""
-	notification_doc.insert(ignore_permissions=True)
-	exam_doc = frappe.get_doc(doctype, docname)
-	exam_doc.db_set('docstatus', 2)
-	status = 'custom_status' if doctype == 'Sample Collection' else 'status'
-	exam_doc.db_set(status, 'Removed')
-	return 'Removed from examination room.'
 
 def get_related_rooms (hsu, dispatcher_id):
 	return frappe.db.sql(f"""

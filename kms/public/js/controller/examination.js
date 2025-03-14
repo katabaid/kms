@@ -205,10 +205,11 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           'dispatcher_id': utils.getDispatcher(frm),
           'hsu': utils.getHsu(frm),
           'doctype': frm.doc.doctype,
-          'docname': frm.doc.name
+          'docname': frm.doc.name,
+          'reason': reason
         };
         frappe.call({
-          method: `kms.kms.doctype.dispatcher.dispatcher.${method}`,
+          method: `kms.mcu_dispatcher.${method}`,
           args: args,
           callback: function (r) {
             handleCallback(r);

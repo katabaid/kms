@@ -44,4 +44,20 @@ frappe.ui.form.on('Clinical Procedure', {
 			frm.refresh_field("codification_table");
 		}
 	},
+  /* appointment: function(frm) {
+    if(frm.doc.appointment) {
+      frappe.db.get_doc('Patient Appointment', frm.doc.appointment).then(function(patient_appointment) {
+        let tindakan_list = patient_appointment.custom_procedures || [];
+        let tindakan_values = tindakan_list.map(item => item.procedure);
+        frm.fields_dict['procedure_template'].get_query = function() {
+          return {
+              filters: {
+                  'name': ['in', tindakan_values]
+              }
+          };
+        };
+        frm.refresh_field('procedure_template');
+      })
+    }
+  }, */
 })

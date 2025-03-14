@@ -57,7 +57,7 @@ const addCustomButtonOnPackage = (frm) => {
 							}				
 							frm.reload_doc();
 						},
-						error: (err) => { console.log(err) }
+						error: (err) => { frappe.msgprint(err) }
 					});
 				}
 			},
@@ -104,6 +104,10 @@ const addSidebarUserAction = (frm) => {
 	frm.sidebar
 	.add_user_action(__('Check Patient Result'))
 	.attr('href', `/app/query-report/Result per Appointment?exam_id=${frm.doc.patient_appointment}`)
+	.attr('target', '_blank')
+	frm.sidebar
+	.add_user_action(__('Exam Notes'))
+	.attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.patient_appointment}`)
 	.attr('target', '_blank')
 };
 
@@ -250,8 +254,8 @@ const createPromiseHandler = (method) => (frm) => new Promise((resolve) => {
 					name: frm.doc.name,
 					room: child.healthcare_service_unit,
 				},
-				callback: (r) => {console.log (`r: ${r}`);resolve(!!r.message)},
-				error: (err) => {console.log (`err:${err}`);resolve(false)},
+				callback: (r) => {console.log(`r: ${r}`);resolve(!!r.message)},
+				error: (err) => {frappe.msgprint(`err:${err}`);resolve(false)},
 			});
 		} else {
 			resolve(false);

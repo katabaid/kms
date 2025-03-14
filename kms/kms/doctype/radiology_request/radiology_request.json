@@ -10,7 +10,9 @@
   "status",
   "status_time",
   "radiology",
-  "radiology_result"
+  "radiology_result",
+  "column_break_jxob",
+  "item"
  ],
  "fields": [
   {
@@ -53,12 +55,25 @@
    "label": "Radiology Result",
    "options": "Radiology Result",
    "read_only": 1
+  },
+  {
+   "fetch_from": "template.item_code",
+   "fetch_if_empty": 1,
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_jxob",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-01-13 13:56:55.303296",
+ "modified": "2025-03-12 12:59:08.872317",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Request",

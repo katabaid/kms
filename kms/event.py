@@ -157,13 +157,6 @@ def update_customer_name(doc, method=None):
     doc.customer_name = doc.customer_type + ' ' + doc.customer_name
     doc.save()
 
-#@frappe.whitelist()
-#def update_healthcare_service_unit_branch(doc, method=None):
-#  ################Doctype: Healthcare Service Unit################
-#  if doc.parent_healthcare_service_unit and doc.is_group==0:
-#    doc.custom_branch = frappe.db.get_value(
-#      'Healthcare Service Unit', doc.parent_healthcare_service_unit, 'custom_branch')
-
 @frappe.whitelist()
 def set_has_attachment(doc, method=None):
   if (
@@ -209,29 +202,44 @@ def update_doctor_result(doc, method=None):
     'Sample Collection', doc.custom_sample_collection, 'custom_encounter')
   if doctor_result_name:
     for item in doc.normal_test_items:
-      item_code, item_group = frappe.db.get_value(
-        'Item', {'item_name': item.lab_test_name}, ['item_code', 'item_group'])
+      item_code = frappe.db.get_value(
+        'Item', {'item_name': item.lab_test_name}, 'item_code')
+      item_group = frappe.db.get_value(
+        'Item', {'item_name': item.lab_test_name}, 'item_group')
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
         'hidden_item': item_code,
         'hidden_item_group': item_group,
         'parent': doctor_result_name,
-        'examination': item.lab_test_event
+        'examination': item.lab_test_event,
+        'is_item': 0
       }, 'name')
       incdec = ''
       incdec_category = ''
+      grade_name = description = ''
       if all([
-        (item.custom_min_value != 0 or item.custom_max_value != 0) and 
-        item.custom_min_value and 
+        item.custom_max_value != 0 and 
+        (item.custom_min_value == 0 or item.custom_min_value) and 
         item.custom_max_value and 
         item.result_value and 
         is_numeric(item.custom_min_value) and 
         is_numeric(item.custom_max_value) and 
-        is_numeric(item.result_value)
+        is_numeric(float(item.result_value))
       ]):
-        if item.result_value > item.custom_max_value:
+        if float(item.result_value) > item.custom_max_value:
           incdec = 'Increase'
-        elif item.result_value < item.custom_min_value:
+        elif float(item.result_value) < item.custom_min_value:
           incdec = 'Decrease'
+        elif float(item.result_value) >= item.custom_min_value and float(item.result_value) <= item.custom_max_value:
+          grade_name = frappe.db.get_value(
+            'MCU Grade',
+            {'item_group': item_group, 'item_code': item_code, 'test_name': item.lab_test_event, 'grade': 'A'},
+            'name'
+          )
+          description = frappe.db.get_value(
+            'MCU Grade',
+            grade_name,
+            'description'
+          )
         else:
           None
         if incdec:
@@ -245,11 +253,15 @@ def update_doctor_result(doc, method=None):
         'result': item.result_value,
         'incdec': incdec,
         'incdec_category': incdec_category,
-        'status': doc.status
+        'status': doc.status,
+        'grade': grade_name,
+        'description': description
       })
     for selective in doc.custom_selective_test_result:
-      item_code, item_group = frappe.db.get_value(
-        'Item', {'item_name': selective.event}, ['item_code', 'item_group'])
+      item_code = frappe.db.get_value(
+        'Item', {'item_name': selective.event}, 'item_code')
+      item_group = frappe.db.get_value(
+        'Item', {'item_name': selective.event}, 'item_group')
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
         'hidden_item': item_code,
         'hidden_item_group': item_group,
@@ -369,12 +381,25 @@ def update_questionnaire_status(doc):
   doc.set("custom_completed_questionnaire", [])
   # Step 1: Check Questionnaire Template for matching appointment_type
   if doc.appointment_type:
-    questionnaire_templates = frappe.get_all(
-      "Questionnaire Template",
-      filters={"appointment_type": doc.appointment_type, 'active': 1, 'internal_questionnaire': 0},
-      fields=["name", "template_name"],
-      order_by='priority'
-    )
+    #questionnaire_templates = frappe.get_all(
+    #  "Questionnaire Template",
+    #  filters={
+    #    "appointment_type": doc.appointment_type, 
+    #    'active': 1, 
+    #    'internal_questionnaire': 0, 
+    #    'item_code': ["is", "null"]
+    #  },
+    #  fields=["name", "template_name"],
+    #  order_by='priority'
+    #)
+    questionnaire_templates = frappe.db.sql("""
+        SELECT name, template_name FROM `tabQuestionnaire Template`
+        WHERE appointment_type = %s 
+          AND active = 1 
+          AND internal_questionnaire = 0 
+          AND item_code IS NULL
+        ORDER BY priority
+    """, (doc.appointment_type,), as_dict=True)
     
     for questionnaire in questionnaire_templates:
       # Append to custom_completed_questionnaire
@@ -529,7 +554,7 @@ def process_checkin(doc, method=None):
             disp_doc.append('package', new_entry)
           rooms = frappe.db.sql(f"""
             SELECT distinct tigsu.service_unit, 
-            thsu.custom_default_doctype, thsu.custom_collection_room
+            thsu.custom_default_doctype, thsu.custom_reception_room
             FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
             WHERE tigsu.branch = '{doc.custom_branch}'
             AND tigsu.parenttype = 'Item'
@@ -551,7 +576,7 @@ def process_checkin(doc, method=None):
               if not any(row.get('healthcare_service_unit') == room.custom_default_doctype for row in disp_doc.assignment_table):
                 new_entry = dict()
                 new_entry['name'] = None
-                new_entry['healthcare_service_unit'] = room.custom_collection_room
+                new_entry['healthcare_service_unit'] = room.custom_reception_room
                 new_entry['status'] = 'Wait for Sample'
                 disp_doc.append('assignment_table', new_entry)
         disp_doc.save(ignore_permissions=True)

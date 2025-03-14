@@ -7,6 +7,14 @@ frappe.ui.form.on('Nurse Result', {
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
+		frm.fields_dict['conclusion'].grid.get_field('conclusion_code').get_query = function(doc, cdt, cdn) {
+			let item_codes = (frm.doc.examination_item || []).map(row => row.item);
+			return {
+				filters: [
+					['item', 'in', item_codes]
+				]
+			};
+		};
   },
 	refresh: function (frm) {
 		frappe.require('assets/kms/js/controller/result.js', function() {

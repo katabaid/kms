@@ -238,7 +238,8 @@
   "dental_detail",
   "dental_detail_html",
   "other_dental",
-  "is_dental_record_inserted"
+  "is_dental_record_inserted",
+  "conclusion"
  ],
  "fields": [
   {
@@ -1605,13 +1606,19 @@
    "fieldname": "exam_note",
    "fieldtype": "Small Text",
    "label": "Exam Note"
+  },
+  {
+   "fieldname": "conclusion",
+   "fieldtype": "Table",
+   "label": "Conclusion",
+   "options": "Radiology Conclusion Table"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-31 18:52:56.565243",
+ "modified": "2025-03-12 23:02:06.820727",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

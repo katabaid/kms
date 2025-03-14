@@ -19,8 +19,21 @@ class NurseResult(Document):
 			'appointment': self.appointment,
 			'docstatus': 0
 		}, 'name')
+		previous_item = ''
 		for result in self.result:
 			item_group = frappe.db.get_value('Item', result.item_code, 'item_group')
+			if result.item_code != previous_item:
+				previous_item = result.item_code
+				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
+					'hidden_item': result.item_code,
+					'hidden_item_group': item_group,
+					'parent': doctor_result_name,
+					'is_item': 1
+				}, 'name')
+				frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
+					'document_type': 'Nurse Result',
+					'document_name': self.name,
+				})
 			mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
 				'hidden_item': result.item_code,
 				'hidden_item_group': item_group,
@@ -32,8 +45,21 @@ class NurseResult(Document):
 				'uom': result.result_text,
 				'status': self.status
 			})
+		previous_item = ''
 		for non_selective in self.non_selective_result:
 			item_group = frappe.db.get_value('Item', non_selective.item_code, 'item_group')
+			if non_selective.item_code != previous_item:
+				previous_item = non_selective.item_code
+				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
+					'hidden_item': non_selective.item_code,
+					'hidden_item_group': item_group,
+					'parent': doctor_result_name,
+					'is_item': 1
+				}, 'name')
+				frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
+					'document_type': 'Nurse Result',
+					'document_name': self.name,
+				})
 			mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
 				'hidden_item': non_selective.item_code,
 				'hidden_item_group': item_group,

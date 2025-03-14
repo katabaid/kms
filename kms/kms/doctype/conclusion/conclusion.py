@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class RadiologyConclusion(Document):
+class Conclusion(Document):
 	pass

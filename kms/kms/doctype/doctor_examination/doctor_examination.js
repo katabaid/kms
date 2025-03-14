@@ -440,6 +440,14 @@ frappe.ui.form.on('Doctor Examination', {
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
+		frm.fields_dict['conclusion'].grid.get_field('conclusion_code').get_query = function(doc, cdt, cdn) {
+			let item_codes = (frm.doc.examination_item || []).map(row => row.item);
+			return {
+				filters: [
+					['item', 'in', item_codes]
+				]
+			};
+		};
   },
 
 	before_save: function (frm) {
@@ -733,7 +741,7 @@ const updateQChildStatus = (frm, grid, newStatus, reason) => {
     window.open(`http://localhost:5173/questionnaire?template=${child.template}&appointment_id=${frm.doc.appointment}`, '_blank');
   } else {
     frappe.call({
-      method: 'kms.kms.doctype.questionnaire.questionnaire.set_status',
+      method: 'kms.mcu_dispatcher.set_status_from_questionnaire',
       freeze: true,
       freeze_message: 'Getting Queue',
       args: { 
@@ -746,7 +754,7 @@ const updateQChildStatus = (frm, grid, newStatus, reason) => {
       callback: (r) => {
         frm.reload_doc()
       },
-      error: (err) => { console.log(err) }
+      error: (err) => { frappe.msgprint(err) }
     })
   }
 };

@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestRadiologyConclusion(FrappeTestCase):
+class TestConclusion(FrappeTestCase):
 	pass

@@ -1,18 +1,33 @@
-import frappe, re
+import frappe
 from frappe.utils import today, getdate
-import json
 
 @frappe.whitelist()
-def get_mcu(price_list):
-  mcu = frappe.db.sql(f"""SELECT ti.item_code, ti.item_name, tip.price_list_rate
-    FROM `tabItem` ti, `tabItem Price` tip 
-    WHERE is_stock_item = 0 
-    AND is_sales_item = 1 
-    AND is_purchase_item = 0 
-    AND custom_mandatory_item_in_package = 1 
-    and ti.item_code = tip.item_code 
-    and price_list = '{price_list}'""", as_dict=True)
-  return mcu 
+def get_mcu(price_list: str) -> list[dict]:
+    """Get MCU items with prices from specified price list.
+    
+    Args:
+        price_list: Name of the Price List to filter by
+        
+    Returns:
+        List of items with code, name and price
+    """
+    return frappe.db.sql("""
+        SELECT
+            ti.item_code,
+            ti.item_name,
+            tip.price_list_rate
+        FROM
+            `tabItem` ti
+        INNER JOIN
+            `tabItem Price` tip
+            ON ti.item_code = tip.item_code
+        WHERE
+            ti.is_stock_item = 0
+            AND ti.is_sales_item = 1
+            AND ti.is_purchase_item = 0
+            AND ti.custom_mandatory_item_in_package = 1
+            AND tip.price_list = %s
+        """, (price_list), as_dict=True)
 
 @frappe.whitelist()
 def upsert_item_price(item_code, price_list, customer, price_list_rate):
@@ -220,47 +235,87 @@ def create_mr_from_encounter(enc):
     return 'No Pharmacy Order created.'
 
 @frappe.whitelist()
-def check_eligibility_to_reopen(name):
-  sql = f"""SELECT IFNULL(SUM(a), 0) not_eligible FROM 
-    (SELECT 1 a FROM `tabVital Signs` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus = 1 UNION 
-    SELECT 1 FROM `tabDoctor Examination` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
-    SELECT 1 FROM `tabNurse Examination` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
-    SELECT 1 FROM `tabSample Collection` tvs 
-      WHERE tvs.custom_appointment = '{name}' AND tvs.docstatus in (0,1) UNION
-    SELECT 1 FROM `tabRadiology` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1)) b"""
-  return frappe.db.sql(sql, as_dict = True)
+def check_eligibility_to_reopen(name: str) -> list[dict]:
+    """Check if an appointment can be reopened by verifying related records.
+    
+    Args:
+        name: Appointment ID to check
+        
+    Returns:
+        List with single dict containing not_eligible count (0 = eligible)
+    """
+    return _check_appointment_eligibility(name)
 
 @frappe.whitelist()
-def reopen_appointment(name):
-  sql = f"""SELECT IFNULL(SUM(a), 0) not_eligible FROM 
-    (SELECT 1 a FROM `tabVital Signs` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus = 1 UNION 
-    SELECT 1 FROM `tabDoctor Examination` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
-    SELECT 1 FROM `tabNurse Examination` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1) UNION
-    SELECT 1 FROM `tabSample Collection` tvs 
-      WHERE tvs.custom_appointment = '{name}' AND tvs.docstatus in (0,1) UNION
-    SELECT 1 FROM `tabRadiology` tvs 
-      WHERE tvs.appointment = '{name}' AND tvs.docstatus in (0,1)) b"""
-  check = frappe.db.sql(sql, as_dict = True)
-  if check[0].not_eligible != 0:
-    frappe.throw('Cannot reopen appointment. There are already recorded examinations.')
-  else:
-    vital_signs = frappe.db.get_value('Vital Signs', {'appointment': name}, 'name')
+def reopen_appointment(name: str) -> None:
+    """Reopen appointment by deleting related records if eligible.
+    
+    Args:
+        name: Appointment ID to reopen
+        
+    Raises:
+        frappe.ValidationError: If appointment cannot be reopened
+    """
+    from frappe import delete_doc, get_value, set_value
+    
+    # Check eligibility using shared validation logic
+    eligibility = _check_appointment_eligibility(name)
+    if eligibility[0]['not_eligible'] != 0:
+        frappe.throw('Cannot reopen appointment. Existing examinations found: '
+                     'Vital Signs, Doctor/Nurse Exams, Sample Collections, or Radiology records.')
+    
+    # Delete related records
+    deleted_records = False
+    
+    # Delete Vital Signs if exists
+    vital_signs = get_value('Vital Signs', {'appointment': name}, 'name')
     if vital_signs:
-      frappe.delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
-    dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': name}, 'name')
+        delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
+        deleted_records = True
+    
+    # Delete Dispatcher if exists
+    dispatcher = get_value('Dispatcher', {'patient_appointment': name}, 'name')
     if dispatcher:
-      frappe.delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
-    if vital_signs or dispatcher:
-      frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
+        delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
+        deleted_records = True
+    
+    # Update appointment status if records were deleted
+    if deleted_records:
+        set_value('Patient Appointment', name, 'status', 'Open')
+        frappe.msgprint(f'Appointment {name} reopened successfully')
     else:
-      frappe.throw('There are no Vital Signs or Dispatcher record to delete.')
+        frappe.throw('No related records found to delete - cannot reopen appointment')
+
+def _check_appointment_eligibility(name: str) -> list[dict]:
+    """Shared validation function for appointment operations."""
+    return frappe.db.sql("""
+        WITH appointment_checks AS (
+            SELECT 1 AS flag FROM `tabVital Signs`
+            WHERE appointment = %(appt)s AND docstatus = 1
+            
+            UNION ALL
+            
+            SELECT 1 FROM `tabDoctor Examination`
+            WHERE appointment = %(appt)s AND docstatus IN (0, 1)
+            
+            UNION ALL
+    
+            SELECT 1 FROM `tabNurse Examination`
+            WHERE appointment = %(appt)s AND docstatus IN (0, 1)
+            
+            UNION ALL
+    
+            SELECT 1 FROM `tabSample Collection`
+            WHERE custom_appointment = %(appt)s AND docstatus IN (0, 1)
+            
+            UNION ALL
+    
+            SELECT 1 FROM `tabRadiology`
+            WHERE appointment = %(appt)s AND docstatus IN (0, 1)
+        )
+        SELECT IFNULL(SUM(flag), 0) AS not_eligible
+        FROM appointment_checks
+    """, {"appt": name}, as_dict=True)
 
 @frappe.whitelist()
 def check_out_appointment(name):
@@ -274,3 +329,18 @@ def check_out_appointment(name):
 @frappe.whitelist()
 def get_assigned_room(date):
   return frappe.db.get_all('Room Assignment', filters = {'date': date, 'assigned': 1}, pluck='healthcare_service_unit')
+
+@frappe.whitelist(allow_guest=True)
+def get_appointment_types():
+  appointment_types = frappe.get_all("Appointment Type", fields=["name"])
+
+  result = []
+  for appt in appointment_types:
+    doc = frappe.get_doc("Appointment Type", appt["name"])  # Fetch full doc
+    branches = [entry.branch for entry in doc.custom_branch]  # Extract branch names
+    result.append({
+      "name": doc.name,
+      "custom_branch": branches
+    })
+
+  return result

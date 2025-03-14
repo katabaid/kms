@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "conclusion_code",
-  "conclusion"
+  "conclusion",
+  "item"
  ],
  "fields": [
   {
@@ -15,7 +16,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Conclusion Code",
-   "options": "Radiology Conclusion",
+   "options": "Conclusion",
    "reqd": 1
   },
   {
@@ -26,12 +27,19 @@
    "in_list_view": 1,
    "label": "Conclusion",
    "read_only": 1
+  },
+  {
+   "fetch_from": "conclusion_code.item",
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-02-18 13:47:58.011618",
+ "modified": "2025-03-13 13:52:28.106554",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Conclusion Table",

@@ -133,9 +133,15 @@ const apply_cell_styling = (frm, row, table_name) => {
     }
   }
   if (row.gradable) {
-    $row.css({
-      'background-color': '#f1f5f9'
-    })
+    if (row.hidden_item_group && !row.hidden_item) {
+      $row.css({
+        'background-color': '#ffac23'
+      })  
+    } else {
+      $row.css({
+        'background-color': '#f1f5f9'
+      })
+    }
   }
   if (row.hidden_item_group && !row.hidden_item) {
     $row.css({
