@@ -167,12 +167,13 @@ doc_events = {
     "after_insert": "kms.event.set_has_attachment",
     "on_trash": "kms.event.set_has_attachment",
   },
-  #"Healthcare Service Unit": {
-  #  "before_save": "kms.event.update_healthcare_service_unit_branch",
-  #},
+  "Item": {
+    "before_save": "kms.event.item_before_save",
+  },
   "Lab Test": {
-    "on_submit": "kms.event.update_doctor_result",
-    "before_submit": "kms.event.validate_test_result",
+    "on_submit": "kms.lab_sample.lab_on_submit",
+    "before_submit": "kms.lab_sample.lab_before_submit",
+    "before_save": "kms.lab_sample.lab_before_save",
   },
   "Material Request": {
     "on_submit": "kms.event.on_submit_material_request",
@@ -197,9 +198,9 @@ doc_events = {
     "before_save": "kms.event.update_rate_amount_after_amend",
   },
   "Sample Collection": {
-    "before_insert": "kms.event.create_barcode",
-    "after_submit": "kms.event.reset_status_after_amend",
-    "before_submit": "kms.event.set_collector",
+    "before_insert": "kms.lab_sample.sample_before_insert",
+    "after_submit": "kms.lab_sample.sample_after_submit",
+    "before_submit": "kms.lab_sample.sample_before_submit",
   },
 }
 

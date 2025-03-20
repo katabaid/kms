@@ -387,10 +387,22 @@ def build_lab_test_grade(item_group, item_code, item_name, appointment):
 		WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
 		AND tlt.docstatus IN (0, 1) AND tntr.lab_test_name = '{item_name}'
 		UNION
-		SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, NULL, 0
+		SELECT tstt.idx, event, NULL, NULL, result, NULL, tlt.name, tlt.status, 
+		CASE WHEN normal_value IS NOT NULL THEN
+		  CASE WHEN normal_value <> result THEN
+			  CONCAT_WS('|||', result,
+				  (SELECT tmc.description FROM `tabMCU Category` tmc 
+						WHERE tmc.item_group = '{item_group}' 
+						AND tmc.item = '{item_code}' 
+						AND tmc.test_name = event 
+						AND tmc.selection = result)
+				)
+			ELSE NULL END
+		ELSE NULL END, 
+		0
 		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt 
 		WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
-		AND tlt.docstatus IN (0, 1) AND event = '{item_name}' ORDER BY idx"""
+		AND tlt.docstatus IN (0, 1) AND item = '{item_code}' ORDER BY idx"""
 	return frappe.db.sql(sql, as_dict = True)
 
 def build_nurse_grade(item_group, item_code, item_name, appointment):
@@ -1519,10 +1531,12 @@ def create_result_doc(doc, target):
 					if selective:
 						for sel in template_doc.custom_selective:
 							new_doc.append('custom_selective_test_result', {
-								'event': exam,
+								'item': template_doc.item,
+								'event': sel.event,
 								'result_set': sel.result_select, 
 								'result': sel.result_select.splitlines()[0],
-								'sample': item.sample
+								'sample': item.sample,
+          			'normal_value': sel.normal_value,
 							})
 		new_doc.normal_toggle = normal_toggle
 	else:

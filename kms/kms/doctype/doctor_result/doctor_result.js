@@ -146,7 +146,8 @@ const apply_cell_styling = (frm, row, table_name) => {
   if (row.hidden_item_group && !row.hidden_item) {
     $row.css({
       'font-weight': 'Bold',
-      'color': 'midnightblue'
+      'color': 'midnightblue',
+      'background-color': '#ffac23'
     });
   }
   if (row.hidden_item_group && row.hidden_item && row.is_item) {

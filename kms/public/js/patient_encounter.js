@@ -46,7 +46,7 @@ frappe.ui.form.on('Patient Encounter', {
   /****************** Buttons ******************/
   custom_pick_order(frm) {
     frappe.call({
-      method: 'kms.sample_collection.get_items'
+      method: 'kms.lab_sample.get_items'
     }).then(res => {
       const itemGroups = res.message.item_group;
       const laboratoryGroups = itemGroups
@@ -177,7 +177,7 @@ frappe.ui.form.on('Patient Encounter', {
   custom_order_test(frm) {
     if (frm.doc.lab_test_prescription.length>0){
       frappe.call({
-        method: 'kms.sample_collection.create_sc',
+        method: 'kms.lab_sample.create_sc',
         args: {
           'name': frm.doc.name,
           'appointment': frm.doc.appointment

@@ -239,7 +239,11 @@
   "dental_detail_html",
   "other_dental",
   "is_dental_record_inserted",
-  "conclusion"
+  "conclusion",
+  "grade_section",
+  "grade",
+  "column_break_qfis",
+  "suggestion"
  ],
  "fields": [
   {
@@ -1612,13 +1616,36 @@
    "fieldtype": "Table",
    "label": "Conclusion",
    "options": "Radiology Conclusion Table"
+  },
+  {
+   "fieldname": "grade_section",
+   "fieldtype": "Section Break",
+   "label": "Grade"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "label": "Grade",
+   "link_filters": "[[\"MCU Grade\",\"item_code\",\"=\",\"DENS-00082\"]]",
+   "options": "MCU Grade"
+  },
+  {
+   "fieldname": "column_break_qfis",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "grade.description",
+   "fieldname": "suggestion",
+   "fieldtype": "Data",
+   "label": "Suggestion",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-12 23:02:06.820727",
+ "modified": "2025-03-18 14:46:33.591345",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

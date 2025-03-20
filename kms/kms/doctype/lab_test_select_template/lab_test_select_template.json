@@ -6,7 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "event",
-  "result_select"
+  "result_select",
+  "normal_value"
  ],
  "fields": [
   {
@@ -22,12 +23,17 @@
    "in_list_view": 1,
    "label": "Result Select",
    "reqd": 1
+  },
+  {
+   "fieldname": "normal_value",
+   "fieldtype": "Data",
+   "label": "Normal Value"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-04-28 22:39:04.444096",
+ "modified": "2025-03-18 14:04:39.095629",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Lab Test Select Template",

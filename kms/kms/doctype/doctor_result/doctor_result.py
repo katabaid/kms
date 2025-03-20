@@ -132,7 +132,6 @@ class DoctorResult(Document):
 						})
 				except Exception as e:
 					frappe.log_error(f"Error processing {table} row: {e}")
-					print(f'error: {e}')
 		sorted_results = sorted(
 			current_results,
 			key = lambda x: (x['bundle_position'], x['idx'])
