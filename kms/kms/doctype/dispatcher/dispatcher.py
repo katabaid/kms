@@ -321,11 +321,16 @@ def process_lab_test_category(doc, group, item):
 	lab_test_grades = build_lab_test_grade(
 		group['item_group'], item['examination_item'], item['item_name'], doc.appointment)
 	for lab_test_grade in lab_test_grades:
+		std_value = ''
 		grade, grade_description = calculate_grade(
 			lab_test_grade.result_text, lab_test_grade.min_value, lab_test_grade.max_value,
 			group['item_group'], item['examination_item'], lab_test_grade.result_line
 		)
 		incdec = lab_test_grade.incdec.split('|||') if lab_test_grade.incdec else ['', '']
+		if lab_test_grade.min_value and lab_test_grade.max_value:
+			std_value = f'{lab_test_grade.min_value} - {lab_test_grade.max_value}'
+		else:
+			std_value = lab_test_grade.normal_value
 		doc.append( 'lab_test_grade', {
 			'examination': lab_test_grade.result_line,
 			'gradable': lab_test_grade.gradable,
@@ -340,7 +345,8 @@ def process_lab_test_category(doc, group, item):
 			'incdec': incdec[0],
 			'incdec_category': incdec[1] if len(incdec) > 1 else '',
 			'hidden_item_group': group['item_group'],
-			'hidden_item': item['examination_item']
+			'hidden_item': item['examination_item'],
+			'std_value': std_value
 		})
 
 def build_lab_test_grade(item_group, item_code, item_name, appointment):
@@ -382,7 +388,7 @@ def build_lab_test_grade(item_group, item_code, item_name, appointment):
 				AND tmg.item_code = '{item_code}' 
 				AND test_name = lab_test_event 
 				LIMIT 1), 
-			0) AS gradable
+			0) AS gradable, NULL as normal_value
 		FROM `tabNormal Test Result` tntr, `tabLab Test` tlt 
 		WHERE tntr.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
 		AND tlt.docstatus IN (0, 1) AND tntr.lab_test_name = '{item_name}'
@@ -399,7 +405,7 @@ def build_lab_test_grade(item_group, item_code, item_name, appointment):
 				)
 			ELSE NULL END
 		ELSE NULL END, 
-		0
+		0, normal_value
 		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt 
 		WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
 		AND tlt.docstatus IN (0, 1) AND item = '{item_code}' ORDER BY idx"""

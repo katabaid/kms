@@ -1,7 +1,7 @@
 import frappe
 from frappe.utils import now
 
-####################### WHITELISTED METHODS #######################
+#region WHITELISTED METHODS
 @frappe.whitelist()
 def get_items():
   item_group = frappe.db.sql(f"""
@@ -104,8 +104,8 @@ def create_sc(name, appointment):
   else:
     frappe.throw('Lab Test already prescribed.')
   return f'Sample Collection {', '.join(resp)} created.'
-
-####################### SAMPLE COLLECTION HOOKS #######################
+#endregion
+#region SAMPLE COLLECTION HOOKS
 def sample_before_insert(doc, method=None):
   doc.custom_barcode_label = doc.custom_appointment
   mcu = frappe.db.get_value('Patient Appointment', doc.custom_appointment, 'mcu')
@@ -155,8 +155,8 @@ def sample_before_submit(doc, method=None):
       sample.reception_status = sample_reception_doc.docstatus
     if sample.status == 'Rescheduled' or sample.status == 'Refused':
       sample.reception_status = 1
-
-####################### LAB TEST HOOKS #######################
+#endregion
+#region LAB TEST HOOKS
 def lab_on_submit(doc, method=None):
   doctor_result_name = frappe.db.get_value('Doctor Result', {
     'appointment': doc.custom_appointment,
@@ -244,7 +244,8 @@ def lab_on_submit(doc, method=None):
         'result': selective.result,
         'incdec': incdec,
         'incdec_category': incdec_category,
-        'status': doc.status
+        'status': doc.status,
+        'std_value': selective.normal_value
       })
   elif encounter:
     for item in doc.normal_test_items:
@@ -296,8 +297,8 @@ def lab_before_save(doc, method=None):
               item.lab_test_event == formula.test_label):
               item.result_value = result
               break
-
-####################### CHILD METHODS #######################
+#endregion
+#region CHILD METHODS
 def is_numeric(value):
   return isinstance(value, (int, float, complex)) and not isinstance(value, bool)
 
@@ -336,3 +337,4 @@ def evaluate_formula(table, formula_string):
   except Exception as e:
     frappe.throw(f"Error evaluating formula: {str(e)}")
     return None
+#endregion

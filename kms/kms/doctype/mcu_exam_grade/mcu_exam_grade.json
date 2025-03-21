@@ -24,7 +24,8 @@
   "incdec_category",
   "document_type",
   "document_name",
-  "is_item"
+  "is_item",
+  "std_value"
  ],
  "fields": [
   {
@@ -179,12 +180,17 @@
    "fieldtype": "Check",
    "hidden": 1,
    "label": "Is Item"
+  },
+  {
+   "fieldname": "std_value",
+   "fieldtype": "Data",
+   "label": "Std Value"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-12-05 20:03:34.109241",
+ "modified": "2025-03-21 10:42:10.926297",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Exam Grade",

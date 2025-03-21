@@ -99,7 +99,7 @@ class DoctorResult(Document):
 								'bundle_position': bundle_position if bundle_position else 9999,
 								'idx': counter,
 								'uom': row.uom,
-								'std_value': format_floats_and_combine(row.min_value, row.max_value),
+								'std_value': row.std_value,
 								'header': (
 									'Group' if not row.hidden_item and row.hidden_item_group else 
 									'Item' if row.hidden_item and row.hidden_item_group and row.is_item else 
@@ -331,7 +331,7 @@ class DoctorResult(Document):
 					for e in children:
 						mcu_grade_name = e.grade
 						if not frappe.db.exists('MCU Grade', mcu_grade_name):
-							invalid_entries.append("MCU Grade '{mcu_grade_name}' not found for {e.examination}")
+							invalid_entries.append(f"MCU Grade '{mcu_grade_name}' not found for {e.examination}")
 							continue
 						mcu_grade = frappe.get_doc("MCU Grade", mcu_grade_name)
 						actual_grade = mcu_grade.get("grade_on_report") or mcu_grade.get("grade")
@@ -363,6 +363,14 @@ def format_floats_and_combine(a, b):
 	formatted_a = f"{int(a)}" if a and a.is_integer() else f"{a}" if a else "0"
 	formatted_b = f"{int(b)}" if b and b.is_integer() else f"{b}" if b else "0"
 	return f"{formatted_a} - {formatted_b}"
+
+def is_numeric(string: str) -> bool:
+	try:
+		float(string)
+		return True
+	except ValueError:
+		return False
+
 
 def vital_sign_templates(): 
 	return frappe.get_all('MCU Vital Sign', filters = {'parentfield': 'vital_sign_on_report'}, pluck = "template")
