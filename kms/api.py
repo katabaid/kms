@@ -344,3 +344,92 @@ def get_appointment_types():
     })
 
   return result
+
+@frappe.whitelist()
+def set_item_price(item_code, price_list, rate):
+  """
+  Set or update the latest item price for a given item and price list.
+  
+  If there's no valid price within today's range, a new record is created.
+  If a valid price exists, its 'valid_to' is set to today, and a new record is created.
+
+  :param item_code: The Item Code (str)
+  :param price_list: The Price List (str)
+  :param rate: The new price (float)
+  :return: Success message or error
+  """
+
+  today_date = today()
+  buying, selling = frappe.db.get_value("Price List", price_list, ["buying", "selling"])
+  item_uom = frappe.db.get_value("Item", item_code, ["stock_uom", "purchase_uom", "sales_uom"], as_dict=True)
+  if not item_uom:
+    return f"Error: Item '{item_code}' not found."
+  if not buying or not selling:
+    return f"Error: Price List '{price_list}' missing type."
+  elif buying:
+    uom = item_uom.get("purchase_uom") or item_uom.get("stock_uom")
+  elif selling:
+    uom = item_uom.get("purchase_uom") or item_uom.get("stock_uom")
+  else:
+    return "Error: UOM could not be determined."
+  
+  # Check if there's an active price within today's range
+  existing_price = frappe.db.get_value(
+    "Item Price",
+    {
+      "item_code": item_code,
+      "price_list": price_list,
+      "valid_from": ["<=", today_date],
+      "valid_to": ["is", "set"],
+      "valid_to": [">=", today_date]
+    },
+    ["name", "valid_from", "valid_to"]
+  )
+
+  if existing_price:
+    existing_price_name, valid_from, valid_to = existing_price
+
+    # Update the existing record to close its validity
+    frappe.db.set_value("Item Price", existing_price_name, "valid_to", today_date)
+
+  # Create a new Item Price record
+  new_price = frappe.get_doc({
+    "doctype": "Item Price",
+    "item_code": item_code,
+    "price_list": price_list,
+    "uom": uom,
+    "price_list_rate": rate,
+    "valid_from": today_date,
+    "valid_to": None  # Open-ended price
+  })
+  new_price.insert(ignore_permissions=True)
+  frappe.db.commit()
+
+  return f"Item Price updated for {item_code} in {price_list} with rate {rate}"
+
+@frappe.whitelist()
+def get_latest_item_price(item_code, price_list):
+    """
+    Fetch the latest valid price of an item from the Item Price doctype.
+
+    - Considers today's date between valid_from and valid_to (if valid_to exists).
+    - Sorts by valid_from in descending order to get the most recent valid price.
+
+    :param item_code: The Item Code
+    :param price_list: The Price List (e.g., "Standard Selling", "Standard Buying")
+    :return: Latest valid item price or None if not found
+    """
+    today_date = today()
+
+    price = frappe.db.sql("""
+      SELECT price_list_rate 
+      FROM `tabItem Price`
+      WHERE item_code = %s 
+      AND price_list = %s
+      AND valid_from <= %s
+      AND (valid_to IS NULL OR valid_to >= %s)
+      ORDER BY valid_from DESC
+      LIMIT 1
+    """, (item_code, price_list, today_date, today_date), as_dict=True)
+
+    return price[0]["price_list_rate"] if price else None

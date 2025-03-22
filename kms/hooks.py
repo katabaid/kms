@@ -53,6 +53,7 @@ doctype_js = {
   "Product Bundle": "public/js/service_package.js",
   "Quotation": "public/js/quotation.js",
   "Sales Order": "public/js/sales_order.js",
+  "Sales Invoice": "public/js/sales_invoice.js",
   "Sample Collection": "public/js/sample_collection.js",
   "Shift Type": "public/js/shift_type.js",
   "Vital Signs": "public/js/vital_signs.js",
@@ -183,6 +184,8 @@ doc_events = {
     "after_insert": "kms.event.process_queue_pooling_and_dental",
     "on_submit": "kms.event.update_queue_pooling_status",
     "validate": "kms.event.validate_child_tables",
+    "on_update": "kms.event.patient_encounter_on_update",
+    "before_save": "kms.event.patient_encounter_before_safe",
   },
   "Patient Appointment": {
     "on_update": "kms.event.process_checkin",
@@ -228,9 +231,9 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-#	"frappe.desk.doctype.event.event.get_events": "kms.event.get_events"
-# }
+override_whitelisted_methods = {
+  "healthcare.healthcare.utils.get_healthcare_services_to_invoice": "kms.override.healthcare.get_healthcare_services_to_invoice",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

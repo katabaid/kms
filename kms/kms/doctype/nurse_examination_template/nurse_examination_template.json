@@ -13,7 +13,7 @@
   "item_code",
   "item_name",
   "result_in_exam",
-  "diagnose_column",
+  "rate",
   "items",
   "normal_items",
   "calculated_exam",
@@ -74,14 +74,14 @@
    "options": "Exam Calculation"
   },
   {
-   "fieldname": "diagnose_column",
-   "fieldtype": "Data",
-   "label": "Diagnose Column"
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-21 22:19:44.880635",
+ "modified": "2025-03-21 16:33:27.121984",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template",

@@ -212,6 +212,18 @@ def update_queue_pooling_status(doc, method=None):
     qp.status = "Closed"
     qp.save(ignore_permissions=True)
 
+def patient_encounter_on_update(doc, method=None):
+  ################Doctype: Patient Encounter################
+  if doc.docstatus == 1:
+    frappe.db.set_value("Patient Appointment", doc.appointment, "status", "Ready to Check Out")
+  else:
+    frappe.db.set_value("Patient Appointment", doc.appointment, "status", doc._appointment_status)
+
+def patient_encounter_before_safe(doc, method=None):
+  ################Doctype: Patient Encounter################
+  doc._appointment_status = frappe.db.get_value('Patient Appointment', doc.appointment, 'status')
+
+
 @frappe.whitelist()
 def unlink_queue_pooling_before_delete(doc, method=None):
   ################Doctype: Patient Encounter################

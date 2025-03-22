@@ -12,6 +12,7 @@
   "template_name",
   "item_code",
   "item_name",
+  "rate",
   "items",
   "normal_items",
   "consumables"
@@ -57,11 +58,16 @@
    "fieldtype": "Table",
    "label": "Consumables",
    "options": "Clinical Procedure Item"
+  },
+  {
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-07-10 09:10:11.071923",
+ "modified": "2025-03-21 16:34:08.099747",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Template",

@@ -12,7 +12,7 @@
   "template_name",
   "item_code",
   "item_name",
-  "diagnose_column",
+  "rate",
   "items",
   "consumables"
  ],
@@ -53,14 +53,14 @@
    "options": "Clinical Procedure Item"
   },
   {
-   "fieldname": "diagnose_column",
-   "fieldtype": "Data",
-   "label": "Diagnose Column"
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-18 22:32:49.026498",
+ "modified": "2025-03-21 16:35:02.665378",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result Template",
