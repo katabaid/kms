@@ -91,11 +91,15 @@ class DoctorResult(Document):
 								arrow = '\u2191'
 							else:
 								arrow = ''
+							if isinstance(row.result, (int, float)):
+								row_result = int(row.result) if row.result.is_integer() else row.result
+							else:
+								row_result = row.result
 							current_results.append({
 								'examination': (
 									row.hidden_item_group if not row.hidden_item and row.hidden_item_group else 
 									row.examination),
-								'result': (row.result or '') + ' ' + arrow,
+								'result': (row_result or '') + ' ' + arrow,
 								'bundle_position': bundle_position if bundle_position else 9999,
 								'idx': counter,
 								'uom': row.uom,
@@ -313,7 +317,7 @@ class DoctorResult(Document):
 		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 		for table in grade_tables:
 			for row in getattr(self, table, []):
-				if not row.hidden_item:
+				if not row.hidden_item and row.gradable:
 					# determine children
 					children = [
 						e for e in getattr(self, table, [])
@@ -323,6 +327,8 @@ class DoctorResult(Document):
 					]
 					# check missing grades
 					missing_grades = [e for e in children if not e.get('grade')]
+					if not children and not row.grade:
+						frappe.throw(f'{row.hidden_item_group} must grade manually.')
 					if missing_grades:
 						frappe.throw(f"Grade missing for item(s) {[e.examination for e in missing_grades]} in {table}")
 					# check invalid grades

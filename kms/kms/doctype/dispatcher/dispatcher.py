@@ -244,6 +244,13 @@ def process_nurse_category(doc, group, item):
 			group['item_group'], item['examination_item'], nurse_grade.result_line
 		)
 		incdec = nurse_grade.incdec.split('|||') if nurse_grade.incdec else ['', '']
+		if nurse_grade.min_value or nurse_grade.max_value:
+			min_val = float(nurse_grade.min_value) if nurse_grade.min_value else None
+			max_val = float(nurse_grade.max_value) if nurse_grade.max_value else None
+			if min_val or max_val:
+				formatted_min = int(min_val) if min_val is not None and min_val.is_integer() else min_val
+				formatted_max = int(max_val) if max_val is not None and max_val.is_integer() else max_val
+				std_value = f'{formatted_min} - {formatted_max}'
 		if nurse_grade.result_line == 'BMI':
 			bmi_rec = frappe.db.get_all(
 				'BMI Classification', fields=['name', 'min_value', 'max_value', 'grade'])
@@ -273,6 +280,7 @@ def process_nurse_category(doc, group, item):
 			'min_value': nurse_grade.min_value,
 			'max_value': nurse_grade.max_value,
 			'grade': grade,
+			'std_value': std_value,
 			'description': grade_description,
 			'uom': nurse_grade.uom,
 			'status': nurse_grade.status,
@@ -328,7 +336,9 @@ def process_lab_test_category(doc, group, item):
 		)
 		incdec = lab_test_grade.incdec.split('|||') if lab_test_grade.incdec else ['', '']
 		if lab_test_grade.min_value or lab_test_grade.max_value:
-			std_value = f'{lab_test_grade.min_value} - {lab_test_grade.max_value}'
+			min_val = int(lab_test_grade.min_value) if lab_test_grade.min_value.is_integer() else lab_test_grade.min_value
+			max_val = int(lab_test_grade.max_value) if lab_test_grade.max_value.is_integer() else lab_test_grade.max_value
+			std_value = f'{min_val} - {max_val}'
 		else:
 			std_value = lab_test_grade.normal_value
 		doc.append( 'lab_test_grade', {

@@ -1,87 +1,90 @@
 // Copyright (c) 2024, GIS and contributors
 // For license information, please see license.txt
 
+// Constants
+const CHILD_TABLES = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade'];
+
+// Main form controller
 frappe.ui.form.on('Doctor Result', {
-  onload: function (frm) {
+  onload: function(frm) {
     frappe.breadcrumbs.add('Healthcare', 'Doctor Result');
   },
-  setup: function (frm) {
-    const child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade'];
-    if(frm.doc.docstatus===0) {
-      child_tables.forEach(child_table_name => {
-        set_grade_query_for_child_table(frm, child_table_name);
-        if (frm.doc[child_table_name]) {
-          frm.refresh_field(child_table_name);
-          frm.doc[child_table_name].forEach(value => {
-            frappe.meta.get_docfield('MCU Exam Grade', 'grade', value.name).read_only = (value.gradable === 1) ? 0 : 1;
-          });
-        }
-      });
-    }
-    hide_standard_buttons (frm, child_tables);
+
+  refresh: function(frm) {
+    CHILD_TABLES.forEach(table => {
+      utilities.processChildTable(frm, table);
+    });
+    hide_standard_buttons(frm, CHILD_TABLES);
   },
-  refresh: function (frm) {
-    const processGrade = (gradeType) => {
-      if (frm.doc[gradeType]) {
-        frm.refresh_field(gradeType);
-        frm.fields_dict[gradeType].grid.grid_rows.forEach((row) => {
-          apply_cell_styling(frm, row.doc, row.doc.parentfield);
-          frm.fields_dict[gradeType].grid.wrapper.find('.grid-row .row-index').hide();
-        });
-      }
-    };
-    ['nurse_grade', 'doctor_grade', 'lab_test_grade', 'radiology_grade'].forEach(processGrade);
-    
-    /* if (frm.doc.docstatus === 0) {
-      frm.add_custom_button('Copy Comment', ()=>{
-        if (frm.doc.remark) {
-          frappe.warn(
-            'There are already entries', 
-            'Do you want to overwrite?', 
-            () => {
-              frm.set_value('remark', frm.doc.copied_remark)
-           },
-            'Continue',
-            true
-          )
-        } else {
-          frm.set_value('remark', frm.doc.copied_remark)
-        }
-      })
-    } */
-  },
-  before_save: function (frm) {
-    const child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade'];
-    create_total_comment(frm, child_tables)
+
+  before_save: function(frm) {
+    create_total_comment(frm, CHILD_TABLES);
   }
 });
 
-function set_grade_query_for_child_table(frm, child_table_name) {
-  frm.fields_dict[child_table_name].grid.get_field('grade').get_query = function (doc, cdt, cdn) {
-    let row = locals[cdt][cdn];
-    let filters = [
-      ['item_group', '=', row.hidden_item_group]
-    ];
+// Utility functions
+const utilities = {
+  processChildTable: (frm, tableName) => {
+    if (!frm.doc[tableName]) return;
+    const grid = frm.fields_dict[tableName].grid;
 
-    if (row.hidden_item) {
-      filters.push(['item_code', '=', row.hidden_item]);
+    grid.wrapper.on('grid-refresh', () => {
+      if (frm.doc.docstatus !== 0) return;
+      
+      grid.grid_rows.forEach(grid_row => {
+        const row = grid_row.doc;
+        utilities.handleGradeField(frm, row, grid_row);
+        apply_cell_styling(frm, row, tableName);
+      });
+      
+      grid.wrapper.find('.grid-row .row-index').hide();
+      grid.wrapper.on('click', '.grid-pagination .btn', function() {
+        setTimeout(() =>{
+          grid.grid_rows.forEach((grid_row)=>{
+            const row = grid_row.doc;
+            utilities.handleGradeField(frm, row, grid_row);
+            apply_cell_styling(frm, row, tableName);    
+          });
+          grid.wrapper.find('.grid-row .row-index').hide();
+        }, 150)
+      })
+    });
+
+    grid.wrapper.trigger('grid-refresh');
+  },
+
+  handleGradeField: (frm, row, grid_row) => {
+    const docfield = frappe.meta.get_docfield('MCU Exam Grade', 'grade', row.name);
+    
+    if (row.gradable === 1) {
+      docfield.read_only = 0;
+      docfield.get_query = () => ({ filters: utilities.getGradeFilters(row) });
     } else {
-      filters.push(['item_code', '=', '']);
+      docfield.read_only = 1;
+      docfield.get_query = undefined;
     }
+    
+    grid_row.refresh_field('grade');
+  },
+
+  getGradeFilters: (row) => {
+    const filters = [
+      ['item_group', '=', row.hidden_item_group],
+      ['item_code', '=', row.hidden_item || ''],
+      ['increase_decrease', '=', row.incdec || '']
+    ];
 
     if (row.is_item) {
       filters.push(['test_name', '=', '']);
     } else if (row.hidden_item) {
       filters.push(['test_name', '=', row.examination]);
     }
-    if (row.incdec) {
-      filters.push(['increase_decrease', '=', row.incdec]);
-    } else {
-      filters.push(['increase_decrease', '=', '']);
-    }
-    return { filters };
+
+    return filters;
   }
-}
+};
+
+// Keep other helper functions (hide_standard_buttons, apply_cell_styling, create_total_comment) unchanged
 
 const hide_standard_buttons = (frm, fields) => {
 	fields.forEach((field) => {
@@ -89,13 +92,8 @@ const hide_standard_buttons = (frm, fields) => {
 		if (child) {
 			if (child.grid.grid_rows) {
 				setTimeout(() => {
-					const elementsToHide = child.grid.wrapper[0].querySelectorAll(
-						'.grid-add-row, .grid-remove-rows, .row-index',
-					);
-					elementsToHide.forEach((element) => {
-						element.style.display = 'none';
-					});
-				}, 200);
+          $(child.grid.wrapper).find('.grid-add-row, .grid-remove-rows, .row-index').hide();
+				}, 300);
 				child.grid.grid_rows.forEach(function (row) {
 					row.wrapper.find('.btn-open-row').on('click', function () {
 						setTimeout(function () {
@@ -106,7 +104,7 @@ const hide_standard_buttons = (frm, fields) => {
 							elementsToHide.forEach((element) => {
 								element.style.display = 'none';
 							});
-						}, 200);
+						}, 300);
 					});
 				});
 			}
@@ -115,7 +113,8 @@ const hide_standard_buttons = (frm, fields) => {
 };
 
 const apply_cell_styling = (frm, row, table_name) => {
-  let $row = $(frm.fields_dict[table_name].grid.grid_rows_by_docname[row.name].row);
+  let $row = $(frm.fields_dict[table_name].grid.grid_rows_by_docname[row.name]?.row);
+  if(!$row) return;
   if (row.result && (row.min_value || row.max_value) && (row.min_value>0 || row.max_value>0)) {
     let resultValue = parseFloat(row.result);
     let minValue = parseFloat(row.min_value);

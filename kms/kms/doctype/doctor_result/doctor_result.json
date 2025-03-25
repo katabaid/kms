@@ -255,6 +255,7 @@
   {
    "fieldname": "other_examination",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Other Examination",
    "no_copy": 1,
    "options": "Doctor Result Other Exam"
@@ -263,6 +264,7 @@
    "allow_on_submit": 1,
    "fieldname": "group_exam",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Group Exam",
    "no_copy": 1,
    "options": "Doctor Result Group Exam"
@@ -311,7 +313,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-11 14:51:38.883040",
+ "modified": "2025-03-25 11:34:19.907587",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",
