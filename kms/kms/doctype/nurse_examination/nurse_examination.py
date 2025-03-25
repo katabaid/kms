@@ -57,12 +57,14 @@ class NurseExamination(Document):
 				if status and name:
 					self.append('questionnaire', {
 						'template': template,
+						'status': status,
 						'is_completed': True if status == 'Completed' else False,
 						'questionnaire': name
 					})
 				else:
 					self.append('questionnaire', {
 						'template': template,
+						'status': status,
 						'is_completed': False
 					})
 
