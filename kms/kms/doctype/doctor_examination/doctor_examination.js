@@ -738,7 +738,7 @@ const updateQChildStatus = (frm, grid, newStatus, reason) => {
   if (selectedRows.length !== 1) return;
   const child = locals[grid.doctype][selectedRows[0]];
   if (newStatus === 'Completed') {
-    window.open(`http://localhost:5173/questionnaire?template=${child.template}&appointment_id=${frm.doc.appointment}`, '_blank');
+    window.open(`https://kmsregis.netlify.app/questionnaire?template=${child.template}&appointment_id=${frm.doc.appointment}`, '_blank');
   } else {
     frappe.call({
       method: 'kms.mcu_dispatcher.set_status_from_questionnaire',
