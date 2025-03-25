@@ -327,7 +327,7 @@ def process_lab_test_category(doc, group, item):
 			group['item_group'], item['examination_item'], lab_test_grade.result_line
 		)
 		incdec = lab_test_grade.incdec.split('|||') if lab_test_grade.incdec else ['', '']
-		if lab_test_grade.min_value and lab_test_grade.max_value:
+		if lab_test_grade.min_value or lab_test_grade.max_value:
 			std_value = f'{lab_test_grade.min_value} - {lab_test_grade.max_value}'
 		else:
 			std_value = lab_test_grade.normal_value
