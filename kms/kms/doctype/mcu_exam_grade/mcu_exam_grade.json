@@ -56,6 +56,7 @@
    "columns": 1,
    "fieldname": "min_value",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Min Value",
    "read_only": 1
@@ -64,6 +65,7 @@
    "columns": 1,
    "fieldname": "max_value",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Max Value",
    "read_only": 1
@@ -184,13 +186,15 @@
   {
    "fieldname": "std_value",
    "fieldtype": "Data",
-   "label": "Std Value"
+   "in_list_view": 1,
+   "label": "Std Value",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-25 16:40:31.299634",
+ "modified": "2025-03-26 22:42:47.581137",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Exam Grade",
