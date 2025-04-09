@@ -503,4 +503,4 @@ def get_invoice_item_from_encounter(exam_id):
     FROM `tabPatient Encounter` tpe
     WHERE tpe.appointment = '{exam_id}';
     """
-  return frappe.db.sql(sql, as_dict = True)/
+  return frappe.db.sql(sql, as_dict = True)
