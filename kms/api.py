@@ -414,38 +414,55 @@ def get_latest_item_price(item_code, price_list):
     return price[0]["price_list_rate"] if price else None
 
 @frappe.whitelist()
-def get_appointments_for_invoice(doctype, txt, searchfield, start, page_len, filters):
+def get_appointments_for_invoice(doctype, txt, searchfield, start, page_len, filters, appt_type_code=None): # Added appt_type_code parameter
 	"""
 	Fetches Patient Appointments suitable for invoicing for MultiSelectDialog.
-	Filters out MCU appointments and applies optional patient filter passed via `filters`.
+	Uses appt_type_code to determine appointment type filtering.
 	Handles search and pagination.
 	"""
-	# Extract standard and custom filters from the filters dictionary
+	# Extract filters from the filters dictionary (excluding appointment_type)
 	patient = filters.get("patient") if filters else None
-	appointment_type = filters.get("appointment_type") if filters else None
 	custom_type = filters.get("custom_type") if filters else None
 	custom_patient_company = filters.get("custom_patient_company") if filters else None
-	# appointment_date = filters.get("appointment_date") if filters else None # Example for date filter
+	status = filters.get("status") if filters else None
+	appointment_type = filters.get("at") if filters else None
+	print('----------------')
+	print("Received filters dict:", filters)
+	print("Received appt_type_code:", appointment_type) # Log the new parameter
 
-	# Define the core filters for the query
-	query_filters = {
-		"status": "Checked Out",
-		"appointment_type": ["!=", "MCU"], # Base filter to exclude MCU
-	}
+	query_filters = {}
 
-	# Add filters if they are provided from the dialog
+	# Apply standard filters from the filters dict
 	if patient:
 		query_filters["patient"] = patient
-	if appointment_type:
-		query_filters["appointment_type"] = appointment_type # Override base filter if specific type is chosen
 	if custom_type:
 		query_filters["custom_type"] = custom_type
 	if custom_patient_company:
 		query_filters["custom_patient_company"] = custom_patient_company
-	# if appointment_date:
-	#   query_filters["appointment_date"] = appointment_date
+	if appointment_type:
+		appt_type_code = "IS_MCU"
 
-	# Add search term filter if provided (txt corresponds to search term)
+	# Apply status filter, defaulting to 'Checked Out' if not provided
+	query_filters["status"] = status or "Checked Out"
+
+	# Decode appt_type_code to set the appointment_type filter
+	if appt_type_code == "IS_MCU":
+		print("Decoding appt_type_code: IS_MCU -> MCU")
+		query_filters["appointment_type"] = "MCU"
+	elif appt_type_code == "NOT_MCU":
+		print("Decoding appt_type_code: NOT_MCU -> ['!=', 'MCU']")
+		query_filters["appointment_type"] = ["!=", "MCU"]
+	elif appt_type_code:
+		# Use the specific type string directly
+		print(f"Using specific appt_type_code: {appt_type_code}")
+		query_filters["appointment_type"] = appt_type_code
+	else:
+		# Fallback if no type code is received (should default to NOT_MCU from JS)
+		print("No appt_type_code received, defaulting to exclude MCU.")
+		query_filters["appointment_type"] = ["!=", "MCU"]
+
+
+	# Add search term filter if provided
 	# Assuming search applies to the 'name' field or relevant fields like patient name
 	if txt:
 		# Example: Searching by appointment name or patient name (adjust as needed)
@@ -459,9 +476,10 @@ def get_appointments_for_invoice(doctype, txt, searchfield, start, page_len, fil
 		# if patient:
 		#     query_filters.append(["Patient Appointment", "patient", "=", patient])
 
+	print("Filters before frappe.get_all:", query_filters) # Log filters right before the call
 
 	appointments = frappe.get_all(
-		"Patient Appointment", # Use the doctype passed, though it's fixed here
+		"Patient Appointment",
 		filters=query_filters,
 		fields=[
 			"name",

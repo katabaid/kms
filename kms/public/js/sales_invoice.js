@@ -14,6 +14,43 @@ frappe.ui.form.on('Sales Invoice', {
 	},
 })
 
+// Generalized query builder - Moved to top level
+const buildHealthcareQuery = (dialog, queryOptions = {}) => {
+  let dialog_filters = dialog.get_values() || {}; // Ensure dialog_filters is an object
+  let query_filters = { ...queryOptions.additional_filters }; // Start with additional static filters
+
+  // Ensure status is always set, defaulting to 'Checked Out'
+  // Set this early.
+  if (!query_filters.status) {
+      query_filters.status = "Checked Out";
+  }
+
+  // Apply dialog filters
+  if (dialog_filters.patient) {
+      query_filters.patient = dialog_filters.patient;
+  }
+
+  if (dialog_filters.custom_type) {
+    query_filters.custom_type = dialog_filters.custom_type;
+  }
+  if (dialog_filters.custom_patient_company) {
+    query_filters.custom_patient_company = dialog_filters.custom_patient_company;
+  }
+  // Note: Removed redundant assignment of dialog_filters.appointment_type to query_filters.appointment_type
+  // as appt_type_code handles this logic now.
+
+  // Status is already handled above
+  // console.log(appt_type_code) // Removed log
+  // TODO: Consider if the API endpoint should also be configurable via queryOptions
+  const return_obj = {
+    query: "kms.api.get_appointments_for_invoice",
+    filters: query_filters, // Filters dictionary without appointment_type
+  };
+  // console.log("buildHealthcareQuery returning:", JSON.stringify(return_obj)); // Removed log
+  return return_obj;
+};
+// Removed extra closing brace here
+
 // Refactored function to fetch items and populate the table
 const fetchAndPopulateInvoiceItems = (frm, selections, dialog) => {
   if (!selections || selections.length === 0) {
@@ -85,57 +122,42 @@ const fetchAndPopulateInvoiceItems = (frm, selections, dialog) => {
   });
 };
 
-const get_healthcare_to_invoice = (frm) => {
-  const filters = [
-    {
-      fieldtype: 'Link',
-      fieldname: 'appointment_type',
-      options: 'Appointment Type',
-      label: __('Appointment Type'),
-    },
-    {
-      fieldtype: 'Select',
-      fieldname: 'custom_type',
-      options: '\nPrivate\nCorporate\nInsurance',
-      label: __('Custom Type'),
-    },
-    {
-      fieldtype: 'Link',
-      fieldname: 'custom_patient_company',
-      options: 'Customer',
-      label: __('Patient Company'),
-    },
-    {
-      fieldtype: 'Link',
-      fieldname: 'patient',
-      options: 'Patient',
-      label: __('Patient'),
-      get_default: () => {
-        return frm.doc.patient;
-      }
-    },
-  ];
+// Define shared filters for the dialogs at the top level
+const DIALOG_FILTERS = (frm) => [
+  {
+    fieldtype: 'Link',
+    fieldname: 'appointment_type',
+    options: 'Appointment Type',
+    label: __('Appointment Type'),
+  },
+  {
+    fieldtype: 'Select',
+    fieldname: 'custom_type',
+    options: '\nPrivate\nCorporate\nInsurance',
+    label: __('Custom Type'),
+  },
+  {
+    fieldtype: 'Link',
+    fieldname: 'custom_patient_company',
+    options: 'Customer',
+    label: __('Patient Company'),
+  },
+  {
+    fieldtype: 'Link',
+    fieldname: 'patient',
+    options: 'Patient',
+    label: __('Patient'),
+    get_default: () => {
+      // Need frm context here, so make it a function
+      return frm.doc.patient;
+    }
+  },
+];
 
-  const buildHealthcareQuery = (dialog) => {
-    let dialog_filters = dialog.get_values();
-    let query_filters = {};
-    if (dialog_filters.patient) {
-        query_filters.patient = dialog_filters.patient;
-    }
-    if (dialog_filters.appointment_type) {
-      query_filters.appointment_type = dialog_filters.appointment_type;
-    }
-    if (dialog_filters.custom_type) {
-      query_filters.custom_type = dialog_filters.custom_type;
-    }
-    if (dialog_filters.custom_patient_company) {
-      query_filters.custom_patient_company = dialog_filters.custom_patient_company;
-    }
-    return {
-      query: "kms.api.get_appointments_for_invoice",
-      filters: query_filters
-    };
-  };
+
+const get_healthcare_to_invoice = (frm) => {
+  // Use the shared filters definition
+  const filters = DIALOG_FILTERS(frm);
 
   const d = new frappe.ui.form.MultiSelectDialog({
     doctype: "Patient Appointment",
@@ -149,9 +171,11 @@ const get_healthcare_to_invoice = (frm) => {
     date_field: "appointment_date",
     add_filters_group: 1,
     primary_action_label: 'Pick Appointment',
-    filters: filters,
+    filters: filters, // Use shared filters
     get_query: function() {
-      return buildHealthcareQuery(this.dialog);
+      const query_obj = buildHealthcareQuery(this.dialog);
+      // console.log("Healthcare get_query:", JSON.stringify(query_obj)); // Removed log
+      return query_obj;
     },
     size: 'large',
     columns: ["name", "patient", "appointment_type", "appointment_date", "custom_type", "custom_patient_company"],
@@ -169,19 +193,29 @@ const get_healthcare_to_invoice = (frm) => {
 };
 
 const get_mcu_to_invoice = (frm) => {
+  // Use the shared filters definition
+  const filters = DIALOG_FILTERS(frm);
+
   const d = new frappe.ui.form.MultiSelectDialog({
     doctype: "Patient Appointment",
     target: frm,
-    setters: { patient: null},
+    setters: {
+      appointment_type: null, // Keep setters for initial dialog values if needed
+      custom_type: null,
+      custom_patient_company: null,
+      patient: frm.doc.patient || null
+    },
     date_field: "appointment_date",
     add_filters_group: 1,
-    get_query: function(){
-      return {
-        filters: {
-          status: 'Checked Out',
-          appointment_type: ["=", "MCU"] ,
-        }
-      }
+    primary_action_label: 'Pick Appointment',
+    filters: filters, // Use shared filters
+    get_query: function() {
+      // Use the generalized builder with MCU specific options
+      const query_obj = buildHealthcareQuery(this.dialog, {
+        additional_filters: { at: 'MCU' } // Keep status here
+      });
+      // console.log("MCU get_query:", JSON.stringify(query_obj)); // Removed log
+      return query_obj;
     },
     columns: ["name", "appointment_type", "patient", "appointment_date", "custom_type", "custom_patient_company"],
     action: function(selections) {
@@ -191,7 +225,6 @@ const get_mcu_to_invoice = (frm) => {
          return; // Stop execution if not exactly one selected
        }
        // Call the refactored function only if validation passes
-       // Note: Pass 'this.dialog' which refers to the dialog instance created by MultiSelectDialog
        fetchAndPopulateInvoiceItems(frm, selections, this.dialog);
     }
   });
