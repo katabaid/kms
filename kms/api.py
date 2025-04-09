@@ -4,10 +4,8 @@ from frappe.utils import today, getdate
 @frappe.whitelist()
 def get_mcu(price_list: str) -> list[dict]:
     """Get MCU items with prices from specified price list.
-    
     Args:
         price_list: Name of the Price List to filter by
-        
     Returns:
         List of items with code, name and price
     """
@@ -45,14 +43,14 @@ def upsert_item_price(item_code, price_list, customer, price_list_rate):
   else:
     today = frappe.utils.today()
     doc = frappe.get_doc({
-      "doctype":"Item Price", 
-      "item_code": item_code, 
-      "uom": "Unit", 
-      "price_list": price_list, 
-      "selling":"true", 
-      "customer": customer, 
-      "currency": "IDR", 
-      "price_list_rate": price_list_rate, 
+      "doctype":"Item Price",
+      "item_code": item_code,
+      "uom": "Unit",
+      "price_list": price_list,
+      "selling":"true",
+      "customer": customer,
+      "currency": "IDR",
+      "price_list_rate": price_list_rate,
       "valid_from": today})
     doc.insert()
     return doc.name
@@ -147,8 +145,8 @@ def create_mr_from_encounter(enc):
   compound_items_3 = filter_compound_items(3)
 
   pharmacy_warehouse, target_warehouse = frappe.db.get_value(
-    'Branch', 
-    encdoc.custom_branch, 
+    'Branch',
+    encdoc.custom_branch,
     ['custom_default_pharmacy_warehouse', 'custom_default_front_office'])
   def create_or_update_mr(items, internal=True):
     if not items:
@@ -157,12 +155,12 @@ def create_mr_from_encounter(enc):
       target_warehouse = frappe.db.get_value(
         'Healthcare Service Unit', encdoc.custom_service_unit, 'warehouse')
     existing_mr = frappe.db.get_all(
-      'Material Request', 
+      'Material Request',
       {
-        'docstatus': 0, 
-        'custom_patient_encounter': enc, 
+        'docstatus': 0,
+        'custom_patient_encounter': enc,
         'set_warehouse': target_warehouse
-      }, 
+      },
       'name'
     )
     if existing_mr:
@@ -199,7 +197,7 @@ def create_mr_from_encounter(enc):
         'description': item.get('drug_name'),
         'qty': item.get('custom_compound_qty'),
         'uom': stock_uom,
-        'stock_uom': stock_uom, 
+        'stock_uom': stock_uom,
         'conversion_factor': 1,
         'from_warehouse': pharmacy_warehouse,
         'warehouse': target_warehouse,
@@ -231,16 +229,14 @@ def create_mr_from_encounter(enc):
   create_or_update_mr(compound_items_3)
   if message:
     return f'Pharmacy Order {', '.join(message)} created.'
-  else: 
+  else:
     return 'No Pharmacy Order created.'
 
 @frappe.whitelist()
 def check_eligibility_to_reopen(name: str) -> list[dict]:
     """Check if an appointment can be reopened by verifying related records.
-    
     Args:
         name: Appointment ID to check
-        
     Returns:
         List with single dict containing not_eligible count (0 = eligible)
     """
@@ -249,36 +245,29 @@ def check_eligibility_to_reopen(name: str) -> list[dict]:
 @frappe.whitelist()
 def reopen_appointment(name: str) -> None:
     """Reopen appointment by deleting related records if eligible.
-    
     Args:
         name: Appointment ID to reopen
-        
     Raises:
         frappe.ValidationError: If appointment cannot be reopened
     """
     from frappe import delete_doc, get_value, set_value
-    
     # Check eligibility using shared validation logic
     eligibility = _check_appointment_eligibility(name)
     if eligibility[0]['not_eligible'] != 0:
         frappe.throw('Cannot reopen appointment. Existing examinations found: '
                      'Vital Signs, Doctor/Nurse Exams, Sample Collections, or Radiology records.')
-    
     # Delete related records
     deleted_records = False
-    
     # Delete Vital Signs if exists
     vital_signs = get_value('Vital Signs', {'appointment': name}, 'name')
     if vital_signs:
         delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
         deleted_records = True
-    
     # Delete Dispatcher if exists
     dispatcher = get_value('Dispatcher', {'patient_appointment': name}, 'name')
     if dispatcher:
         delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
         deleted_records = True
-    
     # Update appointment status if records were deleted
     if deleted_records:
         set_value('Patient Appointment', name, 'status', 'Open')
@@ -292,24 +281,16 @@ def _check_appointment_eligibility(name: str) -> list[dict]:
         WITH appointment_checks AS (
             SELECT 1 AS flag FROM `tabVital Signs`
             WHERE appointment = %(appt)s AND docstatus = 1
-            
             UNION ALL
-            
             SELECT 1 FROM `tabDoctor Examination`
             WHERE appointment = %(appt)s AND docstatus IN (0, 1)
-            
             UNION ALL
-    
             SELECT 1 FROM `tabNurse Examination`
             WHERE appointment = %(appt)s AND docstatus IN (0, 1)
-            
             UNION ALL
-    
             SELECT 1 FROM `tabSample Collection`
             WHERE custom_appointment = %(appt)s AND docstatus IN (0, 1)
-            
             UNION ALL
-    
             SELECT 1 FROM `tabRadiology`
             WHERE appointment = %(appt)s AND docstatus IN (0, 1)
         )
@@ -349,7 +330,6 @@ def get_appointment_types():
 def set_item_price(item_code, price_list, rate):
   """
   Set or update the latest item price for a given item and price list.
-  
   If there's no valid price within today's range, a new record is created.
   If a valid price exists, its 'valid_to' is set to today, and a new record is created.
 
@@ -372,7 +352,6 @@ def set_item_price(item_code, price_list, rate):
     uom = item_uom.get("purchase_uom") or item_uom.get("stock_uom")
   else:
     return "Error: UOM could not be determined."
-  
   # Check if there's an active price within today's range
   existing_price = frappe.db.get_value(
     "Item Price",
@@ -422,9 +401,9 @@ def get_latest_item_price(item_code, price_list):
     today_date = today()
 
     price = frappe.db.sql("""
-      SELECT price_list_rate 
+      SELECT price_list_rate
       FROM `tabItem Price`
-      WHERE item_code = %s 
+      WHERE item_code = %s
       AND price_list = %s
       AND valid_from <= %s
       AND (valid_to IS NULL OR valid_to >= %s)
@@ -433,3 +412,95 @@ def get_latest_item_price(item_code, price_list):
     """, (item_code, price_list, today_date, today_date), as_dict=True)
 
     return price[0]["price_list_rate"] if price else None
+
+@frappe.whitelist()
+def get_appointments_for_invoice(doctype, txt, searchfield, start, page_len, filters):
+	"""
+	Fetches Patient Appointments suitable for invoicing for MultiSelectDialog.
+	Filters out MCU appointments and applies optional patient filter passed via `filters`.
+	Handles search and pagination.
+	"""
+	# Extract standard and custom filters from the filters dictionary
+	patient = filters.get("patient") if filters else None
+	appointment_type = filters.get("appointment_type") if filters else None
+	custom_type = filters.get("custom_type") if filters else None
+	custom_patient_company = filters.get("custom_patient_company") if filters else None
+	# appointment_date = filters.get("appointment_date") if filters else None # Example for date filter
+
+	# Define the core filters for the query
+	query_filters = {
+		"status": "Checked Out",
+		"appointment_type": ["!=", "MCU"], # Base filter to exclude MCU
+	}
+
+	# Add filters if they are provided from the dialog
+	if patient:
+		query_filters["patient"] = patient
+	if appointment_type:
+		query_filters["appointment_type"] = appointment_type # Override base filter if specific type is chosen
+	if custom_type:
+		query_filters["custom_type"] = custom_type
+	if custom_patient_company:
+		query_filters["custom_patient_company"] = custom_patient_company
+	# if appointment_date:
+	#   query_filters["appointment_date"] = appointment_date
+
+	# Add search term filter if provided (txt corresponds to search term)
+	# Assuming search applies to the 'name' field or relevant fields like patient name
+	if txt:
+		# Example: Searching by appointment name or patient name (adjust as needed)
+		query_filters["name"] = ["like", f"%{txt}%"]
+		# Or search multiple fields:
+		# query_filters = [
+		#     ["Patient Appointment", "status", "=", "Checked Out"],
+		#     ["Patient Appointment", "appointment_type", "!=", "MCU"],
+		#     ["Patient Appointment", "name", "like", f"%{txt}%"]
+		# ]
+		# if patient:
+		#     query_filters.append(["Patient Appointment", "patient", "=", patient])
+
+
+	appointments = frappe.get_all(
+		"Patient Appointment", # Use the doctype passed, though it's fixed here
+		filters=query_filters,
+		fields=[
+			"name",
+      "patient",
+			"appointment_type",
+			"appointment_date",
+			"custom_type",
+			"custom_patient_company"
+		],
+		order_by="appointment_date desc", # Optional: order by date
+		start=start, # Use pagination parameters
+		page_length=page_len
+	)
+	return appointments
+
+@frappe.whitelist()
+def get_invoice_item_from_encounter(exam_id):
+  sql = f"""
+    SELECT title, patient, practitioner, custom_service_unit,
+    (SELECT customer FROM tabPatient tp WHERE tp.name = tpe.patient) customer,
+    (SELECT price_list_rate FROM `tabItem Price` tip
+    WHERE item_code = (SELECT value FROM tabSingles ts
+    WHERE field = 'op_consulting_charge_item')
+    AND price_list = (
+      SELECT default_price_list 
+      FROM `tabCustomer Group` tcg 
+      WHERE name = (
+        SELECT customer_group 
+        FROM tabCustomer tc 
+        WHERE tc.name = (
+          SELECT tp.customer FROM tabPatient tp WHERE tp.name = tpe.patient)))
+    AND valid_from <= CURDATE()
+    AND (valid_upto >= CURDATE() OR valid_upto IS NULL)
+    AND customer IS NULL) harga,
+    (SELECT default_income_account FROM tabCompany WHERE name = tpe.company) acc,
+    (SELECT default_receivable_account FROM tabCompany WHERE name = tpe.company) rec,
+    (SELECT custom_cost_center FROM tabBranch WHERE name = tpe.custom_branch) cc,
+    (SELECT value FROM tabSingles where field = 'stock_uom') uom
+    FROM `tabPatient Encounter` tpe
+    WHERE tpe.appointment = '{exam_id}';
+    """
+  return frappe.db.sql(sql, as_dict = True)/

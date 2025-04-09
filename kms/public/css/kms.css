@@ -1,6 +1,3 @@
-.filter-section {
-  display: none;
-}
 /* Hide the love button in list views */
 .list-liked-by-me {
   display: none !important;
@@ -9,4 +6,15 @@
 /* Hide the love button in list view head (if present) */
 .list-row-like {
   display: none !important;
+}
+
+/* Hide specific custom button dropdown items in Sales Invoice view by targeting parent LI */
+.page-container[data-page-route="Sales Invoice"] .dropdown-menu li:has(> a > span.menu-item-label[data-label="Get%20Items%20From%20%3E%20Healthcare%20Services"]),
+.page-container[data-page-route="Sales Invoice"] .dropdown-menu li:has(> a > span.menu-item-label[data-label="Get%20Items%20From%20%3E%20Prescriptions"]) {
+    display: none !important;
+}
+
+/* Hide the default secondary button (e.g., "Create New...") in modal dialogs */
+.modal-footer .btn-modal-secondary {
+    display: none !important;
 }

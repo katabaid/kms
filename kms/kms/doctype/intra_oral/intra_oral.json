@@ -10,6 +10,7 @@
  ],
  "fields": [
   {
+   "allow_on_submit": 1,
    "fieldname": "intra_oral",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -21,7 +22,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-13 08:51:38.535119",
+ "modified": "2025-04-09 14:49:06.141241",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Intra Oral",

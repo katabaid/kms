@@ -11,6 +11,7 @@
   "patient",
   "patient_name",
   "patient_company",
+  "priority",
   "column_break_ydxak",
   "patient_sex",
   "patient_age",
@@ -298,13 +299,20 @@
    "fieldname": "exam_note",
    "fieldtype": "Small Text",
    "label": "Exam Note"
+  },
+  {
+   "fetch_from": "appointment.custom_priority",
+   "fieldname": "priority",
+   "fieldtype": "Data",
+   "label": "Priority",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-31 18:53:41.376236",
+ "modified": "2025-04-09 14:59:03.814295",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

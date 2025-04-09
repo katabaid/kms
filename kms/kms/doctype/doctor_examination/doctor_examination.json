@@ -1317,6 +1317,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "extra_oral",
    "fieldtype": "Table MultiSelect",
    "label": "Extra Oral",
@@ -1327,6 +1328,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "intra_oral",
    "fieldtype": "Table MultiSelect",
    "label": "Intra Oral",
@@ -1344,12 +1346,14 @@
    "options": "Dental Detail"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "other_dental",
    "fieldtype": "Table",
    "label": "Other Dental",
    "options": "Other Dental"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "dental_detail_html",
    "fieldtype": "HTML",
    "label": "Dental Detail HTML"
@@ -1612,6 +1616,7 @@
    "label": "Exam Note"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "conclusion",
    "fieldtype": "Table",
    "label": "Conclusion",
@@ -1623,6 +1628,7 @@
    "label": "Grade"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "grade",
    "fieldtype": "Link",
    "label": "Grade",
@@ -1645,7 +1651,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-18 14:46:33.591345",
+ "modified": "2025-04-09 14:45:14.383983",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
