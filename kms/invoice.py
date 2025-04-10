@@ -76,8 +76,13 @@ def get_appointments_for_invoice(doctype, txt, searchfield, start, page_len, fil
 @frappe.whitelist()
 def get_invoice_item_from_encounter(exam_id):
   sql = f"""
-    SELECT title, patient, practitioner, custom_service_unit,
-    (SELECT customer FROM tabPatient tp WHERE tp.name = tpe.patient) customer,
+    SELECT tpe.title, tpe.patient, tpe.practitioner, custom_service_unit,
+    CASE tpa.custom_type
+    WHEN 'Personal' THEN (SELECT customer FROM tabPatient tp WHERE tp.name = tpe.patient)
+    WHEN 'Bill to Company' THEN (SELECT custom_company FROM tabPatient tp WHERE tp.name = tpe.patient)
+    WHEN 'Insurance' THEN custom_provider
+    ELSE NULL
+    END customer,
     (SELECT price_list_rate FROM `tabItem Price` tip
     WHERE item_code = (SELECT value FROM tabSingles ts
     WHERE field = 'op_consulting_charge_item')
@@ -96,8 +101,9 @@ def get_invoice_item_from_encounter(exam_id):
     (SELECT default_receivable_account FROM tabCompany WHERE name = tpe.company) rec,
     (SELECT custom_cost_center FROM tabBranch WHERE name = tpe.custom_branch) cc,
     (SELECT value FROM tabSingles where field = 'stock_uom') uom
-    FROM `tabPatient Encounter` tpe
-    WHERE tpe.appointment = '{exam_id}';
+    FROM `tabPatient Encounter` tpe, `tabPatient Appointment` tpa
+    WHERE tpe.appointment = '{exam_id}'
+		AND tpa.name = '{exam_id}';
     """
   return frappe.db.sql(sql, as_dict = True)
 

@@ -1405,7 +1405,7 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 	return {'message': 'Finished'}
 
 @frappe.whitelist()
-def update_exam_item_status(dispatcher_id, examination_item, status):
+def update_exam_item_status(dispatcher_id, examination_item, status, exam_id):
 	if dispatcher_id:
 		flag_query = """
 			SELECT 1 result 
@@ -1463,9 +1463,8 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 					frappe.log_warning(f"No items matching template for Dispatcher '{dispatcher_id}' and Sample '{examination_item}'")
 				update_query_template = """
 					UPDATE `tabMCU Appointment`
-					SET `status` = %(status)s
-					WHERE name = %(item_name)s
-
+					SET `status` = %s
+					WHERE name = %s
 				"""
 				for item in items_to_update:
 					values_update_template = (status, item['name'])
@@ -1477,7 +1476,77 @@ def update_exam_item_status(dispatcher_id, examination_item, status):
 			except Exception as e:
 				frappe.log_error(f"Database query failed finding items via template: {e}", "MCU Status Update Error")
 				frappe.throw(f"Database error occurred finding items linked via template for sample: {examination_item}")
-	return f"Updated Dispatcher '{dispatcher_id}' item(s) related to '{examination_item}' status to '{status}'."
+
+	pa_query = """
+		SELECT 1 result 
+		FROM `tabMCU Appointment` tma 
+		WHERE `parent` = %s
+		AND item_name = %s
+		UNION ALL 
+		SELECT 2 result 
+		FROM `tabMCU Appointment` tma 
+		WHERE `parent` = %s
+		AND EXISTS (SELECT 1 
+			FROM `tabLab Test Template` tltt 
+			WHERE tltt.sample = %s
+			AND tltt.name = tma.item_name)		
+	"""
+	pa_values = (exam_id, examination_item, exam_id, examination_item)
+	try:
+		pa_results = frappe.db.sql(pa_query, pa_values, as_dict=True)
+	except Exception as e:
+		frappe.log_error(f"Database query failed during flag check: {e}", "MCU Status Update Error")
+		frappe.throw(f"Database error occurred while checking examination item: {examination_item}")
+		return
+	if not pa_results:
+		frappe.throw(f"Examination item '{examination_item}' not found linked to Appointment '{exam_id}'.")
+	pa_result_type = pa_results[0].get('result')
+	if pa_result_type == 1:
+		pa_update_query = """
+			UPDATE `tabMCU Appointment` 
+			SET `status` = %s
+			WHERE parent = %s
+			AND item_name = %s
+			AND (parentfield = 'custom_mcu_exam_items' OR parentfield = 'custom_additional_mcu_items')
+			AND parenttype = 'Patient Appointment'
+		"""
+		pa_update_values = (status, exam_id, examination_item)
+		try:
+			frappe.db.sql(pa_update_query, pa_update_values)
+		except Exception as e:
+			frappe.log_error(f"Database query failed during direct update: {e}", "MCU Status Update Error")
+			frappe.throw(f"Database error occurred while updating direct item: {examination_item}")		
+	elif pa_result_type == 2:
+		pa_items_query = """
+			SELECT name 
+			FROM `tabMCU Appointment` tma 
+			WHERE `parent` = %s
+			AND EXISTS (SELECT 1 
+				FROM `tabLab Test Template` tltt 
+				WHERE tltt.sample = %s
+				AND tltt.name = tma.item_name)
+		"""
+		pa_items_values = (exam_id, examination_item)
+		try:
+			pa_items_to_update = frappe.db.sql(pa_items_query, pa_items_values, as_dict=True)
+			if not pa_items_to_update:
+				frappe.log_warning(f"No items matching template for Appointment '{exam_id}' and Sample '{examination_item}'")
+			pa_update_template = """
+				UPDATE `tabMCU Appointment`
+				SET `status` = %s
+				WHERE name = %s
+			"""
+			for item in items_to_update:
+				pa_update_values = (status, item['name'])
+				try:
+					frappe.db.sql(pa_update_template, pa_update_values)
+				except Exception as e:
+					frappe.log_error(f"Database query failed updating item {item['name']} via template: {e}", "MCU Status Update Error")
+					frappe.throw(f"Database error occurred while updating item '{item['name']}' linked via template.")
+		except Exception as e:
+			frappe.log_error(f"Database query failed finding items via template: {e}", "MCU Status Update Error")
+			frappe.throw(f"Database error occurred finding items linked via template for sample: {examination_item}")
+	return f"Updated item(s) related to '{examination_item}' status to '{status}'."
 
 def create_result_doc(doc, target):
 	not_created = True

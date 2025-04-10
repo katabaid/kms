@@ -14,6 +14,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     setStatus:        (frm, newStatus) => frm.set_value('status', newStatus),
     getDispatcher:    (frm) => frm.doc.dispatcher,
     getHsu:           (frm) => frm.doc.service_unit,
+    getExamId:        (frm) => frm.doc.appointment,
   };
 
   // Merge custom configuration with default
@@ -114,6 +115,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     setStatus: config.setStatus,
     getDispatcher: config.getDispatcher,
     getHsu: config.getHsu,
+    getExamId: config.getExamId,
   }
 
   let utilsLoaded = false;
@@ -384,7 +386,8 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         args: {
           dispatcher_id: utils.getDispatcher(frm),
           examination_item: item,
-          status: status
+          status: status,
+          exam_id: utils.getExamId(frm),
         },
         callback: (r) => {
           if (r.message) {

@@ -10,6 +10,7 @@ const sampleCollectionConfig = kms.controller.createDocTypeController('Sample Co
 	setStatus: (frm, newStatus) => frm.set_value('custom_status', newStatus),
 	getDispatcher: (frm) => frm.doc.custom_dispatcher,
 	getHsu: (frm) => frm.doc.custom_service_unit,
+  getExamId: (frm) => frm.doc.custom_appointment,
 });
 frappe.ui.form.on('Sample Collection', {
   ...sampleCollectionConfig,
