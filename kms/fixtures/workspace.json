@@ -15794,9 +15794,9 @@
     "hidden": 0,
     "icon": null,
     "is_query_report": 0,
-    "label": "Radiology Conclusion",
+    "label": "Conclusion",
     "link_count": 0,
-    "link_to": "Radiology Conclusion",
+    "link_to": "Conclusion",
     "link_type": "DocType",
     "onboard": 0,
     "only_for": null,
@@ -15807,7 +15807,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2025-02-18 13:43:09.464404",
+  "modified": "2025-03-13 13:53:58.800058",
   "module": "Healthcare",
   "name": "Healthcare",
   "number_cards": [],

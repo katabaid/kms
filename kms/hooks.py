@@ -292,13 +292,16 @@ override_whitelisted_methods = {
 #	"kms.auth.validate"
 # ]
 fixtures = [
+  {'dt':'User'},
+  {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
+  {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
+  {'dt':'User Permission'},
   {'dt':'Custom Field', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
-  {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Workspace'},
-  {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
+  {'dt':'Workflow'},
   {'dt':'Custom HTML Block'},
-  {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
+  {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Print Format', 'filters': [["custom_format", "=", 1]]},
 ]
 on_logout = ["kms.session.remove_room_assignment"]
