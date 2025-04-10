@@ -299,7 +299,6 @@ fixtures = [
   {'dt':'Custom Field', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Property Setter', 'filters': [['module', '=', 'KMS']]}, 
   {'dt':'Workspace'},
-  {'dt':'Workflow'},
   {'dt':'Custom HTML Block'},
   {'dt':'Report', 'filters': [['module', '=', 'KMS']]},
   {'dt':'Print Format', 'filters': [["custom_format", "=", 1]]},
