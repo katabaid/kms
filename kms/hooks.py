@@ -292,7 +292,6 @@ override_whitelisted_methods = {
 #	"kms.auth.validate"
 # ]
 fixtures = [
-  {'dt':'User'},
   {'dt':'Role', 'filters': [["is_custom", "=", 1]]},
   {'dt':'Custom DocPerm', 'filters': [["role", "in", [["is_custom", "=", 1]]]]},
   {'dt':'User Permission'},
