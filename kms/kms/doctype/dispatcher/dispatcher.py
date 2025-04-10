@@ -1406,44 +1406,78 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 
 @frappe.whitelist()
 def update_exam_item_status(dispatcher_id, examination_item, status):
-	flag = frappe.db.sql(f"""
-		SELECT 1 result 
-		FROM `tabMCU Appointment` tma 
-		WHERE `parent` = '{dispatcher_id}' 
-		AND item_name = '{examination_item}' 
-		UNION ALL 
-		SELECT 2 result 
-		FROM `tabMCU Appointment` tma 
-		WHERE `parent` = '{dispatcher_id}' 
-		AND EXISTS (SELECT 1 
-			FROM `tabLab Test Template` tltt 
-			WHERE tltt.sample = '{examination_item}' 
-			AND tltt.name = tma.item_name)""", as_dict=True)
-	if flag[0].result == 1:
-		frappe.db.sql(f"""
-			UPDATE `tabMCU Appointment` 
-			SET `status` = '{status}' 
-			WHERE parent = '{dispatcher_id}' 
-			AND item_name = '{examination_item}' 
-			AND parentfield = 'package' 
-			AND parenttype = 'Dispatcher'
-			""")
-	elif flag[0].result == 2:
-		items = frappe.db.sql(f"""
-			SELECT name 
+	if dispatcher_id:
+		flag_query = """
+			SELECT 1 result 
 			FROM `tabMCU Appointment` tma 
-			WHERE `parent` = '{dispatcher_id}' 
+			WHERE `parent` = %s
+			AND item_name = %s
+			UNION ALL 
+			SELECT 2 result 
+			FROM `tabMCU Appointment` tma 
+			WHERE `parent` = %s
 			AND EXISTS (SELECT 1 
 				FROM `tabLab Test Template` tltt 
-				WHERE tltt.sample = '{examination_item}' 
-				AND tltt.name = tma.item_name)""", as_dict=True)
-		for item in items:
-			sql_update = f"""UPDATE `tabMCU Appointment` SET `status` = '{status}'""" \
-			f"""WHERE name = '{item.name}'"""
-			frappe.db.sql(sql_update)
-	else:
-		frappe.throw(f"Examination item {examination_item} does not exist.")
-	return f"""Updated Dispatcher item: {examination_item} status to {status}."""
+				WHERE tltt.sample = %s
+				AND tltt.name = tma.item_name)		
+		"""
+		values_flag = (dispatcher_id, examination_item, dispatcher_id, examination_item)
+		try:
+			flag_results = frappe.db.sql(flag_query, values_flag, as_dict=True)
+		except Exception as e:
+			frappe.log_error(f"Database query failed during flag check: {e}", "MCU Status Update Error")
+			frappe.throw(f"Database error occurred while checking examination item: {examination_item}")
+			return
+		if not flag_results:
+			frappe.throw(f"Examination item '{examination_item}' not found linked to Dispatcher '{dispatcher_id}'.")
+		result_type = flag_results[0].get('result')
+		if result_type == 1:
+			update_query_direct = """
+				UPDATE `tabMCU Appointment` 
+				SET `status` = %s
+				WHERE parent = %s
+				AND item_name = %s
+				AND parentfield = 'package' 
+				AND parenttype = 'Dispatcher'
+			"""
+			values_update_direct = (status, dispatcher_id, examination_item)
+			try:
+				frappe.db.sql(update_query_direct, values_update_direct)
+			except Exception as e:
+				frappe.log_error(f"Database query failed during direct update: {e}", "MCU Status Update Error")
+				frappe.throw(f"Database error occurred while updating direct item: {examination_item}")		
+		elif result_type == 2:
+			items_query = """
+				SELECT name 
+				FROM `tabMCU Appointment` tma 
+				WHERE `parent` = %s
+				AND EXISTS (SELECT 1 
+					FROM `tabLab Test Template` tltt 
+					WHERE tltt.sample = %s
+					AND tltt.name = tma.item_name)
+			"""
+			items_flag = (dispatcher_id, examination_item)
+			try:
+				items_to_update = frappe.db.sql(items_query, items_flag, as_dict=True)
+				if not items_to_update:
+					frappe.log_warning(f"No items matching template for Dispatcher '{dispatcher_id}' and Sample '{examination_item}'")
+				update_query_template = """
+					UPDATE `tabMCU Appointment`
+					SET `status` = %(status)s
+					WHERE name = %(item_name)s
+
+				"""
+				for item in items_to_update:
+					values_update_template = (status, item['name'])
+					try:
+						frappe.db.sql(update_query_template, values_update_template)
+					except Exception as e:
+						frappe.log_error(f"Database query failed updating item {item['name']} via template: {e}", "MCU Status Update Error")
+						frappe.throw(f"Database error occurred while updating item '{item['name']}' linked via template.")
+			except Exception as e:
+				frappe.log_error(f"Database query failed finding items via template: {e}", "MCU Status Update Error")
+				frappe.throw(f"Database error occurred finding items linked via template for sample: {examination_item}")
+	return f"Updated Dispatcher '{dispatcher_id}' item(s) related to '{examination_item}' status to '{status}'."
 
 def create_result_doc(doc, target):
 	not_created = True
