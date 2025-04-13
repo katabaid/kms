@@ -77,6 +77,7 @@ const fetchAndPopulateInvoiceItems = (frm, selections, dialog, isMCU = false) =>
             frm.doc.service_unit = item_data.custom_service_unit;
             frm.doc.cost_center = item_data.cc;
             frm.doc.debit_to = item_data.rec;
+            frm.doc.custom_exam_id = selection;
           });
         } else {
           frappe.show_alert({ message: `No invoice items found for appointment: ${selection}`, indicator: 'info' });
@@ -98,6 +99,7 @@ const fetchAndPopulateInvoiceItems = (frm, selections, dialog, isMCU = false) =>
     frm.refresh_field('service_unit');
     frm.refresh_field('cost_center');
     frm.refresh_field('debit_to');
+    frm.refresh_field('custom_exam_id');
     dialog.hide();
     frappe.show_alert({ message: __('Items added from selected appointments.'), indicator: 'green' });
   }).catch((err) => {
