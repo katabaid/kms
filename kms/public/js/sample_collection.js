@@ -25,9 +25,11 @@ frappe.ui.form.on('Sample Collection', {
       .attr('target', '_blank');
 		if(frm.doc.custom_dispatcher && frm.doc.docstatus==0){
       frappe.call({
-        method: 'kms.kms.doctype.dispatcher.dispatcher.is_meal_time',
+        method: 'kms.kms.doctype.dispatcher.dispatcher.is_meal_time_in_room',
         args: {
-          dispatcher_id: frm.doc.custom_dispatcher
+          dispatcher_id: frm.doc.custom_dispatcher,
+          doc_name: frm.doctype,
+          doc_no: frm.doc.name,
         },
         callback: (r) => {
           if (r.message === true) {

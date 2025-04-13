@@ -1336,21 +1336,69 @@ def get_related_rooms (hsu, dispatcher_id):
 				AND 	tma.examination_item = tigsu.parent))""", pluck = 'service_unit')
 
 @frappe.whitelist()
-def is_meal_time(dispatcher_id):
+def is_meal_time_in_room(dispatcher_id, doc_name, doc_no):
 	dispatcher_doc = frappe.get_doc('Dispatcher', dispatcher_id)
-	if dispatcher_doc.had_meal == False:
+	if dispatcher_doc.had_meal:
+		return False
+	if doc_name == 'Sample Collection':
+		return True
+	else:
+		check_doc = frappe.get_doc(doc_name, doc_no)
 		mcu_setting = frappe.get_single('MCU Settings')
 		required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
-		unmatched_items = []
-		for row in dispatcher_doc.package:
-			if row.examination_item in required_exams and row.status in ['Started', 'To Retest']:
-				unmatched_items.append(row.examination_item)
-		if not unmatched_items:
-			return True
-		else:
-			return False
-	else:
+		return any(row.item in required_exams for row in check_doc.examination_item)
+
+def is_meal_time(doc):
+	dispatcher_doc = doc
+	print('------------')
+	if dispatcher_doc.had_meal:
+		print('had meal')
 		return False
+	mcu_setting = frappe.get_single('MCU Settings')
+	required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
+	has_sample_collection_assignment = False
+	has_required_exams = False
+	has_sample_collection_assignment = any(
+		row.reference_doctype == 'Sample Collection'
+		for row in dispatcher_doc.assignment_table
+	)
+	has_required_exams = any(row.examination_item in required_exams for row in dispatcher_doc.package)
+	print(has_sample_collection_assignment)
+	print(has_required_exams)
+	if not has_sample_collection_assignment and not has_required_exams:
+		print('KASUS3')
+		return False
+	if has_sample_collection_assignment:
+		print('KASUS1')
+		kasus1 = any(
+			row.reference_doctype == 'Sample Collection'
+			#and row.status in ('Refused', 'Finished', 'Rescheduled', 'Partial Finished')
+			and row.status in ('Finished', 'Partial Finished')
+			for row in dispatcher_doc.assignment_table
+		)
+		print(kasus1)
+		print(f"--- Debugging assignment_table for Dispatcher {dispatcher_doc.name} ---")
+		found_match_for_kasus1 = False
+		for i, row in enumerate(dispatcher_doc.assignment_table):
+			print(f"Row {i}: Doctype='{row.reference_doctype}', Status='{row.status}'")
+			if row.reference_doctype == 'Sample Collection' and row.status in ('Finished', 'Partial Finished'):
+				print(f"  --> Match found for KASUS1 condition on this row!")
+				found_match_for_kasus1 = True
+		if not found_match_for_kasus1:
+			print("  --> NO single row found matching BOTH Doctype='Sample Collection' AND Status in ('Finished', 'Partial Finished')")
+		print("--- End Debugging ---")
+		return kasus1
+	if has_required_exams:
+		print('KASUS2')
+		kasus2 = any(
+			row.examination_item in required_exams and
+			#row.status in ('Finished', 'Refused', 'Cancelled', 'Rescheduled')
+			row.status == 'Finished'
+			for row in dispatcher_doc.package
+		)
+		print(kasus2)
+		return kasus2
+	print('KASUS4')
 
 def set_meal_time(doc):
 	doc.status = 'Meal Time'
@@ -1388,7 +1436,7 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 				room.status = 'Additional or Retest Request' if exists_to_retest else status
 		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
 		doc.room = ''
-		if is_meal_time(dispatcher_id):
+		if is_meal_time(doc):
 			set_meal_time(doc)
 		doc.save(ignore_permissions=True)
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
