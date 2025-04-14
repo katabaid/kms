@@ -8,7 +8,7 @@ frappe.ui.form.on('Sales Invoice', {
 				get_mcu_to_invoice(frm);
 			},__('Front Office'));
 		}
-    if (frm.doc.docstatus == 1 && !frm.doc.is_return){
+    if (frm.doc.docstatus == 1 && !frm.doc.is_return && frm.doc.patient){
       frm.add_custom_button(__('Payment'), function() {
         create_fo_payment(frm);
       },__('Front Office'));
