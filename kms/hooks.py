@@ -156,54 +156,54 @@ doc_events = {
 #		"on_cancel": "kms.event.delete_medical_record",
 #		"on_update_after_submit": "kms.event.update_medical_record",
 #	},
-  "Item Price": {
-    "on_change": "kms.event.update_item_price",
-    "after_insert": "kms.event.update_item_price",
-    "before_save": "kms.event.update_item_price",
-  },
   "Customer": {
-    "after_insert": "kms.event.update_customer_name",
+    "after_insert": "kms.event.erpnext.update_customer_name",
   },
   "File": {
-    "after_insert": "kms.event.set_has_attachment",
-    "on_trash": "kms.event.set_has_attachment",
+    "after_insert": "kms.event.erpnext.set_has_attachment",
+    "on_trash": "kms.event.erpnext.set_has_attachment",
   },
   "Item": {
-    "before_save": "kms.event.item_before_save",
+    "before_save": "kms.event.erpnext.item_before_save",
   },
-  "Lab Test": {
-    "on_submit": "kms.lab_sample.lab_on_submit",
-    "before_submit": "kms.lab_sample.lab_before_submit",
-    "before_save": "kms.lab_sample.lab_before_save",
+  "Item Price": {
+    "on_change": "kms.event.erpnext.update_item_price",
+    "after_insert": "kms.event.erpnext.update_item_price",
+    "before_save": "kms.event.erpnext.update_item_price",
   },
   "Material Request": {
-    "on_submit": "kms.event.on_submit_material_request",
-  },
-  "Patient Encounter": {
-    "on_trash": "kms.event.unlink_queue_pooling_before_delete",
-    "after_insert": "kms.event.process_queue_pooling_and_dental",
-    "on_submit": "kms.event.update_queue_pooling_status",
-    "validate": "kms.event.validate_child_tables",
-    "on_update": "kms.event.patient_encounter_on_update",
-    "before_save": "kms.event.patient_encounter_before_safe",
-  },
-  "Patient Appointment": {
-    "on_update": "kms.event.process_checkin",
-    "after_insert": "kms.event.after_insert_patient_appointment",
-  },
-  "Prescription Duration": {
-    "autoname": "kms.event.prescription_duration_autoname",
-  },
-  "Vital Signs": {
-    "before_submit": "kms.event.return_to_queue_pooling",
+    "on_submit": "kms.event.erpnext.on_submit_material_request",
   },
   "Quotation": {
-    "before_save": "kms.event.update_rate_amount_after_amend",
+    "before_save": "kms.event.erpnext.update_rate_amount_after_amend",
+  },
+  "Patient Appointment": {
+    "after_insert": "kms.event.healthcare.patient_appointment_after_insert",
+    "on_update": "kms.event.healthcare.patient_appointment_on_update",
+  },
+  "Patient Encounter": {
+    "on_trash": "kms.event.healthcare.patient_encounter_on_trash",
+    "after_insert": "kms.event.healthcare.patient_encounter_after_insert",
+    "on_submit": "kms.event.healthcare.patient_encounter_on_submit",
+    "validate": "kms.event.healthcare.patient_encounter_validate",
+    "on_update": "kms.event.healthcare.patient_encounter_on_update",
+    "before_save": "kms.event.healthcare.patient_encounter_before_safe",
+  },
+  "Prescription Duration": {
+    "autoname": "kms.event.healthcare.prescription_duration_autoname",
+  },
+  "Vital Signs": {
+    "before_submit": "kms.event.event.vital_signs_before_submit",
+  },
+  "Lab Test": {
+    "on_submit": "kms.event.lab_sample.lab_on_submit",
+    "before_submit": "kms.event.lab_sample.lab_before_submit",
+    "before_save": "kms.event.lab_sample.lab_before_save",
   },
   "Sample Collection": {
-    "before_insert": "kms.lab_sample.sample_before_insert",
-    "after_submit": "kms.lab_sample.sample_after_submit",
-    "before_submit": "kms.lab_sample.sample_before_submit",
+    "before_insert": "kms.event.lab_sample.sample_before_insert",
+    "after_submit": "kms.event.lab_sample.sample_after_submit",
+    "before_submit": "kms.event.lab_sample.sample_before_submit",
   },
 }
 
