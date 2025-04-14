@@ -87,6 +87,7 @@
    "fieldtype": "Currency",
    "label": "Outstanding Amount",
    "non_negative": 1,
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -101,9 +102,11 @@
    "reqd": 1
   },
   {
+   "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
-   "label": "Patient Name"
+   "label": "Patient Name",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ijen",
@@ -117,9 +120,11 @@
    "reqd": 1
   },
   {
+   "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "label": "Customer Name"
+   "label": "Customer Name",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_xvsn",
@@ -129,6 +134,7 @@
    "fieldname": "total_payment",
    "fieldtype": "Currency",
    "label": "Total Payment",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -145,7 +151,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-13 11:05:23.056726",
+ "modified": "2025-04-14 11:23:05.549585",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "FO Payment",
