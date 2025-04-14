@@ -177,6 +177,9 @@ doc_events = {
   "Quotation": {
     "before_save": "kms.event.erpnext.update_rate_amount_after_amend",
   },
+  "Sales Invoice": {
+    "on_submit": "kms.event.erpnext.sales_invoice_on_submit",
+  },
   "Patient Appointment": {
     "after_insert": "kms.event.healthcare.patient_appointment_after_insert",
     "on_update": "kms.event.healthcare.patient_appointment_on_update",

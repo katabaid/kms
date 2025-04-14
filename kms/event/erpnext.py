@@ -217,3 +217,9 @@ def item_before_save(doc, method=None):
   if doc.is_new():
     doc.item_code = doc.name
 
+def sales_invoice_on_submit(doc, method=None):
+  ################DocType: Sales Invoice################
+  if doc.patient:
+    pa_doc = frappe.get_doc('Patient Appointment', doc.custom_exam_id)
+    pa_doc.status = 'Closed'
+    pa_doc.save(ignore_permissions=True)
