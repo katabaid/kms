@@ -1,6 +1,6 @@
 frappe.ui.form.on('Sales Invoice', {
 	refresh(frm) {
-		if (frm.doc.docstatus === 0 && !frm.doc.is_return && !frm.is_new()) {
+		if (frm.doc.docstatus === 0 && !frm.doc.is_return && frm.is_new()) {
 			frm.add_custom_button(__('Healthcare'), function() {
 				get_healthcare_to_invoice(frm);
 			},__('Front Office'));
@@ -215,23 +215,21 @@ const create_fo_payment = async (frm) => {
   const branch = await frappe.db.get_value('Patient Appointment', frm.doc.custom_exam_id, 'custom_branch');
   const customer = await frappe.db.get_value('Customer', frm.doc.customer, 'customer_name');
   console.log(branch.message.custom_branch)
-  console.log(customer.message.customer_name)
-  frappe.new_doc('FO Payment', {
-    company: frm.doc.company,
-    invoice: frm.doc.name,
-    branch: branch.message.custom_branch||'',
-    posting_date: new Date(),
-    cost_center: frm.doc.cost_center,
-    patient: frm.doc.patient,
-    customer: frm.doc.customer,
-    outstanding_amount: frm.doc.outstanding_amount,
-    cost_center: frm.doc.cost_center,
-    patient_name: frm.doc.patient_name,
-    customer_name: customer.message.customer_name||'',
-    items: [{
-      mode_of_payment: 'Cash',
-      amount: frm.doc.outstanding_amount,
-    }],
-    total_payment: frm.doc.outstanding_amount,
+  console.log(frappe.datetime.get_today())
+  frappe.new_doc('FO Payment', {company: frm.doc.company}, doc => {
+    doc.invoice = frm.doc.name;
+    doc.branch = branch.message.custom_branch||'';
+    doc.posting_date = frappe.datetime.get_today();
+    doc.cost_center = frm.doc.cost_center;
+    doc.patient = frm.doc.patient;
+    doc.customer = frm.doc.customer;
+    doc.outstanding_amount = frm.doc.outstanding_amount
+    doc.cost_center = frm.doc.cost_center;
+    doc.patient_name = frm.doc.patient_name;
+    doc.customer_name = customer.message.customer_name||'';
+    doc.total_payment = frm.doc.outstanding_amount;
+    let row = frappe.model.add_child(doc, "items");
+    row.mode_of_payment = 'Cash';
+    row.amount = frm.doc.outstanding_amount;
   })
 }

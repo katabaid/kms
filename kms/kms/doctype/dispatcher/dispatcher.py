@@ -428,7 +428,13 @@ def build_lab_test_grade(item_group, item_code, item_name, appointment):
 				)
 			ELSE NULL END
 		ELSE NULL END, 
-		0, normal_value
+		IFNULL(
+			(SELECT 1 FROM `tabMCU Grade` tmg 
+				WHERE tmg.item_group = '{item_group}' 
+				AND tmg.item_code = '{item_code}' 
+				AND test_name = lab_test_event 
+				LIMIT 1), 
+			0), normal_value
 		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt 
 		WHERE tstt.parent = tlt.name AND tlt.custom_appointment = '{appointment}' 
 		AND tlt.docstatus IN (0, 1) AND item = '{item_code}' ORDER BY idx"""
