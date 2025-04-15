@@ -432,7 +432,7 @@ def build_lab_test_grade(item_group, item_code, item_name, appointment):
 			(SELECT 1 FROM `tabMCU Grade` tmg 
 				WHERE tmg.item_group = '{item_group}' 
 				AND tmg.item_code = '{item_code}' 
-				AND test_name = lab_test_event 
+				AND test_name = event 
 				LIMIT 1), 
 			0), normal_value
 		FROM `tabSelective Test Template` tstt, `tabLab Test` tlt 
