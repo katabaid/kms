@@ -111,19 +111,19 @@ def patient_appointment_on_update(doc, method=None):
             new_entry['healthcare_service_unit'] = item['healthcare_service_unit']
             new_entry['status'] = item['status']
             disp_doc.append('package', new_entry)
-          rooms = frappe.db.sql(f"""
+          rooms = frappe.db.sql("""
             SELECT distinct tigsu.service_unit, 
             thsu.custom_default_doctype, thsu.custom_reception_room
             FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
-            WHERE tigsu.branch = '{doc.custom_branch}'
+            WHERE tigsu.branch = %s
             AND tigsu.parenttype = 'Item'
             AND tigsu.service_unit = thsu.name 
             AND EXISTS (
               SELECT 1 FROM `tabMCU Appointment` tma
               WHERE tma.parenttype = 'Patient Appointment'
-              AND tma.parent = '{doc.name}'
+              AND tma.parent = %s
               AND tma.examination_item = tigsu.parent)
-            ORDER BY thsu.custom_room, thsu.custom_default_doctype""", as_dict=1)
+            ORDER BY thsu.custom_room, thsu.custom_default_doctype""", (doc.custom_branch, doc.name), as_dict=1)
           for room in rooms:
             new_entry = dict()
             new_entry['name'] = None

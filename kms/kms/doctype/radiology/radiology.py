@@ -20,7 +20,7 @@ class Radiology(Document):
 def create_exam(name):
 	result = []
 	enc = frappe.get_doc('Patient Encounter', name)
-	sql = f"""SELECT DISTINCT service_unit, parent
+	sql = """SELECT DISTINCT service_unit, parent
     FROM `tabItem Group Service Unit` tigsu 
     WHERE EXISTS (
       SELECT 1 
@@ -29,13 +29,13 @@ def create_exam(name):
       AND EXISTS (
         SELECT 1 
         FROM `tabRadiology Request` trr 
-        WHERE trr.parent = '{enc.name}' 
+        WHERE trr.parent = %s
         AND trr.template = trrt.name
 				AND trr.radiology IS NULL
       )
     )
-    AND branch = '{enc.custom_branch}'"""
-	rooms = frappe.db.sql(sql, as_dict = True)
+    AND branch = %s"""
+	rooms = frappe.db.sql(sql, (enc.name, enc.custom_branch), as_dict = True)
 	rooms_map = {}
 	for row in rooms:
 		room = row['service_unit']

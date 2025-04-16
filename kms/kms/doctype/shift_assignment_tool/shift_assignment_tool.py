@@ -14,7 +14,14 @@ class ShiftAssignmentTool(Document):
 def get_employees(
 	from_date: str | datetime.date, to_date: str | datetime.date, department: str = None, branch: str = None, company: str = None
 ) -> dict[str, list]:
-	employee_list = frappe.db.sql(f"""select name, employee_name from `tabEmployee` where status = 'Active' and date_of_joining<='{to_date}' and company = '{company}' and concat(ifnull(department, ''), ifnull(branch, '')) like '%{department if department else ''}{branch if branch else ''}%'""", as_dict=True)
+	employee_list = frappe.db.sql(f"""
+		select name, employee_name 
+		from `tabEmployee` 
+		where status = 'Active' 
+		and date_of_joining<='{to_date}' 
+		and company = '{company}' 
+		and concat(ifnull(department, ''), ifnull(branch, '')) like '%{department if department else ''}{branch if branch else ''}%'""", 
+		as_dict=True)
 	assigned = []
 	unassigned = []
 	for employee in employee_list:

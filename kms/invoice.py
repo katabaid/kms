@@ -75,7 +75,7 @@ def get_appointments_for_invoice(doctype, txt, searchfield, start, page_len, fil
 
 @frappe.whitelist()
 def get_invoice_item_from_encounter(exam_id):
-  sql = f"""
+  sql = """
     SELECT tpe.title, tpe.patient, tpe.practitioner, custom_service_unit,
     CASE tpa.custom_type
     WHEN 'Personal' THEN (SELECT customer FROM tabPatient tp WHERE tp.name = tpe.patient)
@@ -102,14 +102,13 @@ def get_invoice_item_from_encounter(exam_id):
     (SELECT custom_cost_center FROM tabBranch WHERE name = tpe.custom_branch) cc,
     (SELECT value FROM tabSingles where field = 'stock_uom') uom
     FROM `tabPatient Encounter` tpe, `tabPatient Appointment` tpa
-    WHERE tpe.appointment = '{exam_id}'
-		AND tpa.name = '{exam_id}';
-    """
-  return frappe.db.sql(sql, as_dict = True)
+    WHERE tpe.appointment = %s
+		AND tpa.name = %s;"""
+  return frappe.db.sql(sql, (exam_id, exam_id), as_dict = True)
 
 @frappe.whitelist()
 def get_invoice_item_from_mcu(exam_id):
-  sql = f"""
+  sql = """
     SELECT mcu title, patient, NULL practitioner, NULL custom_service_unit,
     CASE custom_type
     WHEN 'Personal' THEN (SELECT customer FROM tabPatient tp WHERE tp.name = tpe.patient)
@@ -129,7 +128,5 @@ def get_invoice_item_from_mcu(exam_id):
     (SELECT value FROM tabSingles where field = 'stock_uom') uom,
 		(SELECT item_name FROM tabItem ti WHERE ti.name = mcu) item_name
     FROM `tabPatient Appointment` tpe
-    WHERE tpe.name = '{exam_id}';
-    """
-  return frappe.db.sql(sql, as_dict = True)
-
+    WHERE tpe.name = %s;"""
+  return frappe.db.sql(sql, (exam_id), as_dict = True)

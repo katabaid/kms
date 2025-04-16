@@ -4,7 +4,7 @@ from frappe.utils import now
 #region WHITELISTED METHODS
 @frappe.whitelist()
 def get_items():
-  item_group = frappe.db.sql(f"""
+  item_group = frappe.db.sql("""
     WITH RECURSIVE ItemHierarchy AS (
     SELECT name, parent_item_group, is_group
     FROM `tabItem Group` tig 
@@ -16,7 +16,7 @@ def get_items():
     )
     SELECT name, parent_item_group, is_group
     FROM ItemHierarchy""", as_dict=True)
-  item = frappe.db.sql(f"""
+  item = frappe.db.sql("""
     SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `tabLab Test Template` tltt
     WHERE EXISTS (SELECT 1 FROM tabItem ti WHERE tltt.item = ti.name) 
     AND EXISTS (SELECT 1 FROM (WITH RECURSIVE ItemHierarchy AS (
@@ -37,13 +37,13 @@ def create_sc(name, appointment):
     filters = {'custom_appointment': appointment, 'docstatus': 0},
     pluck = 'name')
   #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
-  sus = frappe.db.sql(f"""
+  sus = frappe.db.sql("""
     SELECT DISTINCT tigsu.service_unit
     FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp 
-    WHERE tlp.parent = '{name}' 
+    WHERE tlp.parent = %s
     AND tlp.custom_exam_item = tigsu.parent
-    AND branch = '{appt_doc.custom_branch}'
-    AND custom_sample_collection IS NULL""", as_dict=True)
+    AND branch = %s
+    AND custom_sample_collection IS NULL""", (name, appt_doc.custom_branch), as_dict=True)
   resp = []
   if sus:
     for su in sus:
@@ -69,16 +69,17 @@ def create_sc(name, appointment):
           'custom_document_date': frappe.utils.now(),
           'custom_encounter': name
         })
-      samples = frappe.db.sql(f"""
+      samples = frappe.db.sql("""
       SELECT distinct tltt.sample
       FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
-      WHERE tlp.parent = '{name}' 
+      WHERE tlp.parent = %s
       AND tlp.custom_exam_item = tigsu.parent
-      AND branch = '{appt_doc.custom_branch}'
-      and tigsu.service_unit = '{su.service_unit}'
+      AND branch = %s
+      and tigsu.service_unit = %s
       AND tltt.name = tlp.lab_test_name
       AND tltt.sample IS NOT NULL
-      AND custom_sample_collection IS NULL""", as_dict=True)
+      AND custom_sample_collection IS NULL""", 
+      (name, appt_doc.custom_branch, su.service_unit), as_dict=True)
       existing_samples = {row.sample for row in sample_doc.get('custom_sample_table', [])}
       for sample in samples:
         if sample.sample not in existing_samples:

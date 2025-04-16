@@ -1,8 +1,9 @@
-import frappe, json, ast
+import frappe, ast
 
 @frappe.whitelist()
 def get_bundle_items_to_copy(bundle_id):
-  response = frappe.db.sql(f"""SELECT item_code FROM `tabProduct Bundle Item` WHERE parent = '{bundle_id}'""", as_dict=True, pluck='item_code')
+  query = "SELECT item_code FROM `tabProduct Bundle Item` WHERE parent = %s"
+  response = frappe.db.sql(query, (bundle_id), as_dict=True, pluck='item_code')
   return response
 
 @frappe.whitelist()

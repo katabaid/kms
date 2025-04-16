@@ -12,12 +12,13 @@ class RoomAssignmentTool(Document):
 def get_room(branch: str = None) -> dict[str, list]:
 	unassigned = []
 	assigned = []
-	rooms = frappe.db.sql(f"""
+	rooms = frappe.db.sql("""
 		SELECT thsu.name, thsu.service_unit_type, tra.`user`
 		FROM `tabHealthcare Service Unit` thsu
 		LEFT JOIN `tabRoom Assignment` tra
 		ON tra.healthcare_service_unit = thsu.name AND tra.`date` = CURDATE()
-		WHERE thsu.is_group = 0 AND thsu.custom_branch = COALESCE ('{branch}' , thsu.custom_branch)""", as_dict=True)
+		WHERE thsu.is_group = 0 AND thsu.custom_branch = COALESCE (%s , thsu.custom_branch)""", 
+		(branch), as_dict=True)
 	for room in rooms:
 		if room['user']:
 			assigned.append(room)
@@ -27,7 +28,10 @@ def get_room(branch: str = None) -> dict[str, list]:
 
 @frappe.whitelist()
 def assign_room(room: str) -> None:
-	list = frappe.get_list('Room Assignment', filters={"date": today(), "healthcare_service_unit": room[2:-2]}, fields=['name'])
+	list = frappe.get_list(
+		'Room Assignment', 
+		filters={"date": today(), "healthcare_service_unit": room[2:-2]}, 
+		fields=['name'])
 	if list:
 		doc = frappe.get_doc('Room Assignment', list[0].name)
 		doc.user = frappe.session.user

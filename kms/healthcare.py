@@ -211,19 +211,19 @@ def refuse_to_test(name, room):
           package_item.status = 'Refused'
           package_exist = True
   else:
-    query = f"""
+    query = """
       SELECT examination_item AS item_code
       FROM `tabMCU Appointment` tma
       INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
       INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
       WHERE tma.parenttype = 'Dispatcher'
       AND tma.parentfield = 'package'
-      AND tma.parent = '{name}'
+      AND tma.parent = %s
       AND tigsu.parenttype = 'Item'
       AND tigsu.parentfield = 'custom_room'
-      AND tigsu.branch = '{doc.branch}'
-      AND tigsu.service_unit = '{room}'"""
-    exam_items = frappe.db.sql(query, as_dict=True)
+      AND tigsu.branch = %s
+      AND tigsu.service_unit = %s"""
+    exam_items = frappe.db.sql(query, (name, doc.branch, room), as_dict=True)
     for package_item in doc.package:
       for exam_item in exam_items:
         if package_item.examination_item == exam_item.item_code:
@@ -259,15 +259,15 @@ def fetch_exam_items(name, room, branch, template_doctype):
 
 def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None):
   if template_doctype == 'Lab Test Template':
-    sql = f"""
+    sql = """
       SELECT examination_item, tma.item_name
       FROM `tabMCU Appointment` tma, tabItem ti
-      WHERE tma.parent = '{doc.custom_dispatcher}'
+      WHERE tma.parent = %s
       AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.item = tma.examination_item)
       AND ti.name = tma.examination_item
       ORDER BY ti.custom_bundle_position
       """
-    items = frappe.db.sql(sql, as_dict=True)
+    items = frappe.db.sql(sql, (doc.custom_dispatcher), as_dict=True)
     for item in items:
       doc.append('custom_examination_item', {
         'template': item.item_name,

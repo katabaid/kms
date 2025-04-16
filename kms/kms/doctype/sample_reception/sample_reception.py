@@ -50,33 +50,33 @@ def update_dispatcher_status(sr_no, disp_no, sr_room):
 			disp_doc.save(ignore_permissions=True)
 
 def count_samples(sr_no):
-	sql = f"""
+	sql = """
 		SELECT COUNT(*) FROM `tabSample Collection Bulk` tscb 
 		WHERE EXISTS (
 			SELECT 1 FROM `tabSample Collection` tsc 
 			WHERE EXISTS (
 				SELECT 1 FROM `tabSample Reception` tsr 
 				WHERE tsr.appointment = tsc.custom_appointment
-				AND tsr.name = '{sr_no}'
+				AND tsr.name = %s
 				)
 			AND tsc.docstatus = 1
 			AND tscb.parent = tsc.name
 			AND tsc.custom_dispatcher is not NULL 
 		)"""
-	return frappe.db.sql(sql)
+	return frappe.db.sql(sql, (sr_no))
 
 def count_received_samples(sr_no):
-	sql = f"""
+	sql = """
 		SELECT COUNT(*) FROM `tabSample Collection Bulk` tscb 
 		WHERE EXISTS (
 			SELECT 1 FROM `tabSample Collection` tsc 
 			WHERE EXISTS (
 				SELECT 1 FROM `tabSample Reception` tsr 
 				WHERE tsr.appointment = tsc.custom_appointment
-				AND tsr.name = '{sr_no}'
+				AND tsr.name = %s
 				)
 			AND tsc.docstatus = 1
 			AND tscb.parent = tsc.name
 			AND tsc.custom_dispatcher is not NULL 
 		) AND tscb.reception_status = 1"""
-	return frappe.db.sql(sql)
+	return frappe.db.sql(sql, (sr_no))
