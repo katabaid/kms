@@ -68,6 +68,7 @@ frappe.ui.form.on('Patient Appointment', {
     frm.trigger('add_questionnaire_link');
     frm.trigger('add_finish_button');
     frm.trigger('add_reopen_button');
+    frm.trigger('add_invoice_button');
     // Check if any row in custom_completed_questionnaire has is_completed != 1
 	},
 
@@ -98,6 +99,51 @@ frappe.ui.form.on('Patient Appointment', {
           frm.dirty();
           frm.save();
       });
+    }
+  },
+  async add_invoice_button(frm) {
+    let method = 'kms.invoice.get_invoice_item_from_encounter';
+    if (frm.doc.appointment_for==='MCU') method = 'kms.invoice.get_invoice_item_from_mcu';
+    if(frm.doc.status === 'Checked Out'){
+      try {
+        const item_resp = await frappe.call({
+          method: method,
+          args: { exam_id: frm.doc.name }
+        })
+        frm.add_custom_button(
+          'Create Invoice',
+          () => {
+            frappe.new_doc('Sales Invoice', {company: frm.doc.company}, doc => {
+              doc.due_date = frappe.datetime.get_today();
+              doc.patient = item_resp?.message[0].patient;
+              doc.customer = item_resp?.message[0].customer;
+              doc.ref_practitioner = item_resp?.message[0].practitioner;
+              doc.service_unit = item_resp?.message[0].custom_service_unit;
+              doc.cost_center = item_resp?.message[0].cc;
+              doc.debit_to = item_resp?.message[0].rec;
+              doc.custom_exam_id = frm.doc.name;
+              doc.items = [];
+              let row = frappe.model.add_child(doc, 'items');
+              if (frm.doc.appointment_for==='MCU') {
+                row.item_code = item_resp?.message[0].title;
+                row.item_name = item_resp?.message[0].item_name;
+              } else {
+                row.item_name = frm.doc.title;
+              }
+              row.qty = 1;
+              row.uom = item_resp?.message[0].uom || 'Unit';
+              row.rate = item_resp?.message[0].harga || 0;
+              row.reference_dt = 'Patient Appointment';
+              row.reference_dn = frm.doc.name;
+              row.cost_center = item_resp?.message[0].cc;
+              row.income_account = item_resp?.message[0].acc;
+            })
+          }
+        );
+      } catch (err) {
+        frappe.msgprint(`Error fetching related data: ${err.message}`);
+        console.error('Get value error:', err);
+      }
     }
   },
   add_reopen_button(frm) {

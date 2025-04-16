@@ -214,8 +214,6 @@ const get_mcu_to_invoice = (frm) => {
 const create_fo_payment = async (frm) => {
   const branch = await frappe.db.get_value('Patient Appointment', frm.doc.custom_exam_id, 'custom_branch');
   const customer = await frappe.db.get_value('Customer', frm.doc.customer, 'customer_name');
-  console.log(branch.message.custom_branch)
-  console.log(frappe.datetime.get_today())
   frappe.new_doc('FO Payment', {company: frm.doc.company}, doc => {
     doc.invoice = frm.doc.name;
     doc.branch = branch.message.custom_branch||'';
