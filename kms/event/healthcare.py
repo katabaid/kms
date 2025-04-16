@@ -46,6 +46,9 @@ def patient_appointment_on_update(doc, method=None):
             if entry.examination_item not in existing_items:
               new_entry = entry.as_dict()
               new_entry.name = None
+              new_entry.parentfield = 'package'
+              new_entry.parenttype = 'Dispatcher'
+              new_entry.parent = disp_doc.name
               disp_doc.append('package', new_entry)
               rooms = frappe.get_all(
                 'Item Group Service Unit', 
