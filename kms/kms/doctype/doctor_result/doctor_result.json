@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "autoname": "naming_series:",
  "creation": "2024-08-08 11:48:52.099957",
  "default_view": "List",
@@ -313,7 +314,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-25 11:34:19.907587",
+ "modified": "2025-04-17 16:19:28.116533",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",
@@ -334,6 +335,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
