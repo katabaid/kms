@@ -1356,9 +1356,7 @@ def is_meal_time_in_room(dispatcher_id, doc_name, doc_no):
 
 def is_meal_time(doc):
 	dispatcher_doc = doc
-	print('------------')
 	if dispatcher_doc.had_meal:
-		print('had meal')
 		return False
 	mcu_setting = frappe.get_single('MCU Settings')
 	required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
@@ -1369,42 +1367,23 @@ def is_meal_time(doc):
 		for row in dispatcher_doc.assignment_table
 	)
 	has_required_exams = any(row.examination_item in required_exams for row in dispatcher_doc.package)
-	print(has_sample_collection_assignment)
-	print(has_required_exams)
 	if not has_sample_collection_assignment and not has_required_exams:
-		print('KASUS3')
 		return False
 	if has_sample_collection_assignment:
-		print('KASUS1')
 		kasus1 = any(
 			row.reference_doctype == 'Sample Collection'
-			#and row.status in ('Refused', 'Finished', 'Rescheduled', 'Partial Finished')
 			and row.status in ('Finished', 'Partial Finished')
 			for row in dispatcher_doc.assignment_table
 		)
-		print(kasus1)
-		print(f"--- Debugging assignment_table for Dispatcher {dispatcher_doc.name} ---")
-		found_match_for_kasus1 = False
-		for i, row in enumerate(dispatcher_doc.assignment_table):
-			print(f"Row {i}: Doctype='{row.reference_doctype}', Status='{row.status}'")
-			if row.reference_doctype == 'Sample Collection' and row.status in ('Finished', 'Partial Finished'):
-				print(f"  --> Match found for KASUS1 condition on this row!")
-				found_match_for_kasus1 = True
-		if not found_match_for_kasus1:
-			print("  --> NO single row found matching BOTH Doctype='Sample Collection' AND Status in ('Finished', 'Partial Finished')")
-		print("--- End Debugging ---")
 		return kasus1
 	if has_required_exams:
-		print('KASUS2')
 		kasus2 = any(
 			row.examination_item in required_exams and
 			#row.status in ('Finished', 'Refused', 'Cancelled', 'Rescheduled')
 			row.status == 'Finished'
 			for row in dispatcher_doc.package
 		)
-		print(kasus2)
 		return kasus2
-	print('KASUS4')
 
 def set_meal_time(doc):
 	doc.status = 'Meal Time'
@@ -1638,72 +1617,43 @@ def create_result_doc(doc, target):
 					if non_selective:
 						match = re.compile(r'(\d+) Years?').match(doc.patient_age)
 						age = int(match.group(1)) if match else None
-						minmax = frappe.db.sql(f"""
+						minmax = frappe.db.sql("""
 							WITH cte AS (
-								SELECT
+								SELECT 
 									parent, lab_test_event, lab_test_uom, custom_age, custom_sex, 
 									custom_min_value, custom_max_value, idx,
-									MAX(CASE WHEN custom_age <= {age} THEN custom_age END) 
-										OVER (PARTITION BY parent, lab_test_event, custom_sex 
-											ORDER BY custom_age DESC) AS max_age
+									MAX(CASE WHEN custom_age <= %(age)s THEN custom_age END) OVER (
+										PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC
+									) AS max_age
 								FROM `tabNormal Test Template`
+								WHERE parent = %(test)s AND (%(sex)s IS NULL OR custom_sex = %(sex)s)
+							),
+							latest_values AS (
+								SELECT 
+									lab_test_event, lab_test_uom, idx,
+									MAX(CASE WHEN max_age = %(age)s THEN custom_min_value END) AS min_val,
+									MAX(CASE WHEN max_age = %(age)s THEN custom_max_value END) AS max_val,
+									MAX(CASE WHEN max_age < %(age)s THEN custom_age END) AS max_age_below
+								FROM cte
+								GROUP BY lab_test_event, lab_test_uom, idx
+							),
+							final_values AS (
+								SELECT 
+									lv.lab_test_event,
+									lv.lab_test_uom,
+									lv.idx,
+									COALESCE(lv.min_val,
+										(SELECT custom_min_value FROM cte f 
+										WHERE f.lab_test_event = lv.lab_test_event AND f.custom_age = lv.max_age_below LIMIT 1)
+									) AS custom_min_value,
+									COALESCE(lv.max_val,
+										(SELECT custom_max_value FROM cte f 
+										WHERE f.lab_test_event = lv.lab_test_event AND f.custom_age = lv.max_age_below LIMIT 1)
+									) AS custom_max_value
+								FROM latest_values lv
 							)
-							SELECT
-								lab_test_event,
-								lab_test_uom, idx,
-								COALESCE(
-									(
-										SELECT custom_min_value 
-										FROM cte 
-										WHERE parent = '{exam}' 
-										AND lab_test_event = c.lab_test_event 
-										AND custom_sex = '{doc.patient_sex}' 
-										AND max_age = {age} 
-										ORDER BY custom_age desc LIMIT 1
-									),
-									(
-										SELECT custom_min_value 
-										FROM cte 
-										WHERE parent = '{exam}' 
-										AND lab_test_event = c.lab_test_event 
-										AND custom_sex = '{doc.patient_sex}' 
-										AND custom_age = (
-											SELECT MAX(max_age) 
-											FROM cte WHERE parent = '{exam}' 
-											AND lab_test_event = c.lab_test_event 
-											AND custom_sex = '{doc.patient_sex}' 
-											AND max_age < {age}
-										)
-									)
-								) AS custom_min_value,
-								COALESCE(
-									(
-										SELECT custom_max_value 
-										FROM cte 
-										WHERE parent = '{exam}' 
-										AND lab_test_event = c.lab_test_event 
-										AND custom_sex = '{doc.patient_sex}' 
-										AND max_age = {age} ORDER BY custom_age DESC LIMIT 1
-									),
-									(
-										SELECT custom_max_value 
-										FROM cte 
-										WHERE parent = '{exam}' 
-										AND lab_test_event = c.lab_test_event 
-										AND custom_sex = '{doc.patient_sex}' 
-										AND custom_age = (
-											SELECT MAX(max_age) 
-											FROM cte WHERE parent = '{exam}' 
-											AND lab_test_event = c.lab_test_event 
-											AND custom_sex = '{doc.patient_sex}' 
-											AND max_age < {age}
-										)
-									)
-								) AS custom_max_value
-							FROM cte c
-							WHERE parent = '{exam}'
-							AND custom_sex = '{doc.patient_sex}'
-							GROUP BY lab_test_event order by idx""", as_dict=True)
+							SELECT * FROM final_values ORDER BY idx""", 
+							{'age': age, 'test': exam, 'sex': doc.patient_sex}, as_dict=True)
 						for mm in minmax:
 							new_doc.append('normal_test_items', {
 								'lab_test_name': exam, 
