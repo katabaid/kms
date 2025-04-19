@@ -133,11 +133,23 @@ const prepareDentalSections = (frm) => {
         select_all: false,
         columns: 8,
         get_data: () => {
+          const currentPosition = selected.position;
+          // Check cache (dirtyDentalOptions stores an array of selected option keys for a position)
+          const dirtyOptionsArray = frm.dirtyDentalOptions[currentPosition];
+
           return selected_array.map((option) => {
+            let isChecked;
+            if (dirtyOptionsArray !== undefined) {
+              // Use cache if available
+              isChecked = dirtyOptionsArray.includes(option.key);
+            } else {
+              // Otherwise, use the original value from the document/initial load
+              isChecked = option.value;
+            }
             return {
               label: option.key === 'rg' ? 'Regressive Gingivitis' : option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
               value: option.key,
-              checked: option.value,
+              checked: isChecked,
             };
           });
         },
@@ -156,6 +168,10 @@ const prepareDentalSections = (frm) => {
               selected_options.push($(this).attr('data-unit'));
             }
           });
+          // Update the cache
+          frm.dirtyDentalOptions[selected.position] = selected_options;
+
+          // Update the document field (marks form as dirty)
           $.each(frm.doc.dental_detail || [], (index, row) => {
             if (row.position === selected.position) {
               frappe.model.set_value(row.doctype, row.name, 'options', selected_options.join(', '));
@@ -393,6 +409,7 @@ frappe.ui.form.on('Doctor Examination', {
 
   refresh: function (frm) {
     doctorExaminationController.refresh(frm);
+    frm.dirtyDentalOptions = frm.dirtyDentalOptions || {}; // Initialize or preserve dental options cache
     handleTabVisibility(frm);
     handleDentalSections(frm);
     addSidebarUserAction(frm);
