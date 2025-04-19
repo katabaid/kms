@@ -11,8 +11,8 @@ const handleTabVisibility = (frm) => {
     'eyes_section', 'ear_section', 'nose_section', 'throat_section', 'neck_section', 
     'cardiac_section', 'breast_section', 'resp_section', 'abd_section', 'spine_section', 
     'genit_section', 'neuro_section', 'skin_section', 'measurement_section', 'dental_section', 
-    'teeth_section', 'visual_field_test_section', 'romberg_test_section', 'tinnel_test_section',
-    'phallen_test_section', 'rectal_examination_section'
+    'teeth_section', 'grade_section', 'visual_field_test_section', 'romberg_test_section',
+     'tinnel_test_section', 'phallen_test_section', 'rectal_examination_section'
   ];
   const visibleStatus = ['Checked In', 'Finished', 'Partial Finished'];
   const visibleRowStatus = ['Started', 'Checked In', 'Finished', 'Partial Finished'];
@@ -28,7 +28,7 @@ const handleTabVisibility = (frm) => {
         if (item.field === 'tinnel_test_name') frm.set_df_property('tinnel_test_section', 'hidden', 0);
         if (item.field === 'phallen_test_name') frm.set_df_property('phallen_test_section', 'hidden', 0);
         if (item.field === 'rectal_test_name') frm.set_df_property('rectal_examination_section', 'hidden', 0);
-        if (item.field === 'dental_examination_name') sectionsToHide.slice(14, 16).forEach(section => frm.set_df_property(section, 'hidden', 0));
+        if (item.field === 'dental_examination_name') sectionsToHide.slice(14, 17).forEach(section => frm.set_df_property(section, 'hidden', 0));
       });
     }
   }
@@ -354,7 +354,7 @@ const handleReadOnlyExams = (frm) => {
   const tt_fields = ['tinnel_check','tinnel_details'];
   const pt_fields = ['phallen_check','phallen_details'];
   const rect_fields = ['rectal_check','rectal_hemorrhoid','enlarged_prostate','rectal_others'];
-  const dent_fields = ['extra_oral','intra_oral','dental_detail','other_dental'];
+  //const dent_fields = ['extra_oral','intra_oral','dental_detail','other_dental'];
   const exam_list = 
     mcu_settings
     .filter(item => frm.doc.examination_item.filter(item => item.status === 'Finished').map(item => item.template).includes(item.value))
@@ -366,7 +366,7 @@ const handleReadOnlyExams = (frm) => {
       if (exam === 'tinnel_test_name') tt_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
       if (exam === 'phallen_test_name') pt_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
       if (exam === 'rectal_test_name') rect_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
-      if (exam === 'dental_examination_name') dent_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
+      //if (exam === 'dental_examination_name') dent_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
     })
 };
 
