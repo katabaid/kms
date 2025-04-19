@@ -19,6 +19,7 @@ class RoomAssignment(Document):
     healthcare_practitioner = frappe.db.get_value('Healthcare Practitioner', {'user_id': frappe.session.user},'name')
     if healthcare_practitioner:
       self.healthcare_practitioner = healthcare_practitioner
+    set_user_permisssion(self.healthcare_service_unit)
 
 @frappe.whitelist()
 def change_room(name, room):
@@ -30,7 +31,7 @@ def change_room(name, room):
   doc.time_sign_out = now()
   doc.assigned = 0
   doc.save(ignore_permissions=True)
-  #remove_user_permission()
+  remove_user_permission()
 
   new_doc = frappe.new_doc("Room Assignment")
   new_doc.healthcare_service_unit = room

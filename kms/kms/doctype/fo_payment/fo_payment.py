@@ -29,7 +29,6 @@ class FOPayment(Document):
 				email = result[0].get('email_id')
 				bank_account = result[0].get('bank_account')
 				party_bank_account = result[0].get('party_bank_account')
-			print(bank_account)
 			payment_entry = frappe.new_doc('Payment Entry')
 			payment_entry.payment_type = 'Receive'
 			payment_entry.posting_date = self.posting_date

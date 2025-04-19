@@ -12,7 +12,6 @@ def get_healthcare_services_to_invoice(patient, company):
 			#items_to_invoice += get_encounters_to_invoice(patient, company)
 			#items_to_invoice += get_lab_tests_to_invoice(patient, company)
 			#items_to_invoice += get_clinical_procedures_to_invoice(patient, company)
-			print(items_to_invoice)
 			return items_to_invoice
 	return None
 
