@@ -1618,41 +1618,19 @@ def create_result_doc(doc, target):
 						match = re.compile(r'(\d+) Years?').match(doc.patient_age)
 						age = int(match.group(1)) if match else None
 						minmax = frappe.db.sql("""
-							WITH cte AS (
-								SELECT 
-									parent, lab_test_event, lab_test_uom, custom_age, custom_sex, 
-									custom_min_value, custom_max_value, idx,
-									MAX(CASE WHEN custom_age <= %(age)s THEN custom_age END) OVER (
-										PARTITION BY parent, lab_test_event, custom_sex ORDER BY custom_age DESC
-									) AS max_age
+							WITH ranked AS (
+								SELECT parent, lab_test_event, lab_test_uom, custom_age,
+									custom_sex, custom_min_value, custom_max_value, idx,
+									ROW_NUMBER() OVER (PARTITION BY parent, lab_test_event ORDER BY custom_age DESC) as rn
 								FROM `tabNormal Test Template`
-								WHERE parent = %(test)s AND (%(sex)s IS NULL OR custom_sex = %(sex)s)
-							),
-							latest_values AS (
-								SELECT 
-									lab_test_event, lab_test_uom, idx,
-									MAX(CASE WHEN max_age = %(age)s THEN custom_min_value END) AS min_val,
-									MAX(CASE WHEN max_age = %(age)s THEN custom_max_value END) AS max_val,
-									MAX(CASE WHEN max_age < %(age)s THEN custom_age END) AS max_age_below
-								FROM cte
-								GROUP BY lab_test_event, lab_test_uom, idx
-							),
-							final_values AS (
-								SELECT 
-									lv.lab_test_event,
-									lv.lab_test_uom,
-									lv.idx,
-									COALESCE(lv.min_val,
-										(SELECT custom_min_value FROM cte f 
-										WHERE f.lab_test_event = lv.lab_test_event AND f.custom_age = lv.max_age_below LIMIT 1)
-									) AS custom_min_value,
-									COALESCE(lv.max_val,
-										(SELECT custom_max_value FROM cte f 
-										WHERE f.lab_test_event = lv.lab_test_event AND f.custom_age = lv.max_age_below LIMIT 1)
-									) AS custom_max_value
-								FROM latest_values lv
+								WHERE parent = %(test)s
+									AND (%(sex)s IS NULL OR custom_sex = %(sex)s)
+									AND custom_age <= %(age)s
 							)
-							SELECT * FROM final_values ORDER BY idx""", 
+							SELECT lab_test_event, lab_test_uom, custom_min_value, custom_max_value
+							FROM ranked
+							WHERE rn = 1
+							ORDER BY idx""", 
 							{'age': age, 'test': exam, 'sex': doc.patient_sex}, as_dict=True)
 						for mm in minmax:
 							new_doc.append('normal_test_items', {
