@@ -12,7 +12,8 @@
   "result_set",
   "sample",
   "sample_reception",
-  "normal_value"
+  "normal_value",
+  "text_value"
  ],
  "fields": [
   {
@@ -33,6 +34,7 @@
    "fieldname": "result_set",
    "fieldtype": "Small Text",
    "hidden": 1,
+   "in_list_view": 1,
    "label": "Result Set"
   },
   {
@@ -52,25 +54,36 @@
   {
    "fieldname": "normal_value",
    "fieldtype": "Data",
+   "hidden": 1,
+   "in_list_view": 1,
    "label": "Normal Value"
   },
   {
    "fieldname": "item",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Item",
    "options": "Item",
+   "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "text_value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Text Value"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-20 09:21:20.070540",
+ "modified": "2025-04-20 11:54:44.130498",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Selective Test Template",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

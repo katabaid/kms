@@ -73,12 +73,55 @@ frappe.ui.form.on('Lab Test', {
 		if (frm.doc.docstatus === 1 && frm.doc.sms_sent === 0 && frm.doc.status !== 'Rejected' ) {
 			frm.remove_custom_button(__('Send SMS'))
 		}
+
+		// Set initial read_only state for text_value on load/refresh
+		if (frm.doc.custom_selective_test_result) {
+			$.each(frm.doc.custom_selective_test_result, (idx, row) => {
+				let field = frappe.meta.get_docfield('Selective Test Template', 'text_value', row.name);
+				if (field) {
+					field.read_only = (row.result == row.normal_value) ? 1 : 0;
+					// Clear value if it's read-only initially and values match
+					// (Consider if this clearing is desired on load or only on change)
+					// if (field.read_only === 1) {
+					// 	 // Avoid clearing potentially saved data on load unless intended
+					// 	 // frappe.model.set_value(row.doctype, row.name, 'text_value', '');
+					// }
+				}
+			});
+			// Refresh the field to apply initial read_only states visually
+			frm.refresh_field('custom_selective_test_result');
+
+			// Add pagination listener for custom_selective_test_result
+			let selective_grid = frm.fields_dict['custom_selective_test_result']?.grid;
+			if (selective_grid) {
+				// Use .off().on() to prevent multiple listeners accumulating on refresh
+				selective_grid.wrapper.off('click', '.grid-pagination .btn').on('click', '.grid-pagination .btn', function() {
+					setTimeout(() => {
+						selective_grid.wrapper.find('.row-index').hide();
+					}, 200); // Delay to allow grid redraw
+				});
+			}
+		}
+
 		hide_standard_buttons (frm, ['custom_selective_test_result', 'normal_test_items']);
 		if (frm.doc.normal_test_items) {
 			frm.refresh_field('normal_test_items');
 			frm.fields_dict['normal_test_items'].grid.grid_rows.forEach((row) =>{
 				apply_cell_styling (frm, row.doc);
-			})
+			});
+			// Re-apply hiding after iterating/styling rows, hoping to catch pagination redraws
+			hide_standard_buttons(frm, ['normal_test_items']);
+
+			// Add pagination listener for normal_test_items
+			let normal_grid = frm.fields_dict['normal_test_items']?.grid;
+			if (normal_grid) {
+				// Use .off().on() to prevent multiple listeners accumulating on refresh
+				normal_grid.wrapper.off('click', '.grid-pagination .btn').on('click', '.grid-pagination .btn', function() {
+					setTimeout(() => {
+						normal_grid.wrapper.find('.row-index').hide();
+					}, 200); // Delay to allow grid redraw
+				});
+			}
 		}
 	},
 
@@ -127,9 +170,8 @@ const hide_standard_buttons = (frm, fields) => {
 		if (child) {
 			if (child.grid.grid_rows) {
 				setTimeout(()=>{
-					child.grid.wrapper.find('.grid-add-row, .grid-remove-rows').hide();
-					child.grid.wrapper.find('.row-index').hide();
-				}, 150)
+					$(child.grid.wrapper).find('.grid-add-row, .grid-remove-rows, .row-index').hide();
+				}, 500) // Corrected timeout back to 500ms
 				child.grid.grid_rows.forEach(function(row) {
 					row.wrapper.find('.btn-open-row').on('click', function() {
 						setTimeout(function() {
@@ -147,6 +189,29 @@ frappe.ui.form.on('Normal Test Result',{
 		let row = locals[cdt][cdn];
     apply_cell_styling (frm, row);
     frm._show_dialog_on_change = true;
+	}
+})
+
+frappe.ui.form.on('Selective Test Template',{
+	result(frm, cdt, cdn) {
+		let row = locals[cdt][cdn];
+		let field = frappe.meta.get_docfield(cdt, 'text_value', cdn);
+
+		if (field) {
+			// Set read_only based on the comparison
+			field.read_only = (row.result == row.normal_value) ? 1 : 0;
+
+			// Optionally clear the value if it becomes read-only and the values match
+			if (field.read_only === 1) {
+				frappe.model.set_value(cdt, cdn, 'text_value', '');
+			}
+		}
+
+		// Refresh the grid to apply the read-only change visually
+		frm.refresh_field('custom_selective_test_result');
+
+		// Re-apply hiding logic after refresh
+		hide_standard_buttons(frm, ['custom_selective_test_result']);
 	}
 })
 
