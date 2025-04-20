@@ -14,12 +14,13 @@ frappe.ui.form.on('Room Assignment', {
 		}
 	},
 	setup(frm) {
-		const medical_department = frappe.defaults.get_user_default('medical_department');
+		let medical_department = frappe.defaults.get_user_default('medical_department');
+		if (medical_department === 'Nurse') medical_department = ['Nurse', 'Radiology', 'Laboratory'];
 		frm.set_query('healthcare_service_unit', () => {
 			return { filters: 
 				[
 					['is_group', '=', 0], 
-					['custom_department', '=', medical_department],
+					['custom_department', 'in', medical_department],
 					['name', 'not in', get_already_assigned_rooms(frm)]
 				] 
 			};
