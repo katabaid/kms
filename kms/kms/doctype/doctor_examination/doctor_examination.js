@@ -35,6 +35,9 @@ const handleTabVisibility = (frm) => {
 }
 
 const handleDentalSections = (frm) => {
+  // Hide the questionnaire table when handling dental sections
+  frm.set_df_property('questionnaire', 'hidden', 1);
+
   prepareDentalSections(frm);
   prepareStaticDental(frm);
   prepareOtherDentalOptions(frm);
@@ -411,7 +414,28 @@ frappe.ui.form.on('Doctor Examination', {
     doctorExaminationController.refresh(frm);
     frm.dirtyDentalOptions = frm.dirtyDentalOptions || {}; // Initialize or preserve dental options cache
     handleTabVisibility(frm);
-    handleDentalSections(frm);
+
+    // --- Conditional execution for handleDentalSections ---
+    let dentalTemplateName = '';
+    // Ensure mcu_settings is loaded and is an array
+    if (Array.isArray(mcu_settings)) {
+        const dentalSetting = mcu_settings.find(item => item.field === 'dental_examination_name');
+        if (dentalSetting) {
+            dentalTemplateName = dentalSetting.value;
+        }
+    }
+
+    let shouldHandleDental = false;
+    // Ensure examination_item exists and dentalTemplateName was found
+    if (dentalTemplateName && Array.isArray(frm.doc.examination_item)) {
+        shouldHandleDental = frm.doc.examination_item.some(item => item.template === dentalTemplateName);
+    }
+
+    if (shouldHandleDental) {
+        handleDentalSections(frm);
+    }
+    // --- End conditional execution ---
+
     addSidebarUserAction(frm);
     handleReadOnlyExams(frm);
     handleQuestionnaire(frm);
