@@ -26,6 +26,7 @@
   "dispatcher",
   "queue_pooling",
   "patient_encounter",
+  "locker",
   "section_break_cfvz",
   "status",
   "exam_result",
@@ -324,13 +325,21 @@
    "fieldtype": "Data",
    "label": "Priority",
    "read_only": 1
+  },
+  {
+   "fetch_from": "appointment.custom_locker_room_key_number",
+   "fetch_if_empty": 1,
+   "fieldname": "locker",
+   "fieldtype": "Data",
+   "label": "Locker",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-09 14:59:17.873213",
+ "modified": "2025-04-20 21:29:23.177575",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",
@@ -351,6 +360,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

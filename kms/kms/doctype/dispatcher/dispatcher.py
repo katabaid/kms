@@ -1509,7 +1509,8 @@ def update_exam_item_status(dispatcher_id, examination_item, status, exam_id):
 			except Exception as e:
 				frappe.log_error(f"Database query failed finding items via template: {e}", "MCU Status Update Error")
 				frappe.throw(f"Database error occurred finding items linked via template for sample: {examination_item}")
-
+	print('--------')
+	print(exam_id, examination_item)
 	pa_query = """
 		SELECT 1 result 
 		FROM `tabMCU Appointment` tma 
@@ -1534,6 +1535,8 @@ def update_exam_item_status(dispatcher_id, examination_item, status, exam_id):
 	if not pa_results:
 		frappe.throw(f"Examination item '{examination_item}' not found linked to Appointment '{exam_id}'.")
 	pa_result_type = pa_results[0].get('result')
+	print(pa_result_type)
+	print('--------')
 	if pa_result_type == 1:
 		pa_update_query = """
 			UPDATE `tabMCU Appointment` 
@@ -1569,7 +1572,7 @@ def update_exam_item_status(dispatcher_id, examination_item, status, exam_id):
 				SET `status` = %s
 				WHERE name = %s
 			"""
-			for item in items_to_update:
+			for item in pa_items_to_update:
 				pa_update_values = (status, item['name'])
 				try:
 					frappe.db.sql(pa_update_template, pa_update_values)
