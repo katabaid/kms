@@ -81,10 +81,36 @@ class DoctorExamination(Document):
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:
 			self.db_set('exam_result', exam_result)
+	
 	def on_update(self):
 		old = self.get_doc_before_save()
 		if self.status == 'Checked In' and self.docstatus == 0 and old.status == 'Started':
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
+	
+	def on_update_after_submit(self):
+		old_doc = self.get_doc_before_save()
+		if self.grade != old_doc.grade:
+			if hasattr(self, 'appointment') and self.appointment:
+				doctor_results = frappe.get_all(
+					'Doctor Result',
+					filters={"appointment": self.appointment, "docstatus": ["!=", 2]},
+					fields=["name", "docstatus"]
+				)
+				if doctor_results:
+					if doctor_results[0].docstatus==1:
+						frappe.throw(f'Doctor Result {doctor_results[0].name} is already submitted.')
+					elif doctor_results[0].docstatus==0:
+						dental_item = frappe.db.get_single_value('MCU Settings', 'dental_examination')
+						doctor_result = frappe.get_doc("Doctor Result", doctor_results[0].name)
+						found = False
+						for row in doctor_result.doctor_grade:
+							if row.hidden_item == dental_item:
+								row.grade = self.grade
+								found = True
+								break
+						if found:
+							doctor_result.save(ignore_permissions=True)
+							frappe.msgprint(f"Updated dental grade in Doctor Result {doctor_result.name}")
 
 def setup_questionnaire_table(self, item):
 	is_internal = frappe.db.get_value('Questionnaire Template', item.item_name, 'internal_questionnaire')

@@ -583,12 +583,13 @@ def build_doctor_grade(appointment, package):
 			'item_name': frappe.db.get_single_value('MCU Settings', field_name),
 			'code': item_name} for field_name, item_name in fields]
 
-	def prepare_item_and_group(item, previous_exam_item_group, previous_exam_item):
+	def prepare_item_and_group(item, previous_exam_item_group, previous_exam_item, grade):
 		temp_doc = []
 		group_gradable, group_pos = frappe.db.get_value(
 			'Item Group', item.item_group, ['custom_gradable', 'custom_bundle_position'])
 		item_gradable, item_pos = frappe.db.get_value(
 			'Item', item.examination_item, ['custom_gradable', 'custom_bundle_position'])
+		dental_item = frappe.db.get_single_value('MCU Settings', 'dental_examination'),
 
 		if previous_exam_item_group != item.item_group:
 			previous_exam_item_group = item.item_group
@@ -607,6 +608,7 @@ def build_doctor_grade(appointment, package):
 				'hidden_item': item.examination_item,
 				'position': item_pos,
 				'is_item': 1,
+				'grade': grade if item.examination_item == dental_item else None
 			})
 		return temp_doc, item_pos
 
@@ -719,7 +721,7 @@ def build_doctor_grade(appointment, package):
 		for exam_item in doctor_exam.examination_item:
 			item = [item for item in package if item.item_name == exam_item.template]
 			disp_item = item[0]
-			temp_item_group, item_pos = prepare_item_and_group(disp_item, prev_group, prev_item)
+			temp_item_group, item_pos = prepare_item_and_group(disp_item, prev_group, prev_item, doctor_exam.grade)
 			item_group_list.append(temp_item_group)
 			doctor_tabs = [item for item in single_exams if item['item_code'] == disp_item.examination_item]
 			if doctor_tabs:
