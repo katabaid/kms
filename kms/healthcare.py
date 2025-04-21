@@ -3,15 +3,27 @@ from frappe.utils import today
 
 @frappe.whitelist()
 def get_mcu_settings(is_item=False):
-    base_fields = ['phallen_test', 'physical_examination', 'rectal_test', 
-      'romberg_test', 'tinnel_test', 'visual_field_test', 'dental_examination']
-    fields = base_fields if is_item else [f'{f}_name' for f in base_fields]
-    return frappe.db.sql(f"""
-      SELECT field, value 
-      FROM tabSingles
-      WHERE doctype = 'MCU Settings'
-      AND field IN ({', '.join(['%s']*len(fields))})
-      """, tuple(fields), as_dict=True)
+  base_fields = ['phallen_test', 'physical_examination', 'rectal_test', 'ecg',
+    'romberg_test', 'tinnel_test', 'visual_field_test', 'dental_examination']
+  fields = base_fields if is_item else [f'{f}_name' for f in base_fields]
+  return frappe.db.sql(f"""
+    SELECT field, value 
+    FROM tabSingles
+    WHERE doctype = 'MCU Settings'
+    AND field IN ({', '.join(['%s']*len(fields))})
+    """, tuple(fields), as_dict=True)
+
+@frappe.whitelist()
+def get_ecg(exam_id):
+  return frappe.db.sql("""
+    SELECT parent
+    FROM `tabNurse Examination Request` tner
+    WHERE parent IN (
+      SELECT name FROM `tabNurse Examination` tne 
+      WHERE tne.appointment = %s and tne.docstatus IN (0,1))
+    AND template = (
+      SELECT value FROM tabSingles ts WHERE doctype = 'MCU Settings' and `field` = 'ecg_name')
+  """, (exam_id), as_dict=True)
 
 @frappe.whitelist()
 def get_exam_items(root):

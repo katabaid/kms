@@ -34,10 +34,25 @@ const handleTabVisibility = (frm) => {
   }
 }
 
-const handleDentalSections = (frm) => {
-  // Hide the questionnaire table when handling dental sections
-  frm.set_df_property('questionnaire', 'hidden', 1);
+// Function to determine if dental sections should be handled
+const shouldShowDentalSections = (frm, settings) => {
+  let dentalTemplateName = '';
+  // Ensure settings is loaded and is an array
+  if (Array.isArray(settings)) {
+      const dentalSetting = settings.find(item => item.field === 'dental_examination_name');
+      if (dentalSetting) {
+          dentalTemplateName = dentalSetting.value;
+      }
+  }
 
+  // Ensure examination_item exists and dentalTemplateName was found
+  if (dentalTemplateName && Array.isArray(frm.doc.examination_item)) {
+      return frm.doc.examination_item.some(item => item.template === dentalTemplateName);
+  }
+  return false; // Return false if conditions aren't met
+}
+
+const handleDentalSections = (frm) => {
   prepareDentalSections(frm);
   prepareStaticDental(frm);
   prepareOtherDentalOptions(frm);
@@ -389,12 +404,28 @@ const handleReadOnlyExams = (frm) => {
     })
 };
 
+// Function to add the View ECG button conditionally
+const addECGButton = (frm) => {
+  if (ecg_doc_no && frm.doc.docstatus !== 2) {
+    frm.add_custom_button(
+      __('View ECG'),
+      () => {
+        // Construct the URL and open in a new tab
+        const url = `/app/nurse-examination/${ecg_doc_no}`;
+        window.open(url, '_blank');
+      },
+      __('Navigate') // Adding under a 'Navigate' group, adjust if needed
+    );
+  }
+};
+
 // Use the common controller with custom before_submit function for Doctor Examination
 const doctorExaminationController = kms.controller.createDocTypeController('Doctor Examination', {
   before_submit: customBeforeSubmit,
 });
 let mcu_settings = [];
 let normal_values = true;
+let ecg_doc_no = '';
 
 // Attach the custom controller to the Doctor Examination doctype
 frappe.ui.form.on('Doctor Examination', {
@@ -404,10 +435,30 @@ frappe.ui.form.on('Doctor Examination', {
   },
 
   before_load: function (frm) {
-    frappe.call({
-      method: 'kms.healthcare.get_mcu_settings',
-      callback: (r) => { if (r.message) mcu_settings = r.message; }
-    })
+    const get_mcu_settings = () => {
+      return new Promise((resolve) => {
+        frappe.call({
+          method: 'kms.healthcare.get_mcu_settings',
+          callback: (r) => resolve(r.message || [])
+        });
+      });
+    };
+    const get_ecg = (exam_id) => {
+      return new Promise((resolve) => {
+        frappe.call({
+          method: 'kms.healthcare.get_ecg',
+          args: {exam_id: exam_id},
+          callback: (r) => resolve(r.message || '')
+        })
+      })
+    };
+    promises = [get_mcu_settings()];
+    promises.push(frm.doc.appointment ? get_ecg(frm.doc.appointment) : Promise.resolve(null));
+    Promise.all(promises)
+      .then(([settings, ecg]) => {
+        mcu_settings = settings;
+        ecg_doc_no = ecg && ecg[0] ? ecg[0].parent : null;
+      });
   },
 
   refresh: function (frm) {
@@ -415,28 +466,18 @@ frappe.ui.form.on('Doctor Examination', {
     frm.dirtyDentalOptions = frm.dirtyDentalOptions || {}; // Initialize or preserve dental options cache
     handleTabVisibility(frm);
 
-    // --- Conditional execution for handleDentalSections ---
-    let dentalTemplateName = '';
-    // Ensure mcu_settings is loaded and is an array
-    if (Array.isArray(mcu_settings)) {
-        const dentalSetting = mcu_settings.find(item => item.field === 'dental_examination_name');
-        if (dentalSetting) {
-            dentalTemplateName = dentalSetting.value;
-        }
-    }
-
-    let shouldHandleDental = false;
-    // Ensure examination_item exists and dentalTemplateName was found
-    if (dentalTemplateName && Array.isArray(frm.doc.examination_item)) {
-        shouldHandleDental = frm.doc.examination_item.some(item => item.template === dentalTemplateName);
-    }
-
-    if (shouldHandleDental) {
+    // Check if dental sections should be shown and handled
+    if (shouldShowDentalSections(frm, mcu_settings)) {
+        // Hide the questionnaire table when handling dental sections
+        frm.set_df_property('questionnaire', 'hidden', 1);
         handleDentalSections(frm);
+    } else {
+        // Ensure questionnaire is visible if dental sections are not shown
+        frm.set_df_property('questionnaire', 'hidden', 0);
     }
-    // --- End conditional execution ---
 
     addSidebarUserAction(frm);
+    addECGButton(frm); // Call the new function to add the ECG button
     handleReadOnlyExams(frm);
     handleQuestionnaire(frm);
 		if (frm.doc.non_selective_result) {
