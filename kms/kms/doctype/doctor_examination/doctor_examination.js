@@ -165,7 +165,7 @@ const prepareDentalSections = (frm) => {
               isChecked = option.value;
             }
             return {
-              label: option.key === 'rg' ? 'Regressive Gingivitis' : option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
+              label: option.key === 'rg' ? 'Gingival Recession' : option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
               value: option.key,
               checked: isChecked,
             };

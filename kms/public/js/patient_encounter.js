@@ -346,7 +346,7 @@ frappe.ui.form.on('Patient Encounter', {
           get_data: () => {
             return selected_array.map((option) => {
               return {
-                label: option.key === 'rg' ? 'Regressive Gingivitis' : option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
+                label: option.key === 'rg' ? 'Gingival Recession' : option.key.toLowerCase().replace(/\b\w/g, s => s.toUpperCase()),
                 value: option.key,
                 checked: option.value,
               };
