@@ -3,10 +3,20 @@ from frappe.utils import now, get_datetime
 
 def set_cancelled_open_appointment():
   appointment = frappe.db.get_list('Patient Appointment', filters={'status': 'Open'}, fields=['name', 'appointment_date'])
+  today = frappe.utils.getdate(frappe.utils.today())
   for q in appointment:
-      if q['appointment_date']<frappe.utils.today():
+      if q['appointment_date'] < today:
         doc = frappe.get_doc('Patient Appointment', q['name'])
         doc.status = 'Cancelled'
+        doc.save()
+
+def set_open_scheduled_appointment():
+  appointment = frappe.db.get_list('Patient Appointment', filters={'status': 'Scheduled'}, fields=['name', 'appointment_date'])
+  today = frappe.utils.getdate(frappe.utils.today())
+  for q in appointment:
+      if q['appointment_date'] == today:
+        doc = frappe.get_doc('Patient Appointment', q['name'])
+        doc.status = 'Open'
         doc.save()
 
 def set_no_show_queue_pooling():
@@ -26,7 +36,6 @@ def set_cancelled_timeout_queue_pooling():
       doc.cancel_reason = 'Timeout'
       doc.save()
 
-@frappe.whitelist()
 def reset_dispatcher_status():
   d = frappe.db.get_all('Dispatcher', filters={'status': 'Meal Time'}, pluck='name')
   for q in d:
