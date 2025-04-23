@@ -2,8 +2,6 @@
 # For license information, please see license.txt
 
 import frappe, re
-import json
-from datetime import timedelta
 from frappe.model.document import Document
 from frappe.utils import today, flt, now, add_to_date
 from frappe import _
@@ -1511,8 +1509,6 @@ def update_exam_item_status(dispatcher_id, examination_item, status, exam_id):
 			except Exception as e:
 				frappe.log_error(f"Database query failed finding items via template: {e}", "MCU Status Update Error")
 				frappe.throw(f"Database error occurred finding items linked via template for sample: {examination_item}")
-	print('--------')
-	print(exam_id, examination_item)
 	pa_query = """
 		SELECT 1 result 
 		FROM `tabMCU Appointment` tma 
@@ -1537,8 +1533,6 @@ def update_exam_item_status(dispatcher_id, examination_item, status, exam_id):
 	if not pa_results:
 		frappe.throw(f"Examination item '{examination_item}' not found linked to Appointment '{exam_id}'.")
 	pa_result_type = pa_results[0].get('result')
-	print(pa_result_type)
-	print('--------')
 	if pa_result_type == 1:
 		pa_update_query = """
 			UPDATE `tabMCU Appointment` 
@@ -1677,11 +1671,12 @@ def create_result_doc(doc, target):
 			'exam': doc.name
 		})
 		if target == 'Nurse Result':
-			count_nurse_result = frappe.db.sql(f"""SELECT count(*) count 
+			count_nurse_result = frappe.db.sql("""
+				SELECT count(*) count 
 				FROM `tabNurse Examination Template` tnet
 				WHERE EXISTS (SELECT * FROM `tabNurse Examination Request` tner 
-				WHERE tner.parent = '{doc.name}' AND tnet.name = tner.template)
-				AND tnet.result_in_exam = 0""", as_dict = True)
+				WHERE tner.parent = %s AND tnet.name = tner.template)
+				AND tnet.result_in_exam = 0""", (doc.name), as_dict = True)
 			if count_nurse_result[0].count == 0:
 				return
 		for item in doc.examination_item:
@@ -1791,7 +1786,7 @@ def new_doctor_result(appointment):
 	doc.gender = appt.patient_sex
 	doc.dispatcher = disp
 	doc.created_date = today()
-	package_line = frappe.db.sql(f"""SELECT examination_item, item_name, item_group,
+	package_line = frappe.db.sql("""SELECT examination_item, item_name, item_group,
 		(select custom_gradable from `tabItem Group` tig 
 			where tig.name = item_group) group_gradable, 
 		(select custom_bundle_position from `tabItem Group` tig 
@@ -1809,7 +1804,7 @@ def new_doctor_result(appointment):
 		(select 1 from `tabLab Test Template` tnet 
 			where tnet.lab_test_code = examination_item) lab_test
 		from `tabMCU Appointment`
-		where parent = '{appt.name}'""", as_dict = True)
+		where parent = %s""", (appt.name), as_dict = True)
 	group_result = get_examination_items(package_line)
 	combined_items = appt.custom_mcu_exam_items + appt.custom_additional_mcu_items
 	process_examination_items(doc, group_result, combined_items)

@@ -244,36 +244,35 @@ def check_eligibility_to_reopen(name: str) -> list[dict]:
 
 @frappe.whitelist()
 def reopen_appointment(name: str) -> None:
-    """Reopen appointment by deleting related records if eligible.
-    Args:
-        name: Appointment ID to reopen
-    Raises:
-        frappe.ValidationError: If appointment cannot be reopened
-    """
-    from frappe import delete_doc, get_value, set_value
-    # Check eligibility using shared validation logic
-    eligibility = _check_appointment_eligibility(name)
-    if eligibility[0]['not_eligible'] != 0:
-        frappe.throw('Cannot reopen appointment. Existing examinations found: '
-                     'Vital Signs, Doctor/Nurse Exams, Sample Collections, or Radiology records.')
-    # Delete related records
-    deleted_records = False
-    # Delete Vital Signs if exists
-    vital_signs = get_value('Vital Signs', {'appointment': name}, 'name')
-    if vital_signs:
-        delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
-        deleted_records = True
-    # Delete Dispatcher if exists
-    dispatcher = get_value('Dispatcher', {'patient_appointment': name}, 'name')
-    if dispatcher:
-        delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
-        deleted_records = True
-    # Update appointment status if records were deleted
-    if deleted_records:
-        set_value('Patient Appointment', name, 'status', 'Open')
-        frappe.msgprint(f'Appointment {name} reopened successfully')
-    else:
-        frappe.throw('No related records found to delete - cannot reopen appointment')
+  """Reopen appointment by deleting related records if eligible.
+  Args:
+      name: Appointment ID to reopen
+  Raises:
+      frappe.ValidationError: If appointment cannot be reopened
+  """
+  # Check eligibility using shared validation logic
+  eligibility = _check_appointment_eligibility(name)
+  if eligibility[0]['not_eligible'] != 0:
+    frappe.throw('Cannot reopen appointment. Existing examinations found: '
+      'Vital Signs, Doctor/Nurse Exams, Sample Collections, or Radiology records.')
+  # Delete related records
+  deleted_records = False
+  # Delete Vital Signs if exists
+  vital_signs = frappe.db.get_value('Vital Signs', {'appointment': name}, 'name')
+  if vital_signs:
+    frappe.delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
+    deleted_records = True
+  # Delete Dispatcher if exists
+  dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': name}, 'name')
+  if dispatcher:
+    frappe.delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
+    deleted_records = True
+  # Update appointment status if records were deleted
+  if deleted_records:
+    frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
+    frappe.msgprint(f'Appointment {name} reopened successfully')
+  else:
+    frappe.throw('No related records found to delete - cannot reopen appointment')
 
 def _check_appointment_eligibility(name: str) -> list[dict]:
     """Shared validation function for appointment operations."""

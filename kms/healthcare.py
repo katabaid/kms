@@ -150,6 +150,8 @@ def exam_retest (name, item, item_name):
       if getattr(to_cancel_doc, 'exam_result', None):
         to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result)
         frappe.db.set_value(result_doctype, to_cancel_res.name, {'docstatus': 2})
+    if disp_doc.status == 'Waiting to Finish':
+      disp_doc.status = 'In Queue'
     disp_doc.save(ignore_permissions=True)
     return {'docname': disp_doc.name}
 

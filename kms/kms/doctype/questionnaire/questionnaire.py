@@ -3,7 +3,6 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import now
 
 class Questionnaire(Document):
 	def after_insert(self):
@@ -37,7 +36,7 @@ class Questionnaire(Document):
 		try:
 			pa_doc.save(ignore_permissions=True)
 		except Exception as e:
-			print(f"Error saving Patient Appointment: {e}")
+			frappe.msgprint(f"Error saving Patient Appointment: {e}")
 
 	def _get_clean_detail_dict(self, detail):
 		"""Return a dictionary of detail fields excluding metadata."""
