@@ -149,7 +149,7 @@ def sample_before_submit(doc, method=None):
       sample_reception_doc.appointment = doc.custom_appointment
       sample_reception_doc.name1 = doc.patient_name
       sample_reception_doc.healthcare_service_unit = room
-      sample_reception_doc.save()
+      sample_reception_doc.save(ignore_permissions=True)
       #saved = True
       sample.sample_reception = sample_reception_doc.name
       sample.status_time = now()
