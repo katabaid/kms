@@ -38,9 +38,12 @@ class Dispatcher(Document):
 
 	def update_patient_appointment(self):
 		if self.patient_appointment:
-			status = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'status')
-			if status not in {"Closed", "Checked Out", "Ready to Check Out"}:
-				frappe.db.set_value('Patient Appointment', self.patient_appointment, 'status', 'Ready to Check Out')
+			if any(room.status == 'Rescheduled' for room in self.assignment_table):
+				frappe.db.set_value('Patient Appointment', self.patient_appointment, 'status', 'Scheduled')
+			else:
+				status = frappe.db.get_value('Patient Appointment', self.patient_appointment, 'status')
+				if status not in {"Closed", "Checked Out", "Ready to Check Out"}:
+					frappe.db.set_value('Patient Appointment', self.patient_appointment, 'status', 'Ready to Check Out')
 		else:
 			frappe.msgprint(_("No linked Patient Appointment found."))
 	
