@@ -91,13 +91,31 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_check_in_button(frm) {
-    if(frm.doc.status === 'Open'){
+    if(frm.doc.status === 'Open'||frm.doc.status === 'Scheduled'){
       frm.add_custom_button(
         'Check In',
         () => {
-          frm.doc.status = 'Checked In';
-          frm.dirty();
-          frm.save();
+          if(frm.doc.status === 'Scheduled'){
+            frm.set_value('appointment_date', frappe.datetime.get_today());
+          }
+          frm.set_value('status', 'Checked In');
+          frm.doc.custom_mcu_exam_items.forEach(row => {
+            if(row.status === 'Rescheduled'){
+              row.status = 'Started'}});
+          frm.doc.custom_additional_mcu_items.forEach(row => {
+            if(row.status === 'Rescheduled'){
+              row.status = 'Started'}});
+          frm.refresh_field('custom_mcu_exam_items');
+          frm.refresh_field('custom_additional_mcu_items');
+          frm.save().then(()=>{
+            frappe.call({
+              method: 'kms.api.dispatcher.update_rescheduled_dispatcher',
+              args: {appointment: frm.doc.name},
+              callback: () => {
+                frappe.msgprint(__('Check in completed.'))
+              }
+            })
+          });
       });
     }
   },
