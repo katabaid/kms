@@ -102,7 +102,7 @@ function get_already_assigned_rooms(frm) {
 	}
 	
 	frappe.call({
-			method: 'kms.api.get_assigned_room',
+			method: 'kms.api.erpnext.get_assigned_room',
 			args: {
 					date: frm.doc.date,
 			},

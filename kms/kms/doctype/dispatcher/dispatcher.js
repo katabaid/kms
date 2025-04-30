@@ -6,7 +6,7 @@ frappe.ui.form.on('Dispatcher', {
 		addFinishButtons(frm);
 		addFinishMealButtons(frm);
 		hideStandardButtonOnChildTable(frm, childTables);
-		addCustomButtonOnChildTable(frm);
+		addCustomButtonOnRoom(frm);
 		addCustomButtonOnPackage(frm);
 		addSidebarUserAction(frm);
 		frm.disable_save();
@@ -128,12 +128,12 @@ const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 	});
 };
 
-const addCustomButtonOnChildTable = (frm) => {
+const addCustomButtonOnRoom = (frm) => {
 	const grid = frm.fields_dict[childTableButton].grid;
 	const buttons = [
 		{ label: 'Assign', status: 'Waiting to Enter the Room', statuses: 'Wait for Room Assignment,Additional or Retest Request', class: 'btn-primary', prompt: false },
 		{ label: 'Refuse', status: 'Refused', statuses: 'Wait for Room Assignment', class: 'btn-danger', prompt: true },
-		//{ label: 'Retest', status: 'Wait for Room Assignment', statuses: 'Refused,Finished,Rescheduled,Partial Finished', class: 'btn-warning', prompt: true },
+		{ label: 'Reschedule', status: 'Rescheduled', statuses: 'Wait for Room Assignment,Additional or Retest Request', class: 'btn-warning', prompt: true },
 		{ label: 'Remove from Room', status: 'Wait for Room Assignment', statuses: 'Waiting to Enter the Room', class: 'btn-info', prompt: false },
 	];
 	// Remove existing custom buttons
@@ -180,7 +180,7 @@ const updateChildStatus = async (frm, grid, button, reason = null) => {
 		if (frm.doc.status == 'Meal Time') frappe.throw('Cannot modify room assignment. Patient is still on meal time break.');
 		if (button.label === 'Assign') next = await assign_to_room(frm);
 		else if (button.label === 'Remove from Room') next = await remove_from_room(frm);
-		else if (button.label === 'Retest') next = await retest(frm);
+		else if (button.label === 'Reschedule') next = await reschedule(frm);
 		else if (button.label === 'Refuse') next = await refuse_to_test(frm);
 		if (next) {
 			if (utilsLoaded && kms.utils) {
@@ -242,9 +242,9 @@ const updateCustomButtonVisibility = (grid) => {
 const createPromiseHandler = (method) => (frm) => new Promise((resolve) => {
 	let selected_rows = frm.fields_dict['assignment_table'].grid.get_selected();
 	if (frm.doc.room && frm.doc.status === 'In Room' && method === 'kms.healthcare.remove_from_room') {
-				frappe.throw(`Patient ${frm.doc.patient} is already in ${frm.doc.room} room.`);
+		frappe.throw(`Patient ${frm.doc.patient} is already in ${frm.doc.room} room.`);
 	} else if (frm.doc.room && frm.doc.status === 'In Queue' && method !== 'kms.healthcare.remove_from_room') {
-			frappe.throw(`Patient ${frm.doc.patient} is already in a queue for ${frm.doc.room} room.`);
+		frappe.throw(`Patient ${frm.doc.patient} is already in a queue for ${frm.doc.room} room.`);
 	} else {
 		if (selected_rows.length > 0 && selected_rows) {
 			const child = locals[frm.fields_dict['assignment_table'].grid.doctype][selected_rows];
@@ -265,5 +265,5 @@ const createPromiseHandler = (method) => (frm) => new Promise((resolve) => {
 
 const assign_to_room = createPromiseHandler('kms.healthcare.create_service');
 const remove_from_room = createPromiseHandler('kms.healthcare.remove_from_room');
-const retest = createPromiseHandler('kms.healthcare.retest');
+const reschedule = createPromiseHandler('kms.api.dispatcher.reschedule');
 const refuse_to_test = createPromiseHandler('kms.healthcare.refuse_to_test');

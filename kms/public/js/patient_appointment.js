@@ -79,7 +79,7 @@ frappe.ui.form.on('Patient Appointment', {
       frm.add_custom_button(
         'Check Out',
         () => {frappe.call({
-          method: 'kms.api.check_out_appointment',
+          method: 'kms.api.erpnext.check_out_appointment',
           args: { name: frm.doc.name},
           callback: (r=>{
             frm.reload_doc();
@@ -169,12 +169,12 @@ frappe.ui.form.on('Patient Appointment', {
       frm.add_custom_button(
         'Reopen',
         () => {frappe.call({
-          method: 'kms.api.check_eligibility_to_reopen',
+          method: 'kms.api.erpnext.check_eligibility_to_reopen',
           args: { name: frm.doc.name },
           callback: (r=>{
             if(r.message[0].not_eligible==0) {
               frappe.call({
-                method: 'kms.api.reopen_appointment',
+                method: 'kms.api.erpnext.reopen_appointment',
                 args: {
                   name: frm.doc.name
                 },

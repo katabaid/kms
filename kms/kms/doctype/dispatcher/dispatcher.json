@@ -206,14 +206,8 @@
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Patient Appointment",
-   "link_fieldname": "name",
-   "table_fieldname": "patient_appointment"
-  }
- ],
- "modified": "2025-04-29 22:07:39.207237",
+ "links": [],
+ "modified": "2025-04-30 18:16:25.905458",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

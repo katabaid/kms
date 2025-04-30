@@ -193,7 +193,7 @@ frappe.ui.form.on('Patient Encounter', {
   },
   custom_order_medication(frm) {
     frappe.call({
-      method: 'kms.api.create_mr_from_encounter',
+      method: 'kms.api.erpnext.create_mr_from_encounter',
       args: {
         'enc': frm.doc.name
       },
