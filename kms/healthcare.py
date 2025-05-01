@@ -132,6 +132,14 @@ def exam_retest (name, item, item_name):
     for package_item in disp_doc.package:
       if package_item.item_name in [item for item in exam_items]:
         package_item.status = 'To Retest'
+    pa_doc = frappe.get_doc('Patient Appointment', disp_doc.patient_appointment)
+    for pa_mcu in pa_doc.custom_mcu_exam_items:
+      if pa_mcu.item_name in [item for item in exam_items]:
+        pa_mcu.status = 'To Retest'
+    for pa_mcu_add in pa_doc.custom_additional_mcu_items:
+      if pa_mcu_add.item_name in [item for item in exam_items]:
+        pa_mcu_add.status = 'To Retest'
+    pa_doc.save(ignore_permissions=True)
   if exam_items and hsu_exist:
     to_cancel_doc = get_cancelled_doc (previous_doctype, previous_docname)
     #if to_cancel_doc.docstatus == 1:
