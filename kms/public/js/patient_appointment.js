@@ -109,7 +109,7 @@ frappe.ui.form.on('Patient Appointment', {
           frm.refresh_field('custom_additional_mcu_items');
           frm.save().then(()=>{
             frappe.call({
-              method: 'kms.api.dispatcher.update_rescheduled_dispatcher',
+              method: 'kms.api.dispatcher.checkin_rescheduled_dispatcher',
               args: {appointment: frm.doc.name},
               callback: () => {
                 frappe.msgprint(__('Check in completed.'))

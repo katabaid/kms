@@ -1,7 +1,7 @@
 import frappe
 
 @frappe.whitelist()
-def update_rescheduled_dispatcher(appointment):
+def checkin_rescheduled_dispatcher(appointment):
   name = frappe.db.get_value('Dispatcher', 
     {'patient_appointment': appointment, 'status': 'Rescheduled'})
   if name:
@@ -15,29 +15,77 @@ def update_rescheduled_dispatcher(appointment):
         exam.status = 'Started'
     dispatcher.save(ignore_permissions=True)
 
+def update_status_if_match(items, key_field, match_list, valid_statuses, new_status='Rescheduled'):
+  for item in items:
+    if getattr(item, key_field) in match_list and item.status in valid_statuses:
+      item.status = new_status
+
 @frappe.whitelist()
 def reschedule(name, room):
-  doc = frappe.get_doc('Dispatcher', name)
-  #get room and related, then change its status from Wait for Room Assignment,Additional or Retest Request to Rescheduled
-  related_rooms_sql = """
-    SELECT service_unit, parent FROM `tabItem Group Service Unit` 
-    WHERE branch = %s AND parent IN ( 
-      SELECT examination_item FROM `tabMCU Appointment` WHERE parent = %s
-      AND examination_item in (
-        SELECT parent FROM `tabItem Group Service Unit` WHERE branch = %s
-        AND service_unit = %s))
-  """
-  related_rooms = frappe.db.sql(related_rooms_sql, (doc.branch, name, doc.branch, room))
-  related_room_list = list ({r[0] for r in related_rooms})
-  exam_item_list = list ({r[1] for r in related_rooms})
-  for hsu in doc.assignment_table:
-    if hsu.healthcare_service_unit in related_room_list:
-      if hsu.status in ['Wait for Room Assignment', 'Additional or Retest Request']:
-        hsu.status = 'Rescheduled'
-  #get related exam item, then cange its status Started to Rescheduled
-  for exam in doc.package:
-    if exam.examination_item in exam_item_list:
-      if exam.status in ['To Retest', 'Started']:
-        exam.status = 'Rescheduled'
-  doc.save()
-  return {'docname': doc.name}
+  try:
+    doc = frappe.get_doc('Dispatcher', name)
+  except Exception as e:
+    frappe.throw(f"Failed to load Dispatcher document: {e}")
+
+  try:
+    related_rooms_sql = """
+      SELECT tigsu.service_unit, tigsu.parent, thsu.custom_reception_room
+      FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu
+      WHERE branch = %s AND parent IN ( 
+        SELECT examination_item FROM `tabMCU Appointment` WHERE parent = %s
+        AND examination_item IN (
+          SELECT parent FROM `tabItem Group Service Unit` 
+          WHERE branch = %s AND service_unit = %s
+        )
+      ) AND tigsu.service_unit = thsu.name AND tigsu.branch = thsu.custom_branch
+    """
+    related_rooms = frappe.db.sql(related_rooms_sql, (doc.branch, name, doc.branch, room))
+    related_room_list = list({r[0] for r in related_rooms})
+    exam_item_list = list({r[1] for r in related_rooms})
+    reception_list = list({r[2] for r in related_rooms})
+  except Exception as e:
+    frappe.throw(f"Error querying related rooms: {e}")
+
+  try:
+    update_status_if_match(
+      doc.assignment_table,
+      "healthcare_service_unit",
+      related_room_list,
+      ["Wait for Room Assignment", "Additional or Retest Request"]
+    )
+    update_status_if_match(
+      doc.package,
+      "examination_item",
+      exam_item_list,
+      ["To Retest", "Started"]
+    )
+    update_status_if_match(
+      doc.assignment_table,
+      "healthcare_service_unit",
+      reception_list,
+      ["Wait for Sample"]
+    )
+    doc.save()
+  except Exception as e:
+    frappe.throw(f"Error processing Dispatcher assignment or package: {e}")
+
+  try:
+    pa_doc = frappe.get_doc("Patient Appointment", doc.patient_appointment)
+    update_status_if_match(
+      pa_doc.custom_mcu_exam_items,
+      "examination_item",
+      exam_item_list,
+      ["To Retest", "Started"]
+    )
+    update_status_if_match(
+      pa_doc.custom_additional_mcu_items,
+      "examination_item",
+      exam_item_list,
+      ["To Retest", "Started"]
+    )
+    if pa_doc.appointment_date != frappe.utils.today():
+      pa_doc.appointment_date = frappe.utils.today()
+    pa_doc.save(ignore_permissions=True)
+  except Exception as e:
+    frappe.throw(f"Error updating Patient Appointment: {e}")
+  return {"docname": doc.name}
