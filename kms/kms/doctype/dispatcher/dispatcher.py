@@ -1340,13 +1340,15 @@ def get_queued_branch(branch):
 		LEFT JOIN `tabDispatcher Room` tdr 
 			ON thsu.name = tdr.healthcare_service_unit 
 			AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
+			AND EXISTS (SELECT 1 FROM tabDispatcher td WHERE td.name = tdr.parent and td.`date` = CURDATE())
 		LEFT JOIN `tabRoom Assignment` tra 
 			ON thsu.name = tra.healthcare_service_unit 
 			AND tra.`date` = CURDATE()
 		WHERE thsu.custom_branch = '{branch}' 
 		AND thsu.is_group = 0 
 		AND thsu.custom_default_doctype IS NOT NULL
-		GROUP BY thsu.name""", as_dict=True)
+		GROUP BY thsu.name
+		ORDER BY custom_room""", as_dict=True)
 	return count
 
 
