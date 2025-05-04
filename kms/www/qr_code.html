@@ -24,11 +24,7 @@
             let urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
         }
-
-        // Retrieve data from query parameter
         let data = getQueryParam("data") || "https://default-url.com";
-
-        // Generate the QR code
         import QrCode from 'https://danielgjackson.github.io/qrcodejs/qrcode.mjs';
         const matrix = QrCode.generate(data);
         const uri = QrCode.render('bmp-uri', matrix);
