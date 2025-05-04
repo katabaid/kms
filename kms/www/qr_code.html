@@ -15,7 +15,6 @@
     </style>
 </head>
 <body>
-    <h2>QR Code Generator</h2>
     <div id="qrcode"></div>
     <img/>
 
@@ -32,7 +31,7 @@
         // Generate the QR code
         import QrCode from 'https://danielgjackson.github.io/qrcodejs/qrcode.mjs';
         const matrix = QrCode.generate(data);
-        const uri = QrCode.render('svg-uri', matrix);
+        const uri = QrCode.render('bmp-uri', matrix);
         document.querySelector("img").src = uri;
     </script>
 </body>
