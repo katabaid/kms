@@ -9,7 +9,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       'questionnaire', 
     ],
     childTableButton: 'examination_item',
-    templateField:    'template',
+    itemField:    'item',
     getStatus:        (frm) => frm.doc.status,
     setStatus:        (frm, newStatus) => frm.set_value('status', newStatus),
     getDispatcher:    (frm) => frm.doc.dispatcher,
@@ -250,7 +250,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       await frappe.model.set_value(child.doctype, child.name, 'status_time', frappe.datetime.now_datetime());
       await updateParentStatus(frm);
       await frm.save();
-      updateMcuAppointmentStatus(frm, child[config.templateField], newStatus);
+      updateMcuAppointmentStatus(frm, child[config.itemField], newStatus);
       if (newStatus === 'Finished') {
         if (!checkQuestionnaire(frm, child.template)) {
           frappe.throw('Questionnaire must be approved to continue.')
@@ -338,12 +338,12 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   function updateMcuAppointmentStatus(frm, item, status) {
     if (utils.getDispatcher(frm)) {
       frappe.call({
-        method: 'kms.kms.doctype.dispatcher.dispatcher.update_exam_item_status',
+        method: 'kms.mcu_dispatcher.update_exam_item_status',
         args: {
           dispatcher_id: utils.getDispatcher(frm),
-          examination_item: item,
-          status: status,
           exam_id: utils.getExamId(frm),
+          exam_item: item,
+          status: status,
         },
         callback: (r) => {
           if (r.message) {

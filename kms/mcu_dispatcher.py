@@ -211,3 +211,18 @@ def update_exam_header_status(hsu, doctype, docname, status, exam_id, options={}
   # update status to current room and related rooms and its own doctype
   _update_related_rooms_status(params)
   _update_exam_status(doctype, docname, status, cancel)
+
+def update_exam_item_status(dispatcher, exam_id, exam_item, status):
+  if not all(exam_id, exam_item, status):
+    frappe.throw('Internal Error: Not all parameters available.')
+  update_sql = """
+    UPDATE `tabMCU Appointment` SET `status` = %s WHERE name IN 
+    (SELECT name FROM `tabMCU Appointment` tma 
+    WHERE (parent = %s or parent= %s)
+    AND (examination_item IN (SELECT lab_test_code FROM `tabLab Test Template` tltt WHERE sample = %s) 
+    OR examination_item = %s))"""
+  update_val = (status, dispatcher, exam_id, exam_item, exam_item)
+  try:
+    frappe.db.sql(update_sql, update_val)
+  except Exception as e:
+    frappe.throw(f"Database error occurred while updating '{exam_item}'.")

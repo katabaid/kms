@@ -5,7 +5,7 @@ const sampleCollectionConfig = kms.controller.createDocTypeController('Sample Co
   before_submit: customBeforeSubmit,
 	childTables: ['custom_sample_table'],
 	childTableButton: 'custom_sample_table',
-	templateField: 'sample',
+	itemField: 'sample',
   getStatus: (frm) => frm.doc.custom_status,
 	setStatus: (frm, newStatus) => frm.set_value('custom_status', newStatus),
 	getDispatcher: (frm) => frm.doc.custom_dispatcher,
