@@ -131,7 +131,8 @@ def exam_retest (name, item, item_name):
   if exam_items:
     for package_item in disp_doc.package:
       if package_item.item_name in [item for item in exam_items]:
-        package_item.status = 'To Retest'
+        frappe.db.set_value('MCU Appointment', package_item.name, 'status', 'To Retest')
+        # package_item.status = 'To Retest'
     pa_doc = frappe.get_doc('Patient Appointment', disp_doc.patient_appointment)
     for pa_mcu in pa_doc.custom_mcu_exam_items:
       if pa_mcu.item_name in [item for item in exam_items]:
@@ -159,8 +160,9 @@ def exam_retest (name, item, item_name):
         to_cancel_res = frappe.get_doc(result_doctype, to_cancel_doc.exam_result)
         frappe.db.set_value(result_doctype, to_cancel_res.name, {'docstatus': 2})
     if disp_doc.status == 'Waiting to Finish':
-      disp_doc.status = 'In Queue'
-    disp_doc.save(ignore_permissions=True)
+      frappe.db.set_value('Dispatcher', name, 'status', 'In Queue')
+      #disp_doc.status = 'In Queue'
+    #disp_doc.save(ignore_permissions=True)
     return {'docname': disp_doc.name}
 
 def get_dispatcher_doc (name):
@@ -175,7 +177,8 @@ def process_hsu (doc, room):
     if hsu.healthcare_service_unit == room:
       if hsu.status in allowed_status:
         if hsu.reference_doc:
-          hsu.status = 'Additional or Retest Request'
+          frappe.db.set_value('Dispatcher Room', hsu.name, 'status', 'Additional or Retest Request')
+          #hsu.status = 'Additional or Retest Request'
           return True, hsu.reference_doctype, hsu.reference_doc
         else:
           return False, None, None

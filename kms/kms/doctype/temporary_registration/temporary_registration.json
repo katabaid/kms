@@ -10,20 +10,33 @@
  "field_order": [
   "patient_section",
   "naming_series",
-  "patient_name",
-  "type",
-  "gender",
-  "company",
-  "column_break_xsyhe",
+  "first_name",
+  "middle_name",
+  "last_name",
   "date_of_birth",
+  "column_break_xsyhe",
+  "id_type",
   "id_number",
   "phone_number",
-  "company_name",
+  "gender",
+  "blood_group",
+  "company_section",
+  "company",
+  "column_break_sqxc",
+  "occupation",
+  "address_section",
+  "address_line_1",
+  "city",
+  "postal_code",
+  "column_break_zpbb",
+  "address_line_2",
+  "province",
   "section_break_uizpm",
   "questionnaire_type",
   "patient",
   "status",
   "appointment_type",
+  "branch",
   "column_break_g58l2",
   "exam_date",
   "patient_full_name",
@@ -38,15 +51,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
-   "options": "QST-.YYYY..MM.-",
-   "read_only": 1
-  },
-  {
-   "fieldname": "patient_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Patient Name",
+   "options": "TR-.YYYY..MM.-",
    "read_only": 1
   },
   {
@@ -104,26 +109,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "company.customer_name",
-   "fetch_if_empty": 1,
-   "fieldname": "company_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Company Name",
-   "read_only": 1
-  },
-  {
    "fetch_from": "patient.patient_name",
    "fieldname": "patient_full_name",
    "fieldtype": "Data",
    "label": "Patient Full Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Data",
-   "label": "Type",
    "read_only": 1
   },
   {
@@ -167,7 +156,7 @@
   {
    "fieldname": "questionnaire_type",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Questionnaire Type",
    "read_only": 1
   },
@@ -186,13 +175,98 @@
    "fieldtype": "Link",
    "label": "Appointment Type",
    "options": "Appointment Type"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "middle_name",
+   "fieldtype": "Data",
+   "label": "Middle Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "id_type",
+   "fieldtype": "Data",
+   "label": "ID Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "blood_group",
+   "fieldtype": "Select",
+   "label": "Blood Group",
+   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative"
+  },
+  {
+   "fieldname": "address_section",
+   "fieldtype": "Section Break",
+   "label": "Address"
+  },
+  {
+   "fieldname": "address_line_1",
+   "fieldtype": "Data",
+   "label": "Address Line 1"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "postal_code",
+   "fieldtype": "Data",
+   "label": "Postal Code"
+  },
+  {
+   "fieldname": "column_break_zpbb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "address_line_2",
+   "fieldtype": "Data",
+   "label": "Address Line 2"
+  },
+  {
+   "fieldname": "province",
+   "fieldtype": "Data",
+   "label": "Province"
+  },
+  {
+   "fieldname": "company_section",
+   "fieldtype": "Section Break",
+   "label": "Company"
+  },
+  {
+   "fieldname": "column_break_sqxc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "occupation",
+   "fieldtype": "Link",
+   "label": "Occupation",
+   "options": "Occupation"
   }
  ],
  "hide_toolbar": 1,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-02-17 22:10:12.714229",
+ "modified": "2025-05-11 15:21:04.055112",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",
@@ -212,6 +286,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [

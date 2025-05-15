@@ -20,6 +20,7 @@ app_include_js = [
   "/assets/kms/js/controller/examination.js",
   "/assets/kms/js/common/listview.js",
   "/assets/kms/js/common/redirect_after_boot.js",
+  "/assets/kms/js/common/realtime_listeners.js",
   "/assets/kms/js/common/clear_local_storage.js",
   "/assets/kms/node_modules/qrcodejs/qrcode.min.js",
 ]
@@ -196,7 +197,7 @@ doc_events = {
     "autoname": "kms.event.healthcare.prescription_duration_autoname",
   },
   "Vital Signs": {
-    "before_submit": "kms.event.event.vital_signs_before_submit",
+    "before_submit": "kms.event.healthcare.vital_signs_before_submit",
   },
   "Lab Test": {
     "on_submit": "kms.event.lab_sample.lab_on_submit",

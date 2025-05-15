@@ -289,49 +289,50 @@ def process_mcu(doc, appt):
     for exam_item in exam_items:
       template_name = frappe.get_all(
         template_doctype, filters = {'item_code': exam_item.parent},  pluck = 'name')
-      template = frappe.get_doc(template_doctype, template_name[0])
-      if template:
-        if room.custom_default_doctype == 'Sample Collection':
-          entries = dict()
-          entries['template'] = template.name
-          entries['item_code'] = exam_item.parent
-          exam_doc.append('custom_examination_item', entries) 
-          if template.sample not in existing_samples:
-            samples = dict()
-            samples['sample'] = template.sample
-            exam_doc.append('custom_sample_table', samples)
-            existing_samples.append(template.sample)
-        else:
-          entries = dict()
-          entries['template'] = template.name
-          entries['status'] = 'Started'
-          entries['status_time'] = frappe.utils.now()
-          exam_doc.append('examination_item', entries)
-          if (room.custom_default_doctype == 'Nurse Examination' 
-              or room.custom_default_doctype == 'Doctor Examination'):
-            if ((hasattr(template, 'result_in_exam') and template.result_in_exam)
-              or room.custom_default_doctype == 'Doctor Examination'):
-              for result in template.items:
-                entries = dict()
-                entries['item_code'] = exam_item.parent
-                entries['item_name'] = template.item_name
-                entries['result_line'] = result.result_text
-                entries['normal_value'] = result.normal_value
-                entries['mandatory_value'] = result.mandatory_value
-                entries['result_options'] = result.result_select
-                exam_doc.append('result', entries)
-              for non_selective_result in template.normal_items:
-                match = re.compile(r'(\d+) Years?').match(appt.patient_age)
-                age = int(match.group(1)) if match else None
-                if appt.patient_sex == non_selective_result.sex and non_selective_result >= age:
+      if template_name:
+        template = frappe.get_doc(template_doctype, template_name[0])
+        if template:
+          if room.custom_default_doctype == 'Sample Collection':
+            entries = dict()
+            entries['template'] = template.name
+            entries['item_code'] = exam_item.parent
+            exam_doc.append('custom_examination_item', entries) 
+            if template.sample not in existing_samples:
+              samples = dict()
+              samples['sample'] = template.sample
+              exam_doc.append('custom_sample_table', samples)
+              existing_samples.append(template.sample)
+          else:
+            entries = dict()
+            entries['template'] = template.name
+            entries['status'] = 'Started'
+            entries['status_time'] = frappe.utils.now()
+            exam_doc.append('examination_item', entries)
+            if (room.custom_default_doctype == 'Nurse Examination' 
+                or room.custom_default_doctype == 'Doctor Examination'):
+              if ((hasattr(template, 'result_in_exam') and template.result_in_exam)
+                or room.custom_default_doctype == 'Doctor Examination'):
+                for result in template.items:
                   entries = dict()
                   entries['item_code'] = exam_item.parent
-                  entries['test_name'] = non_selective_result.heading_text
-                  entries['test_event'] = non_selective_result.lab_test_event
-                  entries['test_uom'] = non_selective_result.lab_test_uom
-                  entries['min_value'] = non_selective_result.min_value
-                  entries['max_value'] = non_selective_result.max_value
-                  exam_doc.append('non_selective_result', entries)
+                  entries['item_name'] = template.item_name
+                  entries['result_line'] = result.result_text
+                  entries['normal_value'] = result.normal_value
+                  entries['mandatory_value'] = result.mandatory_value
+                  entries['result_options'] = result.result_select
+                  exam_doc.append('result', entries)
+                for non_selective_result in template.normal_items:
+                  match = re.compile(r'(\d+) Years?').match(appt.patient_age)
+                  age = int(match.group(1)) if match else None
+                  if appt.patient_sex == non_selective_result.sex and non_selective_result >= age:
+                    entries = dict()
+                    entries['item_code'] = exam_item.parent
+                    entries['test_name'] = non_selective_result.heading_text
+                    entries['test_event'] = non_selective_result.lab_test_event
+                    entries['test_uom'] = non_selective_result.lab_test_uom
+                    entries['min_value'] = non_selective_result.min_value
+                    entries['max_value'] = non_selective_result.max_value
+                    exam_doc.append('non_selective_result', entries)
     exam_doc.insert(ignore_permissions=True)
 
 def process_non_mcu(doc, appt, type):

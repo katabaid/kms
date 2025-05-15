@@ -1,27 +1,13 @@
-import frappe
+import frappe, json
 
+# region set_status_from_questionnaire helper
 def update_questionnaire_status(questionnaire_name, new_status, reason=None):
-  """Updates the status of a Questionnaire document.
-
-  Args:
-    questionnaire_name (str): The name of the Questionnaire document.
-    new_status (str): The new status to set for the Questionnaire.
-    reason (str, optional): The reason for the status change. Defaults to None.
-  """
   questionnaire = frappe.get_doc('Questionnaire', questionnaire_name)
   questionnaire.status = new_status
   questionnaire.save(ignore_permissions=True)
   return questionnaire
 
 def get_dispatcher_by_appointment(appointment_name):
-  """Retrieves the Dispatcher document associated with a Patient Appointment.
-
-  Args:
-    appointment_name (str): The name of the Patient Appointment document.
-
-  Returns:
-    frappe.model.document.Document or None: The Dispatcher document, or None if not found.
-  """
   dispatcher_names = frappe.db.get_all(
     'Dispatcher',
     filters={'patient_appointment': appointment_name},
@@ -32,16 +18,6 @@ def get_dispatcher_by_appointment(appointment_name):
   return None
 
 def get_service_units_from_item_code(item_code, branch_name):
-  """Retrieves the associated service units for a Questionnaire Template and Branch.
-
-  Args:
-    questionnaire_template_name (str): The name of the Questionnaire Template.
-    branch_name (str): The name of the Branch.
-
-  Returns:
-    list: A list of service unit names.
-  """
-  
   item_doc = frappe.get_doc('Item', item_code)
   service_units = []
   for room in item_doc.custom_room:
@@ -50,15 +26,6 @@ def get_service_units_from_item_code(item_code, branch_name):
   return service_units
 
 def update_dispatcher_notes(dispatcher, service_units, doctype, docname, reason):
-  """Updates the notes in the Dispatcher document for specific service units.
-
-  Args:
-    dispatcher (frappe.model.document.Document): The Dispatcher document.
-    service_units (list): A list of service unit names.
-    doctype (str): The doctype related to the note.
-    docname (str): The docname related to the note.
-    reason (str): The reason to include in the note.
-  """
   current_time = frappe.utils.now()
   for assignment in dispatcher.assignment_table:
     if assignment.healthcare_service_unit in service_units:
@@ -68,121 +35,10 @@ def update_dispatcher_notes(dispatcher, service_units, doctype, docname, reason)
       else:
         assignment.notes = note_entry
   dispatcher.save(ignore_permissions=True)
-
-def get_dispatcher_related_service_units(hsu, dispatcher_id):
-  """
-  Retrieves related service units based on shared parent Items in Item Group Service Unit.
-
-  Args:
-    hsu (str): The name of the primary Healthcare Service Unit.
-    dispatcher_id (str): The name of the Dispatcher document.
-
-  Returns:
-    list: A list of related service unit names.
-  """
-
-  related_rooms = frappe.db.get_all(
-    "Item Group Service Unit",
-    filters={
-      "parenttype": "Item",
-      "service_unit": ["!=", hsu],
-      "parent": [
-        "in",
-        frappe.db.get_all(
-            "Item Group Service Unit",
-            filters={"parenttype": "Item", "service_unit": hsu},
-            pluck="parent",
-        ),
-      ],
-      "parent": [
-        "in", 
-        frappe.get_all(
-          'MCU Appointment', 
-          filters={'parent': dispatcher_id, 'parenttype': 'Dispatcher'},
-          pluck='examination_item')
-      ]
-    },
-    fields=["service_unit"],
-    pluck="service_unit",
-  )
-  return related_rooms
-
-def _update_dispatcher_assignment_table(
-    doc, hsu, doctype, docname, reason, status, set_reference=False, clear_reference=False
-):
-    """
-    Updates the Dispatcher's assignment table based on the provided parameters.
-
-    Args:
-        doc (frappe.model.document.Document): The Dispatcher document.
-        hsu (str): The Healthcare Service Unit name.
-        doctype (str): The doctype related to the update.
-        docname (str): The docname related to the update.
-        reason (str, optional): The reason for the update.
-        status (str): The status to set for the HSU.
-        set_reference (bool, optional): Whether to set the reference doc. Defaults to False.
-        clear_reference (bool, optional): Whether to clear the reference doc. Defaults to False.
-    """
-    related_rooms = get_dispatcher_related_service_units(hsu, doc.name)
-    for room in doc.assignment_table:
-        if room.healthcare_service_unit == hsu:
-            room.status = status
-            if set_reference:
-                room.reference_doctype = doctype
-                room.reference_doc = docname
-            if clear_reference:
-                room.reference_doc = ''
-            _add_note_to_room(room, doctype, docname, reason)
-        elif room.healthcare_service_unit in related_rooms:
-            _add_note_to_room(room, doctype, docname, reason)
-
-def _add_note_to_room(room, doctype, docname, reason):
-    """Adds a note to a Dispatcher assignment table row."""
-    if reason:
-        current_time = frappe.utils.now()
-        note_entry = f'<{current_time}>{doctype} {docname}: {reason}'
-        if room.notes:
-            room.notes = room.notes + '\n' + note_entry
-        else:
-            room.notes = note_entry
-
-def _update_dispatcher_status(doc, room, status ):
-	doc.status = status
-	doc.room = room
-
-def _create_comment(doc, text):
-  """Adds a comment to the Dispatcher document."""
-  doc.add_comment('Comment', text)
-
-def _create_notification(doc, dispatcher_user, subject):
-  """Creates a notification for a Dispatcher."""
-  notification_doc = frappe.new_doc('Notification Log')
-  notification_doc.for_user = dispatcher_user
-  notification_doc.from_user = frappe.session.user
-  notification_doc.document_type = 'Dispatcher'
-  notification_doc.document_name = doc.name
-  notification_doc.subject = subject
-  notification_doc.insert(ignore_permissions=True)
-
-def _update_exam_status(doctype, docname, status):
-	"""Updates the status of an examination document."""
-	exam_doc = frappe.get_doc(doctype, docname)
-	exam_doc.db_set('docstatus', 2)
-	status_field = 'custom_status' if doctype == 'Sample Collection' else 'status'
-	exam_doc.db_set(status_field, status)
+# endregion
 
 @frappe.whitelist()
 def set_status_from_questionnaire(name, status, doctype, docname, reason):
-  """Sets the status of a Questionnaire and updates related Dispatcher notes.
-
-  Args:
-    name (str): The name of the Questionnaire document.
-    status (str): The new status for the Questionnaire.
-    doctype (str): The doctype related to the status change.
-    docname (str): The docname related to the status change.
-    reason (str): The reason for the status change.
-  """
-    
   questionnaire = update_questionnaire_status(name, status, reason)
   
   dispatcher = get_dispatcher_by_appointment(questionnaire.patient_appointment)
@@ -193,65 +49,165 @@ def set_status_from_questionnaire(name, status, doctype, docname, reason):
     if service_units:
       update_dispatcher_notes(dispatcher, service_units, doctype, docname, reason)
 
+# region update_exam_header_status helper
+def _get_related_service_units(hsu, exam_id):
+  related_rooms = frappe.db.get_all(
+    "Item Group Service Unit",
+    filters={
+      "parenttype": "Item",
+      "parent": [
+        "in", 
+        frappe.get_all(
+          'MCU Appointment', 
+          filters={'parent': exam_id, 'parenttype': 'Patient Appointment', 'examination_item': [
+            "in",
+            frappe.db.get_all(
+              "Item Group Service Unit",
+              filters={"parenttype": "Item", "service_unit": hsu},
+              pluck="parent",
+            ),             
+          ]},
+          pluck='examination_item')
+      ]
+    },
+    pluck="service_unit",
+  )
+  return related_rooms
+
+def _validate_room_capacity_on_check_in(hsu, doctype):
+  allowed, capacity = frappe.db.get_value(
+    'Healthcare Service Unit', hsu, ['allow_appointments', 'service_unit_capacity'])
+  if not allowed or not capacity:
+    frappe.throw(f'{hsu} cannot be used for patient assignment.')
+  status = 'custom_status' if doctype == 'Sample Collection' else 'status'
+  queue = frappe.db.count(doctype, {status: 'Checked In'})
+  if queue >= capacity:
+    frappe.throw(f'{hsu} cannot accept more patients. Submit checked in document in order to receive more patient.')
+
+def _update_dispatcher_status(id, room, status, reason):
+  doc = frappe.get_doc('Dispatcher', id)
+  doc.db_set({'status': status, 'room': room})
+  if status == 'Removed':
+    doc.add_comment('Comment', f"Removed from {room} examination room because {reason}.")
+  dispatcher_user = frappe.get_all(
+    'Dispatcher Settings', 
+    filters={'branch': doc.branch, 'enable_date': frappe.utils.today()}, 
+    pluck='dispatcher')
+  for user in dispatcher_user:
+    frappe.publish_realtime(
+      event='update_exam_header_status',
+      message={
+        'room': room,
+        'status': status,
+        'patient': doc.patient_name,
+        'reason': reason
+      },
+      user=user
+    )
+      
+def _update_queue_status(id, status):
+  frappe.db.set_value('MCU Queue Pooling', id, 'status', status)
+
+def _update_related_rooms_status(params):
+  def _update_rooms(
+    doctype_name,   filters,        fields,           unit_field, 
+    hsu,            doctype,        docname,          reason, 
+    status,         set_reference,  clear_reference,  related_rooms):
+    rooms = frappe.get_all(doctype_name, filters=filters, fields=fields)
+    for room in rooms:
+      note = f'<{frappe.utils.now()}>{doctype} {docname}: {reason}'
+      existing_notes = room.get('note', '')
+      notes_to_save = existing_notes + '\n' + note if existing_notes else note
+      if room.get(unit_field) == hsu:
+        updates = {'status': status, 'notes': notes_to_save}
+        if set_reference:
+          updates.update({'reference_doctype': doctype, 'reference_doc': docname})
+        if clear_reference:
+          updates.update({'reference_doc': ''})
+        frappe.db.set_value(doctype_name, room.name, updates)
+      elif room.get(unit_field) in related_rooms:
+        frappe.db.set_value(doctype_name, room.name, 'notes', notes_to_save)
+
+  exam_id           = params.get('exam_id')
+  hsu               = params.get('hsu')
+  doctype           = params.get('doctype')
+  docname           = params.get('docname')
+  reason            = params.get('reason')
+  status            = params.get('status')
+  dispatcher_id     = params.get('dispatcher_id')
+  queue_pooling_id  = params.get('queue_pooling_id')
+  set_reference     = params.get('set_reference')
+  clear_reference   = params.get('clear_reference')
+
+  if (not all((exam_id, hsu, doctype, docname, reason, status)) or 
+    (not any((dispatcher_id, queue_pooling_id)) or all ((dispatcher_id, queue_pooling_id))) or
+    (not any((set_reference, clear_reference)) or all ((set_reference, clear_reference)))):
+    frappe.throw('Not all parameter requirements are met.')
+
+  related_rooms = _get_related_service_units(hsu, exam_id)
+
+  if dispatcher_id:
+    _update_rooms(
+      'Dispatcher Room',
+      {'parent': dispatcher_id, 'healthcare_service_unit': ['in', related_rooms]},
+      ['name', 'notes', 'healthcare_service_unit'],
+      'healthcare_service_unit',
+      hsu, doctype, docname, reason, status, set_reference, clear_reference, related_rooms
+    )
+  elif queue_pooling_id:
+    _update_rooms(
+      'MCU Queue Pooling',
+      {'appointment': exam_id, 'service_unit': ['in', related_rooms]},
+      ['name', 'notes', 'service_unit'],
+      'service_unit',
+      hsu, doctype, docname, reason, status, set_reference, clear_reference, related_rooms
+    )
+  else:
+    frappe.throw('Not all parameter requirements are met.')
+
+def _update_exam_status(doctype, docname, status, cancel):
+  """Updates the status of an examination document."""
+  exam_doc = frappe.get_doc(doctype, docname)
+  if cancel:
+    exam_doc.db_set('docstatus', 2)
+  status_field = 'custom_status' if doctype == 'Sample Collection' else 'status'
+  exam_doc.db_set(status_field, status)
+# endregion
+
 @frappe.whitelist()
-def checkin_room(dispatcher_id, hsu, doctype, docname, reason='Checked In'):
-	"""
-	Checks in a patient to a room and updates the Dispatcher document.
-
-	Args:
-		dispatcher_id (str): The name of the Dispatcher document.
-		hsu (str): The Healthcare Service Unit name.
-		doctype (str): The doctype related to the check-in.
-		docname (str): The docname related to the check-in.
-		reason (str, optional): The reason for the check-in.
-
-	Returns:
-		dict: A dictionary containing the status and a message.
-	"""
-	doc = frappe.get_doc('Dispatcher', dispatcher_id)
-	_update_dispatcher_status(doc, hsu, 'In Room')
-	if not reason:
-		reason = 'Checked In'
-	_update_dispatcher_assignment_table(
-		doc, hsu, doctype, docname, reason, 'Ongoing Examination', set_reference=True
-	)
-	doc.save(ignore_permissions=True)
-	return {'status': 'success', 'message': 'Checked In.'}
-
-@frappe.whitelist()
-def removed_from_room(dispatcher_id, hsu, doctype, docname, reason):
-    """
-    Removes a patient from a room and updates the Dispatcher document.
-
-    Args:
-        dispatcher_id (str): The name of the Dispatcher document.
-        hsu (str): The Healthcare Service Unit name.
-        doctype (str): The doctype related to the removal.
-        docname (str): The docname related to the removal.
-        reason (str, optional): The reason for the removal.
-
-    Returns:
-        dict: A dictionary containing the status and a message.
-    """
-    doc = frappe.get_doc('Dispatcher', dispatcher_id)
-    _update_dispatcher_status(doc, '', 'In Queue')
-    if reason:
-       f'Removed from Room {hsu}: {reason}'
-    _update_dispatcher_assignment_table(
-        doc, hsu, doctype, docname, reason, 'Wait for Room Assignment', clear_reference=True
-    )
-    _create_comment(doc, f"Removed from {hsu} examination room.")
-
-    dispatcher_user = frappe.db.get_value(
-        "Dispatcher Settings",
-        {"branch": doc.branch, 'enable_date': doc.date},
-        ['dispatcher']
-    )
-    _create_notification(
-        doc,
-        dispatcher_user,
-        f"Patient <strong>{doc.patient}</strong> removed from {hsu} room."
-    )
-    _update_exam_status(doctype, docname, 'Removed')
-    doc.save(ignore_permissions=True)
-    return {'status': 'success', 'message': 'Removed from examination room.'}
+def update_exam_header_status(hsu, doctype, docname, status, exam_id, options={}):
+  # initiliaze variables
+  if isinstance(options, str):
+    options = json.loads(options)
+  dispatcher_id = options.get('dispatcher_id')
+  queue_pooling_id = options.get('queue_pooling_id')
+  reason = options.get('reason')
+  cancel = status == 'Removed'
+  # validate room capacity
+  if status == 'Checked In':
+    _validate_room_capacity_on_check_in(hsu, doctype)
+  # update dispatcher or queue pooling status
+  if dispatcher_id:
+    hsu_param = hsu if status == 'Checked In' else ''
+    status_param = 'In Room' if status == 'Checked In' else 'In Queue'
+    _update_dispatcher_status(dispatcher_id, hsu_param, status_param, reason)
+  if queue_pooling_id:
+    _update_queue_status(queue_pooling_id, status)
+  # initialize parameters for room status
+  room_status = 'Wait for Room Assignment' if status == 'Removed' else 'Ongoing Examination'
+  set_reference = room_status == 'Ongoing Examination'
+  clear_reference = room_status == 'Wait for Room Assignment'
+  params = {
+    'exam_id': exam_id, 
+    'hsu': hsu, 
+    'doctype': doctype, 
+    'docname': docname, 
+    'reason': reason, 
+    'status': status, 
+    'dispatcher_id': dispatcher_id, 
+    'queue_pooling_id': queue_pooling_id, 
+    'set_reference': set_reference, 
+    'clear_reference': clear_reference}
+  # update status to current room and related rooms and its own doctype
+  _update_related_rooms_status(params)
+  _update_exam_status(doctype, docname, status, cancel)

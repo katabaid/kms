@@ -1,0 +1,213 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2025-05-15 09:40:40.245778",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "appointment",
+  "patient",
+  "priority",
+  "date",
+  "arrival_time",
+  "status",
+  "refuse_reason",
+  "column_break_ptjqp",
+  "company",
+  "branch",
+  "service_unit",
+  "check_in_time",
+  "finish_time",
+  "refuse_time",
+  "reference_doctype",
+  "reference_doc",
+  "section_break_1vaha",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Series",
+   "options": "HLC-QUE-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "appointment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Appointment",
+   "options": "Patient Appointment",
+   "reqd": 1
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Patient",
+   "options": "Patient"
+  },
+  {
+   "default": "Today",
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "arrival_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Arrival Time",
+   "reqd": 1
+  },
+  {
+   "default": "Wait for Room Assignment",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Wait for Room Assignment\nWaiting to Enter the Room\nOngoing Examination\nRefused\nFinished\nRescheduled\nPartial Finished\nAdditional or Retest Request\nWait for Sample\nFinished Collection\nIneligible for Testing",
+   "reqd": 1
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "1. Emergency\n2. VIP\n3. Outpatient\n4. MCU"
+  },
+  {
+   "fieldname": "column_break_ptjqp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "appointment.service_unit",
+   "fieldname": "service_unit",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Service Unit",
+   "options": "Healthcare Service Unit"
+  },
+  {
+   "fetch_from": "service_unit.custom_branch",
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Branch",
+   "options": "Branch",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1vaha",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference Doctype",
+   "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Sample Collection\",\"Radiology\",\"Nurse Examination\",\"Doctor Examination\"]]]",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "reference_doc",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Doc",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  },
+  {
+   "depends_on": "eval:doc.status==='Refused'",
+   "fieldname": "refuse_reason",
+   "fieldtype": "Data",
+   "label": "Refuse Reason",
+   "mandatory_depends_on": "eval:doc.status==='Cancelled'"
+  },
+  {
+   "depends_on": "eval:doc.status==='Refused'",
+   "fieldname": "refuse_time",
+   "fieldtype": "Time",
+   "label": "Refuse Time",
+   "mandatory_depends_on": "eval:doc.status==='Cancelled'"
+  },
+  {
+   "fieldname": "check_in_time",
+   "fieldtype": "Time",
+   "label": "Check In Time",
+   "mandatory_depends_on": "eval:doc.status==='Ongoing'"
+  },
+  {
+   "fieldname": "finish_time",
+   "fieldtype": "Time",
+   "label": "Finish Time"
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "is_calendar_and_gantt": 1,
+ "links": [],
+ "modified": "2025-05-15 18:17:52.668021",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "MCU Queue Pooling",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Orange",
+   "title": "Queued"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  },
+  {
+   "color": "Blue",
+   "title": "Ongoing"
+  },
+  {
+   "color": "Green",
+   "title": "Closed"
+  }
+ ],
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

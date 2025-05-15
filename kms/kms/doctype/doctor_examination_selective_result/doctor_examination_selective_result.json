@@ -45,8 +45,7 @@
    "fieldname": "result_check",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Result Check",
-   "reqd": 1
+   "label": "Result Check"
   },
   {
    "fieldname": "result_text",
@@ -74,15 +73,17 @@
    "label": "Mandatory Value"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-08-25 09:30:03.177400",
+ "modified": "2025-05-14 17:25:43.861308",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Selective Result",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

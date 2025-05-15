@@ -17,7 +17,9 @@
   "max_value",
   "column_break_1i7if",
   "gradable",
-  "formula"
+  "formula",
+  "test_id",
+  "test_jp"
  ],
  "fields": [
   {
@@ -79,17 +81,29 @@
    "fieldname": "formula",
    "fieldtype": "Data",
    "label": "Formula"
+  },
+  {
+   "fieldname": "test_id",
+   "fieldtype": "Data",
+   "label": "Test ID"
+  },
+  {
+   "fieldname": "test_jp",
+   "fieldtype": "Data",
+   "label": "Test JP"
   }
  ],
+ "grid_page_length": 50,
  "istable": 1,
  "links": [],
- "modified": "2024-10-28 17:53:48.074436",
+ "modified": "2025-05-09 09:29:36.688272",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Template Item",
  "owner": "Administrator",
  "permissions": [],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

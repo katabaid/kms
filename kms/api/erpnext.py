@@ -310,21 +310,6 @@ def check_out_appointment(name):
 def get_assigned_room(date):
   return frappe.db.get_all('Room Assignment', filters = {'date': date, 'assigned': 1}, pluck='healthcare_service_unit')
 
-@frappe.whitelist(allow_guest=True)
-def get_appointment_types():
-  appointment_types = frappe.get_all("Appointment Type", fields=["name"])
-
-  result = []
-  for appt in appointment_types:
-    doc = frappe.get_doc("Appointment Type", appt["name"])  # Fetch full doc
-    branches = [entry.branch for entry in doc.custom_branch]  # Extract branch names
-    result.append({
-      "name": doc.name,
-      "custom_branch": branches
-    })
-
-  return result
-
 @frappe.whitelist()
 def set_item_price(item_code, price_list, rate):
   """

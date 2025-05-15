@@ -321,13 +321,15 @@ const prepareOtherDentalOptions = (frm) => {
   if (frm.doc.docstatus === 0) {
     if (frm.doc.other_dental) {
       frm.refresh_field ('other_dental');
-      $.each (frm.doc.other_dental, (key, value) => {
-        frappe.db
-        .get_value('Other Dental Option', value.other, 'selections')
-        .then(opt=> {
-          frappe.meta.get_docfield('Other Dental', 'selective_value', value.name).options = opt.message.selections.split('\n')
+      setTimeout(()=>{
+        $.each (frm.doc.other_dental, (key, value) => {
+          frappe.db
+          .get_value('Other Dental Option', value.other, 'selections')
+          .then(opt=> {
+            frappe.meta.get_docfield('Other Dental', 'selective_value', value.name).options = opt.message.selections.split('\n')
+          })
         })
-      })
+      }, 500)
     }
   }
 }
@@ -748,12 +750,17 @@ frappe.ui.form.on('Doctor Examination Selective Result',{
 frappe.ui.form.on('Other Dental',{
 	other(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
-    frappe.db
-    .get_value('Other Dental Option', row.other, 'selections')
-    .then(opt=> {
-      frappe.meta.get_docfield(cdt, 'selective_value', cdn).options = opt.message.selections.split('\n')
-      frm.refresh_field('other_dental');
-    })
+    frm.refresh_field('other_dental');
+    setTimeout(()=>{
+      frappe.db
+      .get_value('Other Dental Option', row.other, 'selections')
+      .then(opt=> {
+        const options = opt.message.selections.split('\n');
+        frappe.meta.get_docfield(cdt, 'selective_value', cdn).options = opt.message.selections.split('\n');
+        frm.fields_dict['other_dental'].grid.update_docfield_property('selective_value', 'options', options);
+        frm.refresh_field('other_dental');
+      })
+    }, 500)
 	}
 })
 

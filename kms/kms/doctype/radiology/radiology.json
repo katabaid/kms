@@ -200,7 +200,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused",
+   "options": "Started\nChecked In\nFinished\nRemoved\nPartial Finished\nRescheduled\nRefused\nTo Retest",
    "read_only": 1,
    "reqd": 1
   },
@@ -321,7 +321,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-20 21:30:42.304963",
+ "modified": "2025-05-14 16:12:05.177925",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

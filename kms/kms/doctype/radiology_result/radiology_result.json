@@ -41,6 +41,7 @@
   "items",
   "remark_section",
   "remark",
+  "suggestion",
   "conclusion",
   "amended_from",
   "has_attachment"
@@ -280,13 +281,18 @@
    "fieldtype": "Table",
    "label": "Conclusion",
    "options": "Radiology Conclusion Table"
+  },
+  {
+   "fieldname": "suggestion",
+   "fieldtype": "Text Editor",
+   "label": "Suggestion"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-18 14:32:25.054126",
+ "modified": "2025-05-09 10:42:46.240985",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",
@@ -307,6 +313,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

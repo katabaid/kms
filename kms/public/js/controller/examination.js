@@ -15,6 +15,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     getDispatcher:    (frm) => frm.doc.dispatcher,
     getHsu:           (frm) => frm.doc.service_unit,
     getExamId:        (frm) => frm.doc.appointment,
+    getQueuePooling:  (frm) => frm.doc.queue_pooling,
   };
 
   // Merge custom configuration with default
@@ -23,7 +24,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   // Utility functions
   const utils = {
     handleBeforeSubmit(frm) {
-      const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed'];
+      const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed', 'To Retest'];
       if (validStatuses.includes(utils.getStatus(frm))) {
         finishExam(frm).then(()=>{
           frappe.set_route('List', frm.doctype, 'List');
@@ -65,12 +66,12 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       $('.add-assignment-btn').remove();
       switch (utils.getStatus(frm)) {
         case 'Started':
-          addCustomButton(frm, 'Check In', 'checkin_room', 'Checked In');
-          addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed', true);
+          addParentCustomButton(frm, 'Check In', 'Checked In');
+          addParentCustomButton(frm, 'Remove', 'Removed', true);
           break;
         case 'Checked In':
           frm.remove_custom_button('Check In', 'Status');
-          addCustomButton(frm, 'Remove', 'removed_from_room', 'Removed', true);
+          addParentCustomButton(frm, 'Remove', 'Removed', true);
           break;
         case 'Finished':
         case 'Partial Finished':
@@ -116,6 +117,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     getDispatcher: config.getDispatcher,
     getHsu: config.getHsu,
     getExamId: config.getExamId,
+    getQueuePooling: config.getQueuePooling,
   }
 
   let utilsLoaded = false;
@@ -187,69 +189,23 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     });
   }
 
-  function addCustomButton(frm, label, method, newStatus, prompt = false) {
-    function handleCallback(r) {
-      if (r.message) {
-        if (utilsLoaded && kms.utils) {
-          kms.utils.show_alert(r.message, 'green');
-        }
-        utils.setStatus(frm, newStatus);
-        frm.dirty();
-        frm.save().then(()=>{
-          if (newStatus==='Checked In') location.reload();
-        });
-      }
-    }
-
+  function addParentCustomButton(frm, label, newStatus, prompt = false) {
     function callMethod(reason = null) {
-      if (utils.getDispatcher(frm)){
-        const args = {
-          'dispatcher_id': utils.getDispatcher(frm),
-          'hsu': utils.getHsu(frm),
-          'doctype': frm.doc.doctype,
-          'docname': frm.doc.name,
-          'reason': reason
-        };
-        frappe.call({
-          method: `kms.mcu_dispatcher.${method}`,
-          args: args,
-          callback: function (r) {
-            handleCallback(r);
-            if (reason) {
-              if (utilsLoaded && kms.utils) {
-                kms.utils.add_comment(
-                  frm.doc.doctype, 
-                  frm.doc.name, 
-                  `${newStatus} for the reason of: ${reason}`, 
-                  frappe.session.user_fullname,
-                  'Comment added successfully.'
-                );
-              }
-              frm.reload_doc();
-            }
-          }
-        });
-      } else {
-        process_non_dispatcher(reason);
-      }
-    }
-
-    function process_non_dispatcher(reason = null) {
-      if (utilsLoaded && kms.utils) {
-        if (reason) {
-          kms.utils.add_comment(
-            frm.doc.doctype, 
-            frm.doc.name, 
-            `${newStatus} for the reason of: ${reason}`, 
-            frappe.session.user_fullname,
-            'Comment added successfully.'
-          );
-        }
-      }
-      utils.setStatus(frm, newStatus);
-      frm.dirty();
-      frm.save().then(()=>{
-        if (newStatus==='Checked In') location.reload();
+      frappe.call({
+        method: 'kms.mcu_dispatcher.update_exam_header_status',
+        args: {
+          hsu: utils.getHsu(frm),
+          doctype: frm.doc.doctype,
+          docname: frm.doc.name,
+          status: newStatus,
+          exam_id: utils.getExamId(frm),
+          options: JSON.stringify({
+            dispatcher_id: utils.getDispatcher(frm),
+            queue_pooling_id: utils.getQueuePooling(frm),
+            reason: reason,
+          })
+        },
+        callback: function(r) {location.reload();}
       });
     }
 
