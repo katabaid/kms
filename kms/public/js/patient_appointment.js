@@ -205,12 +205,20 @@ frappe.ui.form.on('Patient Appointment', {
               fieldtype: 'Link',
               options: 'Item',
               get_query: () => {
+                let exam_items = frm.doc.custom_mcu_exam_items
+                  ? frm.doc.custom_mcu_exam_items.map(row => row.examination_item).filter(item => item)
+                  : [];
+                let additional_items = frm.doc.custom_additional_mcu_items
+                  ? frm.doc.custom_additional_mcu_items.map(row => row.examination_item).filter(item => item)
+                  : [];
+                let existing_items = [...new Set([...exam_items, ...additional_items])];
                 return { filters: [
                   ['Item', 'is_stock_item', '=', 0],
                   ['Item', 'disabled', '=', 0],
                   ['Item', 'is_sales_item', '=', 1],
                   ['Item', 'custom_is_mcu_item', '=', 1],
                   ['Item', 'item_group', '!=', 'Exam Course'],
+                  ['Item', 'name', 'not in', existing_items]
                 ]}
               }
             }],
@@ -218,6 +226,7 @@ frappe.ui.form.on('Patient Appointment', {
             primary_action(values) {
               let row = frm.add_child('custom_additional_mcu_items')
               row.examination_item = values.item
+              row.status = 'To be Added'
               refresh_field("custom_additional_mcu_items");
               dialog.hide()
             }

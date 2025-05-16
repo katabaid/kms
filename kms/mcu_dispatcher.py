@@ -214,7 +214,7 @@ def update_exam_header_status(hsu, doctype, docname, status, exam_id, options={}
 
 def update_exam_item_status(dispatcher, exam_id, exam_item, status):
   if not all(exam_id, exam_item, status):
-    frappe.throw('Internal Error: Not all parameters available.')
+    frappe.throw('Internal Error: Not all required parameters available.')
   update_sql = """
     UPDATE `tabMCU Appointment` SET `status` = %s WHERE name IN 
     (SELECT name FROM `tabMCU Appointment` tma 
@@ -225,4 +225,4 @@ def update_exam_item_status(dispatcher, exam_id, exam_item, status):
   try:
     frappe.db.sql(update_sql, update_val)
   except Exception as e:
-    frappe.throw(f"Database error occurred while updating '{exam_item}'.")
+    frappe.throw(f"Database error occurred while updating '{exam_item}' status.")
