@@ -71,7 +71,6 @@ def _get_related_service_units(hsu, exam_id):
       ]
     },
     pluck="service_unit",
-    cache=True
   )
   return related_rooms
 
@@ -135,9 +134,13 @@ def _update_related_rooms_status(params):
   queue_pooling_id  = params.get('queue_pooling_id')
   clear_reference   = params.get('clear_reference')
 
-  if (not all((exam_id, hsu, doctype, docname, status)) or 
-    (not any((dispatcher_id, queue_pooling_id)) or all ((dispatcher_id, queue_pooling_id)))):
-    frappe.throw('Not all parameter requirements are met.')
+  # if (not all((exam_id, hsu, doctype, docname, status)) or 
+  #   (not any((dispatcher_id, queue_pooling_id)) or all ((dispatcher_id, queue_pooling_id)))):
+  #   if not all((exam_id, hsu, doctype, docname, status)):
+  #     print(1)
+  #   if not any((dispatcher_id, queue_pooling_id)) or all ((dispatcher_id, queue_pooling_id)):
+  #     print(2)
+  #   frappe.throw('Not all parameter requirements are met.')
 
   related_rooms = _get_related_service_units(hsu, exam_id)
   if dispatcher_id:
@@ -156,8 +159,8 @@ def _update_related_rooms_status(params):
       'service_unit',
       hsu, doctype, docname, reason, status, clear_reference, related_rooms
     )
-  else:
-    frappe.throw('Internal Error: Neither Dispatcher ID nor MCU Queue Pooling are given to continue.')
+  # else:
+  #   frappe.throw('Internal Error: Neither Dispatcher ID nor MCU Queue Pooling are given to continue.')
 
 def _update_exam_status(doctype, docname, status, cancel):
   """Updates the status of an examination document."""

@@ -61,7 +61,7 @@ const handleDentalSections = (frm) => {
 const prepareDentalSections = (frm) => {
   const referenceArray = [
     'missing', 'filling', 'radix', 'abrasion', 'crown', 'veneer', 'persistent', 'abscess', 'impaction', 
-    'caries', 'fracture', 'mob', 'bridge', 'rg', 'exfolia', 'fistula'
+    'caries', 'fracture', 'tooth mobility', 'bridge', 'gingival recession', 'exfoliation', 'fistula'
   ];
 
   const generateOptions = item => referenceArray.reduce((acc, key) => {
