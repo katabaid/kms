@@ -255,7 +255,7 @@ const createPromiseHandler = (method) => (frm) => new Promise((resolve) => {
 					room: child.healthcare_service_unit,
 				},
 				callback: (r) => {console.log(`r: ${r}`);resolve(!!r.message)},
-				error: (err) => {frappe.msgprint(`err:${err}`);resolve(false)},
+				error: (err) => {resolve(false)},
 			});
 		} else {
 			resolve(false);

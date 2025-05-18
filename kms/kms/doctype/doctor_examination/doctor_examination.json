@@ -273,7 +273,7 @@
    "fieldname": "queue_pooling",
    "fieldtype": "Link",
    "label": "Queue Pooling",
-   "options": "Queue Pooling",
+   "options": "MCU Queue Pooling",
    "read_only": 1
   },
   {
@@ -1661,7 +1661,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-21 21:49:34.215196",
+ "modified": "2025-05-18 15:37:11.963415",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

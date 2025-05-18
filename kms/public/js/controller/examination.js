@@ -191,6 +191,8 @@ const createDocTypeController = (doctype, customConfig = {}) => {
 
   function addParentCustomButton(frm, label, newStatus, prompt = false) {
     function callMethod(reason = null) {
+      dispatcher_id = utils.getDispatcher(frm) ? utils.getDispatcher(frm) : null;
+      queue_pooling_id = utils.getQueuePooling(frm) ? utils.getQueuePooling(frm) : null;
       frappe.call({
         method: 'kms.mcu_dispatcher.update_exam_header_status',
         args: {
@@ -242,18 +244,17 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           (!item.hasOwnProperty('result_value') || item.result_value === null)
         );
         if (filteredData.length > 0) {
-          frappe.throw(__(`All rows of ${child.template} result must have value to finish.`));
-          return; // This will stop the execution if frappe.throw doesn't
+          throw new Error(__(`All rows of ${child.template} result must have value to finish.`));
         }
       }
       await frappe.model.set_value(child.doctype, child.name, 'status', newStatus);
       await frappe.model.set_value(child.doctype, child.name, 'status_time', frappe.datetime.now_datetime());
       await updateParentStatus(frm);
       await frm.save();
-      updateMcuAppointmentStatus(frm, child[config.itemField], newStatus);
+      updateMcuAppointmentStatus(frm, child[config.itemField], newStatus, reason);
       if (newStatus === 'Finished') {
         if (!checkQuestionnaire(frm, child.template)) {
-          frappe.throw('Questionnaire must be approved to continue.')
+          throw new Error('Questionnaire must be approved to continue.')
         };
       };
       if (utilsLoaded && kms.utils) {
@@ -335,31 +336,35 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     });
   }
 
-  function updateMcuAppointmentStatus(frm, item, status) {
-    if (utils.getDispatcher(frm)) {
-      frappe.call({
-        method: 'kms.mcu_dispatcher.update_exam_item_status',
-        args: {
-          dispatcher_id: utils.getDispatcher(frm),
-          exam_id: utils.getExamId(frm),
-          exam_item: item,
-          status: status,
-        },
-        callback: (r) => {
-          if (r.message) {
-            if (utilsLoaded && kms.utils) {
-              kms.utils.show_alert(r.message, 'green');
-            }
-          } else {
-            if (utilsLoaded && kms.utils) {
-              kms.utils.show_alert('No corresponding MCU Appointment found.', 'red');
-            }
-            frappe.model.set_value(child.doctype, child.name, 'status', 'Started');
-            frm.reload_doc();
-          }
-        },
-      });
-    }
+  function updateMcuAppointmentStatus(frm, item, status, reason=null) {
+    dispatcher_id = utils.getDispatcher(frm) ? utils.getDispatcher(frm) : null;
+    queue_pooling_id = utils.getQueuePooling(frm) ? utils.getQueuePooling(frm) : null;
+    frappe.call({
+      method: 'kms.mcu_dispatcher.update_exam_item_status',
+      args: {
+        dispatcher: dispatcher_id,
+        qp: queue_pooling_id,
+        doctype: frm.doc.doctype,
+        docname: frm.doc.name,
+        hsu: utils.getHsu(frm),
+        exam_id: utils.getExamId(frm),
+        exam_item: item,
+        status,
+        ...(reason && {reason})
+      },
+      callback: (r) => {
+        const msg = r.message
+          ? { text: r.message, color: 'green' }
+          : { text: 'No corresponding MCU Appointment found.', color: 'red' };
+        if (utilsLoaded && kms.utils) {
+          kms.utils.show_alert(msg.text, msg.color);
+        }
+        if (!r.message) {
+          frappe.model.set_value(child.doctype, child.name, 'status', 'Started');
+          frm.reload_doc();
+        }
+      },
+    });
   }
 
   function checkQuestionnaire(frm, template) {

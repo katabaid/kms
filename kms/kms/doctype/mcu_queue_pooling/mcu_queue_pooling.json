@@ -8,7 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "appointment",
+  "patient_appointment",
   "patient",
   "priority",
   "date",
@@ -34,14 +34,6 @@
    "in_list_view": 1,
    "label": "Series",
    "options": "HLC-QUE-.YYYY.-",
-   "reqd": 1
-  },
-  {
-   "fieldname": "appointment",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Appointment",
-   "options": "Patient Appointment",
    "reqd": 1
   },
   {
@@ -160,6 +152,14 @@
    "fieldname": "finish_time",
    "fieldtype": "Time",
    "label": "Finish Time"
+  },
+  {
+   "fieldname": "patient_appointment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Appointment",
+   "options": "Patient Appointment",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -167,7 +167,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-05-16 17:18:48.183228",
+ "modified": "2025-05-18 14:18:52.734805",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",

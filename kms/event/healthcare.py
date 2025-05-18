@@ -179,7 +179,7 @@ def _create_dispatcher(exam_id, branch, item_table):
 def _create_queue_pooling_record(appointment, service_unit, status, reference_doctype=None):
   doc_data = {
     'doctype': 'MCU Queue Pooling',
-    'appointment': appointment.name,
+    'patient_appointment': appointment.name,
     'appointment_type': appointment.appointment_type,
     'patient': appointment.patient,
     'company': appointment.company,

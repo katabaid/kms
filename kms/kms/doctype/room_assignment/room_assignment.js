@@ -16,6 +16,9 @@ frappe.ui.form.on('Room Assignment', {
 	setup(frm) {
 		let medical_department = frappe.defaults.get_user_default('medical_department');
 		if (medical_department === 'Nurse') medical_department = ['Nurse', 'Radiology', 'Laboratory'];
+		if (frappe.session.user == 'Administrator') {
+			medical_department = ['Nurse', 'Radiology', 'Laboratory', 'General Practice', 'Dental'];
+		}
 		frm.set_query('healthcare_service_unit', () => {
 			return { filters: 
 				[
@@ -110,6 +113,7 @@ function get_already_assigned_rooms(frm) {
 			callback: function(response) {
 					if (response && response.message) {
 							rooms = response.message;
+							console.log(rooms)
 					}
 			}
 	});

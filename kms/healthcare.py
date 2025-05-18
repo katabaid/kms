@@ -65,22 +65,21 @@ def get_exam_items(root):
 
 @frappe.whitelist()
 def create_service(name, room):
-  service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
-  target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
-  target_map = {
-    'Nurse Examination': create_nurse_exam,
-    'Doctor Examination': create_doctor_exam,
-    'Radiology': create_radiology_exam,
-    'Sample Collection': create_sample_collection
-  }
-  if target in target_map:
-    result = target_map[target](name, room)
+  for doctype in ['Dispatcher', 'MCU Queue Pooling']:
+    if frappe.db.exists(doctype, name):
+      break
+  else:
+    frappe.throw('Internal Error: Cannot find connected Dispatcher or MCU Queue Pooling.')
+  rel = _get_exam_template_rel(room)
+  valid_targets = {'Nurse Examination', 'Doctor Examination', 'Radiology', 'Sample Collection'}
+  if rel[0] in valid_targets:
+    result = _create_exam(doctype, name, room, rel)
     if result:
       return result
     else:
       frappe.throw("Failed to create service.")
   else:
-    frappe.throw(f"Unsupported target: {target}")
+    frappe.throw(f"Unsupported target: {rel(0)}")
 
 @frappe.whitelist()
 def remove_from_room(name, room):
@@ -169,7 +168,10 @@ def get_dispatcher_doc (name):
   return frappe.get_doc ('Dispatcher', name)
 
 def get_rooms_by_item_branch (item, branch):
-  return frappe.get_all('Item Group Service Unit', filters={'parent': item, 'branch': branch}, fields=['service_unit'])
+  return frappe.get_all(
+    'Item Group Service Unit', 
+    filters={'parent': item, 'branch': branch}, 
+    fields=['service_unit'])
 
 def process_hsu (doc, room):
   allowed_status = {'Refused','Finished','Rescheduled','Partial Finished'}
@@ -203,7 +205,9 @@ def get_sample_from_template (item_name):
 
 def get_affected_exam_items_list (template_doctype, doc, item_name = None, sample = None):
   if template_doctype == 'Lab Test Template':
-    return list(set(frappe.get_all('Lab Test Template', filters={'sample':sample}, pluck='name')) & set(list(o.item_name for o in doc.package)))
+    return list(
+      set(frappe.get_all('Lab Test Template', filters={'sample':sample}, pluck='name')) 
+      & set(list(o.item_name for o in doc.package)))
   else:
     return [item_name]
 
@@ -221,16 +225,11 @@ def refuse_to_test(name, room):
         hsu.status = 'Refused'
         hsu_exist = True
       else:
-        frappe.throw(f"Cannot make patient refuse to test, because server status of room: {room} is {hsu.status}.")
-  service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
-  target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
-  rel = frappe.get_all('MCU Relationship', filters={'examination': target}, fields=['result', 'template'])
-  if rel:
-    template_doctype = rel[0].template
-  else:
-    frappe.throw(f"Undefined Default Doctype for room: {room}.")
+        frappe.throw(
+          f"Cannot make patient refuse to test, because server status of room: {room} is {hsu.status}.")
+  _, template_doctype = _get_exam_template_rel(room)
   if (template_doctype != 'Lab Test Template'):
-    exam_items = fetch_exam_items(name, room, doc.branch, template_doctype)
+    exam_items = _fetch_exam_items(doc.appointment, room, doc.branch, template_doctype)
     for package_item in doc.package:
       for exam_item in exam_items:
         if package_item.examination_item == exam_item.item_code:
@@ -259,91 +258,88 @@ def refuse_to_test(name, room):
     doc.save(ignore_permissions=True)
     return {'docname': doc.name}
 
-def fetch_exam_items(name, room, branch, template_doctype):
-  common_conditions = """INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
-    WHERE tma.parenttype = 'Dispatcher'
-    AND tma.parentfield = 'package'
-    AND tma.parent = %s
+def _fetch_exam_items(name, room, branch, template_doctype):
+  join_key = "lab_test_code" if template_doctype == "Lab Test Template" else "item_code"
+  select_clause = (
+    "SELECT sample, SUM(sample_qty) AS qty"
+    if template_doctype == "Lab Test Template"
+    else "SELECT tma.item_name AS name, tma.examination_item AS item_code, status"
+  )
+  group_clause = "GROUP BY sample" if template_doctype == "Lab Test Template" else ""
+
+  common_conditions = """
+  INNER JOIN `tabItem Group Service Unit` tigsu ON tigsu.parent = tma.examination_item
+  WHERE tma.parent = %s
     AND tigsu.parenttype = 'Item'
     AND tigsu.parentfield = 'custom_room'
     AND tigsu.branch = %s
     AND tigsu.service_unit = %s"""
 
-  if template_doctype == 'Lab Test Template':
-    query = f"""
-    SELECT sample, SUM(sample_qty) qty FROM `tabMCU Appointment` tma
-    INNER JOIN `tabLab Test Template` tnet ON tnet.lab_test_code = tma.examination_item
-    {common_conditions}
-    GROUP BY 1"""
-  else:
-    query = f"""
-    SELECT tma.item_name AS name, tma.examination_item AS item_code, status
-    FROM `tabMCU Appointment` tma
-    INNER JOIN `tab{template_doctype}` tnet ON tnet.item_code = tma.examination_item
-    {common_conditions}"""
+  query = f"""{select_clause}
+  FROM `tabMCU Appointment` tma
+  INNER JOIN `tab{template_doctype}` tnet ON tnet.{join_key} = tma.examination_item
+  {common_conditions} {group_clause}"""
   return frappe.db.sql(query, (name, branch, room), as_dict=True)
 
-def append_exam_results(doc, exam_items, template_doctype, cancelled_doc = None):
+def _append_items_and_inputs(doc, template_doctype, exam_items, cancelled_doc = None):
   if template_doctype == 'Lab Test Template':
-    sql = """
-      SELECT examination_item, tma.item_name
-      FROM `tabMCU Appointment` tma, tabItem ti
-      WHERE tma.parent = %s
-      AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.item = tma.examination_item)
-      AND ti.name = tma.examination_item
-      ORDER BY ti.custom_bundle_position
-      """
-    items = frappe.db.sql(sql, (doc.custom_dispatcher), as_dict=True)
-    for item in items:
-      doc.append('custom_examination_item', {
-        'template': item.item_name,
-        'item_code': item.examination_item,
-      })
-  for exam_item in exam_items:
-    if template_doctype == 'Lab Test Template':
-      if cancelled_doc:
-        for sample in cancelled_doc.custom_sample_table:
-          if sample.sample == exam_item.sample:
-            doc.append(
-              'custom_sample_table', 
-              {
-                'sample': sample.sample, 
-                'quantity': sample.quantity, 
-                'status': 'Started' if sample.status == 'To Retest' else sample.status,
-                'uom': sample.uom,
-                'status_time': sample.status_time if sample.status != 'To Retest' else ''})
-      else:
-        doc.append('custom_sample_table', {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status': 'Started'})
-    else:
-      assigned_status = ''
-      if cancelled_doc:
-        cancelled_item_count = len(cancelled_doc.examination_item) 
-        have_status = False
-        for index, cancelled_item in enumerate(cancelled_doc.examination_item, start = 1):
-          if cancelled_item.template == exam_item.name: 
-            if cancelled_item.status == 'To Retest':
-              doc.append('examination_item', {'template': exam_item.name, 'status': 'Started'})
-              have_status = True
-              assigned_status = 'Started'
-            elif cancelled_item.status == 'Finished':
-              doc.append(
-                'examination_item', 
-                {'template': exam_item.name, 'status': 'Finished', 'status_time': cancelled_item.status_time}
-              )
-              have_status = True
-              assigned_status = 'Finished'
-            else:
-              pass
-          if index == cancelled_item_count and not have_status:
-            doc.append('examination_item', {'template': exam_item.name, 'status': 'Started'})
-            assigned_status = 'Started'
-      else:
-        doc.append('examination_item', {'template': exam_item.name})
+    _append_examination_items_for_lab_test(doc)
+    for exam_item in exam_items:
+      _append_samples_for_lab_test(doc, exam_item, cancelled_doc)
+  else:
+    for exam_item in exam_items:
+      assigned_status = _append_examination_item(doc, exam_item, cancelled_doc)
       template_doc = frappe.get_doc(template_doctype, exam_item.name)
       if template_doctype == 'Doctor Examination Template' or getattr(template_doc, 'result_in_exam', False):
-        append_results (doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
+        _append_inputs (doc, template_doc, exam_item.item_code, cancelled_doc, assigned_status)
 
-def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_status=None):
+def _append_examination_items_for_lab_test(doc):
+  sql = """
+    SELECT examination_item, tma.item_name FROM `tabMCU Appointment` tma, tabItem ti
+    WHERE tma.parent = %s AND ti.name = tma.examination_item
+    AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.item = tma.examination_item)
+    ORDER BY ti.custom_bundle_position
+    """
+  items = frappe.db.sql(sql, (doc.custom_dispatcher), as_dict=True)
+  for item in items:
+    doc.append('custom_examination_item', {
+      'template': item.item_name,
+      'item_code': item.examination_item,
+    })
+
+def _append_samples_for_lab_test(doc, exam_item, cancelled_doc):
+  if cancelled_doc:
+    for sample in cancelled_doc.custom_sample_table:
+      if sample.sample == exam_item.sample:
+        doc.append('custom_sample_table', {
+          'sample': sample.sample, 
+          'quantity': sample.quantity, 
+          'status': 'Started' if sample.status == 'To Retest' else sample.status,
+          'uom': sample.uom,
+          'status_time': sample.status_time if sample.status != 'To Retest' else ''
+        })
+  else:
+    doc.append('custom_sample_table', 
+      {'sample': exam_item.sample, 'quantity': exam_item.qty, 'status': 'Started'})
+    
+def _append_examination_item(doc, exam_item, cancelled_doc):
+  item_data = {'template': exam_item.name, 'status': 'Started', 'item': exam_item.item_code}
+  if cancelled_doc:
+    for cancelled_item in cancelled_doc.examination_item:
+      if cancelled_item.template == exam_item.name: 
+        if cancelled_item.status == 'To Retest':
+          assigned_status = 'Started'
+        elif cancelled_item.status == 'Finished':
+          item_data.update({'status': 'Finished', 'status_time': cancelled_item.status_time})
+          assigned_status = 'Finished'
+        doc.append('examination_item', item_data)
+        return assigned_status if 'assigned_status' in locals() else ""
+    doc.append('examination_item', item_data)
+    return 'Started'
+  doc.append('examination_item', {'template': exam_item.name, 'status': 'Started', 'item': exam_item.item_code})
+  return None
+
+def _append_inputs(doc, template_doc, item_code, cancelled_doc=None, assigned_status=None):
   is_cancelled = bool(cancelled_doc and assigned_status)
   is_finished = assigned_status == 'Finished' if is_cancelled else False
   for result_type in ['result', 'non_selective_result']:
@@ -370,7 +366,6 @@ def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_st
           result.update({
             'is_finished': is_finished, 
             f"{base_key}_value": getattr(item, f"{base_key}_value", '') if is_finished else ''})
-            #result_type.split('_')[0] + '_value': getattr(item, result_type.split('_')[0] + '_value', '') if is_finished else ''})
         else:
           cancelled_pair = [
             ('result_line', 'result_text'),         ('normal_value', 'normal_value'), 
@@ -378,56 +373,76 @@ def append_results(doc, template_doc, item_code, cancelled_doc=None, assigned_st
             ('result_options', 'result_select'),    ('test_name', 'heading_text'), 
             ('test_event', 'lab_test_event'),       ('test_uom', 'lab_test_uom'), 
             ('min_value', 'min_value'),             ('max_value', 'max_value')] 
-          #result.update({new_key: getattr(item, old_key) for new_key, old_key in cancelled_pair if hasattr(item, old_key)})
           for new_key, old_key in cancelled_pair:
             if hasattr(item, old_key):
               result[new_key] = getattr(item, old_key)
         doc.append(result_type, result)
 
-def update_dispatcher_room_status(doc, room, doc_type, doc_name):
-  doc.room = room
-  for hsu in doc.assignment_table:
-    if hsu.healthcare_service_unit == room:
-      hsu.status = 'Waiting to Enter the Room'
-      hsu.reference_doctype = doc_type
-      hsu.reference_doc = doc_name
-      doc.save(ignore_permissions=True)
+from kms.mcu_dispatcher import _get_related_service_units
 
-def create_exam(name, room, doc_type, template_doctype):
-  disp_doc = frappe.get_doc('Dispatcher', name)
-  if disp_doc.status == 'In Room':
-    frappe.throw(f"""Patient {disp_doc.patient} is already in a queue for {disp_doc.room} room.""")
-  else:
-    for hsu in disp_doc.assignment_table:
+def _update_room_status(doc, room, reference_doctype, reference_doc):
+  if doc.doctype == 'Dispatcher':
+    doc.room = room
+    for hsu in doc.assignment_table:
       if hsu.healthcare_service_unit == room:
-        previous_docname = hsu.reference_doc
-      if hsu.status in ['Waiting to Enter the Room', 'Ongoing Examination']:
-        frappe.throw(f"""Patient {disp_doc.patient} is already in a queue for {hsu.healthcare_service_unit} room.""")
-  appt_doc = frappe.get_doc('Patient Appointment', disp_doc.patient_appointment)
+        hsu.status = 'Waiting to Enter the Room'
+        hsu.reference_doctype = reference_doctype
+        hsu.reference_doc = reference_doc
+  else:
+    related_rooms = _get_related_service_units(doc.patient_appointment, room)
+    for related_room in related_rooms:
+      if related_room == room:
+        doc.status = 'Waiting to Enter the Room'
+        doc.reference_doctype = reference_doctype
+        doc.reference_doc = reference_doc
+      else:
+        doc.status = 'Waiting to Enter the Room'
+
+def _get_exam_template_rel(room):
+  service_unit_type = frappe.db.get_value('Healthcare Service Unit', room, 'service_unit_type')
+  target = frappe.db.get_value('Healthcare Service Unit Type', service_unit_type, 'custom_default_doctype')
+  rel = frappe.db.get_value('MCU Relationship', {'examination': target}, 'template')
+  return (target, rel)
+
+def _create_exam(doctype, name, room, rel):
+  target, template_doctype  = rel
+  ori_doc = frappe.get_doc(doctype, name)
+  if doctype == 'Dispatcher':
+    original_field = 'custom_dispatcher' if target == 'Sample Collection' else 'dispatcher'
+    if ori_doc.status == 'In Room':
+      frappe.throw(f"""Patient {ori_doc.patient} is already in a queue for {ori_doc.room} room.""")
+    else:
+      for hsu in ori_doc.assignment_table:
+        if hsu.healthcare_service_unit == room:
+          previous_docname = hsu.reference_doc
+        if hsu.status in ['Waiting to Enter the Room', 'Ongoing Examination']:
+          frappe.throw(
+            f"""Patient {ori_doc.patient} is already in a queue for {hsu.healthcare_service_unit} room.""")
+  else:
+    previous_docname = ori_doc.reference_doc
+    original_field = 'custom_queue_pooling' if target == 'Sample Collection' else 'queue_pooling'
+  appt_doc = frappe.get_doc('Patient Appointment', ori_doc.patient_appointment)
   doc_fields = {
-    'doctype': doc_type,
-    'custom_appointment' if doc_type == 'Sample Collection' else 'appointment': appt_doc.name,
+    'doctype': target,
+    'custom_appointment' if target == 'Sample Collection' else 'appointment': appt_doc.name,
     'patient': appt_doc.patient,
     'patient_name': appt_doc.patient_name,
     'patient_age': appt_doc.patient_age,
     'patient_sex': appt_doc.patient_sex,
     'company': appt_doc.company,
-    'custom_branch' if doc_type == 'Sample Collection' else 'branch': appt_doc.custom_branch,
-    'custom_dispatcher' if doc_type == 'Sample Collection' else 'dispatcher': name,
-    'custom_service_unit' if doc_type == 'Sample Collection' else 'service_unit': room,
-    'custom_document_date' if doc_type == 'Sample Collection' else 'created_date': today(),
-    'custom_status' if doc_type == 'Sample Collection' else 'status': 'Started'
+    'custom_branch' if target == 'Sample Collection' else 'branch': appt_doc.custom_branch,
+    original_field: ori_doc.name,
+    'custom_service_unit' if target == 'Sample Collection' else 'service_unit': room,
+    'custom_document_date' if target == 'Sample Collection' else 'created_date': today(),
+    'custom_status' if target == 'Sample Collection' else 'status': 'Started'
   }
   doc = frappe.get_doc(doc_fields)
   cancelled_doc = None
   if previous_docname:
-    cancelled_doc = frappe.get_doc(doc_type, previous_docname)
+    cancelled_doc = frappe.get_doc(target, previous_docname)
     if cancelled_doc.docstatus != 2:
       cancelled_doc.db_set('docstatus', 2)
-    if doc_type == 'Sample Collection':
-      if cancelled_doc.custom_status == 'To Retest':
-        doc.amended_from = cancelled_doc.name
-    elif doc_type == 'Doctor Examination':
+    if target == 'Doctor Examination':
       doc = frappe.copy_doc(cancelled_doc)
       doc.amended_from = cancelled_doc.name
       doc.created_date = today()
@@ -439,27 +454,17 @@ def create_exam(name, room, doc_type, template_doctype):
       doc.non_selective_result = []
       doc.dental_detail = []
       doc.other_dental = []
-      doc.questionnaire_detail = []
+      doc.questionnaire = []
     else:
-      if cancelled_doc.status == 'To Retest':
+      if ((cancelled_doc.meta.has_field("custom_status") and cancelled_doc.custom_status == "To Retest")
+        or (cancelled_doc.meta.has_field("status") and cancelled_doc.status == "To Retest")):
         doc.amended_from = cancelled_doc.name
 
-  exam_items = fetch_exam_items(name, room, appt_doc.custom_branch, template_doctype)
+  exam_items = _fetch_exam_items(appt_doc.name, room, appt_doc.custom_branch, template_doctype)
   if not exam_items:
     frappe.throw("No Template found.")
-  append_exam_results(doc, exam_items, template_doctype, cancelled_doc)
+  _append_items_and_inputs(doc, template_doctype, exam_items, cancelled_doc)
   doc.insert(ignore_permissions=True)
-  update_dispatcher_room_status(disp_doc, room, doc_type, doc.name)
-  return {'docname': doc.name}
-
-def create_nurse_exam(name, room):
-  return create_exam(name, room, 'Nurse Examination', 'Nurse Examination Template')
-
-def create_doctor_exam(name, room):
-  return create_exam(name, room, 'Doctor Examination', 'Doctor Examination Template')
-
-def create_radiology_exam(name, room):
-  return create_exam(name, room, 'Radiology', 'Radiology Result Template')
-
-def create_sample_collection(name, room):
-  return create_exam(name, room, 'Sample Collection', 'Lab Test Template')
+  _update_room_status(ori_doc, room, target, doc.name)
+  ori_doc.save(ignore_permissions=True)
+  return doc.name
