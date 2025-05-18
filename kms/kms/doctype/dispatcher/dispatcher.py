@@ -1372,48 +1372,108 @@ def get_related_rooms (hsu, dispatcher_id):
 				AND 	tma.examination_item = tigsu.parent))""", pluck = 'service_unit')
 
 @frappe.whitelist()
-def is_meal_time_in_room(dispatcher_id, doc_name, doc_no):
-	dispatcher_doc = frappe.get_doc('Dispatcher', dispatcher_id)
-	if dispatcher_doc.had_meal:
-		return False
-	if doc_name == 'Sample Collection':
-		return True
-	else:
-		check_doc = frappe.get_doc(doc_name, doc_no)
-		mcu_setting = frappe.get_single('MCU Settings')
-		required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
-		return any(row.item in required_exams for row in check_doc.examination_item)
-
-def is_meal_time(doc):
-	dispatcher_doc = doc
-	if dispatcher_doc.had_meal:
-		return False
+def is_meal(exam_id, doctype=None, docname=None):
 	mcu_setting = frappe.get_single('MCU Settings')
-	required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
-	has_sample_collection_assignment = False
-	has_required_exams = False
-	has_sample_collection_assignment = any(
-		row.reference_doctype == 'Sample Collection'
-		for row in dispatcher_doc.assignment_table
-	)
-	has_required_exams = any(row.examination_item in required_exams for row in dispatcher_doc.package)
-	if not has_sample_collection_assignment and not has_required_exams:
-		return False
-	if has_sample_collection_assignment:
-		kasus1 = any(
-			row.reference_doctype == 'Sample Collection'
-			and row.status in ('Finished', 'Partial Finished')
-			for row in dispatcher_doc.assignment_table
-		)
-		return kasus1
-	if has_required_exams:
-		kasus2 = any(
-			row.examination_item in required_exams and
-			#row.status in ('Finished', 'Refused', 'Cancelled', 'Rescheduled')
-			row.status == 'Finished'
-			for row in dispatcher_doc.package
-		)
-		return kasus2
+	radiology = [exam.exam_required for exam in mcu_setting.required_exam]
+	lab_test = frappe.db.get_all(
+		'Item', pluck='name', 
+		filters=[["item_group", "descendants of (inclusive)", "Laboratory"],["custom_is_mcu_item", "=", 1]])
+	valid_status = ['Finished', 'Refused', 'Rescheduled']
+	lab_test_result = False
+	radiology_items = []
+	if docname: # for room 
+		appt = frappe.get_doc('Patient Appointment', exam_id)
+		check_list = (getattr(appt, "custom_mcu_exam_items", []) or []) + (getattr(appt, "custom_additional_mcu_items", []) or [])
+		if doctype == 'Sample Collection':
+			lab_test_result = True
+			for item in check_list:
+				if item.examination_item in radiology:
+					radiology_items.append(item.status)
+			if radiology_items:
+				radiology_result = all(status in valid_status for status in radiology_items)
+			else:
+				radiology_result = False
+		else:
+			doc = frappe.get_doc(doctype, docname)
+			current_item = False
+			for item in check_list:
+				if item.examination_item in lab_test and item.status in valid_status:
+					lab_test_result = True
+				if item.examination_item in radiology:
+					print([row.as_dict() for row in doc.examination_item])
+					if any(row.get("item") == item.examination_item for row in doc.examination_item):
+						print(doc.examination_item)
+						current_item = True
+					else:
+						radiology_items.append(item.status)
+						print('a')
+			if radiology_items:
+				radiology_result = all(status in valid_status for status in radiology_items)
+				print('radiology_result', radiology_result)
+			else:
+				radiology_result = True if current_item else False
+		return lab_test_result and radiology_result
+	else: # for dispatcher
+		dispatcher = frappe.get_doc(
+			'Dispatcher', 
+			frappe.db.get_value('Dispatcher', {'patient_appointment': exam_id}, 'name'))
+		if dispatcher:
+			if dispatcher.had_meal:
+				return False
+			for item in dispatcher.package:
+				if item.examination_item in lab_test and item.status in valid_status:
+					lab_test_result = True
+				if item.examination_item in radiology:
+					radiology_items.append(item.status)
+			if radiology_items:
+				radiology_result = all(status in valid_status for status in radiology_items)
+			else:
+				radiology_result = False
+			return lab_test_result and radiology_result
+
+#@frappe.whitelist()
+#def is_meal_time_in_room(dispatcher_id, doc_name, doc_no):
+#	dispatcher_doc = frappe.get_doc('Dispatcher', dispatcher_id)
+#	if dispatcher_doc.had_meal:
+#		return False
+#	if doc_name == 'Sample Collection':
+#		return True
+#	else:
+#		check_doc = frappe.get_doc(doc_name, doc_no)
+#		mcu_setting = frappe.get_single('MCU Settings')
+#		required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
+#		return any(row.item in required_exams for row in check_doc.examination_item)
+#
+#def is_meal_time(doc):
+#	dispatcher_doc = doc
+#	if dispatcher_doc.had_meal:
+#		return False
+#	mcu_setting = frappe.get_single('MCU Settings')
+#	required_exams = [exam.exam_required for exam in mcu_setting.required_exam]
+#	has_sample_collection_assignment = False
+#	has_required_exams = False
+#	has_sample_collection_assignment = any(
+#		row.reference_doctype == 'Sample Collection'
+#		for row in dispatcher_doc.assignment_table
+#	)
+#	has_required_exams = any(row.examination_item in required_exams for row in dispatcher_doc.package)
+#	if not has_sample_collection_assignment and not has_required_exams:
+#		return False
+#	if has_sample_collection_assignment:
+#		kasus1 = any(
+#			row.reference_doctype == 'Sample Collection'
+#			and row.status in ('Finished', 'Partial Finished')
+#			for row in dispatcher_doc.assignment_table
+#		)
+#		return kasus1
+#	if has_required_exams:
+#		kasus2 = any(
+#			row.examination_item in required_exams and
+#			#row.status in ('Finished', 'Refused', 'Cancelled', 'Rescheduled')
+#			row.status == 'Finished'
+#			for row in dispatcher_doc.package
+#		)
+#		return kasus2
 
 def set_meal_time(doc):
 	doc.status = 'Meal Time'
@@ -1451,7 +1511,7 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 				room.status = 'Additional or Retest Request' if exists_to_retest else status
 		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
 		doc.room = ''
-		if is_meal_time(doc):
+		if is_meal(doc.patient_appointment):
 			set_meal_time(doc)
 		doc.save(ignore_permissions=True)
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:

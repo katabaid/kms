@@ -208,7 +208,7 @@ def update_exam_header_status(hsu, doctype, docname, status, exam_id, options={}
   _update_exam_status(doctype, docname, status, cancel)
 
 @frappe.whitelist()
-def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam_item, status, reason):
+def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam_item, status, reason=None):
   if not all((exam_id, exam_item, status)):
     frappe.throw('Internal Error: Not all required parameters available.')
   update_sql = """
