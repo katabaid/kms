@@ -420,6 +420,7 @@ def _create_exam(doctype, name, room, rel):
             f"""Patient {ori_doc.patient} is already in a queue for {hsu.healthcare_service_unit} room.""")
   else:
     previous_docname = ori_doc.reference_doc
+    ori_doc.status = 'Waiting to Enter the Room'
     original_field = 'custom_queue_pooling' if target == 'Sample Collection' else 'queue_pooling'
   appt_doc = frappe.get_doc('Patient Appointment', ori_doc.patient_appointment)
   doc_fields = {

@@ -1480,33 +1480,31 @@ def set_meal_time(doc):
 	doc.had_meal = True
 	doc.meal_time = add_to_date(now(), minutes=15)
 
+from kms.mcu_dispatcher import _get_related_service_units
+
 @frappe.whitelist()
-def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
+def finish_exam(hsu, status, doctype, docname):
 	exists_to_retest = False
 	source_doc = frappe.get_doc(doctype, docname)
+	is_sc = doctype = 'Sample COllection'
+	exam_id = source_doc.custom_appointment if is_sc else source_doc.appointment
+	dispatcher_id = source_doc.custom_appointment if is_sc else source_doc.dispatcher
+	queue_pooling_id = source_doc.custom_dispatcher if is_sc else source_doc.custom_queue_pooling
+	child = source_doc.custom_sample_table if is_sc else source_doc.examination_item
+	related_rooms = _get_related_service_units(hsu, exam_id)
+	exists_to_retest = any(item.status == 'To Retest' for item in child)
+	target = ''
+	room_count = 0
+	final_count = 0
+	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing']
 	if dispatcher_id:
 		if status == 'Removed':
 			status = 'Wait for Room Assignment'
 		doc = frappe.get_doc('Dispatcher', dispatcher_id)
-		room_count = 0
-		final_count = 0
-		final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing']
-		target = ''
-		related_rooms = get_related_rooms (hsu, dispatcher_id)
-		if doctype == 'Sample Collection':
-			for sample in source_doc.custom_sample_table:
-				if sample.status == 'To Retest':
-					exists_to_retest = True
-		else:
-			for item in source_doc.examination_item:
-				if item.status == 'To Retest':
-					exists_to_retest = True
 		for room in doc.assignment_table:
 			room_count += 1
 			if room.status in final_status:
 				final_count += 1
-			if room.healthcare_service_unit == hsu:
-				room.status = 'Additional or Retest Request' if exists_to_retest else status
 			if room.healthcare_service_unit in related_rooms:
 				room.status = 'Additional or Retest Request' if exists_to_retest else status
 		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
@@ -1514,6 +1512,18 @@ def finish_exam(hsu, status, doctype, docname, dispatcher_id=None):
 		if is_meal(doc.patient_appointment):
 			set_meal_time(doc)
 		doc.save(ignore_permissions=True)
+	elif queue_pooling_id:
+		qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
+		for qp in qps:
+			room_count += 1
+			if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
+				final_count += 1
+			if frappe.db.get_value('MCU Queue Pooling', qp, 'service_unit') in related_rooms:
+				status_to_set = 'Additional or Retest Request' if exists_to_retest else status
+				frappe.db.set_value('MCU Queue Pooling', qp, 'status', status_to_set)
+		if room_count == final_count:
+			frappe.db.set_status('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
+
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:
 			case 'Radiology':

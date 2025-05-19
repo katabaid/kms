@@ -40,8 +40,7 @@ def get_data(filters):
 	exams = frappe.db.sql(f"""
 		SELECT DISTINCT tma.examination_item, tma.item_name, tma.status
 		FROM `tabMCU Appointment` tma , tabItem ti
-		WHERE EXISTS (SELECT 1 FROM `tabDispatcher` td 
-		WHERE patient_appointment = '{filters.exam_id}' AND tma.parent = td.name)
+		WHERE parent = '{filters.exam_id}'
 		AND tma.examination_item = ti.name
 		ORDER BY ti.custom_bundle_position""", as_dict = 1)
 	group_data = []

@@ -173,7 +173,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
           'status': utils.getStatus(frm),
           'doctype': frm.doc.doctype,
           'docname': frm.doc.name,
-          'dispatcher_id': utils.getDispatcher(frm)
         },
         callback: function (r) {
           if (r.message) {

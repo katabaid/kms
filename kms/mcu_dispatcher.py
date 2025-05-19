@@ -117,7 +117,7 @@ def _update_related_rooms_status(params):
       existing_notes = room.get('notes', '')
       notes_to_save = existing_notes + '\n' + note if existing_notes else note
       if room.get(hsu_field) == hsu:
-        updates = {'status': status, 'notes': notes_to_save}
+        updates = {'status': status, 'notes': notes_to_save, 'reference_doc':  docname}
         if clear_reference:
           updates.update({'reference_doc': ''})
         frappe.db.set_value(doctype_name, room.name, updates)
@@ -154,7 +154,7 @@ def _update_related_rooms_status(params):
   elif queue_pooling_id:
     _update_rooms(
       'MCU Queue Pooling',
-      {'appointment': exam_id, 'service_unit': ['in', related_rooms]},
+      {'patient_appointment': exam_id, 'service_unit': ['in', related_rooms]},
       ['name', 'notes', 'service_unit'],
       'service_unit',
       hsu, doctype, docname, reason, status, clear_reference, related_rooms
