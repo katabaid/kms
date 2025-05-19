@@ -132,6 +132,8 @@
    "reqd": 1
   },
   {
+   "fetch_from": "patient_appointment.custom_queue_no",
+   "fetch_if_empty": 1,
    "fieldname": "queue_no",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -207,7 +209,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-04-30 18:16:25.905458",
+ "modified": "2025-05-19 21:11:04.856821",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",
