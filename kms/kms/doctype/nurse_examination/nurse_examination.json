@@ -211,7 +211,7 @@
    "read_only": 1
   },
   {
-   "fetch_from": "dispatcher.queue_no",
+   "fetch_from": "appointment.custom_queue_no",
    "fieldname": "queue_no",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -339,7 +339,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-18 15:37:36.569122",
+ "modified": "2025-05-19 20:28:22.696441",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

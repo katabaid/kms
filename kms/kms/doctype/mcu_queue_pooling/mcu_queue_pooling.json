@@ -16,6 +16,7 @@
   "status",
   "refuse_reason",
   "in_room",
+  "queue_no",
   "column_break_ptjqp",
   "company",
   "branch",
@@ -167,6 +168,13 @@
    "fieldname": "in_room",
    "fieldtype": "Check",
    "label": "In Room"
+  },
+  {
+   "fetch_from": "patient_appointment.custom_queue_no",
+   "fetch_if_empty": 1,
+   "fieldname": "queue_no",
+   "fieldtype": "Int",
+   "label": "Queue No"
   }
  ],
  "grid_page_length": 50,
@@ -174,7 +182,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-05-19 17:39:05.378726",
+ "modified": "2025-05-19 20:09:34.892164",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",

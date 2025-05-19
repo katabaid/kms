@@ -27,6 +27,19 @@ def patient_appointment_on_update(doc, method=None):
       doc.save()
     # END prevent recursive call for updating questionnaire
     if str(doc.appointment_date) == frappe.utils.nowdate():
+      if not doc.custom_queue_no:
+        custom_queue_no = frappe.db.get_all(
+          'Patient Appointment', 
+          filters={
+              'company': 'Kyoai Medical Services',
+              'custom_branch': 'Jakarta Main Clinic', 
+              'appointment_date': frappe.utils.today(),
+              'appointment_type': 'MCU'
+          },
+          fields=['max(custom_queue_no)+1 as maks'],
+          pluck='maks'
+        )[0]
+        frappe.db.set_value('Patient Appointment', doc.name, 'custom_queue_no', custom_queue_no)
       if doc.custom_temporary_registration:
         frappe.db.set_value(
           'Temporary Registration', 

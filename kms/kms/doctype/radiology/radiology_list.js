@@ -34,42 +34,49 @@ async function open_queue_dialog(listview){
       user: frappe.session.user,
       assigned: 1
     },
-    'healthcare_service_unit'
+    ['healthcare_service_unit',
+    'healthcare_service_unit.custom_default_doctype'],
   )
   const healthcare_service_unit = result.message?.healthcare_service_unit || null;
-  const dialog = new frappe.ui.form.MultiSelectDialog({
-    doctype: 'MCU Queue Pooling',
-    target: listview,
-    date_field: 'date',
-    setters: {
-      patient: null,
-      priority: null,
-    },
-    get_query: function() {
-      return {
-        filters: {
-          status: ['in', ['Wait for Room Assignment', 'Additional or Retest Request']],
-          service_unit: healthcare_service_unit,
-          in_room: 0,
+  const default_doctype = result.message?.custom_default_doctype || null;
+  if(healthcare_service_unit && default_doctype == listview.doctype){
+    const dialog = new frappe.ui.form.MultiSelectDialog({
+      doctype: 'MCU Queue Pooling',
+      target: listview,
+      date_field: 'date',
+      setters: {
+        patient: null,
+        priority: null,
+      },
+      get_query: function() {
+        return {
+          filters: {
+            status: ['in', ['Wait for Room Assignment', 'Additional or Retest Request']],
+            service_unit: healthcare_service_unit,
+            in_room: 0,
+          }
         }
-      }
-    },
-    action: function(selections){
-      qp = selections.join(', ');
-      dialog.dialog.hide();
-      frappe.call({
-        method: 'kms.healthcare.create_service',
-        args: {
-          name: qp,
-          room: healthcare_service_unit
-        },
-        callback: (r=>{
-          console.log(r.message)
-          frappe.set_route('Form', listview.doctype, r.message)
+      },
+      action: function(selections){
+        qp = selections.join(', ');
+        dialog.dialog.hide();
+        frappe.call({
+          method: 'kms.healthcare.create_service',
+          args: {
+            name: qp,
+            room: healthcare_service_unit
+          },
+          callback: (r=>{
+            console.log(r.message)
+            frappe.set_route('Form', listview.doctype, r.message)
+          })
         })
-      })
-    },
-  });
+      },
+    });
+  } else {
+    frappe.throw(`The room you are assigned ${healthcare_service_unit} 
+      is not for this document type ${listview.doctype} to use.`)
+  }
   const bindCheckboxWatcher = setInterval(() => {
     const $checkboxes = dialog.$wrapper.find('input[type="checkbox"]');
     if ($checkboxes.length > 0) {
