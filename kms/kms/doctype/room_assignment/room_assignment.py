@@ -46,13 +46,11 @@ def change_room(name, room):
 
 @frappe.whitelist()
 def get_room_list(dept, room):
-  if not dept:
-    return []
   rooms = frappe.db.get_all(
     'Healthcare Service Unit',
     filters = {
       'is_group': 0,
-      'custom_department': dept,
+      'custom_department': ['in', dept],
       'name': ['!=', room]
     },
     pluck = 'name')

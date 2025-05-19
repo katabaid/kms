@@ -15,6 +15,7 @@
   "arrival_time",
   "status",
   "refuse_reason",
+  "in_room",
   "column_break_ptjqp",
   "company",
   "branch",
@@ -160,6 +161,12 @@
    "label": "Appointment",
    "options": "Patient Appointment",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "in_room",
+   "fieldtype": "Check",
+   "label": "In Room"
   }
  ],
  "grid_page_length": 50,
@@ -167,7 +174,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-05-18 14:18:52.734805",
+ "modified": "2025-05-19 17:39:05.378726",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",

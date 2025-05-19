@@ -50,6 +50,13 @@ frappe.ui.form.on('Nurse Examination', {
 			},
 			__('Reports')
 		)
+		frm.add_custom_button(
+			__('Patient Result'),
+			() => {
+				window.open(`/app/query-report/Result per Appointment?exam_id=${frm.doc.appointment}`, '_blank');
+			},
+			__('Reports')
+		)
 		if (frm.doc.non_selective_result) {
 			frm.refresh_field('non_selective_result');
 			frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{

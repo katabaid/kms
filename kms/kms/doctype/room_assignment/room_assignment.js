@@ -15,8 +15,7 @@ frappe.ui.form.on('Room Assignment', {
 	},
 	setup(frm) {
 		let medical_department = frappe.defaults.get_user_default('medical_department');
-		if (medical_department === 'Nurse') medical_department = ['Nurse', 'Radiology', 'Laboratory'];
-		if (frappe.session.user == 'Administrator') {
+		if (frappe.session.user == 'Administrator' || medical_department === 'Nurse') {
 			medical_department = ['Nurse', 'Radiology', 'Laboratory', 'General Practice', 'Dental'];
 		}
 		frm.set_query('healthcare_service_unit', () => {
@@ -50,9 +49,10 @@ frappe.ui.form.on('Room Assignment', {
 
 function add_change_room_button(frm) {
 	frm.add_custom_button("Change Room", () => {
-		const medical_department =
-			frappe.defaults.get_user_default("medical_department");
-
+		let medical_department = frappe.defaults.get_user_default('medical_department');
+		if (frappe.session.user == 'Administrator' || medical_department === 'Nurse') {
+			medical_department = ['Nurse', 'Radiology', 'Laboratory', 'General Practice', 'Dental'];
+		}
 		frappe.call({
 			method: "kms.kms.doctype.room_assignment.room_assignment.get_room_list",
 			args: {

@@ -10,6 +10,13 @@ frappe.ui.form.on('Radiology', {
   },
   refresh: function (frm) {
     radiologyController.refresh(frm);
+    frm.add_custom_button(
+      __('Patient Result'),
+      () => {
+        window.open(`/app/query-report/Result per Appointment?exam_id=${frm.doc.appointment}`, '_blank');
+      },
+      __('Reports')
+    ),
     frm.sidebar
       .add_user_action(__('Exam Notes per Appointment'))
       .attr('href', `/app/query-report/Exam%20Notes%20per%20Appointment?exam_id=${frm.doc.appointment}`)

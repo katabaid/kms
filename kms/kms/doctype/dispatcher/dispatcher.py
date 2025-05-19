@@ -1486,10 +1486,10 @@ from kms.mcu_dispatcher import _get_related_service_units
 def finish_exam(hsu, status, doctype, docname):
 	exists_to_retest = False
 	source_doc = frappe.get_doc(doctype, docname)
-	is_sc = doctype = 'Sample COllection'
+	is_sc = doctype == 'Sample Collection'
 	exam_id = source_doc.custom_appointment if is_sc else source_doc.appointment
 	dispatcher_id = source_doc.custom_appointment if is_sc else source_doc.dispatcher
-	queue_pooling_id = source_doc.custom_dispatcher if is_sc else source_doc.custom_queue_pooling
+	queue_pooling_id = source_doc.custom_queue_pooling if is_sc else source_doc.queue_pooling
 	child = source_doc.custom_sample_table if is_sc else source_doc.examination_item
 	related_rooms = _get_related_service_units(hsu, exam_id)
 	exists_to_retest = any(item.status == 'To Retest' for item in child)
