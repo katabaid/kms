@@ -1515,6 +1515,7 @@ def finish_exam(hsu, status, doctype, docname):
 	elif queue_pooling_id:
 		qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
 		for qp in qps:
+			frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)
 			room_count += 1
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
 				final_count += 1

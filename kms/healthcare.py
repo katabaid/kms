@@ -421,6 +421,13 @@ def _create_exam(doctype, name, room, rel):
   else:
     previous_docname = ori_doc.reference_doc
     ori_doc.status = 'Waiting to Enter the Room'
+    ori_doc.in_room = 1
+    qps = frappe.get_all(
+      'MCU Queue Pooling', pluck='name',
+      filters={'patient_appointment': ori_doc.patient_appointment})
+    for qp in qps:
+      if qp != ori_doc.name:
+        frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 1)
     original_field = 'custom_queue_pooling' if target == 'Sample Collection' else 'queue_pooling'
   appt_doc = frappe.get_doc('Patient Appointment', ori_doc.patient_appointment)
   doc_fields = {

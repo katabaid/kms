@@ -61,6 +61,7 @@ doctype_js = {
 }
 doctype_list_js = {
   "ToDo": "public/js/todo_list.js",
+  "Sample Collection": "public/js/sample_collection_list.js",
   "Healthcare Service Unit" : "public/js/healthcare_service_unit_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}

@@ -49,7 +49,8 @@ async function open_queue_dialog(listview){
       return {
         filters: {
           status: ['in', ['Wait for Room Assignment', 'Additional or Retest Request']],
-          service_unit: healthcare_service_unit
+          service_unit: healthcare_service_unit,
+          in_room: 0,
         }
       }
     },

@@ -1,31 +1,11 @@
-frappe.listview_settings['Radiology'] = {
-  add_fields: ['has_attachment'],
-  has_indicator_for_draft: true,
-  hide_name_column: true, 
-  hide_name_filter: true,
-  get_indicator: function(doc) {
-    if (doc.has_attachment==1&&doc.docstatus==1) {
-      return [doc.status.concat(' *'), "blue"];
-    } else if (doc.has_attachment==0&&doc.docstatus==1){
-      return [doc.status, "light-blue"];
-    } else if (doc.has_attachment==0&&doc.docstatus==0){
-      return [doc.status, "light-gray"];
-    } else if (doc.has_attachment==1&&doc.docstatus==0){
-      return [doc.status.concat(' *'), "gray"];
-    } else if (doc.has_attachment==1&&doc.docstatus==2){
-      return [doc.status.concat(' *'), "red"];
-    } else if (doc.has_attachment==0&&doc.docstatus==2){
-      return [doc.status, "orange"];
-    }
-  },
+frappe.listview_settings['Sample Collection'] = {
   onload: (listview) => {
-    frappe.breadcrumbs.add('Healthcare', 'Radiology');
-    listview.filter_area.add([[listview.doctype, "created_date", "=", frappe.datetime.get_today()]]);
     listview.page.add_inner_button(__('Add from Queue'), function() {
       open_queue_dialog(listview);
     })
   }
 }
+
 async function open_queue_dialog(listview){
   const result = await frappe.db.get_value(
     'Room Assignment',
@@ -49,8 +29,8 @@ async function open_queue_dialog(listview){
       return {
         filters: {
           status: ['in', ['Wait for Room Assignment', 'Additional or Retest Request']],
-          service_unit: healthcare_service_unit,
           in_room: 0,
+          service_unit: healthcare_service_unit
         }
       }
     },
