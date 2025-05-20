@@ -7,19 +7,21 @@ frappe.listview_settings['Sample Collection'] = {
 }
 
 async function open_queue_dialog(listview){
-  const result = await frappe.db.get_value(
+  const ra = await frappe.db.get_value(
     'Room Assignment',
     {
       date: frappe.datetime.now_date(),
       user: frappe.session.user,
       assigned: 1
     },
-    ['healthcare_service_unit',
-    'healthcare_service_unit.custom_default_doctype'],
+    'healthcare_service_unit',
   )
-  const healthcare_service_unit = result.message?.healthcare_service_unit || null;
-  const default_doctype = result.message?.custom_default_doctype || null;
-  if(healthcare_service_unit && default_doctype == listview.doctype){
+  const healthcare_service_unit = ra.message?.healthcare_service_unit || null;
+  const hsu = await frappe.db.get_value(
+    'Healthcare Service Unit', healthcare_service_unit,'custom_default_doctype',
+  )
+  const dt = hsu.message?.custom_default_doctype || null;
+  if(healthcare_service_unit && dt == listview.doctype){
     const dialog = new frappe.ui.form.MultiSelectDialog({
       doctype: 'MCU Queue Pooling',
       target: listview,
@@ -27,6 +29,7 @@ async function open_queue_dialog(listview){
       setters: {
         patient: null,
         priority: null,
+        queue_no: null,
       },
       get_query: function() {
         return {
