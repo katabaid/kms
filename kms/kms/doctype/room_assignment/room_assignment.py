@@ -43,17 +43,19 @@ def change_room(name, room):
   set_session_default(room)
 
   return new_doc.name
-
+import json
 @frappe.whitelist()
 def get_room_list(dept, room):
-  rooms = frappe.db.get_all(
+  dept_list = json.loads(dept)
+  rooms = frappe.get_all(
     'Healthcare Service Unit',
-    filters = {
-      'is_group': 0,
-      'custom_department': ['in', dept],
-      'name': ['!=', room]
-    },
+    filters = [
+      ['is_group', '=', 0],
+      ['custom_department', 'in', dept_list],
+      ['name', '!=', room]
+    ],
     pluck = 'name')
+  print(rooms)
   return rooms
 
 def set_session_default(room):

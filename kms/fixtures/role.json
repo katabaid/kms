@@ -151,7 +151,7 @@
   "is_custom": 1,
   "modified": "2025-01-02 19:08:58.529647",
   "name": "HC Manager",
-  "restrict_to_domain": null,
+  "restrict_to_domain": "Healthcare",
   "role_name": "HC Manager",
   "two_factor_auth": 0
  },
@@ -164,7 +164,7 @@
   "is_custom": 1,
   "modified": "2025-01-02 19:08:58.506680",
   "name": "HC Lab Manager",
-  "restrict_to_domain": null,
+  "restrict_to_domain": "Healthcare",
   "role_name": "HC Lab Manager",
   "two_factor_auth": 0
  },
@@ -177,7 +177,7 @@
   "is_custom": 1,
   "modified": "2025-01-02 19:08:58.452991",
   "name": "HC Pharmacy",
-  "restrict_to_domain": null,
+  "restrict_to_domain": "Healthcare",
   "role_name": "HC Pharmacy",
   "two_factor_auth": 0
  }

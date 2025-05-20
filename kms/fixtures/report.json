@@ -11,7 +11,7 @@
   "javascript": null,
   "json": null,
   "letter_head": "Kyoai",
-  "modified": "2025-01-31 19:17:59.563583",
+  "modified": "2025-04-22 16:15:08.739242",
   "module": "KMS",
   "name": "Exam Notes per Appointment",
   "prepared_report": 0,
@@ -51,6 +51,12 @@
     "parentfield": "roles",
     "parenttype": "Report",
     "role": "HC Basic"
+   },
+   {
+    "parent": "Exam Notes per Appointment",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HC Dokter Internal"
    }
   ],
   "timeout": 0
@@ -67,7 +73,7 @@
   "javascript": null,
   "json": null,
   "letter_head": null,
-  "modified": "2024-09-10 08:54:07.872725",
+  "modified": "2025-04-22 07:35:12.619582",
   "module": "KMS",
   "name": "Nurse Examination History",
   "prepared_report": 0,
@@ -95,6 +101,12 @@
     "parentfield": "roles",
     "parenttype": "Report",
     "role": "HC Dispatcher"
+   },
+   {
+    "parent": "Nurse Examination History",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HC Dokter Internal"
    }
   ],
   "timeout": 0

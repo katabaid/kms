@@ -53,6 +53,8 @@ function add_change_room_button(frm) {
 		if (frappe.session.user == 'Administrator' || medical_department === 'Nurse') {
 			medical_department = ['Nurse', 'Radiology', 'Laboratory', 'General Practice', 'Dental'];
 		}
+		console.log(medical_department)
+		console.log(frm.doc.healthcare_service_unit)
 		frappe.call({
 			method: "kms.kms.doctype.room_assignment.room_assignment.get_room_list",
 			args: {
@@ -61,6 +63,7 @@ function add_change_room_button(frm) {
 			},
 			callback: (r) => {
 				if (r.message) {
+					console.log(r.message)
 					const room_list = r.message;
 
 					frappe.prompt(

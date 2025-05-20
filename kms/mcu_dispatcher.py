@@ -110,7 +110,7 @@ def _update_related_rooms_status(params):
   def _update_rooms(
     doctype_name,   filters,        fields,           hsu_field, 
     hsu,            doctype,        docname,          reason, 
-    status,         clear_reference,  related_rooms):
+    status,         clear_reference, related_rooms,   exam_id=None):
     rooms = frappe.get_all(doctype_name, filters=filters, fields=fields)
     for room in rooms:
       note = f'<{frappe.utils.now()}>{status} {doctype} {docname} {reason if reason else ''}'
@@ -119,6 +119,10 @@ def _update_related_rooms_status(params):
       if room.get(hsu_field) == hsu:
         updates = {'status': status, 'notes': notes_to_save, 'reference_doc':  docname}
         if clear_reference:
+          if doctype_name == 'MCU Queue Pooling':
+            qps = frappe.get_all('MCU Queue Pooling', {'patient_appointment': exam_id}, pluck='name')
+            for qp in qps:
+              frappe.db.set_value(doctype_name, qp, 'in_room', 0)
           updates.update({'reference_doc': ''})
         frappe.db.set_value(doctype_name, room.name, updates)
       elif room.get(hsu_field) in related_rooms:
@@ -157,7 +161,7 @@ def _update_related_rooms_status(params):
       {'patient_appointment': exam_id, 'service_unit': ['in', related_rooms]},
       ['name', 'notes', 'service_unit'],
       'service_unit',
-      hsu, doctype, docname, reason, status, clear_reference, related_rooms
+      hsu, doctype, docname, reason, status, clear_reference, related_rooms, exam_id
     )
   # else:
   #   frappe.throw('Internal Error: Neither Dispatcher ID nor MCU Queue Pooling are given to continue.')
