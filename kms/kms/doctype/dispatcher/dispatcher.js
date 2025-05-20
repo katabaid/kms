@@ -9,6 +9,7 @@ frappe.ui.form.on('Dispatcher', {
 		addCustomButtonOnRoom(frm);
 		addCustomButtonOnPackage(frm);
 		addSidebarUserAction(frm);
+		refreshRoomResidence(frm);
 		frm.disable_save();
 	},
 	onload: function (frm) {
@@ -172,6 +173,9 @@ const addCustomButtonOnRoom = (frm) => {
 	}
 };
 
+const refreshRoomResidence = (frm) => {
+
+}
 // trigger methods
 const updateChildStatus = async (frm, grid, button, reason = null) => {
 	const selectedRows = grid.get_selected();
