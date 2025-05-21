@@ -1279,11 +1279,24 @@
   "apply_to_all_doctypes": 1,
   "docstatus": 0,
   "doctype": "User Permission",
+  "for_value": "JMC - Vital Sign",
+  "hide_descendants": 0,
+  "is_default": 1,
+  "modified": "2025-05-20 09:09:07.901998",
+  "name": "ql7g38nq3a",
+  "user": "Administrator"
+ },
+ {
+  "allow": "Healthcare Service Unit",
+  "applicable_for": null,
+  "apply_to_all_doctypes": 1,
+  "docstatus": 0,
+  "doctype": "User Permission",
   "for_value": "JMC - Eye Exam",
   "hide_descendants": 0,
   "is_default": 1,
-  "modified": "2025-05-20 08:22:25.431807",
-  "name": "v9epforqe9",
+  "modified": "2025-05-20 13:35:41.344180",
+  "name": "mr6l6q2pph",
   "user": "ardel@kyoai123.co.id"
  },
  {
@@ -1292,11 +1305,37 @@
   "apply_to_all_doctypes": 1,
   "docstatus": 0,
   "doctype": "User Permission",
-  "for_value": "JMC - Vital Sign",
+  "for_value": "JMC - ECG 1",
   "hide_descendants": 0,
   "is_default": 1,
-  "modified": "2025-05-20 09:09:07.901998",
-  "name": "ql7g38nq3a",
-  "user": "Administrator"
+  "modified": "2025-05-20 15:05:52.434077",
+  "name": "bm4obgk5od",
+  "user": "eko@kyoai123.co.id"
+ },
+ {
+  "allow": "Employee",
+  "applicable_for": null,
+  "apply_to_all_doctypes": 1,
+  "docstatus": 0,
+  "doctype": "User Permission",
+  "for_value": "HR-EMP-00040",
+  "hide_descendants": 0,
+  "is_default": 0,
+  "modified": "2025-05-20 15:16:54.945923",
+  "name": "i55pul7902",
+  "user": "windy@kyoai123.co.id"
+ },
+ {
+  "allow": "Company",
+  "applicable_for": null,
+  "apply_to_all_doctypes": 1,
+  "docstatus": 0,
+  "doctype": "User Permission",
+  "for_value": "Kyoai Medical Services",
+  "hide_descendants": 0,
+  "is_default": 0,
+  "modified": "2025-05-20 15:16:55.022645",
+  "name": "i5674nv9vn",
+  "user": "windy@kyoai123.co.id"
  }
 ]

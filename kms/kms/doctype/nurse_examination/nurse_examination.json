@@ -331,7 +331,7 @@
    "fetch_if_empty": 1,
    "fieldname": "locker",
    "fieldtype": "Data",
-   "label": "Locker",
+   "label": "Service Number",
    "read_only": 1
   }
  ],
@@ -339,7 +339,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-19 20:28:22.696441",
+ "modified": "2025-05-21 18:06:51.121986",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",
