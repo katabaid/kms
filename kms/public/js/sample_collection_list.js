@@ -50,7 +50,6 @@ async function open_queue_dialog(listview){
             room: healthcare_service_unit
           },
           callback: (r=>{
-            console.log(r.message)
             frappe.set_route('Form', listview.doctype, r.message)
           })
         })

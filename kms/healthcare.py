@@ -111,7 +111,7 @@ def remove_from_room(name, room):
 
 @frappe.whitelist()
 def exam_retest (name, item, item_name):
-  disp_doc = get_dispatcher_doc (name)
+  disp_doc = frappe.get_doc ('Dispatcher', name)
   rooms = get_rooms_by_item_branch (item, disp_doc.branch)
   for room in rooms:
     temp_hsu_exist, temp_previous_doctype, temp_previous_docname = process_hsu (disp_doc, room.service_unit)
@@ -125,7 +125,7 @@ def exam_retest (name, item, item_name):
     result_doctype, template_doctype = get_relationship(room.service_unit)
   sample = ''
   if template_doctype == 'Lab Test Template':
-    sample = get_sample_from_template(item_name)
+    sample = frappe.db.get_value('Lab Test Template', item_name, 'sample')
   exam_items = get_affected_exam_items_list (template_doctype, disp_doc, item_name, sample)
   if exam_items:
     for package_item in disp_doc.package:
@@ -141,7 +141,7 @@ def exam_retest (name, item, item_name):
         pa_mcu_add.status = 'To Retest'
     pa_doc.save(ignore_permissions=True)
   if exam_items and hsu_exist:
-    to_cancel_doc = get_cancelled_doc (previous_doctype, previous_docname)
+    to_cancel_doc = frappe.get_doc (previous_doctype, previous_docname)
     #if to_cancel_doc.docstatus == 1:
     if previous_doctype == 'Sample Collection':
       for cancel_item in to_cancel_doc.custom_sample_table:
@@ -173,9 +173,6 @@ def _check_room_queue_capacity(doctype, room):
     if c >= capacity:
       frappe.throw(f"Room {room} is more than room queue capacity: {capacity}.")
   return True
-
-def get_dispatcher_doc (name):
-  return frappe.get_doc ('Dispatcher', name)
 
 def get_rooms_by_item_branch (item, branch):
   return frappe.get_all(
@@ -210,9 +207,6 @@ def get_relationship(room):
     }, 
     fields=['result', 'template'])[0].values()
 
-def get_sample_from_template (item_name):
-  return frappe.db.get_value('Lab Test Template', item_name, 'sample')
-
 def get_affected_exam_items_list (template_doctype, doc, item_name = None, sample = None):
   if template_doctype == 'Lab Test Template':
     return list(
@@ -220,9 +214,6 @@ def get_affected_exam_items_list (template_doctype, doc, item_name = None, sampl
       & set(list(o.item_name for o in doc.package)))
   else:
     return [item_name]
-
-def get_cancelled_doc (doctype, docname):
-  return frappe.get_doc(doctype, docname)
 
 @frappe.whitelist()
 def refuse_to_test(name, room):

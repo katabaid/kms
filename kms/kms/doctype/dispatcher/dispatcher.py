@@ -1400,16 +1400,12 @@ def is_meal(exam_id, doctype=None, docname=None):
 				if item.examination_item in lab_test and item.status in valid_status:
 					lab_test_result = True
 				if item.examination_item in radiology:
-					print([row.as_dict() for row in doc.examination_item])
 					if any(row.get("item") == item.examination_item for row in doc.examination_item):
-						print(doc.examination_item)
 						current_item = True
 					else:
 						radiology_items.append(item.status)
-						print('a')
 			if radiology_items:
 				radiology_result = all(status in valid_status for status in radiology_items)
-				print('radiology_result', radiology_result)
 			else:
 				radiology_result = True if current_item else False
 		return lab_test_result and radiology_result

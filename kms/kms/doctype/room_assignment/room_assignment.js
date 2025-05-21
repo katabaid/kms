@@ -53,8 +53,6 @@ function add_change_room_button(frm) {
 		if (frappe.session.user == 'Administrator' || medical_department === 'Nurse') {
 			medical_department = ['Nurse', 'Radiology', 'Laboratory', 'General Practice', 'Dental'];
 		}
-		console.log(medical_department)
-		console.log(frm.doc.healthcare_service_unit)
 		frappe.call({
 			method: "kms.kms.doctype.room_assignment.room_assignment.get_room_list",
 			args: {
@@ -63,7 +61,6 @@ function add_change_room_button(frm) {
 			},
 			callback: (r) => {
 				if (r.message) {
-					console.log(r.message)
 					const room_list = r.message;
 
 					frappe.prompt(
@@ -83,10 +80,7 @@ function add_change_room_button(frm) {
 								},
 								callback: function (response) {
 									if (response.message) {
-										frappe.set_route(
-											"Form",
-											"Room Assignment",
-											response.message,
+										frappe.set_route("Form", "Room Assignment", response.message,
 										);
 									}
 								},
@@ -103,22 +97,21 @@ function add_change_room_button(frm) {
 function get_already_assigned_rooms(frm) {
 	let rooms = [];
 	if (!frm.doc.date) {
-			frappe.msgprint(__('Please enter a date before selecting a room.'));
-			return rooms;
+		frappe.msgprint(__('Please enter a date before selecting a room.'));
+		return rooms;
 	}
 	
 	frappe.call({
-			method: 'kms.api.erpnext.get_assigned_room',
-			args: {
-					date: frm.doc.date,
-			},
-			async: false, // Ensures this call finishes before returning
-			callback: function(response) {
-					if (response && response.message) {
-							rooms = response.message;
-							console.log(rooms)
-					}
+		method: 'kms.api.erpnext.get_assigned_room',
+		args: {
+			date: frm.doc.date,
+		},
+		async: false, // Ensures this call finishes before returning
+		callback: function(response) {
+			if (response && response.message) {
+				rooms = response.message;
 			}
+		}
 	});
 	return rooms;
 }
