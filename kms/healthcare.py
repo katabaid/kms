@@ -72,7 +72,7 @@ def create_service(name, room):
     frappe.throw('Internal Error: Cannot find connected Dispatcher or MCU Queue Pooling.')
   rel = _get_exam_template_rel(room)
   valid_targets = {'Nurse Examination', 'Doctor Examination', 'Radiology', 'Sample Collection'}
-  if rel[0] in valid_targets:
+  if rel[0] in valid_targets and _check_room_queue_capacity(rel[0], room):
     result = _create_exam(doctype, name, room, rel)
     if result:
       return result
@@ -163,6 +163,16 @@ def exam_retest (name, item, item_name):
       #disp_doc.status = 'In Queue'
     #disp_doc.save(ignore_permissions=True)
     return {'docname': disp_doc.name}
+
+def _check_room_queue_capacity(doctype, room):
+  capacity = frappe.db.get_single_value('MCU Settings', 'max_room_queue')
+  status_field = 'custom_status' if doctype == 'Sample Collection' else 'status'
+  hsu_field = 'custom_service_unit' if doctype == 'Sample Collection' else 'service_unit'
+  if capacity:
+    c = frappe.db.count(doctype, {status_field: 'Started', hsu_field: room, 'created_date': today()})
+    if c >= capacity:
+      frappe.throw(f"Room {room} is more than room queue capacity: {capacity}.")
+  return True
 
 def get_dispatcher_doc (name):
   return frappe.get_doc ('Dispatcher', name)

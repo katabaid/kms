@@ -45,6 +45,7 @@
   "radiology_result_assignment_role",
   "section_break_kcub",
   "meal_time",
+  "max_room_queue",
   "column_break_dpux",
   "required_exam",
   "relationship_tab",
@@ -370,12 +371,17 @@
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "max_room_queue",
+   "fieldtype": "Int",
+   "label": "Max Room Queue"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-04-20 23:04:04.106106",
+ "modified": "2025-05-21 18:13:31.305644",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
