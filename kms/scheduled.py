@@ -1,5 +1,6 @@
-import frappe, json
-from frappe.utils import now, get_datetime
+import frappe
+from frappe.utils import now_datetime, get_datetime
+from datetime import timedelta
 
 def set_cancelled_open_appointment():
   appointment = frappe.db.get_list('Patient Appointment', filters={'status': 'Open'}, fields=['name', 'appointment_date'])
@@ -38,8 +39,10 @@ def set_cancelled_timeout_queue_pooling():
 
 def reset_dispatcher_status():
   d = frappe.db.get_all('Dispatcher', filters={'status': 'Meal Time'}, pluck='name')
+  interval = frappe.db.get_single_value('MCU Settings', 'meal_time')
   for q in d:
     dispatcher = frappe.get_doc('Dispatcher', q)
-    if get_datetime("2025-01-22 14:25:00") <= get_datetime(now()):
+    expire_at = get_datetime(dispatcher.meal_time) + timedelta(minutes=interval)
+    if expire_at < now_datetime():
       dispatcher.status = "In Queue"
       dispatcher.save(ignore_permissions=True)
