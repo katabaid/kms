@@ -224,7 +224,7 @@ scheduler_events = {
   ],
   "cron": {
     "*/10 * * * *": [
-      "kms.scheduled.reset_dispatcher_status",
+      "kms.scheduled.reset_meal_status",
     ]
   }
 }

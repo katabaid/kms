@@ -26,8 +26,12 @@
   "refuse_time",
   "reference_doctype",
   "reference_doc",
+  "is_meal_time",
   "section_break_1vaha",
-  "notes"
+  "notes",
+  "section_break_qzhw",
+  "had_meal",
+  "meal_time"
  ],
  "fields": [
   {
@@ -72,7 +76,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Wait for Room Assignment\nWaiting to Enter the Room\nOngoing Examination\nRefused\nFinished\nRescheduled\nPartial Finished\nAdditional or Retest Request\nWait for Sample\nFinished Collection\nIneligible for Testing",
+   "options": "Wait for Room Assignment\nWaiting to Enter the Room\nOngoing Examination\nRefused\nFinished\nRescheduled\nPartial Finished\nAdditional or Retest Request\nWait for Sample\nFinished Collection\nIneligible for Testing\nMeal Time",
    "reqd": 1
   },
   {
@@ -190,6 +194,28 @@
    "fieldname": "queue_no",
    "fieldtype": "Int",
    "label": "Queue No"
+  },
+  {
+   "fieldname": "section_break_qzhw",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "had_meal",
+   "fieldtype": "Check",
+   "label": "Had Meal"
+  },
+  {
+   "fieldname": "meal_time",
+   "fieldtype": "Datetime",
+   "label": "Meal Time"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_meal_time",
+   "fieldtype": "Check",
+   "label": "Is Meal Time"
   }
  ],
  "grid_page_length": 50,
@@ -197,7 +223,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-05-19 21:14:44.272819",
+ "modified": "2025-05-21 16:52:57.307505",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",

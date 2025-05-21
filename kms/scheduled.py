@@ -37,12 +37,17 @@ def set_cancelled_timeout_queue_pooling():
       doc.cancel_reason = 'Timeout'
       doc.save()
 
-def reset_dispatcher_status():
-  d = frappe.db.get_all('Dispatcher', filters={'status': 'Meal Time'}, pluck='name')
+def reset_meal_status():
   interval = frappe.db.get_single_value('MCU Settings', 'meal_time')
-  for q in d:
-    dispatcher = frappe.get_doc('Dispatcher', q)
-    expire_at = get_datetime(dispatcher.meal_time) + timedelta(minutes=interval)
-    if expire_at < now_datetime():
-      dispatcher.status = "In Queue"
-      dispatcher.save(ignore_permissions=True)
+  now = now_datetime()
+  def expired(t):
+    return get_datetime(t) + timedelta(minutes=interval) < now
+  for doctype, filters, field, update in [
+    ('Dispatcher', {'status': 'Meal Time'}, 'meal_time', lambda doc: setattr(doc, 'status', 'In Queue')),
+    ('MCU Queue Pooling', {'is_meal_time': 1}, 'meal_time', lambda doc: setattr(doc, 'is_meal_time', 0))
+  ]:
+    for name in frappe.db.get_all(doctype, filters=filters, pluck='name'):
+      doc = frappe.get_doc(doctype, name)
+      if expired(getattr(doc, field)):
+        update(doc)
+        doc.save(ignore_permissions=True)

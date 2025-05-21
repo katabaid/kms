@@ -1381,8 +1381,8 @@ def is_meal(exam_id, doctype=None, docname=None):
 	valid_status = ['Finished', 'Refused', 'Rescheduled']
 	lab_test_result = False
 	radiology_items = []
+	appt = frappe.get_doc('Patient Appointment', exam_id)
 	if docname: # for room 
-		appt = frappe.get_doc('Patient Appointment', exam_id)
 		check_list = (getattr(appt, "custom_mcu_exam_items", []) or []) + (getattr(appt, "custom_additional_mcu_items", []) or [])
 		if doctype == 'Sample Collection':
 			lab_test_result = True
@@ -1421,6 +1421,22 @@ def is_meal(exam_id, doctype=None, docname=None):
 			if dispatcher.had_meal:
 				return False
 			for item in dispatcher.package:
+				if item.examination_item in lab_test and item.status in valid_status:
+					lab_test_result = True
+				if item.examination_item in radiology:
+					radiology_items.append(item.status)
+			if radiology_items:
+				radiology_result = all(status in valid_status for status in radiology_items)
+			else:
+				radiology_result = False
+			return lab_test_result and radiology_result
+		else:
+			had_meal = frappe.db.exists(
+				'MCU Queue Pooling', {'patient_appointment': exam_id, 'had_meal': 1})
+			if had_meal:
+				return False
+			check_list = (getattr(appt, "custom_mcu_exam_items", []) or []) + (getattr(appt, "custom_additional_mcu_items", []) or [])
+			for item in check_list:
 				if item.examination_item in lab_test and item.status in valid_status:
 					lab_test_result = True
 				if item.examination_item in radiology:
@@ -1475,10 +1491,10 @@ def is_meal(exam_id, doctype=None, docname=None):
 #		)
 #		return kasus2
 
-def set_meal_time(doc):
-	doc.status = 'Meal Time'
-	doc.had_meal = True
-	doc.meal_time = add_to_date(now(), minutes=15)
+#def set_meal_time(doc):
+#	doc.status = 'Meal Time'
+#	doc.had_meal = True
+#	doc.meal_time = add_to_date(now(), minutes=15)
 
 from kms.mcu_dispatcher import _get_related_service_units
 
@@ -1494,6 +1510,7 @@ def finish_exam(hsu, status, doctype, docname):
 	related_rooms = _get_related_service_units(hsu, exam_id)
 	exists_to_retest = any(item.status == 'To Retest' for item in child)
 	target = ''
+	is_meal_time = is_meal(exam_id)
 	room_count = 0
 	final_count = 0
 	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing']
@@ -1509,12 +1526,18 @@ def finish_exam(hsu, status, doctype, docname):
 				room.status = 'Additional or Retest Request' if exists_to_retest else status
 		doc.status = 'Waiting to Finish' if room_count == final_count else 'In Queue'
 		doc.room = ''
-		if is_meal(doc.patient_appointment):
-			set_meal_time(doc)
+		if is_meal_time:
+			doc.status = 'Meal Time'
+			doc.had_meal = True
+			doc.meal_time = now()
 		doc.save(ignore_permissions=True)
 	elif queue_pooling_id:
 		qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
+		meal_time = now()
 		for qp in qps:
+			if is_meal_time:
+				frappe.db.set_value(
+					'MCU Queue Pooling', qp, {'is_meal_time': 1, 'meal_time': meal_time, 'had_meal': 1})
 			frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)
 			room_count += 1
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
