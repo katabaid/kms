@@ -237,3 +237,38 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
         frappe.db.set_value('Dispatcher Room', room.name, 'notes', notes_to_save)
   except Exception as e:
     frappe.throw(f"Database error occurred while updating '{exam_item}' status.")
+
+@frappe.whitelist()
+def count_last_room(exam_id):
+  finished_disp_rooms = frappe.db.count('Dispacther Room',
+    {
+      'parent': [
+        'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
+      'status': [
+        'in', 
+        ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 'Ineligible for Testing']]
+    })
+  all_disp_rooms = frappe.db.count('Dispacther Room',
+    {
+      'parent': [
+        'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
+    })
+  if finished_disp_rooms and all_disp_rooms:
+    return all_disp_rooms - finished_disp_rooms
+  else:
+    finished_mqp_rooms = frappe.db.count('MCU Queue Pooling',
+      {
+        'parent': [
+          'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
+        'status': [
+          'in', 
+          ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 'Ineligible for Testing']]
+      })
+    all_mqp_rooms = frappe.db.count('MCU Queue Pooling',
+      {
+        'parent': [
+          'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
+      })
+    if all_mqp_rooms and finished_mqp_rooms:
+      return all_mqp_rooms - finished_mqp_rooms
+  return 0

@@ -137,6 +137,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         frm.trigger('setup_child_table_custom_buttons');
       }
       frm.trigger('check_room_assignment');
+      checkLastRoom(utils.getExamId(frm))
     },
 
     before_submit: function (frm) {
@@ -395,6 +396,21 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         }
       })
     }
+  }
+
+  function checkLastRoom(exam_id) {
+    frappe.call({
+      method: 'kms.mcu_dispatcher.count_last_room',
+      args:{exam_id: exam_id},
+      callback: (r) => {
+        if(r.message){
+          count = parseInt(r.message);
+          if(count == 1) {
+            frm.page.set_indicator(__('This is the last examination room. Patient can check outafter this examination.'), 'red');
+          }
+        }
+      }
+    })
   }
 
   controller.utils = utils;
