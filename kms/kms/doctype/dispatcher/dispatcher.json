@@ -209,7 +209,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-19 21:11:04.856821",
+ "modified": "2025-05-21 09:16:27.447441",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",
@@ -254,5 +254,6 @@
    "title": "Waiting to Finish"
   }
  ],
+ "title_field": "patient_appointment",
  "track_changes": 1
 }

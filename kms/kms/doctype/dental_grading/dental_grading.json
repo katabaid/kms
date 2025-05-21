@@ -1,0 +1,44 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-05-20 18:20:11.819565",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "grade",
+  "suggestion"
+ ],
+ "fields": [
+  {
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Grade",
+   "link_filters": "[[\"MCU Grade\",\"item_code\",\"=\",\"DENS-00082\"]]",
+   "options": "MCU Grade"
+  },
+  {
+   "fetch_from": "grade.description",
+   "fieldname": "suggestion",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Suggestion",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-05-20 18:22:37.926831",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Dental Grading",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

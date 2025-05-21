@@ -5,6 +5,18 @@ import frappe
 from frappe.model.document import Document
 
 class DoctorResult(Document):
+	child_tables = ["nurse_grade", "doctor_grade", "radiology_grade", "lab_test_grade"]
+
+	def before_save(self):
+		remarks = {
+			row.description.strip()
+			for child_name in self.child_tables
+			for row in (self.get(child_name) or [])
+			if row.grade != "A" and row.description
+    }
+		dental_comments = _get_dental_comments(self.appointment) or []
+		self.copied_remark = "\n".join(sorted(remarks) + dental_comments)
+
 	def before_submit(self):
 		#if not self.validate_before_submit():
 		#	frappe.throw('All results must be submitted, and all gradable must be graded.')
@@ -31,12 +43,9 @@ class DoctorResult(Document):
 		def validate_child_table(child_table):
 			return all(validate_row(row) for row in child_table)
 
-		# List of child tables to validate
-		child_tables = ["nurse_grade", "doctor_grade", "radiology_grade", "lab_test_grade"]
-
 		# Validate all child tables and return the result
 		return all(
-			validate_child_table(self.get(table)) for table in child_tables if self.get(table)
+			validate_child_table(self.get(table)) for table in self.child_tables if self.get(table)
 		)
 
 	def on_submit(self):
@@ -185,6 +194,19 @@ class DoctorResult(Document):
 			})
 
 	def process_group_exam(self):
+		def _get_dental_grade(appt, item):
+			dental_grade = ''
+			if frappe.db.exists('MCU Appointment', {'examination_item': item, 'parent': appt}):
+				de_names = frappe.db.get_all(
+					'Doctor Examination', filters={'appointment': appt, 'docstatus': 1}, pluck='name')
+				for de in de_names:
+					dental_found = frappe.db.exists(
+						'Doctor Examination Request', {'parent': de, 'item': item})
+					if dental_found:
+						dental_grade = frappe.db.get_value('Dental Grading', {'parent': de}, 'grade')
+						return dental_grade
+
+		dental_examination = frappe.db.get_single_value('MCU Settings', 'dental_examination')
 		self.group_exam = []
 		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 		current_results = []
@@ -205,6 +227,18 @@ class DoctorResult(Document):
 						})
 				except Exception as e:
 					frappe.log_error(f"Error processing {table} row: {e}")
+		if current_results:
+			dental_grade = _get_dental_grade(self.appointment)
+			if dental_grade:
+				item_group = frappe.db.get_value('Item', dental_examination, 'item_group')
+				bundle_position = frappe.get_value('Item Group', item_group, 'custom_bundle_position')
+				current_results.append({
+					'contents': item_group,
+					'result': dental_grade,
+					'bundle_position': bundle_position,
+					'idx': 99999,
+				})
+
 		sorted_results = sorted(
 			current_results,
 			key = lambda x: (x['bundle_position'], x['idx'])
@@ -386,3 +420,13 @@ def physical_examination():
 
 def physical_examination_name():
 	return frappe.db.get_single_value('MCU Settings', 'physical_examination_name')
+
+def _get_dental_comments(appointment):
+	sql ="""
+		SELECT suggestion FROM `tabDental Grading` WHERE parent =
+		(SELECT parent FROM `tabDoctor Examination Request` tder, `tabDoctor Examination` td 
+		WHERE item = (SELECT value FROM tabSingles ts WHERE doctype = 'MCU Settings'
+		AND field = 'dental_examination') AND parent = td.name
+		AND td.appointment = %s AND td.docstatus = 0) ORDER BY idx
+		"""
+	return frappe.db.sql(sql, (appointment), as_list=True)

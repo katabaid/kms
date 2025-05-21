@@ -16,10 +16,6 @@ frappe.ui.form.on('Doctor Result', {
     });
     hide_standard_buttons(frm, CHILD_TABLES);
   },
-
-  before_save: function(frm) {
-    create_total_comment(frm, CHILD_TABLES);
-  }
 });
 
 // Utility functions
@@ -155,17 +151,4 @@ const apply_cell_styling = (frm, row, table_name) => {
       'color': 'midnightblue'
     });
   }
-}
-
-const create_total_comment = (frm, fields) => {
-  let copied_remark = '';
-  fields.forEach((field) => {
-    frm.doc[field].forEach((row) => {
-      if (row.grade && row.grade.split('-').pop() != 'A') {
-        if (copied_remark) copied_remark += '\n';
-        copied_remark += row.description;
-      }
-    })
-  })
-  frm.set_value('copied_remark', copied_remark)
 }

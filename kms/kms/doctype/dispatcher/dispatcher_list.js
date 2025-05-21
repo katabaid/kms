@@ -1,4 +1,6 @@
 frappe.listview_settings['Dispatcher'] = {
+  hide_name_column: true,
+  hide_name_filter: true,
   //add_fields: ['progress'],
   refresh: (listview) => {
     setInterval(()=>{
