@@ -51,3 +51,15 @@ def reset_meal_status():
       if expired(getattr(doc, field)):
         update(doc)
         doc.save(ignore_permissions=True)
+
+def reset_qp_in_room():
+  try:
+    affected_rows = frappe.db.sql("""
+      UPDATE `tabMCU Queue Pooling`
+      SET in_room = 0, delay_time = NULL
+      WHERE delay_time IS NOT NULL AND delay_time <= %s
+    """, (frappe.utils.now_datetime(),))
+    frappe.db.commit()
+    frappe.log(f"Reset {affected_rows} rows in MCU Queue Pooling")
+  except Exception as e:
+    frappe.log_error(f"Failed to reset_qp_in_room: {str(e)}")

@@ -223,8 +223,9 @@ scheduler_events = {
     "kms.scheduled.set_cancelled_timeout_queue_pooling"
   ],
   "cron": {
-    "*/5 * * * *": [
+    "*/2 * * * *": [
       "kms.scheduled.reset_meal_status",
+      "kms.scheduled.reset_qp_in_room",
     ]
   }
 }

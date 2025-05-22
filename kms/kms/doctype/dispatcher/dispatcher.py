@@ -3,9 +3,10 @@
 
 import frappe, re
 from frappe.model.document import Document
-from frappe.utils import today, flt, now, add_to_date
+from frappe.utils import today, flt, now, now_datetime
 from frappe import _
 from statistics import mean
+from datetime import timedelta
 
 FINISHED_STATUSES = {
   'Refused', 
@@ -1532,17 +1533,14 @@ def finish_exam(hsu, status, doctype, docname):
 	elif queue_pooling_id:
 		qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
 		meal_time = now()
+		submit_time = now_datetime()
 		for qp in qps:
 			if is_meal_time:
 				frappe.db.set_value(
 					'MCU Queue Pooling', qp, {'is_meal_time': 1, 'meal_time': meal_time, 'had_meal': 1})
 			delay_in_minutes = frappe.db.get_single_value('MCU Settings', 'queue_pooling_submit_delay') or 2
-			frappe.enqueue(
-				method = 'kms.mcu_dispatcher.set_in_room_flag',
-				queue = 'short',
-				delay = delay_in_minutes* 60,
-				exam_id = exam_id,
-			)
+			delay_time = submit_time + timedelta(minutes=delay_in_minutes)
+			frappe.db.set_value('MCU Queue Pooling', qp, 'delay_time', delay_time)
 			room_count += 1
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
 				final_count += 1
