@@ -11,7 +11,9 @@
   "healthcare_practitioner",
   "reference_doctype",
   "reference_doc",
-  "notes"
+  "column_break_rrpx",
+  "notes",
+  "tier"
  ],
  "fields": [
   {
@@ -61,12 +63,24 @@
    "label": "Healthcare Practitioner",
    "options": "Healthcare Practitioner",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rrpx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "healthcare_service_unit.custom_tier",
+   "fetch_if_empty": 1,
+   "fieldname": "tier",
+   "fieldtype": "Data",
+   "label": "Tier",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-05-20 15:26:58.131623",
+ "modified": "2025-05-22 13:47:32.825544",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher Room",

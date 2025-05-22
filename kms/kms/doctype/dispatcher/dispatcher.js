@@ -5,6 +5,7 @@ frappe.ui.form.on('Dispatcher', {
 	refresh: function (frm) {
 		addFinishButtons(frm);
 		addFinishMealButtons(frm);
+		addMealButtons(frm);
 		hideStandardButtonOnChildTable(frm, childTables);
 		addCustomButtonOnRoom(frm);
 		addCustomButtonOnPackage(frm);
@@ -95,6 +96,16 @@ const addFinishMealButtons = (frm) => {
 	if (frm.doc.status === 'Meal Time') {
 		frm.add_custom_button('Finish Meal', () => {
 			frm.doc.status = 'In Queue';
+			frm.dirty();
+			frm.save();
+		});
+	}
+};
+
+const addMealButtons = (frm) => {
+	if (frm.doc.status !== 'Meal Time') {
+		frm.add_custom_button('Meal Time', () => {
+			frm.doc.status = 'Meal Time';
 			frm.dirty();
 			frm.save();
 		});

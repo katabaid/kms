@@ -70,6 +70,8 @@ def create_service(name, room):
       break
   else:
     frappe.throw('Internal Error: Cannot find connected Dispatcher or MCU Queue Pooling.')
+  if not _check_room_tier_completion(doctype, name, room):
+    frappe.throw('Cannot assign to room with higher tier while all lower tier rooms have not finished examination.')
   rel = _get_exam_template_rel(room)
   valid_targets = {'Nurse Examination', 'Doctor Examination', 'Radiology', 'Sample Collection'}
   if rel[0] in valid_targets and _check_room_queue_capacity(rel[0], room):
@@ -173,6 +175,25 @@ def _check_room_queue_capacity(doctype, room):
     if c >= capacity:
       frappe.throw(f"Room {room} is more than room queue capacity: {capacity}.")
   return True
+
+def _check_room_tier_completion(doctype, docname, room):
+  tier = frappe.db.get_value('Healthcare Service Unit', room, 'tier')
+  if not tier or tier <= 1:
+    return True
+  if doctype == 'Dispatcher':
+    return not _has_unfinished_lower_tier('Dispatcher Room', 'parent', docname)
+  else:
+    exam_id = frappe.db.get_value('MCU Queue Pooling', docname, 'patient_appointment')
+    return not _has_unfinished_lower_tier('MCU Queue Pooling', 'patient_appointment', exam_id)
+
+def _has_unfinished_lower_tier(doctype, field, value):
+  unfinished_status = [
+    'Wait for Room Assignment', 'Waiting to Enter the Room',
+    'Ongoing Examination', 'Additional or Retest Request'
+  ]
+  return frappe.db.exists(
+    doctype, {field: value, 'status': ['in', unfinished_status]}
+  )
 
 def get_rooms_by_item_branch (item, branch):
   return frappe.get_all(
