@@ -170,7 +170,7 @@ def _create_dispatcher(exam_id, branch, item_table):
       WHERE tma.parenttype = 'Patient Appointment'
       AND tma.parent = %s
       AND tma.examination_item = tigsu.parent)
-    ORDER BY thsu.custom_room, thsu.custom_default_doctype""", (branch, doc.exam_id), as_dict=1)
+    ORDER BY thsu.custom_room, thsu.custom_default_doctype""", (branch, doc.patient_appointment), as_dict=1)
   for room in rooms:
     new_entry = dict()
     new_entry['name'] = None

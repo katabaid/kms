@@ -240,35 +240,28 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
 
 @frappe.whitelist()
 def count_last_room(exam_id):
-  finished_disp_rooms = frappe.db.count('Dispacther Room',
+  dispatcher_list = frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')
+  finished_disp_rooms = frappe.db.count('Dispatcher Room',
     {
-      'parent': [
-        'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
+      'parent': ['in', dispatcher_list],
       'status': [
         'in', 
         ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 'Ineligible for Testing']]
     })
-  all_disp_rooms = frappe.db.count('Dispacther Room',
-    {
-      'parent': [
-        'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
-    })
+  all_disp_rooms = frappe.db.count('Dispatcher Room',
+    {'parent': ['in', dispatcher_list],})
   if finished_disp_rooms and all_disp_rooms:
     return all_disp_rooms - finished_disp_rooms
   else:
     finished_mqp_rooms = frappe.db.count('MCU Queue Pooling',
       {
-        'parent': [
-          'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
+        'patient_appointment': exam_id,
         'status': [
           'in', 
           ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 'Ineligible for Testing']]
       })
     all_mqp_rooms = frappe.db.count('MCU Queue Pooling',
-      {
-        'parent': [
-          'in', frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')],
-      })
+      {'patient_appointment': exam_id,})
     if all_mqp_rooms and finished_mqp_rooms:
       return all_mqp_rooms - finished_mqp_rooms
   return 0
