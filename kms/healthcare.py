@@ -177,7 +177,7 @@ def _check_room_queue_capacity(doctype, room):
   return True
 
 def _check_room_tier_completion(doctype, docname, room):
-  tier = frappe.db.get_value('Healthcare Service Unit', room, 'tier')
+  tier = frappe.db.get_value('Healthcare Service Unit', room, 'custom_tier')
   if not tier or tier <= 1:
     return True
   if doctype == 'Dispatcher':
@@ -477,7 +477,7 @@ def _create_exam(doctype, name, room, rel):
       doc.amended_from = cancelled_doc.name
       doc.created_date = today()
       doc.service_unit = room
-      doc.dispatcher = name
+      setattr(doc, original_field, name)
       doc.status = 'Started'
       doc.examination_item = []
       doc.result = []

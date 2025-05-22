@@ -265,3 +265,9 @@ def count_last_room(exam_id):
     if all_mqp_rooms and finished_mqp_rooms:
       return all_mqp_rooms - finished_mqp_rooms
   return 0
+
+@frappe.whitelist()
+def set_in_room_flag(exam_id):
+  qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
+  for qp in qps:
+    frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)

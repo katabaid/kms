@@ -1410,10 +1410,12 @@ def is_meal(exam_id, doctype=None, docname=None):
 				radiology_result = True if current_item else False
 		return lab_test_result and radiology_result
 	else: # for dispatcher
-		dispatcher = frappe.get_doc(
-			'Dispatcher', 
+		dispatcher_exists = frappe.db.exists('Dispatcher', 
 			frappe.db.get_value('Dispatcher', {'patient_appointment': exam_id}, 'name'))
-		if dispatcher:
+		if dispatcher_exists:
+			dispatcher = frappe.get_doc(
+				'Dispatcher', 
+				frappe.db.get_value('Dispatcher', {'patient_appointment': exam_id}, 'name'))
 			if dispatcher.had_meal:
 				return False
 			for item in dispatcher.package:
@@ -1500,7 +1502,7 @@ def finish_exam(hsu, status, doctype, docname):
 	source_doc = frappe.get_doc(doctype, docname)
 	is_sc = doctype == 'Sample Collection'
 	exam_id = source_doc.custom_appointment if is_sc else source_doc.appointment
-	dispatcher_id = source_doc.custom_appointment if is_sc else source_doc.dispatcher
+	dispatcher_id = source_doc.custom_dispatcher if is_sc else source_doc.dispatcher
 	queue_pooling_id = source_doc.custom_queue_pooling if is_sc else source_doc.queue_pooling
 	child = source_doc.custom_sample_table if is_sc else source_doc.examination_item
 	related_rooms = _get_related_service_units(hsu, exam_id)
@@ -1534,7 +1536,13 @@ def finish_exam(hsu, status, doctype, docname):
 			if is_meal_time:
 				frappe.db.set_value(
 					'MCU Queue Pooling', qp, {'is_meal_time': 1, 'meal_time': meal_time, 'had_meal': 1})
-			frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)
+			delay_in_minutes = frappe.db.get_single_value('MCU Settings', 'queue_pooling_submit_delay') or 2
+			frappe.enqueue(
+				method = 'kms.mcu_dispatcher.set_in_room_flag',
+				queue = 'short',
+				delay = delay_in_minutes* 60,
+				exam_id = exam_id,
+			)
 			room_count += 1
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
 				final_count += 1
@@ -1543,7 +1551,6 @@ def finish_exam(hsu, status, doctype, docname):
 				frappe.db.set_value('MCU Queue Pooling', qp, 'status', status_to_set)
 		if room_count == final_count:
 			frappe.db.set_status('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
-
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:
 			case 'Radiology':

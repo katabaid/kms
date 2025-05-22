@@ -406,7 +406,8 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         if(r.message){
           count = parseInt(r.message);
           if(count == 1) {
-            frm.page.set_indicator(__('This is the last examination room. Patient can check outafter this examination.'), 'red');
+            frm.page.set_indicator(__(
+              'This is the last examination room. Patient can check outafter this examination.'), 'red');
           }
         }
       }

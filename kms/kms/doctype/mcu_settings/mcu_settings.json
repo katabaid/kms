@@ -35,6 +35,7 @@
   "assignment_tab",
   "dispatcher_and_room_assignment_section",
   "dispatcher_role",
+  "queue_pooling_submit_delay",
   "column_break_ytemr",
   "room_assignment_role",
   "section_break_qrmv",
@@ -376,12 +377,18 @@
    "fieldname": "max_room_queue",
    "fieldtype": "Int",
    "label": "Max Room Queue"
+  },
+  {
+   "description": "How many <b>minutes</b> until a room can get a Patient into their room queue after being submitted from other room.",
+   "fieldname": "queue_pooling_submit_delay",
+   "fieldtype": "Int",
+   "label": "Queue Pooling Submit Delay"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-21 18:13:31.305644",
+ "modified": "2025-05-22 17:24:37.624336",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
