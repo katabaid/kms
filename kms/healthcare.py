@@ -170,8 +170,9 @@ def _check_room_queue_capacity(doctype, room):
   capacity = frappe.db.get_single_value('MCU Settings', 'max_room_queue')
   status_field = 'custom_status' if doctype == 'Sample Collection' else 'status'
   hsu_field = 'custom_service_unit' if doctype == 'Sample Collection' else 'service_unit'
+  date_field = 'custom_document_date' if doctype == 'Sample Collection' else 'created_date'
   if capacity:
-    c = frappe.db.count(doctype, {status_field: 'Started', hsu_field: room, 'created_date': today()})
+    c = frappe.db.count(doctype, {status_field: 'Started', hsu_field: room, date_field: today()})
     if c >= capacity:
       frappe.throw(f"Room {room} is more than room queue capacity: {capacity}.")
   return True
