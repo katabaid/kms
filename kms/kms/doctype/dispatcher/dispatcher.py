@@ -1512,7 +1512,7 @@ def finish_exam(hsu, status, doctype, docname):
 	is_meal_time = is_meal(exam_id)
 	room_count = 0
 	final_count = 0
-	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing']
+	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing', 'Finished Collection']
 	if dispatcher_id:
 		if status == 'Removed':
 			status = 'Wait for Room Assignment'
@@ -1538,17 +1538,20 @@ def finish_exam(hsu, status, doctype, docname):
 			if is_meal_time:
 				frappe.db.set_value(
 					'MCU Queue Pooling', qp, {'is_meal_time': 1, 'meal_time': meal_time, 'had_meal': 1})
-			delay_in_minutes = frappe.db.get_single_value('MCU Settings', 'queue_pooling_submit_delay') or 2
-			delay_time = submit_time + timedelta(minutes=delay_in_minutes)
-			frappe.db.set_value('MCU Queue Pooling', qp, 'delay_time', delay_time)
+			delay_in_minutes = frappe.db.get_single_value('MCU Settings', 'queue_pooling_submit_delay')
+			if delay_in_minutes:
+				delay_time = submit_time + timedelta(minutes=delay_in_minutes)
+				frappe.db.set_value('MCU Queue Pooling', qp, 'delay_time', delay_time)
+			else:
+				frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)
 			room_count += 1
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
 				final_count += 1
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'service_unit') in related_rooms:
 				status_to_set = 'Additional or Retest Request' if exists_to_retest else status
 				frappe.db.set_value('MCU Queue Pooling', qp, 'status', status_to_set)
-		if room_count == final_count:
-			frappe.db.set_status('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
+		if room_count == final_count+1:
+			frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:
 			case 'Radiology':

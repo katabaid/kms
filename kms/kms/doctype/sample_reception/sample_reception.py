@@ -21,6 +21,12 @@ class SampleReception(Document):
 					self.name, 
 					collection_doc.custom_dispatcher, 
 					self.healthcare_service_unit)
+			elif collection_doc.custom_queue_pooling:
+				update_queue_pooling_status(
+					self.name, 
+					self.appointment, 
+					self.healthcare_service_unit)
+
 
 def update_sample_collection(doc, sample):
 	for cs in doc.custom_sample_table:
@@ -49,6 +55,13 @@ def update_dispatcher_status(sr_no, disp_no, sr_room):
 					room.status = 'Finished Collection'
 			disp_doc.save(ignore_permissions=True)
 
+def update_queue_pooling_status(sr_no, exam_id, sr_room):
+	count1 = count_samples(sr_no)[0][0]
+	if count1 > 0:
+		count2 = count_received_samples(sr_no)[0][0]
+		if count1 == count2:
+			frappe.db.set_value('MCU Queue Pooling', {'patient_appointment': exam_id, 'service_unit': sr_room}, 'status', 'Finished Collection')
+
 def count_samples(sr_no):
 	sql = """
 		SELECT COUNT(*) FROM `tabSample Collection Bulk` tscb 
@@ -61,7 +74,6 @@ def count_samples(sr_no):
 				)
 			AND tsc.docstatus = 1
 			AND tscb.parent = tsc.name
-			AND tsc.custom_dispatcher is not NULL 
 		)"""
 	return frappe.db.sql(sql, (sr_no))
 
@@ -77,6 +89,5 @@ def count_received_samples(sr_no):
 				)
 			AND tsc.docstatus = 1
 			AND tscb.parent = tsc.name
-			AND tsc.custom_dispatcher is not NULL 
 		) AND tscb.reception_status = 1"""
 	return frappe.db.sql(sql, (sr_no))
