@@ -22,10 +22,13 @@
   "company",
   "branch",
   "amended_from",
+  "healthcare_practitioner",
   "column_break_cqqr",
   "appointment",
+  "appointment_date",
   "dispatcher",
   "queue_pooling",
+  "healthcare_practitioner_user",
   "section_break_slts",
   "created_date",
   "submitted_date",
@@ -308,13 +311,33 @@
   {
    "fieldname": "column_break_jqhj",
    "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "appointment.appointment_date",
+   "fieldname": "appointment_date",
+   "fieldtype": "Date",
+   "label": "Appointment Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "healthcare_practitioner",
+   "fieldtype": "Link",
+   "label": "Healthcare Practitioner",
+   "options": "Healthcare Practitioner"
+  },
+  {
+   "fetch_from": "healthcare_practitioner.user_id",
+   "fieldname": "healthcare_practitioner_user",
+   "fieldtype": "Data",
+   "label": "Healthcare Practitioner User",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-17 16:19:28.116533",
+ "modified": "2025-05-25 16:59:26.573338",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

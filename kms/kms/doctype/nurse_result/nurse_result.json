@@ -298,6 +298,7 @@
    "no_copy": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "conclusion",
    "fieldtype": "Table",
    "label": "Conclusion",
@@ -313,7 +314,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-18 15:38:29.764220",
+ "modified": "2025-05-25 17:05:53.196865",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

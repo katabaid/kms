@@ -15,6 +15,8 @@ frappe.ui.form.on('Doctor Result', {
       utilities.processChildTable(frm, table);
     });
     hide_standard_buttons(frm, CHILD_TABLES);
+    add_custom_buttons(frm);
+    hide_save_button(frm);
   },
 });
 
@@ -151,4 +153,39 @@ const apply_cell_styling = (frm, row, table_name) => {
       'color': 'midnightblue'
     });
   }
+}
+
+const add_custom_buttons = (frm) => {
+  frm.add_custom_button('Questionnaire', () => {
+    window.open(`/app/questionnaire?exam_id=${frm.doc.appointment}`, '_blank');
+  })
+  if(frm.doc.docstatus === 0) {
+    if(frm.doc.healthcare_practitioner){
+      frm.add_custom_button('Check Out', () => {
+        frm.set_value('healthcare_practitioner', '');
+        frm.save();
+      })
+    }else{
+      frm.add_custom_button('Check In', () => {
+        frappe.db.get_value('Healthcare Practitioner', {user_id: frappe.session.user}, 'name')
+        .then(r =>{
+          console.log(r.message)
+          frm.set_value('healthcare_practitioner', r.message.name);
+          frm.save();
+        })
+      })
+    };
+  }
+}
+
+const hide_save_button = (frm) => {
+  if(frm.doc.docstatus === 0){
+    if(frm.doc.healthcare_practitioner_user){
+      if(frm.doc.healthcare_practitioner_user === frappe.session.user){
+        frm.enable_save();
+      } else {
+        frm.disable_save();
+      }
+    } else { frm.enable_save(); }
+  } else { frm.enable_save(); }
 }
