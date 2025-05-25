@@ -12,52 +12,34 @@ def patient_appointment_on_update(doc, method=None):
     doc.status = 'Open'
   if doc.status == 'Checked In' or doc.status == 'Ready to Check Out':
     validate_with_today_date(doc.appointment_date)
-    # prevent recursive call for updating questionnaire
-    if getattr(doc.flags, "skip_on_update", False):
-      return
-    doc.flags.skip_on_update = True
-    previous_doc = doc.get_doc_before_save()
-    if not previous_doc:
-      return
-    previous_row_count = len(previous_doc.custom_additional_mcu_items)
-    current_row_count = len(doc.custom_additional_mcu_items)
-    if current_row_count > previous_row_count:
-      _set_completed_questionnaire_status(doc.name)
-      doc.appointment_time = frappe.utils.nowtime()
-      doc.save()
-    # END prevent recursive call for updating questionnaire
     if str(doc.appointment_date) == frappe.utils.nowdate():
-      if not doc.custom_queue_no:
-        custom_queue_no = frappe.db.get_all(
-          'Patient Appointment', 
-          filters={
-              'company': 'Kyoai Medical Services',
-              'custom_branch': 'Jakarta Main Clinic', 
-              'appointment_date': frappe.utils.today(),
-              'appointment_type': 'MCU'
-          },
-          fields=['max(custom_queue_no)+1 as maks'],
-          pluck='maks'
-        )[0]
-        frappe.db.set_value('Patient Appointment', doc.name, 'custom_queue_no', custom_queue_no)
       if doc.custom_temporary_registration:
         frappe.db.set_value(
           'Temporary Registration', 
           doc.custom_temporary_registration, 
           {'patient_appointment': doc.name, 'status': 'Transferred'})
-      dispatcher_user = frappe.db.get_value(
-        "Dispatcher Settings", 
-        {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
-        ['dispatcher'])
       if doc.appointment_type == 'MCU':
+        dispatcher_user = frappe.db.get_value(
+          "Dispatcher Settings", 
+          {"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
+          ['dispatcher'])
+        if not doc.custom_queue_no:
+          _set_mcu_queue_no(doc.name)
+        # Update Completed Questionnaire when there's additional mcu item
+        previous_doc = doc.get_doc_before_save()
+        if not previous_doc:
+          return
+        previous_row_count = len(previous_doc.custom_additional_mcu_items)
+        current_row_count = len(doc.custom_additional_mcu_items)
+        if current_row_count > previous_row_count:
+          _set_completed_questionnaire_status(doc.name)
         additional = [row for row in doc.custom_additional_mcu_items if row.status == 'To be Added']
         if additional:
-          if dispatcher_user:
-            exist_docname = frappe.db.get_value(
-              'Dispatcher', {'patient_appointment': doc.name}, ['name'])
-            if exist_docname:
-              _add_dispatcher_additional_mcu_item(
-                exist_docname, additional, dispatcher_user)
+          exist_docname = frappe.db.get_value(
+            'Dispatcher', {'patient_appointment': doc.name}, ['name'])
+          if exist_docname:
+            _add_dispatcher_additional_mcu_item(
+              exist_docname, additional, dispatcher_user)
           else:
             _add_queue_pooling_additional_mcu_item(doc.name, doc.custom_branch, additional)
         else:
@@ -95,7 +77,7 @@ def _add_dispatcher_additional_mcu_item(dispatcher, additional_table, dispatcher
     # find related room to added item
     rooms = frappe.get_all(
       'Item Group Service Unit', 
-      filters={'parent': entry.examination_item, 'branch': doc.custom_branch}, 
+      filters={'parent': entry.examination_item, 'branch': doc.branch}, 
       pluck='service_unit'
     )
     found = False
@@ -115,7 +97,7 @@ def _add_dispatcher_additional_mcu_item(dispatcher, additional_table, dispatcher
           'Healthcare Service Unit', room, 'custom_default_doctype')
         new_entry = dict()
         new_entry['name'] = None
-        new_entry['healthcare_service_unit'] = room.service_unit
+        new_entry['healthcare_service_unit'] = room
         new_entry['status'] = 'Wait for Room Assignment'
         new_entry['reference_doctype'] = reference_doctype if reference_doctype else None
         doc.append('assignment_table', new_entry)
@@ -359,7 +341,7 @@ def _set_completed_questionnaire_status(name):
     OR EXISTS (SELECT 1 FROM `tabMCU Appointment` tma WHERE tma.parent = %(name)s 
       AND tma.examination_item = tqt.item_code))
     AND active = 1 AND (internal_questionnaire = 0 OR internal_questionnaire IS NULL)"""
-  templates = frappe.db.sql(sql, name, as_dict=True)
+  templates = frappe.db.sql(sql, {'name': name}, as_dict=True)
   if templates:
     frappe.db.delete('Questionnaire Completed', {'parent': name})
     for template in templates:
@@ -373,3 +355,17 @@ def _set_completed_questionnaire_status(name):
         'status': 'Completed' if template.completed else 'Started'
       })
       doc.db_insert()
+
+def _set_mcu_queue_no(name):
+  custom_queue_no = frappe.db.get_all(
+    'Patient Appointment', 
+    filters={
+      'company': 'Kyoai Medical Services',
+      'custom_branch': 'Jakarta Main Clinic', 
+      'appointment_date': frappe.utils.today(),
+      'appointment_type': 'MCU'
+    },
+    fields=['max(custom_queue_no)+1 as maks'],
+    pluck='maks'
+  )[0]
+  frappe.db.set_value('Patient Appointment', name, 'custom_queue_no', custom_queue_no)
