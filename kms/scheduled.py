@@ -6,19 +6,19 @@ def set_cancelled_open_appointment():
   appointment = frappe.db.get_list('Patient Appointment', filters={'status': 'Open'}, fields=['name', 'appointment_date'])
   today = frappe.utils.getdate(frappe.utils.today())
   for q in appointment:
-      if q['appointment_date'] < today:
-        doc = frappe.get_doc('Patient Appointment', q['name'])
-        doc.status = 'Cancelled'
-        doc.save()
+    if q['appointment_date'] < today:
+      doc = frappe.get_doc('Patient Appointment', q['name'])
+      doc.status = 'Cancelled'
+      doc.save()
 
 def set_open_scheduled_appointment():
   appointment = frappe.db.get_list('Patient Appointment', filters={'status': 'Scheduled'}, fields=['name', 'appointment_date'])
   today = frappe.utils.getdate(frappe.utils.today())
   for q in appointment:
-      if q['appointment_date'] == today:
-        doc = frappe.get_doc('Patient Appointment', q['name'])
-        doc.status = 'Open'
-        doc.save()
+    if q['appointment_date'] == today:
+      doc = frappe.get_doc('Patient Appointment', q['name'])
+      doc.status = 'Open'
+      doc.save()
 
 def set_no_show_queue_pooling():
   queue_pooling = frappe.db.get_list('Queue Pooling', filters={'status': 'Scheduled'}, fields=['name', 'date'])
@@ -36,6 +36,17 @@ def set_cancelled_timeout_queue_pooling():
       doc.status = 'Cancelled'
       doc.cancel_reason = 'Timeout'
       doc.save()
+
+def reset_room_assignment():
+  room_assignment = frappe.db.get_list('Room Assignment', filters={'assigned': 1}, pluck='name')
+  for ra in room_assignment:
+    frappe.db.set_value('Room Assignment', ra, 'assigned', 0)
+  name = frappe.db.get_all('User Permission', 
+    filters = {'allow', '=', 'Healthcare Service Unit'},
+    pluck = 'name')
+  for up in name:
+    frappe.db.delete('User Permission', {'name': up})
+
 
 def reset_meal_status():
   interval = frappe.db.get_single_value('MCU Settings', 'meal_time')

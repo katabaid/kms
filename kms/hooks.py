@@ -221,7 +221,8 @@ scheduler_events = {
     "kms.scheduled.set_cancelled_open_appointment",
     "kms.scheduled.set_open_scheduled_appointment",
     "kms.scheduled.set_no_show_queue_pooling",
-    "kms.scheduled.set_cancelled_timeout_queue_pooling"
+    "kms.scheduled.set_cancelled_timeout_queue_pooling",
+    "kms.scheduled.reset_room_assignment"
   ],
   "cron": {
     "*/2 * * * *": [
