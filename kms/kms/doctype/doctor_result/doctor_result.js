@@ -11,6 +11,24 @@ frappe.ui.form.on('Doctor Result', {
   },
 
   refresh: function(frm) {
+    // Call the questionnaire utility
+    if (frm.fields_dict.questionnaire_html && kms.utils && kms.utils.fetch_questionnaire_for_doctype) {
+        kms.utils.fetch_questionnaire_for_doctype(
+            frm,
+            "appointment", // name_field_key for Doctor Result
+            null,          // questionnaire_type_field_key (optional)
+            "questionnaire_html" // target_wrapper_selector: HTML field name
+        );
+    } else {
+        if (!frm.fields_dict.questionnaire_html) {
+            console.warn("Doctor Result form is missing 'questionnaire_html'. Questionnaire cannot be displayed.");
+        }
+        if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
+            console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
+        }
+    }
+    // ... any other refresh logic for Doctor Result ...
+
     CHILD_TABLES.forEach(table => {
       utilities.processChildTable(frm, table);
     });

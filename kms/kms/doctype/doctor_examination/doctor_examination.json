@@ -244,7 +244,9 @@
   "grade_section",
   "grade_table",
   "grade",
-  "suggestion"
+  "suggestion",
+  "questionnaire_tab",
+  "questionnaire_html"
  ],
  "fields": [
   {
@@ -1659,13 +1661,23 @@
    "fieldtype": "Table",
    "label": "Grade Table",
    "options": "Dental Grading"
+  },
+  {
+   "fieldname": "questionnaire_tab",
+   "fieldtype": "Tab Break",
+   "label": "Questionnaire"
+  },
+  {
+   "fieldname": "questionnaire_html",
+   "fieldtype": "HTML",
+   "label": "Questionnaire"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-22 10:09:43.897596",
+ "modified": "2025-05-26 13:32:12.487342",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

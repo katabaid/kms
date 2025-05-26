@@ -70,7 +70,24 @@ frappe.ui.form.on('Patient Appointment', {
     frm.trigger('add_reopen_button');
     frm.trigger('add_invoice_button');
     // Check if any row in custom_completed_questionnaire has is_completed != 1
-	},
+
+    // Call the questionnaire utility
+    if (frm.fields_dict.custom_questionnaire_html && kms.utils && kms.utils.fetch_questionnaire_for_doctype) {
+        kms.utils.fetch_questionnaire_for_doctype(
+            frm,
+            "name", // name_field_key for Patient Appointment
+            null,   // questionnaire_type_field_key (optional)
+            "custom_questionnaire_html" // target_wrapper_selector: HTML field name
+        );
+    } else {
+        if (!frm.fields_dict.custom_questionnaire_html) {
+            console.warn("Patient Appointment form is missing 'custom_questionnaire_html'. Questionnaire cannot be displayed.");
+        }
+        if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
+            console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
+        }
+    }
+ },
 
 //======Triggers======//
 

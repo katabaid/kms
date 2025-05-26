@@ -18,3 +18,14 @@
 .modal-footer .btn-modal-secondary {
     display: none !important;
 }
+
+/* Styles for questionnaire table question cells to improve wrapping and readability */
+.questionnaire-question-cell {
+    white-space: normal !important; /* Ensure text wraps */
+    word-break: break-word;         /* Allow long words/strings to break */
+    line-height: 1.4;               /* Improve readability for multi-line text */
+    /* You might also consider:
+    overflow-wrap: break-word;  -- Another property for word breaking
+    hyphens: auto;              -- If you want hyphenation (browser support varies)
+    */
+}

@@ -44,7 +44,8 @@
   "created",
   "section_break_m6bb5",
   "detail",
-  "remark"
+  "remark",
+  "questionnaire"
  ],
  "fields": [
   {
@@ -260,13 +261,19 @@
    "fieldtype": "Link",
    "label": "Occupation",
    "options": "Occupation"
+  },
+  {
+   "fieldname": "questionnaire",
+   "fieldtype": "HTML",
+   "label": "Questionnaire",
+   "options": "Questionnaire Detail"
   }
  ],
  "hide_toolbar": 1,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-11 15:21:04.055112",
+ "modified": "2025-05-26 10:43:39.307239",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",

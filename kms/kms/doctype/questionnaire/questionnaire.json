@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{patient_appointment}-{template}",
+ "autoname": "format:{patient_appointment}{temporary_registration}-{template}",
  "creation": "2024-12-11 20:15:56.702801",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -47,7 +47,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-23 15:29:51.087132",
+ "modified": "2025-05-25 20:58:54.221367",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire",

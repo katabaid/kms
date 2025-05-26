@@ -7,12 +7,12 @@ from frappe.model.document import Document
 class Questionnaire(Document):
 	def after_insert(self):
 		if self.patient_appointment:
-			self._update_patient_appointment()
+			#self._update_patient_appointment()
 			self._update_examinations('Doctor Examination', 'Completed')
 			self._update_examinations('Nurse Examination', 'Completed')
 
 	def before_insert(self):
-		self.status = 'Completed' if self.patient_appointment else 'Draft'
+		self.status = 'Completed' #if self.patient_appointment else 'Draft'
 		self._update_question_labels()
 
 	def before_save(self):
@@ -23,25 +23,25 @@ class Questionnaire(Document):
 				if self.status == 'Rejected':
 					self._update_dispatcher()
 
-	def _update_patient_appointment(self):
-		"""Update the Patient Appointment with questionnaire details."""
-		pa_doc = frappe.get_doc("Patient Appointment", self.patient_appointment)
-		for detail in self.detail:
-			detail_dict = self._get_clean_detail_dict(detail)
-			pa_doc.append('custom_questionnaire_detail', detail_dict)
-		for pa_q in pa_doc.custom_completed_questionnaire:
-			if pa_q.template == self.template:
-				pa_q.questionnaire = self.name
-				pa_q.status = 'Completed'
-		try:
-			pa_doc.save(ignore_permissions=True)
-		except Exception as e:
-			frappe.msgprint(f"Error saving Patient Appointment: {e}")
-
-	def _get_clean_detail_dict(self, detail):
-		"""Return a dictionary of detail fields excluding metadata."""
-		exclude_fields = {'name', 'parent', 'parenttype', 'parentfield', 'idx'}
-		return {k: v for k, v in detail.as_dict().items() if k not in exclude_fields}
+#	def _update_patient_appointment(self):
+#		"""Update the Patient Appointment with questionnaire details."""
+#		pa_doc = frappe.get_doc("Patient Appointment", self.patient_appointment)
+#		for detail in self.detail:
+#			detail_dict = self._get_clean_detail_dict(detail)
+#			pa_doc.append('custom_questionnaire_detail', detail_dict)
+#		for pa_q in pa_doc.custom_completed_questionnaire:
+#			if pa_q.template == self.template:
+#				pa_q.questionnaire = self.name
+#				pa_q.status = 'Completed'
+#		try:
+#			pa_doc.save(ignore_permissions=True)
+#		except Exception as e:
+#			frappe.msgprint(f"Error saving Patient Appointment: {e}")
+#
+#	def _get_clean_detail_dict(self, detail):
+#		"""Return a dictionary of detail fields excluding metadata."""
+#		exclude_fields = {'name', 'parent', 'parenttype', 'parentfield', 'idx'}
+#		return {k: v for k, v in detail.as_dict().items() if k not in exclude_fields}
 
 	def _update_examinations(self, examination_type, status):
 		"""Update the status of the questionnaire in the given examination type."""
@@ -95,3 +95,30 @@ class Questionnaire(Document):
 						if(su.status in ['Wait for Room Assignment', 'Rescheduled']):
 							su.status = 'Ineligible for Testing'
 				disp.save(ignore_permissions=True)
+
+@frappe.whitelist()
+def fetch_questionnaire(name):
+	q_list = frappe.db.get_all('Questionnaire', pluck='name',
+		filters={
+			'name': ['in', frappe.db.get_all('Questionnaire', 
+				or_filters=[
+					{'patient_appointment': name},
+					{'temporary_registration': name}
+				],
+				pluck='name'
+			)]
+		},
+	)
+	list_to_return = []
+	if not q_list:
+		return []
+	for q in q_list:
+		q_doc = frappe.get_doc('Questionnaire', q)
+		for d in q_doc.detail:
+			list_to_return.append({
+				'name': d.name,
+				'template': d.template,
+				'question': d.question,
+				'answer': d.answer,
+			})
+	return list_to_return

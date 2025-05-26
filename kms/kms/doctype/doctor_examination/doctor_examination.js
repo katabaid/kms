@@ -465,6 +465,22 @@ frappe.ui.form.on('Doctor Examination', {
   },
 
   refresh: function (frm) {
+    // Call the questionnaire utility
+    if (frm.fields_dict.questionnaire_html && kms.utils && kms.utils.fetch_questionnaire_for_doctype) {
+        kms.utils.fetch_questionnaire_for_doctype(
+            frm,
+            "appointment", // name_field_key for Doctor Examination
+            null,          // questionnaire_type_field_key (optional)
+            "questionnaire_html" // target_wrapper_selector: HTML field name
+        );
+    } else {
+        if (!frm.fields_dict.questionnaire_html) {
+            console.warn("Doctor Examination form is missing 'questionnaire_html'. Questionnaire cannot be displayed.");
+        }
+        if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
+            console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
+        }
+    }
     doctorExaminationController.refresh(frm);
     frm.dirtyDentalOptions = frm.dirtyDentalOptions || {}; // Initialize or preserve dental options cache
     handleTabVisibility(frm);
@@ -483,12 +499,12 @@ frappe.ui.form.on('Doctor Examination', {
     addECGButton(frm); // Call the new function to add the ECG button
     handleReadOnlyExams(frm);
     handleQuestionnaire(frm);
-		if (frm.doc.non_selective_result) {
-			frm.refresh_field('non_selective_result');
-			frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
-				apply_cell_styling (frm, row.doc);
-			})
-		}
+  if (frm.doc.non_selective_result) {
+  	frm.refresh_field('non_selective_result');
+  	frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
+  		apply_cell_styling (frm, row.doc);
+  	})
+  }
   },
 
   setup: function (frm) {

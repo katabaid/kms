@@ -2,8 +2,10 @@ import frappe, re
 
 def patient_appointment_after_insert(doc, method=None):
   ################Doctype: Patient Appointment################
-  _clone_temporary_registration_questionnaire(doc.name, doc.custom_temporary_registration)
+  #_clone_temporary_registration_questionnaire(doc.name, doc.custom_temporary_registration)
   _set_completed_questionnaire_status(doc.name)
+  if doc.custom_temporary_registration:
+    _set_questionnaire_key(doc.name, doc.custom_temporary_registration)
 #  doc.save()
 
 def patient_appointment_on_update(doc, method=None):
@@ -317,20 +319,20 @@ def process_non_mcu(doc, appt, type):
     branch = doc.custom_branch,
     note = doc.vital_signs_note)).insert(ignore_permissions=True)
 
-def _clone_temporary_registration_questionnaire(name, temp_reg):
-  if temp_reg:
-    details = frappe.get_all(
-      'Questionnaire Detail', fields=["*"], ignore_permissions=True, order_by='idx asc',
-      filters={"parent": temp_reg})
-    for detail in details:
-      detail_dict = {k: v for k, v in detail.items() if k not in ("name", "parent", "parenttype", "parentfield", "idx")}
-      detail_dict.update({
-        'parent': name,
-        'parenttype': 'Patient Appointment',
-        'parentfield': 'custom_questionnaire_detail',
-        'doctype': 'Questionnaire Detail'})
-      frappe.db.insert(detail_dict, commit=False)
-    frappe.db.commit()
+#def _clone_temporary_registration_questionnaire(name, temp_reg):
+#  if temp_reg:
+#    details = frappe.get_all(
+#      'Questionnaire Detail', fields=["*"], ignore_permissions=True, order_by='idx asc',
+#      filters={"parent": temp_reg})
+#    for detail in details:
+#      detail_dict = {k: v for k, v in detail.items() if k not in ("name", "parent", "parenttype", "parentfield", "idx")}
+#      detail_dict.update({
+#        'parent': name,
+#        'parenttype': 'Patient Appointment',
+#        'parentfield': 'custom_questionnaire_detail',
+#        'doctype': 'Questionnaire Detail'})
+#      frappe.db.insert(detail_dict, commit=False)
+#    frappe.db.commit()
 
 def _set_completed_questionnaire_status(name):
   sql = """SELECT name, (SELECT IF(count(*)>0,1,0) FROM `tabQuestionnaire Detail` tqd 
@@ -369,3 +371,8 @@ def _set_mcu_queue_no(name):
     pluck='maks'
   )[0]
   frappe.db.set_value('Patient Appointment', name, 'custom_queue_no', custom_queue_no)
+
+def _set_questionnaire_key(name, temp_reg):
+  q_list = frappe.db.get_all('Questionnaire', filters={'temporary_registration': temp_reg}, pluck='name')
+  for q in q_list:
+    frappe.db.set_value('Questionnaire', q, 'patient_appointment', name)

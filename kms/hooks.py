@@ -23,6 +23,7 @@ app_include_js = [
   "/assets/kms/js/common/realtime_listeners.js",
   "/assets/kms/js/common/clear_local_storage.js",
   "/assets/kms/node_modules/qrcodejs/qrcode.min.js",
+  "/assets/kms/js/controller/questionnaire_helper.js",
 ]
 
 # include js, css files in header of web template
