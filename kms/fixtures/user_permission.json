@@ -1279,19 +1279,6 @@
   "apply_to_all_doctypes": 1,
   "docstatus": 0,
   "doctype": "User Permission",
-  "for_value": "JMC - Vital Sign",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-20 09:09:07.901998",
-  "name": "ql7g38nq3a",
-  "user": "Administrator"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
   "for_value": "JMC - Eye Exam",
   "hide_descendants": 0,
   "is_default": 1,
@@ -1337,5 +1324,31 @@
   "modified": "2025-05-20 15:16:55.022645",
   "name": "i5674nv9vn",
   "user": "windy@kyoai123.co.id"
+ },
+ {
+  "allow": "Healthcare Service Unit",
+  "applicable_for": null,
+  "apply_to_all_doctypes": 1,
+  "docstatus": 0,
+  "doctype": "User Permission",
+  "for_value": "JMC - Dental",
+  "hide_descendants": 0,
+  "is_default": 1,
+  "modified": "2025-05-23 16:39:15.639284",
+  "name": "5l490mt1k6",
+  "user": "Administrator"
+ },
+ {
+  "allow": "Healthcare Practitioner",
+  "applicable_for": null,
+  "apply_to_all_doctypes": 1,
+  "docstatus": 0,
+  "doctype": "User Permission",
+  "for_value": "HLC-PRAC-2025-00023",
+  "hide_descendants": 0,
+  "is_default": 0,
+  "modified": "2025-05-25 16:50:56.672412",
+  "name": "40693ms0uk",
+  "user": "Administrator"
  }
 ]

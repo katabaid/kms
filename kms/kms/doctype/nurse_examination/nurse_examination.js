@@ -88,7 +88,7 @@ frappe.ui.form.on('Nurse Examination', {
 			frm.refresh_field('questionnaire');
 			$.each(frm.doc.questionnaire, (key, value) => {
 				if (!value.is_completed) {
-					const link = `https://kmsregis.netlify.app/questionnaire?template=${value.template}&appointment_id=${frm.doc.appointment}`;
+					const link = `https://kyomedic.vercel.app/questionnaire?template=${value.template}&appt=${frm.doc.appointment}`;
 					frm.sidebar.add_user_action(__(value.template)).attr('href', link).attr('target', '_blank');
 				}
 			})

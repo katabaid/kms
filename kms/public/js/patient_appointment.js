@@ -263,7 +263,7 @@ frappe.ui.form.on('Patient Appointment', {
         () => {
           frappe.set_route('List', 'Temporary Registration', 'List')
       });
-      const link = `https://kmsregis.netlify.app/questionnaire?source=${frm.doc.appointment_type}&template=${template||frm.doc.appointment_type}&appointment_id=${frm.doc.name}`;
+      const link = `https://kyomedic.vercel.app/questionnaire?template=${template||frm.doc.appointment_type}&appt=${frm.doc.name}`;
       frm.sidebar
       .add_user_action(__('QR Code'))
       .attr('href', `/qr_code.html?data=${link}`)

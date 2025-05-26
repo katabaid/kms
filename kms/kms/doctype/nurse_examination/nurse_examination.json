@@ -49,7 +49,9 @@
   "amended_from",
   "has_attachment",
   "exam_note_section",
-  "exam_note"
+  "exam_note",
+  "questionnaire_tab",
+  "questionnaire_html"
  ],
  "fields": [
   {
@@ -333,13 +335,23 @@
    "fieldtype": "Data",
    "label": "Service Number",
    "read_only": 1
+  },
+  {
+   "fieldname": "questionnaire_tab",
+   "fieldtype": "Tab Break",
+   "label": "Questionnaire"
+  },
+  {
+   "fieldname": "questionnaire_html",
+   "fieldtype": "HTML",
+   "label": "Questionnaire "
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-22 10:10:16.749838",
+ "modified": "2025-05-26 14:25:41.007561",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

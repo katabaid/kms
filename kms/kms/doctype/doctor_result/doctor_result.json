@@ -49,7 +49,9 @@
   "hidden_section",
   "physical_examination",
   "other_examination",
-  "group_exam"
+  "group_exam",
+  "questionnaire_tab",
+  "questionnaire_html"
  ],
  "fields": [
   {
@@ -331,13 +333,23 @@
    "fieldtype": "Data",
    "label": "Healthcare Practitioner User",
    "read_only": 1
+  },
+  {
+   "fieldname": "questionnaire_tab",
+   "fieldtype": "Tab Break",
+   "label": "Questionnaire"
+  },
+  {
+   "fieldname": "questionnaire_html",
+   "fieldtype": "HTML",
+   "label": "Questionnaire"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-25 16:59:26.573338",
+ "modified": "2025-05-26 14:23:49.684120",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",
@@ -362,6 +374,7 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "appointment",
  "track_changes": 1,
  "track_seen": 1,
  "track_views": 1

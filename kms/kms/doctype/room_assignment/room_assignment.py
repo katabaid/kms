@@ -20,7 +20,7 @@ class RoomAssignment(Document):
       if hp:
         self.healthcare_practitioner = hp
     branch = frappe.db.get_value('Healthcare Service Unit', self.healthcare_service_unit, 'custom_branch')
-    disp = frappe.db.exists('Dispatcher', {'branch': branch, 'enable_date': today()})
+    disp = frappe.db.exists('Dispatcher Settings', {'branch': branch, 'enable_date': today()})
     if self.assigned == 1:
       set_user_permisssion(self.healthcare_service_unit)
       set_session_default(self.healthcare_service_unit)
@@ -105,3 +105,4 @@ def set_dispatcher_room(room, hp, clear=None):
     AND company = %s AND branch = %s and tdr.parent = td.name)
     AND tdr.healthcare_service_unit = %s"""
   frappe.db.sql(sql, (set_value, today(), company, branch, room))
+  frappe.db.commit()
