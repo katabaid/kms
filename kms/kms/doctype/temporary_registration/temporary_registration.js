@@ -20,26 +20,14 @@ frappe.ui.form.on('Temporary Registration', {
 		if (frm.doc.status !== 'Cancelled' && frm.doc.status !== 'Transferred') {
 			add_cancel_button(frm);
 		}
-		// Ensure this is called after the HTML field is available/rendered
-		if (frm.fields_dict.questionnaire) { // questionnaire is the actual HTML field name
+		if (frm.fields_dict.questionnaire) {
 			kms.utils.fetch_questionnaire_for_doctype(
-				frm,
-				"name", // name_field_key for Temporary Registration
-				null,   // questionnaire_type_field_key (optional, not used by current backend)
-				"questionnaire" // target_wrapper_selector: the name of the HTML field
+				frm, "name", null, "questionnaire"
 			);
 		}
-		//fetch_questionnaire_alt(frm);
 	}
 });
 
-const split_full_name = (full_name) => {
-	const nameParts = full_name.trim().split(' ');
-	const [first_name, ...rest] = nameParts;
-	const last_name = rest.pop() | '';
-	const middle_name = rest.join(' ');
-	return { first_name, middle_name, last_name };
-}
 
 const add_create_appointment_button = (frm) => {
 	frm.add_custom_button(
@@ -82,9 +70,7 @@ const add_create_patient_button = (frm) => {
 	frm.add_custom_button(
 		'Create Patient',
 		() => {
-			//const name = split_full_name (frm.doc.patient_name);
-			frappe.db
-			.insert({
+			frappe.db.insert({
 				doctype:'Patient',
 				first_name: frm.doc.first_name,
 				middle_name: frm.doc.middle_name,
@@ -96,9 +82,25 @@ const add_create_patient_button = (frm) => {
 				mobile: frm.doc.phone_number,
 				customer_group: 'Individual',
 				custom_company: frm.doc.company
-			})
-			.then(doc=> {
-				frappe.db.set_value('Temporary Registration', frm.doc.name, 'patient', doc.name)
+			}).then(doc=> {
+				frappe.db.set_value('Temporary Registration', frm.doc.name, 'patient', doc.name);
+				frm.refresh_field('patient');
+				frappe.db.insert({
+					doctype: 'Address',
+					address_title: doc.patient_name,
+					address_type: 'Billing',
+					address_line1: frm.doc.address_line_1,
+					address_line2: frm.doc.address_line_2,
+					city: frm.doc.city,
+					state: frm.doc.province,
+					pincode: frm.doc.postal_code,
+					links: [{
+						link_doctype: 'Patient',
+						link_name: doc.name,
+					}]
+				}).then(addr=>{
+					frappe.msgprint(`Patient ${doc.patient_name} successfully created.`)
+				})
 			})
 		},
 		'Process'
@@ -109,71 +111,62 @@ const add_existing_patient_button = (frm) => {
 	frm.add_custom_button(
 		'Create from Existing Patient',
 		() => {
-			let d = new frappe.ui.Dialog({
-				title: 'Select a Patient',
-				fields:[
-					{
-						label: 'Patient',
-						fieldname: 'patient',
-						fieldtype: 'Link',
-						options: 'Patient',
-						reqd: 1
-					},
-					{
-						label: 'Name',
-						fieldname: 'name',
-						fieldtype: 'Data',
-						read_only: 1
-					},
-					{
-						label: 'Date of Birth',
-						fieldname: 'dob',
-						fieldtype: 'Date',
-						read_only: 1
-					},
-					{
-						label: 'Gender',
-						fieldname: 'gender',
-						fieldtype: 'Data',
-						read_only: 1
-					},
-					{
-						label: 'ID',
-						fieldname: 'id',
-						fieldtype: 'Data',
-						read_only: 1
-					},
-					{
-						label: 'Company',
-						fieldname: 'company',
-						fieldtype: 'Data',
-						read_only: 1
-					},
-				],
-				primary_action_label: 'Pick',
-				primary_action(values) {
-					frm.set_value('patient', values.patient)
-					d.hide();
-					frm.refresh_field('patient');
+			const dialog = new frappe.ui.form.MultiSelectDialog({
+				doctype: 'Patient',
+				target: frm,
+				date_field: 'dob',
+				setters: {
+					patient_name:  null,
+					custom_id_type: null,
+					uid: null,
+					dob: null,
+					custom_company: null
+				},
+				get_query: function() {
+					return {
+						filters: {status: 'Active'}
+					}
+				},
+				action: function(selections){
+					if(selections){
+						const full_name = [frm.doc.first_name, frm.doc.middle_name, frm.doc.last_name]
+						.filter(Boolean).join(' ');
+						frappe.warn('Setting portal data to use existing patient',
+							`Are you sure want to change ${full_name} in to ${selections[0]}?`,
+							() => {
+								//frappe.get_doc('Patient', selections[0]).then(doc=>{
+									frm.set_df_property('patient_section', 'hidden', 1);
+									frm.set_df_property('company_section', 'hidden', 1);
+									frm.set_df_property('address_section', 'hidden', 1);
+									/* frm.toggle_display(
+										['patient_section', 'company_section','address_section'], frm.doc.patient!='') */
+									frm.set_value('patient', selections[0]);
+									frm.refresh_field('patient');
+									/* frm.refresh_field('patient_section');
+									frm.refresh_field('company_section');
+									frm.refresh_field('address_section'); */
+								//})
+							},
+							'Continue',
+						)
+					}
+					dialog.dialog.hide();
 				}
-			});
-			d.fields_dict.patient.df.onchange = function() {
-				const patient_id = d.get_value('patient');
-				if(patient_id){
-					frappe.db
-					.get_value('Patient', patient_id, ['patient_name', 'sex', 'uid', 'dob', 'custom_company'])
-					.then(r=>{
-						if(r.message) {
-							d.set_value('name', r.message.patient_name||'');
-							d.set_value('gender', r.message.sex||'');
-							d.set_value('id', r.message.uid||'');
-							d.set_value('dob', r.message.dob||'');
-							d.set_value('company', r.message.custom_company||'');
+			})
+			const bindCheckboxWatcher = setInterval(() => {
+				const $checkboxes = dialog.$wrapper.find('input[type="checkbox"]');
+				if ($checkboxes.length > 0) {
+					clearInterval(bindCheckboxWatcher);
+					dialog.$wrapper.on('change', 'input[type="checkbox"]', function () {
+						if (this.checked) {
+							dialog.$wrapper
+								.find('input[type="checkbox"]')
+								.not(this)
+								.prop('checked', false);
 						}
-					})
+					});
 				}
-			};
-			d.show();
+			}, 100);
 		},
 		'Process'
 	);
