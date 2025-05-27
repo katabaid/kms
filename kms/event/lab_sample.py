@@ -324,6 +324,8 @@ def evaluate_formula(table, formula_string):
   # Replace all placeholders with their corresponding values
   result_formula = formula_string
   for placeholder, value in placeholder_values.items():
+    if isinstance(value, str):
+      value = value.replace(',', '.')
     try:
       # Convert to float for calculation
       numeric_value = float(value)
