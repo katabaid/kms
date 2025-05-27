@@ -500,3 +500,11 @@ def _create_exam(doctype, name, room, rel):
   _update_room_status(ori_doc, room, target, doc.name)
   ori_doc.save(ignore_permissions=True)
   return doc.name
+
+from dateutil.relativedelta import relativedelta
+
+@frappe.whitelist()
+def calculate_patient_age(dob, appt_date):
+  if dob and appt_date:
+    delta = relativedelta(appt_date, dob)
+    return f"{delta.years} Year(s) {delta.months} Month(s) {delta.days} Day(s)"

@@ -201,6 +201,9 @@ doc_events = {
   "Vital Signs": {
     "before_submit": "kms.event.healthcare.vital_signs_before_submit",
   },
+  "Patient": {
+    "before_save": "kms.event.healthcare.patient_before_save",
+  },
   "Lab Test": {
     "on_submit": "kms.event.lab_sample.lab_on_submit",
     "before_submit": "kms.event.lab_sample.lab_before_submit",
@@ -219,10 +222,11 @@ doc_events = {
 scheduler_events = {
   "daily": [
     "kms.scheduled.set_cancelled_open_appointment",
-    "kms.scheduled.set_open_scheduled_appointment",
+    "kms.scheduled.set_open_scheduled_appointment", 
     "kms.scheduled.set_no_show_queue_pooling",
     "kms.scheduled.set_cancelled_timeout_queue_pooling",
-    "kms.scheduled.reset_room_assignment"
+    "kms.scheduled.reset_room_assignment",
+    "kms.scheduled.calculate_patient_age"
   ],
   "cron": {
     "*/2 * * * *": [

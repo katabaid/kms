@@ -19,6 +19,7 @@
   "patient_name",
   "gender",
   "patient_date_of_birth",
+  "age",
   "patient_company",
   "column_break_0jucv",
   "date",
@@ -91,7 +92,8 @@
    "label": "Patient Appointment",
    "options": "Patient Appointment",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "assignment_table",
@@ -171,7 +173,7 @@
    "fetch_from": "patient.dob",
    "fieldname": "patient_date_of_birth",
    "fieldtype": "Date",
-   "label": "Patient Date of Birth",
+   "label": "Date of Birth",
    "read_only": 1
   },
   {
@@ -203,13 +205,19 @@
    "fieldtype": "Datetime",
    "hidden": 1,
    "label": "Meal Time"
+  },
+  {
+   "fetch_from": "patient_appointment.patient_age",
+   "fieldname": "age",
+   "fieldtype": "Data",
+   "label": "Age"
   }
  ],
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-21 09:16:27.447441",
+ "modified": "2025-05-27 13:18:54.486036",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dispatcher",

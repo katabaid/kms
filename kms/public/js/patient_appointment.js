@@ -69,6 +69,7 @@ frappe.ui.form.on('Patient Appointment', {
     frm.trigger('add_finish_button');
     frm.trigger('add_reopen_button');
     frm.trigger('add_invoice_button');
+    frm.trigger('add_refresh_patient_button');
     // Check if any row in custom_completed_questionnaire has is_completed != 1
 
     // Call the questionnaire utility
@@ -103,7 +104,8 @@ frappe.ui.form.on('Patient Appointment', {
             frappe.msgprint(r.message);
           }),
           error: (r=>{frappe.throw(JSON.stringify(r.message))}),
-        })}
+        })},
+        'Status'
       )
     }
   },
@@ -133,7 +135,7 @@ frappe.ui.form.on('Patient Appointment', {
               }
             })
           });
-      });
+      }, 'Status');
     }
   },
   async add_invoice_button(frm) {
@@ -173,7 +175,8 @@ frappe.ui.form.on('Patient Appointment', {
               row.cost_center = item_resp?.message[0].cc;
               row.income_account = item_resp?.message[0].acc;
             })
-          }
+          },
+          'Status'
         );
       } catch (err) {
         frappe.msgprint(`Error fetching related data: ${err.message}`);
@@ -205,14 +208,15 @@ frappe.ui.form.on('Patient Appointment', {
             }
           }),
           error: (r=>{frappe.throw(JSON.stringify(r.message))}),
-        })}
+        })},
+        'Status'
       );
     }
   },
   add_additional_mcu_button(frm) {
     if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In' || frm.doc.status === 'Ready to Check Out') && frm.doc.mcu) {
       frm.add_custom_button(
-        'Additional MCU Item',
+        'Additional MCU',
         () =>{
           let dialog = new frappe.ui.Dialog({
             title: 'Enter Exam Item',
@@ -249,7 +253,8 @@ frappe.ui.form.on('Patient Appointment', {
             }
           });
           dialog.show();
-        }
+        },
+        'Process'
       )
     }
   },
@@ -258,11 +263,6 @@ frappe.ui.form.on('Patient Appointment', {
     frm.sidebar.clear_user_actions();
     if (incompleteRow) {
       const template = incompleteRow.template;
-      frm.add_custom_button(
-        'Temporary Registration',
-        () => {
-          frappe.set_route('List', 'Temporary Registration', 'List')
-      });
       const link = `https://kyomedic.vercel.app/questionnaire?template=${template||frm.doc.appointment_type}&appt=${frm.doc.name}`;
       frm.sidebar
       .add_user_action(__('QR Code'))
@@ -283,4 +283,24 @@ frappe.ui.form.on('Patient Appointment', {
       }
     }
   },
+  add_refresh_patient_button(frm){
+    if (frm.doc.status === 'Open' || frm.doc.status === 'Checked In' || frm.doc.status === 'Ready to Check Out') {
+      frm.add_custom_button(
+        'Refresh Patient Data',
+        () => {
+          frappe.db.get_value('Patient', frm.doc.patient, ['patient_name', 'sex', 'dob', 'custom_age'])
+          .then(r => {
+            let values = r.message;
+            frm.set_value('patient_name', values.patient_name);
+            frm.set_value('patient_sex', values.sex);
+            frm.set_value('custom_patient_date_of_birth', values.dob);
+            frm.set_value('patient_age', values.custom_age);
+            frm.save();
+            frm.refresh();
+          })
+        },
+        'Process'
+      )
+    } 
+  }
 });

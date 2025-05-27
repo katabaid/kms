@@ -1,4 +1,6 @@
-import frappe, re
+import frappe
+from kms.healthcare import calculate_patient_age
+from frappe.utils import getdate, today, nowdate, nowtime, now
 
 def patient_appointment_after_insert(doc, method=None):
   ################Doctype: Patient Appointment################
@@ -11,6 +13,7 @@ def patient_appointment_after_insert(doc, method=None):
   _set_completed_questionnaire_status(doc.name)
   if doc.custom_temporary_registration:
     _set_questionnaire_key(doc.name, doc.custom_temporary_registration)
+  doc.patient_age = calculate_patient_age(doc.custom_patient_date_of_birth, doc.appointment_date)
 #  doc.save()
 
 def patient_appointment_on_update(doc, method=None):
@@ -19,7 +22,7 @@ def patient_appointment_on_update(doc, method=None):
     doc.status = 'Open'
   if doc.status == 'Checked In' or doc.status == 'Ready to Check Out':
     validate_with_today_date(doc.appointment_date)
-    if str(doc.appointment_date) == frappe.utils.nowdate():
+    if str(doc.appointment_date) == nowdate():
       if doc.appointment_type == 'MCU':
         dispatcher_user = frappe.db.get_value(
           "Dispatcher Settings", 
@@ -53,8 +56,8 @@ def patient_appointment_on_update(doc, method=None):
         vs_doc = frappe.get_doc(dict(
           doctype = 'Vital Signs',
           patient = doc.patient,
-          signs_date = frappe.utils.nowdate(),
-          signs_time = frappe.utils.nowtime(),
+          signs_date = nowdate(),
+          signs_time = nowtime(),
           appointment = doc.name,
           custom_branch = doc.custom_branch,
           custom_patient_sex = doc.patient_sex,
@@ -118,7 +121,7 @@ def _create_dispatcher(exam_id, branch, item_table):
   doc = frappe.get_doc({
     'doctype': 'Dispatcher',
     'patient_appointment': exam_id,
-    'date': frappe.utils.today(),
+    'date': today(),
     'status': 'In Queue'
   })
   item_with_sort_order = []
@@ -182,8 +185,8 @@ def _create_queue_pooling_record(appointment, service_unit, status, reference_do
     'company': appointment.company,
     'priority': appointment.custom_priority,
     'branch': appointment.custom_branch,
-    'date': frappe.utils.today(),
-    'arrival_time': frappe.utils.nowtime(),
+    'date': today(),
+    'arrival_time': nowtime(),
     'service_unit': service_unit,
     'status': status
   }
@@ -246,7 +249,7 @@ def patient_encounter_after_insert(doc, method=None):
   if doc.custom_queue_pooling:
     qp = frappe.get_doc("Queue Pooling", doc.custom_queue_pooling)
     qp.status = "Ongoing"
-    qp.dequeue_time = frappe.utils.nowtime()
+    qp.dequeue_time = nowtime()
     qp.encounter = doc.name
     qp.healthcare_practitioner = doc.practitioner
     qp.save(ignore_permissions=True)
@@ -265,7 +268,7 @@ def patient_encounter_validate(doc, method=None):
   if doc.custom_radiology:
     for radiology in doc.custom_radiology:
       if not radiology.status_time:
-        radiology.status_time = frappe.utils.now()
+        radiology.status_time = now()
 
 def patient_encounter_on_update(doc, method=None):
   ################Doctype: Patient Encounter################
@@ -289,11 +292,15 @@ def vital_signs_before_submit(doc, method=None):
   process_non_mcu(doc, appt, appt.appointment_for)
   validate_vs_mandatory_fields(doc, ['temperature', 'pulse', 'bp_systolic', 'bp_diastolic'])
 
+def patient_before_save(doc, method=None):
+  ################Doctype: Patient################
+  doc.custom_age = calculate_patient_age(getdate(doc.dob), getdate(today()))
+
 def validate_with_today_date(validate_date):
-  if str(validate_date) != frappe.utils.today():
+  if str(validate_date) != today():
     frappe.throw(
       title = 'Error', 
-      msg=f"Date {validate_date} must be the same as today's date {frappe.utils.today()}.", 
+      msg=f"Date {validate_date} must be the same as today's date {today()}.", 
       exc='ValidationError')
     
 def validate_vs_mandatory_fields(doc, fields):
@@ -308,8 +315,8 @@ def process_non_mcu(doc, appt, type):
     appointment = doc.appointment,
     appointment_type = appt.appointment_type,
     patient = doc.patient,
-    date = frappe.utils.nowdate(),
-    arrival_time = frappe.utils.nowtime(),
+    date = nowdate(),
+    arrival_time = nowtime(),
     status = 'Queued',
     priority = appt.custom_priority,
     vital_sign = doc.name,
@@ -364,7 +371,7 @@ def _set_mcu_queue_no(name):
     filters={
       'company': 'Kyoai Medical Services',
       'custom_branch': 'Jakarta Main Clinic', 
-      'appointment_date': frappe.utils.today(),
+      'appointment_date': today(),
       'appointment_type': 'MCU'
     },
     fields=['max(custom_queue_no)+1 as maks'],

@@ -36,10 +36,11 @@ def reset_room_assignment():
   room_assignment = frappe.db.get_list('Room Assignment', filters={'assigned': 1}, pluck='name')
   for ra in room_assignment:
     frappe.db.set_value('Room Assignment', ra, 'assigned', 0)
-  name = frappe.db.get_all('User Permission', pluck = 'name',
+  name = frappe.db.get_all('User Permission', pluck = 'user',
     filters = {'allow', '=', 'Healthcare Service Unit'})
   for up in name:
-    frappe.db.delete('User Permission', {'name': up})
+    frappe.core.doctype.user_permission.user_permission.clear_user_permissions(
+      user=up, for_doctype='Healthcare Service Unit')
 
 def reset_meal_status():
   interval = frappe.db.get_single_value('MCU Settings', 'meal_time')
@@ -66,3 +67,31 @@ def reset_qp_in_room():
     frappe.log(f"Reset {affected_rows} rows in MCU Queue Pooling")
   except Exception as e:
     frappe.log_error(f"Failed to reset_qp_in_room: {str(e)}")
+
+def calculate_patient_age():
+  try:
+    affected_rows = frappe.db.sql("""
+      UPDATE tabPatient
+      SET custom_age = CONCAT(
+          TIMESTAMPDIFF(YEAR, dob, CURDATE()), ' Year(s) ',
+          TIMESTAMPDIFF(MONTH, dob, CURDATE()) 
+            - TIMESTAMPDIFF(YEAR, dob, CURDATE()) * 12, ' Month(s) ',
+          DATEDIFF(
+            CURDATE(),
+            DATE_ADD(
+              DATE_ADD(
+                dob,
+                INTERVAL TIMESTAMPDIFF(YEAR, dob, CURDATE()) YEAR
+              ),
+              INTERVAL (
+                TIMESTAMPDIFF(MONTH, dob, CURDATE()) 
+                - TIMESTAMPDIFF(YEAR, dob, CURDATE()) * 12
+              ) MONTH
+            )
+          ), ' Day(s)'
+      );
+    """)
+    frappe.db.commit()
+    frappe.log(f"Reset {affected_rows} rows in MCU Queue Pooling")
+  except Exception as e:
+    frappe.log_error(f"Failed to update patient age: {str(e)}")
