@@ -32,7 +32,6 @@
   "address_line_2",
   "province",
   "section_break_uizpm",
-  "questionnaire_type",
   "patient",
   "status",
   "appointment_type",
@@ -43,7 +42,6 @@
   "patient_appointment",
   "created",
   "section_break_m6bb5",
-  "detail",
   "remark",
   "questionnaire"
  ],
@@ -60,26 +58,26 @@
    "fieldtype": "Link",
    "label": "Gender",
    "options": "Gender",
-   "read_only": 1
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Date of Birth",
-   "read_only": 1
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "id_number",
    "fieldtype": "Data",
    "label": "ID Number",
-   "read_only": 1
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "phone_number",
    "fieldtype": "Data",
    "label": "Phone Number",
-   "read_only": 1
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fetch_from": "patient.custom_company",
@@ -87,7 +85,8 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Customer",
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "patient",
@@ -128,12 +127,6 @@
    "label": "Questionnaire"
   },
   {
-   "fieldname": "detail",
-   "fieldtype": "Table",
-   "label": "Detail",
-   "options": "Questionnaire Detail"
-  },
-  {
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
@@ -144,21 +137,13 @@
    "fieldname": "exam_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Exam Date",
-   "read_only": 1
+   "label": "Exam Date"
   },
   {
    "fieldname": "patient_appointment",
    "fieldtype": "Link",
    "label": "Patient Appointment",
    "options": "Patient Appointment",
-   "read_only": 1
-  },
-  {
-   "fieldname": "questionnaire_type",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Questionnaire Type",
    "read_only": 1
   },
   {
@@ -181,25 +166,25 @@
    "fieldname": "first_name",
    "fieldtype": "Data",
    "label": "First Name",
-   "read_only": 1
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "middle_name",
    "fieldtype": "Data",
    "label": "Middle Name",
-   "read_only": 1
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "last_name",
    "fieldtype": "Data",
-   "label": "Last Name",
-   "read_only": 1
+   "label": "Last Name"
   },
   {
    "fieldname": "id_type",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "ID Type",
-   "read_only": 1
+   "options": "KTP\nKITAS\nPassport\nSIM",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "branch",
@@ -211,7 +196,8 @@
    "fieldname": "blood_group",
    "fieldtype": "Select",
    "label": "Blood Group",
-   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative"
+   "options": "\nA Positive\nA Negative\nAB Positive\nAB Negative\nB Positive\nB Negative\nO Positive\nO Negative",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "address_section",
@@ -221,17 +207,20 @@
   {
    "fieldname": "address_line_1",
    "fieldtype": "Data",
-   "label": "Address Line 1"
+   "label": "Address Line 1",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "city",
    "fieldtype": "Data",
-   "label": "City"
+   "label": "City",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "postal_code",
    "fieldtype": "Data",
-   "label": "Postal Code"
+   "label": "Postal Code",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "column_break_zpbb",
@@ -240,12 +229,14 @@
   {
    "fieldname": "address_line_2",
    "fieldtype": "Data",
-   "label": "Address Line 2"
+   "label": "Address Line 2",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "province",
    "fieldtype": "Data",
-   "label": "Province"
+   "label": "Province",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "company_section",
@@ -260,7 +251,8 @@
    "fieldname": "occupation",
    "fieldtype": "Link",
    "label": "Occupation",
-   "options": "Occupation"
+   "options": "Occupation",
+   "read_only_depends_on": "eval:doc.patient"
   },
   {
    "fieldname": "questionnaire",
@@ -273,7 +265,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-26 10:43:39.307239",
+ "modified": "2025-05-27 08:08:13.933232",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",

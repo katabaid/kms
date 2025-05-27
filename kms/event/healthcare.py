@@ -3,6 +3,11 @@ import frappe, re
 def patient_appointment_after_insert(doc, method=None):
   ################Doctype: Patient Appointment################
   #_clone_temporary_registration_questionnaire(doc.name, doc.custom_temporary_registration)
+  if doc.custom_temporary_registration:
+    frappe.db.set_value(
+      'Temporary Registration', 
+      doc.custom_temporary_registration, 
+      {'patient_appointment': doc.name, 'status': 'Transferred'})
   _set_completed_questionnaire_status(doc.name)
   if doc.custom_temporary_registration:
     _set_questionnaire_key(doc.name, doc.custom_temporary_registration)
@@ -15,11 +20,6 @@ def patient_appointment_on_update(doc, method=None):
   if doc.status == 'Checked In' or doc.status == 'Ready to Check Out':
     validate_with_today_date(doc.appointment_date)
     if str(doc.appointment_date) == frappe.utils.nowdate():
-      if doc.custom_temporary_registration:
-        frappe.db.set_value(
-          'Temporary Registration', 
-          doc.custom_temporary_registration, 
-          {'patient_appointment': doc.name, 'status': 'Transferred'})
       if doc.appointment_type == 'MCU':
         dispatcher_user = frappe.db.get_value(
           "Dispatcher Settings", 

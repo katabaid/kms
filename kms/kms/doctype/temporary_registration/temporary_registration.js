@@ -5,9 +5,9 @@ frappe.ui.form.on('Temporary Registration', {
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Temporary Registration');
   },
-	setup: function(frm) {
+	/* setup: function(frm) {
 		frm.disable_form();
-	},
+	}, */
 	refresh: function(frm) {
 		if (!frm.doc.patient) {
 			add_create_patient_button(frm);
@@ -34,7 +34,10 @@ const add_create_appointment_button = (frm) => {
 		'Create Appointment',
 		() => {
 			if (frm.doc.patient) {
-				frappe.new_doc('Patient Appointment', {appointment_type: frm.doc.questionnaire_type === 'Outpatient' ? 'Dokter Consultation (GP)' : frm.doc.appointment_type},
+				frappe.new_doc('Patient Appointment', 
+					{appointment_type: 
+						frm.doc.questionnaire_type === 
+						'Outpatient' ? 'Dokter Consultation (GP)' : frm.doc.appointment_type},
 					doc => {
 						doc.custom_priority= frm.doc.questionnaire_type === 'MCU' ? '4. MCU' : '3. Outpatient'
 						doc.appointment_for= frm.doc.questionnaire_type === 'MCU' ? 'MCU' : 'Department'
