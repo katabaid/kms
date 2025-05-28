@@ -725,7 +725,8 @@ frappe.ui.form.on('Doctor Examination', {
       frm.set_value('skin_tattoo', 0);
       frm.set_value('skin_tag', 0);
       frm.set_value('sk_others', 0);
-      frm.set_value('motoric_details', '');
+      frm.set_value('skin_others', '');
+      frm.set_value('skin_tattoo_location', '');
     }
   },
   visual_check: function(frm){

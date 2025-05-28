@@ -108,15 +108,11 @@ def get_examination_items(sql):
 			})
 		for group in grouped_data.values():
 			group['items'] = sorted(group['items'], key=lambda x: x['item_position'])
-		sorted_data = sorted(grouped_data.values(), key=lambda x: x['group_position'])
-		return sorted_data
-	nurse_array = group_and_sort(sql, 'nurse')
-	radiology_array = group_and_sort(sql, 'radiology')
-	lab_array = group_and_sort(sql, 'lab_test')
+		return sorted(grouped_data.values(), key=lambda x: x['group_position'])
 	return {
-		'nurse': nurse_array,
-		'radiology': radiology_array,
-		'lab_test': lab_array,
+		'nurse': group_and_sort(sql, 'nurse'),
+		'radiology': group_and_sort(sql, 'radiology'),
+		'lab_test': group_and_sort(sql, 'lab_test'),
 	}
 
 def process_examination_items(doc, data, package):
@@ -1314,7 +1310,7 @@ def process_skin(doctor_exam, item_group, item_code, status, pos):
 			if doctor_exam.skin_psoriasis:
 				result_list.append('Psoriasis')
 			if doctor_exam.skin_tattoo:
-				result_list.append('Tattoo')
+				result_list.append(f'Tattoo ({doctor_exam.skin_tattoo_location})')
 			if doctor_exam.skin_tag:
 				result_list.append('Skin Tag')
 			if doctor_exam.sk_others:

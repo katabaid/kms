@@ -197,6 +197,7 @@
   "abnormal_skin",
   "skin_psoriasis",
   "skin_tattoo",
+  "skin_tattoo_location",
   "skin_tag",
   "sk_others",
   "skin_others",
@@ -1671,13 +1672,20 @@
    "fieldname": "questionnaire_html",
    "fieldtype": "HTML",
    "label": "Questionnaire"
+  },
+  {
+   "depends_on": "eval:doc.skin_tattoo",
+   "fieldname": "skin_tattoo_location",
+   "fieldtype": "Data",
+   "label": "Tattoo Location",
+   "mandatory_depends_on": "eval:doc.skin_tattoo"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-26 13:32:12.487342",
+ "modified": "2025-05-28 14:05:52.628385",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
