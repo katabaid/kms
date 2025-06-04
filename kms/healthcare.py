@@ -324,7 +324,7 @@ def _append_examination_items_for_lab_test(doc):
     AND EXISTS (SELECT 1 FROM `tabLab Test Template` tltt WHERE tltt.item = tma.examination_item)
     ORDER BY ti.custom_bundle_position
     """
-  items = frappe.db.sql(sql, (doc.custom_dispatcher), as_dict=True)
+  items = frappe.db.sql(sql, (doc.custom_appointment), as_dict=True)
   for item in items:
     doc.append('custom_examination_item', {
       'template': item.item_name,

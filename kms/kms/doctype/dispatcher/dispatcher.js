@@ -103,9 +103,10 @@ const addFinishMealButtons = (frm) => {
 };
 
 const addMealButtons = (frm) => {
-	if (frm.doc.status !== 'Meal Time') {
+	if (frm.doc.meal_time && frm.doc.status === 'In Queue') {
 		frm.add_custom_button('Meal Time', () => {
 			frm.doc.status = 'Meal Time';
+			frm.doc.meal_time = frappe.datetime.now_datetime();
 			frm.dirty();
 			frm.save();
 		});

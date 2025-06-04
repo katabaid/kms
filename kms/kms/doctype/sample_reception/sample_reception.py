@@ -61,6 +61,8 @@ def update_queue_pooling_status(sr_no, exam_id, sr_room):
 		count2 = count_received_samples(sr_no)[0][0]
 		if count1 == count2:
 			frappe.db.set_value('MCU Queue Pooling', {'patient_appointment': exam_id, 'service_unit': sr_room}, 'status', 'Finished Collection')
+			if check_final_room(exam_id):
+				frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
 
 def count_samples(sr_no):
 	sql = """
@@ -91,3 +93,10 @@ def count_received_samples(sr_no):
 			AND tscb.parent = tsc.name
 		) AND tscb.reception_status = 1"""
 	return frappe.db.sql(sql, (sr_no))
+
+def check_final_room(exam_id):
+	mqp = frappe.db.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='status')
+	total_count = len(mqp)
+	final_statuses = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing', 'Finished Collection']
+	final_count = sum(1 for status in mqp if status in final_statuses)
+	return total_count == final_count

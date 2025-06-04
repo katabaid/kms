@@ -70,14 +70,14 @@
   "ear_left",
   "left_cerumen",
   "left_cerumen_prop",
-  "left_tympanic",
+  "left_tympanic_membrane_intact",
   "earl_others",
   "ear_left_others",
   "column_break_4gkw6",
   "ear_right",
   "right_cerumen",
   "right_cerumen_prop",
-  "right_tympanic",
+  "right_tympanic_membrane_intact",
   "earr_others",
   "ear_right_others",
   "nose_section",
@@ -130,13 +130,13 @@
   "breast_check",
   "abnormal_breast",
   "breast_left",
-  "left_enlarged_breast",
+  "left_enlarged_breast_glands",
   "left_lumps",
   "bl_others",
   "breast_left_others",
   "column_break_gxf7e",
   "breast_right",
-  "right_enlarged_breast",
+  "right_enlarged_breast_glands",
   "right_lumps",
   "br_others",
   "breast_right_others",
@@ -540,12 +540,6 @@
    "label": "Cerumen Prop"
   },
   {
-   "default": "0",
-   "fieldname": "left_tympanic",
-   "fieldtype": "Check",
-   "label": "Tympanic membrane intact"
-  },
-  {
    "depends_on": "eval:doc.earl_others",
    "fieldname": "ear_left_others",
    "fieldtype": "Small Text",
@@ -573,12 +567,6 @@
    "fieldname": "right_cerumen_prop",
    "fieldtype": "Check",
    "label": "Cerumen Prop"
-  },
-  {
-   "default": "0",
-   "fieldname": "right_tympanic",
-   "fieldtype": "Check",
-   "label": "Tympanic membrane intact"
   },
   {
    "depends_on": "eval:doc.earr_others",
@@ -851,12 +839,6 @@
   },
   {
    "default": "0",
-   "fieldname": "left_enlarged_breast",
-   "fieldtype": "Check",
-   "label": "Enlarged Breast Glands"
-  },
-  {
-   "default": "0",
    "fieldname": "left_lumps",
    "fieldtype": "Check",
    "label": "Lumps"
@@ -877,12 +859,6 @@
    "fieldname": "breast_right",
    "fieldtype": "Heading",
    "label": "Right"
-  },
-  {
-   "default": "0",
-   "fieldname": "right_enlarged_breast",
-   "fieldtype": "Check",
-   "label": "Enlarged Breast Glands"
   },
   {
    "default": "0",
@@ -1549,6 +1525,7 @@
    "label": "Abdominal Girth"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "questionnaire",
    "fieldtype": "Table",
    "label": "Questionnaire",
@@ -1679,13 +1656,37 @@
    "fieldtype": "Data",
    "label": "Tattoo Location",
    "mandatory_depends_on": "eval:doc.skin_tattoo"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_tympanic_membrane_intact",
+   "fieldtype": "Check",
+   "label": "Tympanic membrane intact"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_tympanic_membrane_intact",
+   "fieldtype": "Check",
+   "label": "Tympanic membrane intact"
+  },
+  {
+   "default": "0",
+   "fieldname": "left_enlarged_breast_glands",
+   "fieldtype": "Check",
+   "label": "Enlarged Breast Glands"
+  },
+  {
+   "default": "0",
+   "fieldname": "right_enlarged_breast_glands",
+   "fieldtype": "Check",
+   "label": "Enlarged Breast Glands"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-28 14:05:52.628385",
+ "modified": "2025-06-04 13:06:02.075337",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
