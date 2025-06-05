@@ -437,7 +437,7 @@ def ____create_BMI_record(row, item, item_group):
 	row.incdec = bmi_data['name']
 	row.incdec_desc = frappe.db.get_value('MCU Category', 
 		f"{item_group}.{item}.BMI.{bmi_data['name']}", 'description') or None
-	row.grade.desc = frappe.db.get_value('MCU Grade', row.grade, 'description')
+	row.grade_desc = frappe.db.get_value('MCU Grade', row.grade, 'description')
 	return build_result_dict(row, item, item_group, 'nurse_grade', 'Nurse Examination')
 #endregion
 

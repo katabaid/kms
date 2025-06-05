@@ -6,6 +6,7 @@ from frappe.model.document import Document
 
 class DoctorResult(Document):
 	child_tables = ["nurse_grade", "doctor_grade", "radiology_grade", "lab_test_grade"]
+	grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
 
 	def before_save(self):
 		remarks = {
@@ -18,34 +19,24 @@ class DoctorResult(Document):
 		self.copied_remark = "\n".join(sorted(remarks) + dental_comments)
 
 	def before_submit(self):
-		#if not self.validate_before_submit():
-		#	frappe.throw('All results must be submitted, and all gradable must be graded.')
+		if not self.validate_before_submit():
+			frappe.throw('All results must be submitted, and all gradable must be graded.')
 		self.process_auto_grading()
 		self.process_physical_exam()
 		self.process_other_exam()		
 	
 # Server Script: before_submit for DoctorResult
 	def validate_before_submit(self):
-		def validate_row(row):
-			# Check if gradable = 1 and grade is empty
-			if row.get("gradable") == 1 and not row.get("grade"):
-				return False
-			# Check if hidden_item_group and hidden_item are set, is_item = 0, and result is empty
-			if (
-				row.get("hidden_item_group")
-				and row.get("hidden_item")
-				and row.get("is_item") == 0
-				and not row.get("result")
-			):
-				return False
-			return True
-
-		def validate_child_table(child_table):
-			return all(validate_row(row) for row in child_table)
-
-		# Validate all child tables and return the result
+		def is_valid(row):
+			return not (
+				(row.get("gradable") == 1 and not row.get("grade")) or
+				(row.get(
+					"hidden_item_group") and row.get("hidden_item") and 
+					row.get("is_item") == 0 and not row.get("result")
+				)
+			)
 		return all(
-			validate_child_table(self.get(table)) for table in self.child_tables if self.get(table)
+			all(is_valid(row) for row in self.get(table)) for table in self.child_tables if self.get(table)
 		)
 
 	def on_submit(self):
@@ -61,10 +52,9 @@ class DoctorResult(Document):
 
 	def process_other_exam(self):
 		self.other_examination = []
-		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 		current_results = []
 		counter = 0
-		for table in grade_tables:
+		for table in self.child_tables:
 			previous_item = ''
 			for row in getattr(self, table, []):
 				try:
@@ -78,7 +68,9 @@ class DoctorResult(Document):
 						):
 							counter += 1
 							if previous_item and previous_item != row.hidden_item:
-								item_all_inputs = [p.incdec_category for p in getattr(self, table, []) if p.hidden_item == previous_item and p.incdec_category]
+								item_all_inputs = [
+									p.incdec_category for p in getattr(self, table, []) 
+									if p.hidden_item == previous_item and p.incdec_category]
 								comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
 								current_results.append({
 									'examination': f'Comment: {comments}',
@@ -123,7 +115,9 @@ class DoctorResult(Document):
 					else:
 						counter += 1
 						if counter > 1:
-							item_all_inputs = [p.incdec_category for p in getattr(self, table, []) if p.hidden_item == previous_item and p.incdec_category]
+							item_all_inputs = [
+								p.incdec_category for p in getattr(self, table, []) 
+								if p.hidden_item == previous_item and p.incdec_category]
 							comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
 							current_results.append({
 								'examination': f'Comment: {comments}',
@@ -206,12 +200,11 @@ class DoctorResult(Document):
 						dental_grade = frappe.db.get_value('Dental Grading', {'parent': de}, 'grade')
 						return dental_grade
 
-		dental_examination = frappe.db.get_single_value('MCU Settings', 'dental_examination')
+		dental_exam = frappe.db.get_single_value('MCU Settings', 'dental_examination', cache=True)
 		self.group_exam = []
-		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 		current_results = []
 		counter = 0
-		for table in grade_tables:
+		for table in self.child_tables:
 			for row in getattr(self, table, []):
 				try:
 					if not row.hidden_item:
@@ -230,7 +223,7 @@ class DoctorResult(Document):
 		if current_results:
 			dental_grade = _get_dental_grade(self.appointment)
 			if dental_grade:
-				item_group = frappe.db.get_value('Item', dental_examination, 'item_group')
+				item_group = frappe.db.get_value('Item', dental_exam, 'item_group')
 				bundle_position = frappe.get_value('Item Group', item_group, 'custom_bundle_position')
 				current_results.append({
 					'contents': item_group,
@@ -300,9 +293,7 @@ class DoctorResult(Document):
 
 
 	def _process_item_grade(self):
-		grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
-		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
-		for table in grade_tables:
+		for table in self.child_tables:
 			for row in getattr(self, table, []):
 				if row.is_item == 1 and row.gradable == 1:
 					item_group = row.hidden_item_group
@@ -335,7 +326,7 @@ class DoctorResult(Document):
 						actual_grade = mcu_grade.get("grade_on_report") or mcu_grade.get("grade")
 						if not actual_grade:
 							invalid_entries.append(f"MCU Grade '{mcu_grade_name}' has no grade configured for {e.examination}")
-						elif actual_grade not in grade_order:
+						elif actual_grade not in self.grade_order:
 							invalid_entries.append(f"Invalid grade '{actual_grade}' from MCU Grade '{mcu_grade_name}' for {e.examination}")
 						else:
 							actual_grades.append(actual_grade)
@@ -343,13 +334,13 @@ class DoctorResult(Document):
 							frappe.throw("<br>".join(invalid_entries))
 					# determine worst grade
 					if actual_grades:
-						worst_grade = max(actual_grades, key=lambda g: grade_order.index(g))
+						worst_grade = max(actual_grades, key=lambda g: self.grade_order.index(g))
 						row.grade = item_group+'.'+item_code+'.-'+worst_grade
 
 	def _process_group_grade(self):
-		grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
-		grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
-		for table in grade_tables:
+		#grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
+		#grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
+		for table in self.child_tables:
 			for row in getattr(self, table, []):
 				if not row.hidden_item and row.gradable:
 					# determine children
@@ -377,7 +368,7 @@ class DoctorResult(Document):
 						actual_grade = mcu_grade.get("grade_on_report") or mcu_grade.get("grade")
 						if not actual_grade:
 							invalid_entries.append(f"MCU Grade '{mcu_grade_name}' has no grade configured for {e.examination}")
-						elif actual_grade not in grade_order:
+						elif actual_grade not in self.grade_order:
 							invalid_entries.append(f"Invalid grade '{actual_grade}' from MCU Grade '{mcu_grade_name}' for {e.examination}")
 						else:
 							actual_grades.append(actual_grade)
@@ -385,41 +376,15 @@ class DoctorResult(Document):
 						frappe.throw("<br>".join(invalid_entries))
 					# determine worst grade
 					if actual_grades:
-						worst_grade = max(actual_grades, key=lambda g: grade_order.index(g))
+						worst_grade = max(actual_grades, key=lambda g: self.grade_order.index(g))
 						row.grade = row.hidden_item_group+'..-'+worst_grade
 
-
-def format_floats_and_combine(a, b):
-	def safe_float(value):
-			try:
-					return float(value)
-			except (TypeError, ValueError):
-					return None
-
-	a = safe_float(a)
-	b = safe_float(b)
-	if not a and not b:
-		return None
-	formatted_a = f"{int(a)}" if a and a.is_integer() else f"{a}" if a else "0"
-	formatted_b = f"{int(b)}" if b and b.is_integer() else f"{b}" if b else "0"
-	return f"{formatted_a} - {formatted_b}"
-
-def is_numeric(string: str) -> bool:
-	try:
-		float(string)
-		return True
-	except ValueError:
-		return False
-
-
 def vital_sign_templates(): 
-	return frappe.get_all('MCU Vital Sign', filters = {'parentfield': 'vital_sign_on_report'}, pluck = "template")
+	return frappe.get_all(
+		'MCU Vital Sign', filters = {'parentfield': 'vital_sign_on_report'}, pluck = "template")
 
 def physical_examination():
-	return frappe.db.get_single_value('MCU Settings', 'physical_examination')
-
-def physical_examination_name():
-	return frappe.db.get_single_value('MCU Settings', 'physical_examination_name')
+	return frappe.db.get_single_value('MCU Settings', 'physical_examination', cache=True)
 
 def _get_dental_comments(appointment):
 	sql ="""
