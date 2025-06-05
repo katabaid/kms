@@ -55,20 +55,19 @@ const utilities = {
   		if ($headingRowWithFilter.length > 0) {
   			$headingRowWithFilter.removeClass('with-filter');
   			$headingRowWithFilter.children('div.grid-row:has(div.filter-row)').css('display', 'none', 'important');
-  		} else {
   		}
+      if (grid.grid_rows) {
+        grid.grid_rows.forEach(grid_row => {
+          if (!grid_row.doc) return;
+          const row = grid_row.doc;
+          if (frm.doc.docstatus === 0) {
+            utilities.handleGradeField(frm, row, grid_row);
+          }
+          apply_cell_styling(frm, row, tableName);
+        });
+      }
   	}, 150);
 
-  	if (grid.grid_rows) {
-  		grid.grid_rows.forEach(grid_row => {
-  			if (!grid_row.doc) return;
-  			const row = grid_row.doc;
-  			if (frm.doc.docstatus === 0) {
-  				utilities.handleGradeField(frm, row, grid_row);
-  			}
-  			apply_cell_styling(frm, row, tableName);
-  		});
-  	}
   };
 
   grid.wrapper.off('grid-refresh.doctorResultCustom')
@@ -92,7 +91,7 @@ const utilities = {
   } else {
   	setTimeout(runGridCustomizations, 350);
   }
- },
+},
 
   handleGradeField: (frm, row, grid_row) => {
     const docfield = frappe.meta.get_docfield('MCU Exam Grade', 'grade', row.name);
@@ -123,11 +122,10 @@ const utilities = {
 
 const hide_standard_buttons = (frm, fields) => {
 	fields.forEach((field) => {
-		if (frm.fields_dict[field]) { // Ensure field exists in form's dictionary
+		if (frm.fields_dict[field]) {
 			frm.set_df_property(field, 'cannot_add_rows', true);
 			frm.set_df_property(field, 'cannot_delete_rows', true);
 			frm.set_df_property(field, 'cannot_delete_all_rows', true);
-		} else {
 		}
 	});
 };
@@ -187,9 +185,14 @@ const hide_save_button = (frm) => {
     if (frm.doc.healthcare_practitioner_user) {
       if (frm.doc.healthcare_practitioner_user === frappe.session.user) {
         frm.enable_save();
+        frm.toggle_display('submit', true);
       } else {
         frm.disable_save();
+        frm.toggle_display('submit', false);
       }
-    } else { frm.enable_save(); }
-  } else { frm.enable_save(); }
+    } else {
+      frm.disable_save();
+      frm.toggle_display('submit', false);
+    }
+  }
 }
