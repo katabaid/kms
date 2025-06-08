@@ -5,4 +5,8 @@
 from frappe.model.document import Document
 
 class DoctorExaminationTemplate(Document):
-	pass
+	def before_save(self):
+		if len(self.items) + len(self.normal_items) == 1:
+			self.is_single_result = 1
+		else:
+			self.is_single_result = 0

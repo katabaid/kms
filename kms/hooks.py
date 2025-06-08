@@ -198,7 +198,7 @@ doc_events = {
     "autoname": "kms.event.healthcare.prescription_duration_autoname",
   },
   "Vital Signs": {
-    "before_submit": "kms.event.healthcare.vital_signs_before_submit",
+    "before_submit": "kms.event.healthcare.vital_signs_before_submit"
   },
   "Patient": {
     "before_save": "kms.event.healthcare.patient_before_save",
@@ -213,6 +213,9 @@ doc_events = {
     "after_submit": "kms.event.lab_sample.sample_after_submit",
     "before_submit": "kms.event.lab_sample.sample_before_submit",
   },
+  "Lab Test Template": {
+    "before_save": "kms.event.lab_sample.lab_test_template_before_save"
+  }
 }
 
 # Scheduled Tasks

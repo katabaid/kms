@@ -30,17 +30,17 @@ class RadiologyResult(Document):
 			for exam in self.examination_item:
 				conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
 				if conclusion_text:
-					conclusion_result = ','.join(conclusion_text)
+					conclusion_result = ', '.join(conclusion_text)
 				item_group = frappe.db.get_value('Item', exam.item, 'item_group')
 				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
 					'hidden_item': exam.item,
 					'hidden_item_group': item_group,
 					'parent': doctor_result_name,
-					'is_item': 1
+					'is_item': 0
 				}, 'name')
 				frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
 					'result': conclusion_result,
-					'status': self.workflow_state,
+					'status': self.get('workflow_state', 'Finished'),
 					'document_type': 'Radiology Result',
 					'document_name': self.name,
 				})

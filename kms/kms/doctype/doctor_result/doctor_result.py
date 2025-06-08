@@ -19,8 +19,8 @@ class DoctorResult(Document):
 		self.copied_remark = "\n".join(sorted(remarks) + dental_comments)
 
 	def before_submit(self):
-		if not self.validate_before_submit():
-			frappe.throw('All results must be submitted, and all gradable must be graded.')
+		#if not self.validate_before_submit():
+		#	frappe.throw('All results must be submitted, and all gradable must be graded.')
 		self.process_auto_grading()
 		self.process_physical_exam()
 		self.process_other_exam()		
@@ -291,7 +291,6 @@ class DoctorResult(Document):
 					'result': doctor_grade.result,
 				})
 
-
 	def _process_item_grade(self):
 		for table in self.child_tables:
 			for row in getattr(self, table, []):
@@ -338,8 +337,6 @@ class DoctorResult(Document):
 						row.grade = item_group+'.'+item_code+'.-'+worst_grade
 
 	def _process_group_grade(self):
-		#grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
-		#grade_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 		for table in self.child_tables:
 			for row in getattr(self, table, []):
 				if not row.hidden_item and row.gradable:
@@ -387,11 +384,9 @@ def physical_examination():
 	return frappe.db.get_single_value('MCU Settings', 'physical_examination', cache=True)
 
 def _get_dental_comments(appointment):
-	sql ="""
-		SELECT suggestion FROM `tabDental Grading` WHERE parent =
+	return frappe.db.sql("""SELECT suggestion FROM `tabDental Grading` WHERE parent =
 		(SELECT parent FROM `tabDoctor Examination Request` tder, `tabDoctor Examination` td 
 		WHERE item = (SELECT value FROM tabSingles ts WHERE doctype = 'MCU Settings'
 		AND field = 'dental_examination') AND parent = td.name
 		AND td.appointment = %s AND td.docstatus = 0) ORDER BY idx
-		"""
-	return frappe.db.sql(sql, (appointment), as_list=True)
+		""", (appointment), as_list=True)

@@ -1,5 +1,6 @@
 import frappe
 from frappe.utils import today
+from kms.utils import assess_mcu_grade
 
 @frappe.whitelist()
 def create_doctor_result(appointment):
@@ -89,7 +90,6 @@ def _create_examination_items(appointment, exam_dict):
 					result.extend(__create_radiology_category(appointment, item, group['item_group']))
 				elif category == 'lab_test':
 					result.extend(__create_lab_test_category(appointment, item, group['item_group']))
-	print(result)	
 	return result
 
 def __create_doctor_category(appt, item_group):
@@ -101,7 +101,7 @@ def __create_doctor_category(appt, item_group):
 		{'item_code': frappe.db.get_single_value('MCU Settings', a), 'tab': a} 
 		for a in custom_result_items]
 	items = frappe.db.sql("""
-		SELECT item, parent FROM `tabDoctor Examination Request` tder
+		SELECT item, parent, template FROM `tabDoctor Examination Request` tder
 		WHERE parent IN (
 			SELECT name FROM `tabDoctor Examination` tde WHERE tde.appointment = %s AND docstatus = 1)
 		AND EXISTS (SELECT 1 FROM tabItem WHERE item_group = %s AND name = item)	
@@ -118,11 +118,45 @@ def __create_doctor_category(appt, item_group):
 			'document_type': 'Doctor Examination', 
 			'document_name': item.parent
 		}])
-		if item.item in [item['item_code'] for item in custom_results]:
-			tab = next((cr['tab'] for cr in custom_results if cr['item_code'] == item.item), None)
-			result.extend(___build_doctor_tab_result(item.parent, item.item, item_group, tab))
+		is_single_result = frappe.db.get_value(
+			'Doctor Examination Template', item['template'], 'is_single_result')
+		if is_single_result:
+			if item.item in [item['item_code'] for item in custom_results]:
+				de_doc = frappe.get_doc('Doctor Examination', item.parent)
+				single_result = ___find_single_item_result(
+					de_doc.result, de_doc.non_selective_result, item['item'])
+				if single_result:
+					result[0][1].update(single_result)
+					if gradable:
+						grade, description = assess_mcu_grade(
+							result[0][1].get('result', ''), item_group, item['item'],
+							min_value=result[0][1].get('min_value', 0), max_value=result[0][1].get('max_value', 0),
+							normal_value=result[0][1].get('normal_value', 0))
+						if grade:
+							result[0][1].update({'grade': grade, 'description': description})
+					if result[0][1].get('normal_value'):
+						result[0][1].pop('normal_value')
+			else:
+				tab = next((cr['tab'] for cr in custom_results if cr['item_code'] == item.item), None)
+				single_result = ___build_doctor_tab_result(item.parent, item.item, item_group, tab)
+				if single_result:
+					result[0][1].update(single_result)
+					if tab != 'dental_examination':
+						if gradable:
+							grade, description = assess_mcu_grade(
+								result[0][1].get('result', ''), item_group, item['item'],
+								min_value=result[0][1].get('min_value', 0), max_value=result[0][1].get('max_value', 0),
+								normal_value=result[0][1].get('normal_value', 0))
+							if grade:
+								result[0][1].update({'grade': grade, 'description': description})
+						if result[0][1].get('normal_value'):
+							result[0][1].pop('normal_value')
 		else:
-			result.extend(___fetch_doctor_result_per_item(item.parent, item.item, item_group))
+			if item.item in [item['item_code'] for item in custom_results]:
+				tab = next((cr['tab'] for cr in custom_results if cr['item_code'] == item.item), None)
+				result.extend(___build_doctor_tab_result(item.parent, item.item, item_group, tab))
+			else:
+				result.extend(___fetch_doctor_result_per_item(item.parent, item.item, item_group))
 	return result
 
 def __create_lab_test_category(appointment, item, item_group):
@@ -145,17 +179,42 @@ def __create_lab_test_category(appointment, item, item_group):
 		'document_name': doc_no.name
 	}])
 	result_rows = ___fetch_lab_result_per_item(appointment, item['examination_item'], item_group)
-	for row in result_rows:
-		result.append(build_result_dict(
-			row, item['examination_item'], item_group, 'lab_test_grade', 'lab Test'))
+	if result_rows:
+		if len(result_rows) == 1:
+			row = result_rows[0]
+			result_value = (f"{row['result_text']}: {row['result_desc']}" 
+				if row.get('result_desc') else convert_if_whole(row.get('result_text')))
+			grade_desc = (frappe.db.get_value('MCU Grade', row.get('grade'), 'description') 
+				if row.get('grade') else None)
+			std_value = (
+				f"{convert_if_whole(row.get('min_value'))} - {convert_if_whole(row.get('max_value'))}" 
+				if row.get('min_value') or row.get('max_value') else None)
+			updated_attr = {
+				'result': result_value,
+				'min_value': convert_if_whole(row.get('min_value')) or None,
+				'max_value': convert_if_whole(row.get('max_value')) or None,
+				'grade': row.get('grade', None),
+				'uom': row.get('uom', None),
+				'status': row.get('status'),
+				'incdec': row.get('incdec', None),
+				'incdec_desc': row.get('incdec_desc', None),
+				'description': grade_desc,
+				'std_value': std_value,
+			}
+			result[0][1].update(updated_attr)
+		else:
+			for row in result_rows:
+				result.append(build_result_dict(
+					row, item['examination_item'], item_group, 'lab_test_grade', 'lab Test'))
 	return result
 
 def __create_nurse_category(appointment, item, item_group, bp):
 	result = []
 	if item['examination_item'] == bp:
 		return ___create_blood_pressure_exam(appointment, item, item_group)
-	result_in_exam = frappe.db.get_value(
-		'Nurse Examination Template', {'item_code': item['examination_item']}, 'result_in_exam')
+	result_in_exam, is_single_result = frappe.db.get_value(
+		'Nurse Examination Template', {'item_code': item['examination_item']}, 
+		['result_in_exam', 'is_single_result'])
 	doc_no = frappe.db.get_value('Nurse Examination Request',
 		{
 			'parent': ['in', 
@@ -172,47 +231,64 @@ def __create_nurse_category(appointment, item, item_group, bp):
 		'document_type': 'Nurse Examination', 
 		'document_name': doc_no
 	}])
-	if result_in_exam:
-		result.extend(___create_nurse_result_per_item_in_exam(appointment, item['examination_item'], item_group))
+	if not is_single_result and result_in_exam:
+		result.extend(
+			___create_nurse_result_per_item_in_exam(appointment, item['examination_item'], item_group))
 	else:
-		nurse_result = frappe.db.get_value('Nurse Examination', doc_no, 'exam_result')
-		nr_doc = frappe.get_doc('Nurse Result', nurse_result)
-		data = {
-			'result_line': item['item_name'],
-			'gradable': 0,
-			'doc': nurse_result,
-			'result_text': ', '. join([row.conclusion for row in nr_doc.conclusion]),
-		}
-		result.append(build_result_dict(data, item['examination_item'], item_group, 'nurse_grade', 'Nurse Result'))
+		if result_in_exam:
+			nurse_result = frappe.db.get_value('Nurse Examination', doc_no, 'exam_result')
+			nr_doc = frappe.get_doc('Nurse Result', nurse_result)
+			if nr_doc:
+				result[0][1]['document_type'] = 'Nurse Result'
+				result[0][1]['document_name'] = nurse_result
+				result[0][1]['result'] = ', '. join([row.conclusion for row in nr_doc.conclusion])
+		else:
+			ne_doc = frappe.get_doc('Nurse Examination', doc_no)
+			single_result = ___find_single_item_result(
+				ne_doc.result, ne_doc.non_selective_result, item['examination_item'])
+			if single_result:
+				result[0][1].update(single_result)
+				if item.get('item_gradable', 0):
+					grade, description = assess_mcu_grade(
+						result[0][1].get('result', ''), item_group, item['examination_item'],
+						min_value=result[0][1].get('min_value', 0), max_value=result[0][1].get('max_value', 0),
+						normal_value=result[0][1].get('normal_value', 0))
+					if grade:
+						result[0][1].update({'grade': grade, 'description': description})
+				if result[0][1].get('normal_value'):
+					result[0][1].pop('normal_value')
 	return result
+
+def ___find_single_item_result(result_table, non_selective_table, item_code):
+  return next((
+		{'result': r.result_value, 'min_value': r.min_value, 'max_value': r.max_value} 
+		for r in (non_selective_table or []) if r.item_code == item_code), 
+    	next((
+				{'result': f"{r.result_check}: {r.result_text}" 
+		 			if r.result_check and r.result_text else (r.result_check or ""), 
+				'normal_value': r.normal_value}
+				for r in (result_table or []) if r.item_code == item_code), {}))
 
 def __create_radiology_category(appointment, item, item_group):
 	result = []
 	doc_no = frappe.db.get_value('Radiology Request',
 		{
 			'parent': ['in', 
-				frappe.db.get_all('Radiology', pluck='name', 
+				frappe.db.get_all('Radiology Result', pluck='name', 
 					filters={'appointment': appointment, 'docstatus': 1})],
 			'item': item['examination_item']
 		}, 'parent')
+	r_doc = frappe.get_doc('Radiology Result', doc_no)
 	result.append(['radiology_grade', {
 		'examination': item['item_name'],
 		'gradable': item.get('item_gradable', 0),
 		'hidden_item_group': item_group,
 		'hidden_item': item['examination_item'],
 		'is_item': 1, 
-		'document_type': 'Radiology', 
-		'document_name': doc_no
+		'document_type': 'Radiology Result', 
+		'document_name': doc_no,
+		'result': ', '. join([row.conclusion for row in r_doc.conclusion]),
 	}])
-	radiology_result = frappe.db.get_value('Radiology', doc_no, 'exam_result')
-	r_doc = frappe.get_doc('Radiology Result', radiology_result)
-	data = {
-		'result_line': item['item_name'],
-		'gradable': 0,
-		'doc': radiology_result,
-		'result_text': ', '. join([row.conclusion for row in r_doc.conclusion]),
-	}
-	result.append(build_result_dict(data, item['examination_item'], item_group, 'radiology_grade', 'Radiology Result'))
 	return result
 
 def ___fetch_lab_result_per_item(appointment, item_code, item_group):
@@ -690,47 +766,27 @@ def _____process_skin(doc, item, item_group):
 	return build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')
 
 def ____process_visual_field_test(doc, item, item_group):
-	data = {
-		'result_line': 'Visual Field Test',
-		'gradable': 0,
-		'doc': doc.name,
-		'result_text': 'Same As Examiner' if doc.visual_check else doc.visual_details,
-	}
-	return build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')
+	return {
+		'result': 'Same As Examiner' if doc.visual_check else doc.visual_details,}
 
 def ____process_romberg_test(doc, item, item_group):
-	data = {
-		'result_line': 'Romberg Test',
-		'gradable': 0,
-		'doc': doc.name,
+	return {
 		'result_text': 'No Abnormality' if doc.romberg_check else '\n'.join(filter(None, 
 			[doc.romberg_abnormal or '', doc.romberg_others or ''])),
 	}
-	return build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')
 
 def ____process_tinnel_test(doc, item, item_group):
-	data = {
-		'result_line': 'Tinnel Test',
-		'gradable': 0,
-		'doc': doc.name,
+	return {
 		'result_text': 'No Abnormality' if doc.tinnel_check else doc.tinnel_details,
 	}
-	return build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')
 
 def ____process_phallen_test(doc, item, item_group):
-	data = {
-		'result_line': 'Phallen Test',
-		'gradable': 0,
-		'doc': doc.name,
+	return {
 		'result_text': 'No Abnormality' if doc.phallen_check else doc.phallen_details,
 	}
-	return build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')
 
 def ____process_rectal_test(doc, item, item_group):
-	data = {
-		'result_line': 'Rectal Test',
-		'gradable': 0,
-		'doc': doc.name,
+	return {
 		'result_text': build_result_text(
 			'rectal_check',
 			[('rectal_hemorrhoid', None, 'rectal_hemorrhoid'), 
@@ -738,18 +794,13 @@ def ____process_rectal_test(doc, item, item_group):
 				('re_others', 'Others', 'rectal_others')],
 			doc)
 	}
-	return build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')
 
 def ____process_dental_examination(doc, item, item_group):
-	data = {
-		'result_line': 'Dental Examination',
-		'gradable': 0,
-		'doc': doc.name,
-		'result_text': ', '. join([row.conclusion for row in doc.conclusion]),
+	return {
+		'result': ', '. join([row.conclusion for row in doc.conclusion]),
 		'grade': doc.grade_table[0].grade if doc.grade_table else None,
-		'grade_desc': doc.grade_table[0].suggestion if doc.grade_table else None
+		'description': doc.grade_table[0].suggestion if doc.grade_table else None
 	}
-	return [build_result_dict(data, item, item_group, 'doctor_grade', 'Doctor Examination')]
 #endregion
 
 #region utility

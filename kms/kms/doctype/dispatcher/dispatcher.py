@@ -3,7 +3,7 @@
 
 import frappe, re
 from frappe.model.document import Document
-from frappe.utils import today, flt, now, now_datetime
+from frappe.utils import today, now, now_datetime
 from frappe import _
 from statistics import mean
 from datetime import timedelta
@@ -88,29 +88,8 @@ def is_within_range(value, min_value, max_value):
 	return min_value < value < max_value
 
 @frappe.whitelist()
-def calculate_grade(result_text, min_value, max_value, group, item_code, test_name):
-	if not (result_text and min_value and max_value):
-		return None, None
-	result_value = flt(result_text)
-	if flt(min_value) <= result_value <= flt(max_value):
-		grade = 'A'
-		grade_name = frappe.db.get_value(
-			'MCU Grade',
-			{'item_group': group, 'item_code': item_code, 'test_name': test_name, 'grade': grade},
-			'name'
-		)
-		grade_description = frappe.db.get_value(
-			'MCU Grade',
-			grade_name,
-			'description'
-		)
-		if grade_name:
-			return grade_name, grade_description
-	return None, None
-
-@frappe.whitelist()
 def get_queued_branch(branch):
-	count = frappe.db.sql(f"""
+	return frappe.db.sql(f"""
 		SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, 
 			tra.`user`, thsu.custom_default_doctype
 		FROM `tabHealthcare Service Unit` thsu
@@ -121,32 +100,11 @@ def get_queued_branch(branch):
 		LEFT JOIN `tabRoom Assignment` tra 
 			ON thsu.name = tra.healthcare_service_unit 
 			AND tra.`date` = CURDATE()
-		WHERE thsu.custom_branch = '{branch}' 
+		WHERE thsu.custom_branch = %s
 		AND thsu.is_group = 0 
 		AND thsu.custom_default_doctype IS NOT NULL
 		GROUP BY thsu.name
-		ORDER BY custom_room""", as_dict=True)
-	return count
-
-
-def get_related_rooms (hsu, dispatcher_id):
-	return frappe.db.sql(f"""
-		SELECT service_unit FROM `tabItem Group Service Unit` tigsu1
-		WHERE tigsu1.parentfield = 'custom_room'
-		AND 	tigsu1.parenttype = 'Item'
-		AND 	tigsu1.service_unit != '{hsu}'
-		AND 	EXISTS (
-			SELECT 1 FROM `tabItem Group Service Unit` tigsu 
-			WHERE tigsu.parentfield = 'custom_room'
-			AND 	tigsu.parenttype = 'Item'
-			AND 	tigsu.service_unit = '{hsu}'
-			AND 	tigsu.parent = tigsu1.parent
-			AND EXISTS (
-				SELECT 1 FROM `tabMCU Appointment` tma
-				WHERE tma.parent = '{dispatcher_id}'
-				AND 	tma.parentfield = 'package'
-				AND		tma.parenttype = 'Dispatcher'
-				AND 	tma.examination_item = tigsu.parent))""", pluck = 'service_unit')
+		ORDER BY custom_room""", (branch), as_dict=True)
 
 @frappe.whitelist()
 def is_meal(exam_id, doctype=None, docname=None):
@@ -310,19 +268,16 @@ def create_result_doc(doc, target):
 		})
 		for item in doc.custom_sample_table:
 			if item.status == 'Finished':
-				lab_test = frappe.db.sql(f"""
-					SELECT tltt.name FROM `tabLab Test Template` tltt, tabItem ti
-					WHERE tltt.sample = '{item.sample}'
-					AND ti.name = tltt.lab_test_code
-					AND EXISTS (
-					SELECT 1 FROM `tabLab Test Request` tltr
-					WHERE tltr.item_code = tltt.item
-					AND tltr.parent = '{doc.name}'
-					AND tltr.parentfield = 'custom_examination_item'
-					AND tltr.parenttype = 'Sample Collection')
-					ORDER BY ti.custom_bundle_position""", pluck='name')
+				lab_test = frappe.db.sql("""
+					SELECT tltt.name, tltt.lab_test_code FROM `tabLab Test Template` tltt, tabItem ti
+					WHERE tltt.sample = %s AND ti.name = tltt.lab_test_code
+					AND EXISTS (SELECT 1 FROM `tabLab Test Request` tltr
+						WHERE tltr.item_code = tltt.item AND tltr.parent = %s
+						AND tltr.parentfield = 'custom_examination_item'
+						AND tltr.parenttype = 'Sample Collection')
+					ORDER BY ti.custom_bundle_position""", (item.sample, doc.name), as_dict=True)
 				for exam in lab_test:
-					template_doc = frappe.get_doc('Lab Test Template', exam)
+					template_doc = frappe.get_doc('Lab Test Template', exam.name)
 					non_selective = template_doc.get('normal_test_templates')
 					selective = template_doc.get('custom_selective')
 					if non_selective:
@@ -342,15 +297,16 @@ def create_result_doc(doc, target):
 							FROM ranked
 							WHERE rn = 1
 							ORDER BY idx""", 
-							{'age': age, 'test': exam, 'sex': doc.patient_sex}, as_dict=True)
+							{'age': age, 'test': exam.name, 'sex': doc.patient_sex}, as_dict=True)
 						for mm in minmax:
 							new_doc.append('normal_test_items', {
-								'lab_test_name': exam, 
+								'lab_test_name': exam.name, 
 								'custom_min_value': mm.custom_min_value, 
 								'custom_max_value': mm.custom_max_value, 
 								'lab_test_event': mm.lab_test_event, 
 								'lab_test_uom': mm.lab_test_uom,
-								'custom_sample': item.sample
+								'custom_sample': item.sample,
+								'custom_item': exam.lab_test_code
 							})
 							normal_toggle = 1
 					if selective:

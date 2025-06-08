@@ -1,111 +1,7 @@
 import frappe
 from frappe.utils import now
+from kms.utils import assess_mcu_grade
 
-#region WHITELISTED METHODS
-@frappe.whitelist()
-def get_items():
-  item_group = frappe.db.sql("""
-    WITH RECURSIVE ItemHierarchy AS (
-    SELECT name, parent_item_group, is_group
-    FROM `tabItem Group` tig 
-    WHERE parent_item_group = 'Laboratory'
-    UNION ALL
-    SELECT t.name, t.parent_item_group, t.is_group
-    FROM `tabItem Group` t
-    INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
-    )
-    SELECT name, parent_item_group, is_group
-    FROM ItemHierarchy""", as_dict=True)
-  item = frappe.db.sql("""
-    SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `tabLab Test Template` tltt
-    WHERE EXISTS (SELECT 1 FROM tabItem ti WHERE tltt.item = ti.name) 
-    AND EXISTS (SELECT 1 FROM (WITH RECURSIVE ItemHierarchy AS (
-        SELECT name, parent_item_group, is_group
-        FROM `tabItem Group` tig 
-        WHERE parent_item_group = 'Laboratory'
-        UNION ALL
-        SELECT t.name, t.parent_item_group, t.is_group
-        FROM `tabItem Group` t
-        INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
-    )  SELECT name, parent_item_group, is_group FROM ItemHierarchy) ih WHERE tltt.lab_test_group = ih.name)""", as_dict=True)
-  return {'item_group': item_group, 'item': item}
-
-@frappe.whitelist()
-def create_sc(name, appointment):
-  appt_doc = frappe.get_doc('Patient Appointment', appointment)
-  sample_collections = frappe.db.get_all('Sample Collection',
-    filters = {'custom_appointment': appointment, 'docstatus': 0},
-    pluck = 'name')
-  #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
-  sus = frappe.db.sql("""
-    SELECT DISTINCT tigsu.service_unit
-    FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp 
-    WHERE tlp.parent = %s
-    AND tlp.custom_exam_item = tigsu.parent
-    AND branch = %s
-    AND custom_sample_collection IS NULL""", (name, appt_doc.custom_branch), as_dict=True)
-  resp = []
-  if sus:
-    for su in sus:
-      sample_doc = None
-      if sample_collections:
-        for sample_collection in sample_collections:
-          existing_doc = frappe.get_doc('Sample Collection', sample_collection)
-          if existing_doc.custom_service_unit == su.service_unit:
-            sample_doc = existing_doc
-            break
-      if not sample_doc:  
-        sample_doc = frappe.get_doc({
-          'doctype': 'Sample Collection',
-          'custom_appointment': appt_doc.name,
-          'patient': appt_doc.patient,
-          'patient_name': appt_doc.patient_name,
-          'patient_age': appt_doc.patient_age,
-          'patient_sex': appt_doc.patient_sex,
-          'company': appt_doc.company,
-          'custom_branch': appt_doc.custom_branch,
-          'custom_service_unit': su.service_unit,
-          'custom_status': 'Started',
-          'custom_document_date': frappe.utils.now(),
-          'custom_encounter': name
-        })
-      samples = frappe.db.sql("""
-      SELECT distinct tltt.sample
-      FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
-      WHERE tlp.parent = %s
-      AND tlp.custom_exam_item = tigsu.parent
-      AND branch = %s
-      and tigsu.service_unit = %s
-      AND tltt.name = tlp.lab_test_name
-      AND tltt.sample IS NOT NULL
-      AND custom_sample_collection IS NULL""", 
-      (name, appt_doc.custom_branch, su.service_unit), as_dict=True)
-      existing_samples = {row.sample for row in sample_doc.get('custom_sample_table', [])}
-      for sample in samples:
-        if sample.sample not in existing_samples:
-          sample_doc.append('custom_sample_table', {
-            'sample': sample.sample,
-          })
-      enc_doc = frappe.get_doc('Patient Encounter', name)
-      for lab in enc_doc.lab_test_prescription:
-        entries = dict()
-        if not lab.custom_sample_collection: 
-          entries['template'] = lab.lab_test_code
-          entries['item_code'] = lab.custom_exam_item
-          sample_doc.append('custom_examination_item', entries)
-      sample_doc.save(ignore_permissions=True)
-      resp.append(sample_doc.name)
-      lab_test_prescription = enc_doc.get('lab_test_prescription', [])
-      lt = [item for item in lab_test_prescription
-        if item.get('custom_sample_collection') is None
-      ]
-      for item in lt:
-        item.set('custom_sample_collection', sample_doc.name)
-      enc_doc.save(ignore_permissions=True)
-  else:
-    frappe.throw('Lab Test already prescribed.')
-  return f'Sample Collection {', '.join(resp)} created.'
-#endregion
 #region SAMPLE COLLECTION HOOKS
 def sample_before_insert(doc, method=None):
   doc.custom_barcode_label = doc.custom_appointment
@@ -131,7 +27,6 @@ def sample_before_submit(doc, method=None):
     doc.collected_by = frappe.session.user
   if not doc.collected_time:
     doc.collected_time = frappe.utils.now()
-
   exam_result = frappe.db.exists('Lab Test', {'custom_sample_collection': doc.name}, 'name')
   if exam_result:
     doc.custom_lab_test = exam_result
@@ -150,7 +45,6 @@ def sample_before_submit(doc, method=None):
       sample_reception_doc.name1 = doc.patient_name
       sample_reception_doc.healthcare_service_unit = room
       sample_reception_doc.save(ignore_permissions=True)
-      #saved = True
       sample.sample_reception = sample_reception_doc.name
       sample.status_time = now()
       sample.reception_status = sample_reception_doc.docstatus
@@ -167,87 +61,68 @@ def lab_on_submit(doc, method=None):
     'Sample Collection', doc.custom_sample_collection, 'custom_encounter')
   if doctor_result_name:
     for item in doc.normal_test_items:
-      item_code = frappe.db.get_value(
-        'Item', {'item_name': item.lab_test_name}, 'item_code')
-      item_group = frappe.db.get_value(
-        'Item', {'item_name': item.lab_test_name}, 'item_group')
-      mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-        'hidden_item': item_code,
+      item_group, is_single_result = frappe.db.get_value(
+        'Lab Test Template', item.template, ['item_group', 'custom_is_single_result'])
+      filters = {
+        'hidden_item': item.item,
         'hidden_item_group': item_group,
-        'parent': doctor_result_name,
-        'examination': item.lab_test_event,
-        'is_item': 0
-      }, 'name')
-      incdec = ''
-      incdec_category = ''
-      grade_name = description = ''
-      if all([
-        item.custom_max_value != 0 and 
-        (item.custom_min_value == 0 or item.custom_min_value) and 
-        item.custom_max_value and 
-        item.result_value and 
-        is_numeric(item.custom_min_value) and 
-        is_numeric(item.custom_max_value) and 
-        is_numeric(float(item.result_value))
-      ]):
+        'parent': doctor_result_name}
+      incdec = incdec_category = lab_test_event = grade_name = description = None
+      if not is_single_result:
+        lab_test_event = item.lab_test_event
+        filters['examination'] = item.lab_test_event
+        filters['is_item'] = 0
+      else:
+        filters['examination'] = item.lab_test_name
+        filters['is_item'] = 1
+      mcu_grade_name = frappe.db.get_value('MCU Exam Grade', filters, 'name')
+      grade_name, description, error = assess_mcu_grade(item.result_value, item_group, item.item, 
+        min_value=item.custom_min_value, max_value=item.custom_max_value, test_name=lab_test_event)
+      if not error:
         if float(item.result_value) > item.custom_max_value:
           incdec = 'Increase'
         elif float(item.result_value) < item.custom_min_value:
           incdec = 'Decrease'
-        elif float(item.result_value) >= item.custom_min_value and float(item.result_value) <= item.custom_max_value:
-          grade_name = frappe.db.get_value(
-            'MCU Grade',
-            {'item_group': item_group, 'item_code': item_code, 'test_name': item.lab_test_event, 'grade': 'A'},
-            'name'
-          )
-          description = frappe.db.get_value(
-            'MCU Grade',
-            grade_name,
-            'description'
-          )
-        else:
-          None
         if incdec:
-          incdec_category = frappe.db.get_value('MCU Category', {
+          incdec_filter = {
             'item_group': item_group,
-            'item': item_code,
-            'test_name': item.lab_test_event,
-            'selection': incdec
-          }, 'description')
+            'item': item.item,
+            'selection': incdec}
+          if not is_single_result:
+            incdec_filter['test_name'] = lab_test_event
+          incdec_category = frappe.db.get_value('MCU Category', incdec_filter, 'description')
       frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
         'result': item.result_value,
         'incdec': incdec,
         'incdec_category': incdec_category,
         'status': doc.status,
         'grade': grade_name,
-        'description': description
-      })
+        'description': description})
     for selective in doc.custom_selective_test_result:
-      item_group = frappe.db.get_value(
-        'Item', selective.item, 'item_group')
-      mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
+      item_group, is_single_result, lab_test_name = frappe.db.get_value(
+        'Lab Test Template', item.template, 
+        ['item_group', 'custom_is_single_result', 'lab_test_description'])
+      filters = {
         'hidden_item': selective.item,
         'hidden_item_group': item_group,
-        'parent': doctor_result_name,
-        'examination': selective.event
-      }, 'name')
-      incdec = ''
-      incdec_category = ''
-      if selective.normal_value and selective.normal_value != selective.result:
-        incdec = selective.result
-        incdec_category = frappe.db.get_value('MCU Category', {
-            'item_group': item_group,
-            'item': selective.item,
-            'test_name': selective.event,
-            'selection': incdec
-          }, 'description')
+        'parent': doctor_result_name}
+      incdec = incdec_category = lab_test_event = grade_name = description = None
+      if not is_single_result:
+        lab_test_event = item.lab_test_event
+        filters['examination'] = selective.lab_test_event
+        filters['is_item'] = 0
+      else:
+        filters['examination'] = lab_test_name
+        filters['is_item'] = 1
+      mcu_grade_name = frappe.db.get_value('MCU Exam Grade', filters, 'name')
+      grade_name, description, error = assess_mcu_grade(selective.result, item_group, 
+        selective.item, normal_value=selective.normal_value, test_name=lab_test_event)
       frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
         'result': selective.result,
-        'incdec': incdec,
-        'incdec_category': incdec_category,
+        'grade': grade_name,
+        'description': description,
         'status': doc.status,
-        'std_value': selective.normal_value
-      })
+        'std_value': selective.normal_value})
   elif encounter:
     for item in doc.normal_test_items:
       lab_prescription_name = frappe.db.get_value('Lab Prescription', {
@@ -298,6 +173,13 @@ def lab_before_save(doc, method=None):
               item.lab_test_event == formula.test_label):
               item.result_value = result
               break
+#endregion
+#region Lab Test Template
+def lab_test_template_before_save(doc, method=None):
+  if len(doc.custom_selective) + len(doc.normal_test_templates) == 1:
+    doc.custom_is_single_result = 1
+  else:
+    doc.custom_is_single_result = 0
 #endregion
 #region CHILD METHODS
 def is_numeric(value):

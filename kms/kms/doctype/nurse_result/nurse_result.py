@@ -19,67 +19,20 @@ class NurseResult(Document):
 			'appointment': self.appointment,
 			'docstatus': 0
 		}, 'name')
-		previous_item = ''
-		for result in self.result:
-			item_group = frappe.db.get_value('Item', result.item_code, 'item_group')
-			if result.item_code != previous_item:
-				previous_item = result.item_code
-				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-					'hidden_item': result.item_code,
-					'hidden_item_group': item_group,
-					'parent': doctor_result_name,
-					'is_item': 1
-				}, 'name')
-				frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-					'document_type': 'Nurse Result',
-					'document_name': self.name,
-				})
+		for exam in self.examination_item:
+			conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
+			if conclusion_text:
+				conclusion_result = ', '.join(conclusion_text)
+			item_group = frappe.db.get_value('Item', exam.item, 'item_group')
 			mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-				'hidden_item': result.item_code,
+				'hidden_item': exam.item,
 				'hidden_item_group': item_group,
 				'parent': doctor_result_name,
-				'examination': result.result_line
+				'is_item': 0
 			}, 'name')
 			frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-				'result': result.result_check,
-				'uom': result.result_text,
-				'status': self.status
-			})
-		previous_item = ''
-		for non_selective in self.non_selective_result:
-			item_group = frappe.db.get_value('Item', non_selective.item_code, 'item_group')
-			if non_selective.item_code != previous_item:
-				previous_item = non_selective.item_code
-				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-					'hidden_item': non_selective.item_code,
-					'hidden_item_group': item_group,
-					'parent': doctor_result_name,
-					'is_item': 1
-				}, 'name')
-				frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-					'document_type': 'Nurse Result',
-					'document_name': self.name,
-				})
-			mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-				'hidden_item': non_selective.item_code,
-				'hidden_item_group': item_group,
-				'parent': doctor_result_name,
-				'examination': non_selective.test_name
-			}, 'name')
-			incdec = ''
-			incdec_category = ''
-			if (non_selective.min_value != 0 or non_selective.max_value != 0) and non_selective.min_value and non_selective.max_value and non_selective.result_value:
-				incdec = 'Increase' if non_selective.result_value > non_selective.max_value else ('Decrease' if non_selective.result_value < non_selective.min_value else None)
-				if incdec:
-					incdec_category = frappe.db.get_value('MCU Category', {
-						'item_group': item_group,
-						'item': non_selective.item_code,
-						'test_name': non_selective.test_name,
-						'selection': incdec
-					}, 'description')
-			frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-				'result': non_selective.result_value,
-				'incdec': incdec,
-				'incdec_category': incdec_category,
-				'status': self.status
+				'result': conclusion_result,
+				'status': self.get('workflow_state', 'Finished'),
+				'document_type': 'Nurse Result',
+				'document_name': self.name,
 			})
