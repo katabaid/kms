@@ -62,7 +62,6 @@ def lab_on_submit(doc, method=None):
   if doctor_result_name:
     for item in doc.normal_test_items:
       if item.lab_test_name == 'ESR':
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
       item_group, is_single_result = frappe.db.get_value(
         'Lab Test Template', item.template or item.lab_test_name, 
         ['lab_test_group', 'custom_is_single_result'])
@@ -78,13 +77,10 @@ def lab_on_submit(doc, method=None):
       else:
         filters['examination'] = item.lab_test_name
         filters['is_item'] = 1
-      print(filters)
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', filters, 'name')
-      print(mcu_grade_name)
       result_value = float(item.result_value.replace(',', '.'))
       grade_name, description, error = assess_mcu_grade(result_value, item_group, item.custom_item, 
         min_value=item.custom_min_value, max_value=item.custom_max_value, test_name=lab_test_event)
-      print(item.custom_item, error, result_value, item.custom_min_value, item.custom_max_value)
       if result_value > item.custom_max_value:
         incdec = 'Increase'
       elif result_value < item.custom_min_value:

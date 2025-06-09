@@ -134,7 +134,7 @@ const apply_cell_styling = (frm, row, table_name) => {
   let $row = $(frm.fields_dict[table_name].grid.grid_rows_by_docname[row.name]?.row);
   if (!$row) return;
   if (row.result && (row.min_value || row.max_value) && (row.min_value > 0 || row.max_value > 0)) {
-    let resultValue = parseFloat(row.result);
+    let resultValue = parseFloat(row.result.replace(',', '.'));
     let minValue = parseFloat(row.min_value);
     let maxValue = parseFloat(row.max_value);
     if (resultValue < minValue || resultValue > maxValue) {

@@ -205,7 +205,6 @@ kms.utils.fetch_questionnaire_for_doctype = function(frm, name_field_key, questi
     const doc_name = frm.doc[name_field_key];
 
     if (frm.doc.__is_local || !doc_name) {
-        // console.log("Document is local or name_field_key did not yield a document name. Clearing questionnaire.");
         _clear_kms_questionnaire_datatable(frm, target_wrapper_selector);
         return;
     }
