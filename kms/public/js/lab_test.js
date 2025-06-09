@@ -217,7 +217,7 @@ frappe.ui.form.on('Selective Test Template',{
 
 const apply_cell_styling = (frm, row) => {
   if (row.result_value && (row.custom_min_value || row.custom_max_value)) {
-    let resultValue = parseFloat(row.result_value);
+    let resultValue = parseFloat(row.result_value.replace(',', '.'));
     let minValue = parseFloat(row.custom_min_value);
     let maxValue = parseFloat(row.custom_max_value);
     let $row = $(frm.fields_dict["normal_test_items"].grid.grid_rows_by_docname[row.name].row);

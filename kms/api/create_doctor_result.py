@@ -118,39 +118,42 @@ def __create_doctor_category(appt, item_group):
 			'document_type': 'Doctor Examination', 
 			'document_name': item.parent
 		}])
+		result_index = len(result) - 1
 		is_single_result = frappe.db.get_value(
 			'Doctor Examination Template', item['template'], 'is_single_result')
 		if is_single_result:
 			if item.item in [item['item_code'] for item in custom_results]:
+				tab = next((cr['tab'] for cr in custom_results if cr['item_code'] == item.item), None)
+				single_result = ___build_doctor_tab_result(item.parent, item.item, item_group, tab)
+				if single_result:
+					result[result_index][1].update(single_result)
+					if tab != 'dental_examination':
+						if gradable:
+							grade, description, _ = assess_mcu_grade(
+								result[result_index][1].get('result', ''), item_group, item['item'],
+								min_value=result[result_index][1].get('min_value', 0), 
+								max_value=result[result_index][1].get('max_value', 0),
+								normal_value=result[result_index][1].get('normal_value', 0))
+							if grade:
+								result[result_index][1].update({'grade': grade, 'description': description})
+						if result[result_index][1].get('normal_value'):
+							result[result_index][1].pop('normal_value')
+			else:
 				de_doc = frappe.get_doc('Doctor Examination', item.parent)
 				single_result = ___find_single_item_result(
 					de_doc.result, de_doc.non_selective_result, item['item'])
 				if single_result:
-					result[0][1].update(single_result)
+					result[result_index][1].update(single_result)
 					if gradable:
-						grade, description = assess_mcu_grade(
-							result[0][1].get('result', ''), item_group, item['item'],
-							min_value=result[0][1].get('min_value', 0), max_value=result[0][1].get('max_value', 0),
-							normal_value=result[0][1].get('normal_value', 0))
+						grade, description, _ = assess_mcu_grade(
+							result[result_index][1].get('result', ''), item_group, item['item'],
+							min_value=result[result_index][1].get('min_value', 0), 
+							max_value=result[result_index][1].get('max_value', 0),
+							normal_value=result[result_index][1].get('normal_value', 0))
 						if grade:
-							result[0][1].update({'grade': grade, 'description': description})
-					if result[0][1].get('normal_value'):
-						result[0][1].pop('normal_value')
-			else:
-				tab = next((cr['tab'] for cr in custom_results if cr['item_code'] == item.item), None)
-				single_result = ___build_doctor_tab_result(item.parent, item.item, item_group, tab)
-				if single_result:
-					result[0][1].update(single_result)
-					if tab != 'dental_examination':
-						if gradable:
-							grade, description = assess_mcu_grade(
-								result[0][1].get('result', ''), item_group, item['item'],
-								min_value=result[0][1].get('min_value', 0), max_value=result[0][1].get('max_value', 0),
-								normal_value=result[0][1].get('normal_value', 0))
-							if grade:
-								result[0][1].update({'grade': grade, 'description': description})
-						if result[0][1].get('normal_value'):
-							result[0][1].pop('normal_value')
+							result[result_index][1].update({'grade': grade, 'description': description})
+					if result[result_index][1].get('normal_value'):
+						result[result_index][1].pop('normal_value')
 		else:
 			if item.item in [item['item_code'] for item in custom_results]:
 				tab = next((cr['tab'] for cr in custom_results if cr['item_code'] == item.item), None)
@@ -249,7 +252,7 @@ def __create_nurse_category(appointment, item, item_group, bp):
 			if single_result:
 				result[0][1].update(single_result)
 				if item.get('item_gradable', 0):
-					grade, description = assess_mcu_grade(
+					grade, description, _ = assess_mcu_grade(
 						result[0][1].get('result', ''), item_group, item['examination_item'],
 						min_value=result[0][1].get('min_value', 0), max_value=result[0][1].get('max_value', 0),
 						normal_value=result[0][1].get('normal_value', 0))
@@ -275,7 +278,7 @@ def __create_radiology_category(appointment, item, item_group):
 		{
 			'parent': ['in', 
 				frappe.db.get_all('Radiology Result', pluck='name', 
-					filters={'appointment': appointment, 'docstatus': 1})],
+					filters={'appointment': appointment, 'docstatus': ['in', [1, 0]]})],
 			'item': item['examination_item']
 		}, 'parent')
 	r_doc = frappe.get_doc('Radiology Result', doc_no)
@@ -303,7 +306,7 @@ def ___fetch_lab_result_per_item(appointment, item_code, item_group):
 			(SELECT description FROM `tabMCU Category`
 				WHERE name = CONCAT_WS('.', %(group)s, %(item)s, result_line, incdec)) AS incdec_desc,
 			IF(STRCMP(incdec,'---'), NULL,
-				IF(gradable, CONCAT_WS('.',%(group)s, %(item)s, CONCAT(result_line,'-A')), 
+				IF(gradable AND result_text IS NOT NULL, CONCAT_WS('.',%(group)s, %(item)s, CONCAT(result_line,'-A')), 
 					NULL)) AS grade
 		FROM (
 			SELECT tntr.idx, lab_test_event AS result_line, custom_min_value min_value, 
@@ -333,7 +336,7 @@ def ___fetch_lab_result_per_item(appointment, item_code, item_group):
 		SELECT idx, result_line, NULL, NULL, IF(text_value, CONCAT(result_text, ': ', text_value), result_text), 
 			NULL, doc, status, gradable, NULL, NULL,
 			IF(STRCMP(result_text, normal_value), NULL, 
-				IF(gradable, CONCAT_WS('.',%(group)s, %(item)s, CONCAT(result_line,'-A')), NULL)) 
+				IF(gradable AND result_text IS NOT NULL, CONCAT_WS('.',%(group)s, %(item)s, CONCAT(result_line,'-A')), NULL)) 
 		FROM (SELECT tstt.idx + 500 AS idx, event AS result_line, result AS result_text, tlt.name AS doc, 
 			tlt.status, tstt.normal_value, tstt.text_value,
 			IFNULL((SELECT 1 FROM `tabMCU Grade` 
@@ -494,7 +497,7 @@ def ____fetch_nurse_result_per_item(appointment, item_code, item_group):
 			AND EXISTS (SELECT 1 FROM `tabNurse Examination Template` tnet 
 				WHERE tnet.item_code = tnesr.item_code AND tnerq.template = tnet.item_name)) AS b
 		UNION
-		SELECT tce.idx+200, test_label, NULL, NULL, FORMAT(result, 2), NULL, tne.name, tnerq.status, 
+		SELECT tce.idx+200, test_label, NULL, NULL, result, NULL, tne.name, tnerq.status, 
 			0, NULL, NULL, NULL
 		FROM `tabCalculated Exam` tce, `tabNurse Examination` tne, `tabNurse Examination Request` tnerq
 		WHERE tne.name = tce.parent AND tne.appointment = %(appt)s AND tne.docstatus = 1 
