@@ -78,6 +78,8 @@ frappe.ui.form.on('Lab Test', {
 		if (frm.doc.custom_selective_test_result) {
 			$.each(frm.doc.custom_selective_test_result, (idx, row) => {
 				let field = frappe.meta.get_docfield('Selective Test Template', 'text_value', row.name);
+				let result_column = frappe.meta.get_docfield('Selective Test Template', 'result', row.name);
+				if (result_column) result_column.read_only = 0;
 				if (field) {
 					field.read_only = (row.result == row.normal_value) ? 1 : 0;
 					// Clear value if it's read-only initially and values match
@@ -166,7 +168,10 @@ frappe.ui.form.on('Lab Test', {
 });
 const hide_standard_buttons = (frm, fields) => {
 	fields.forEach((field) => {
-		let child = frm.fields_dict[field];
+		frm.set_df_property(field, 'cannot_add_rows', true);
+		frm.set_df_property(field, 'cannot_delete_rows', true);
+		frm.set_df_property(field, 'cannot_delete_all_rows', true);
+		/* let child = frm.fields_dict[field];
 		if (child) {
 			if (child.grid.grid_rows) {
 				setTimeout(()=>{
@@ -180,7 +185,7 @@ const hide_standard_buttons = (frm, fields) => {
 					});
 				});
 			}
-		}
+		} */
 	});
 }
 

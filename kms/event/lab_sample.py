@@ -61,10 +61,13 @@ def lab_on_submit(doc, method=None):
     'Sample Collection', doc.custom_sample_collection, 'custom_encounter')
   if doctor_result_name:
     for item in doc.normal_test_items:
+      if item.lab_test_name == 'ESR':
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
       item_group, is_single_result = frappe.db.get_value(
-        'Lab Test Template', item.template, ['item_group', 'custom_is_single_result'])
+        'Lab Test Template', item.template or item.lab_test_name, 
+        ['lab_test_group', 'custom_is_single_result'])
       filters = {
-        'hidden_item': item.item,
+        'hidden_item': item.custom_item,
         'hidden_item_group': item_group,
         'parent': doctor_result_name}
       incdec = incdec_category = lab_test_event = grade_name = description = None
@@ -75,24 +78,27 @@ def lab_on_submit(doc, method=None):
       else:
         filters['examination'] = item.lab_test_name
         filters['is_item'] = 1
+      print(filters)
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', filters, 'name')
-      grade_name, description, error = assess_mcu_grade(item.result_value, item_group, item.item, 
+      print(mcu_grade_name)
+      result_value = float(item.result_value.replace(',', '.'))
+      grade_name, description, error = assess_mcu_grade(result_value, item_group, item.custom_item, 
         min_value=item.custom_min_value, max_value=item.custom_max_value, test_name=lab_test_event)
-      if not error:
-        if float(item.result_value) > item.custom_max_value:
-          incdec = 'Increase'
-        elif float(item.result_value) < item.custom_min_value:
-          incdec = 'Decrease'
-        if incdec:
-          incdec_filter = {
-            'item_group': item_group,
-            'item': item.item,
-            'selection': incdec}
-          if not is_single_result:
-            incdec_filter['test_name'] = lab_test_event
-          incdec_category = frappe.db.get_value('MCU Category', incdec_filter, 'description')
+      print(item.custom_item, error, result_value, item.custom_min_value, item.custom_max_value)
+      if result_value > item.custom_max_value:
+        incdec = 'Increase'
+      elif result_value < item.custom_min_value:
+        incdec = 'Decrease'
+      if incdec:
+        incdec_filter = {
+          'item_group': item_group,
+          'item': item.custom_item,
+          'selection': incdec}
+        if not is_single_result:
+          incdec_filter['test_name'] = lab_test_event
+        incdec_category = frappe.db.get_value('MCU Category', incdec_filter, 'description')
       frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-        'result': item.result_value,
+        'result': result_value,
         'incdec': incdec,
         'incdec_category': incdec_category,
         'status': doc.status,
@@ -100,16 +106,16 @@ def lab_on_submit(doc, method=None):
         'description': description})
     for selective in doc.custom_selective_test_result:
       item_group, is_single_result, lab_test_name = frappe.db.get_value(
-        'Lab Test Template', item.template, 
-        ['item_group', 'custom_is_single_result', 'lab_test_description'])
+        'Lab Test Template', {'item': selective.item}, 
+        ['lab_test_group', 'custom_is_single_result', 'lab_test_description'])
       filters = {
         'hidden_item': selective.item,
         'hidden_item_group': item_group,
         'parent': doctor_result_name}
       incdec = incdec_category = lab_test_event = grade_name = description = None
       if not is_single_result:
-        lab_test_event = item.lab_test_event
-        filters['examination'] = selective.lab_test_event
+        lab_test_event = selective.event
+        filters['examination'] = selective.event
         filters['is_item'] = 0
       else:
         filters['examination'] = lab_test_name
@@ -176,10 +182,10 @@ def lab_before_save(doc, method=None):
 #endregion
 #region Lab Test Template
 def lab_test_template_before_save(doc, method=None):
-  if len(doc.custom_selective) + len(doc.normal_test_templates) == 1:
-    doc.custom_is_single_result = 1
-  else:
-    doc.custom_is_single_result = 0
+  normal_events = {d.lab_test_event for d in doc.normal_test_templates if d.lab_test_event}
+  custom_events = {d.event for d in doc.custom_selective if d.event}
+  total_distinct_events = len(normal_events.union(custom_events))
+  doc.custom_is_single_result = 1 if total_distinct_events == 1 else 0
 #endregion
 #region CHILD METHODS
 def is_numeric(value):
