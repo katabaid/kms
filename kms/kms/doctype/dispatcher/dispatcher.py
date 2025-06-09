@@ -235,7 +235,7 @@ def finish_exam(hsu, status, doctype, docname):
 			if frappe.db.get_value('MCU Queue Pooling', qp, 'service_unit') in related_rooms:
 				status_to_set = 'Additional or Retest Request' if exists_to_retest else status
 				frappe.db.set_value('MCU Queue Pooling', qp, 'status', status_to_set)
-		if room_count == final_count+1:
+		if  final_count+1 >= room_count:
 			frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
 	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
 		match doctype:

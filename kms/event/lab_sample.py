@@ -61,7 +61,6 @@ def lab_on_submit(doc, method=None):
     'Sample Collection', doc.custom_sample_collection, 'custom_encounter')
   if doctor_result_name:
     for item in doc.normal_test_items:
-      if item.lab_test_name == 'ESR':
       item_group, is_single_result = frappe.db.get_value(
         'Lab Test Template', item.template or item.lab_test_name, 
         ['lab_test_group', 'custom_is_single_result'])

@@ -28,7 +28,7 @@ class NurseResult(Document):
 				'hidden_item': exam.item,
 				'hidden_item_group': item_group,
 				'parent': doctor_result_name,
-				'is_item': 0
+				'is_item': 1
 			}, 'name')
 			frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
 				'result': conclusion_result,
