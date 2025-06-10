@@ -1287,19 +1287,6 @@
   "user": "ardel@kyoai123.co.id"
  },
  {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - ECG 1",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-20 15:05:52.434077",
-  "name": "bm4obgk5od",
-  "user": "eko@kyoai123.co.id"
- },
- {
   "allow": "Employee",
   "applicable_for": null,
   "apply_to_all_doctypes": 1,
@@ -1326,19 +1313,6 @@
   "user": "windy@kyoai123.co.id"
  },
  {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Dental",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-23 16:39:15.639284",
-  "name": "5l490mt1k6",
-  "user": "Administrator"
- },
- {
   "allow": "Healthcare Practitioner",
   "applicable_for": null,
   "apply_to_all_doctypes": 1,
@@ -1349,6 +1323,19 @@
   "is_default": 0,
   "modified": "2025-05-25 16:50:56.672412",
   "name": "40693ms0uk",
+  "user": "Administrator"
+ },
+ {
+  "allow": "Healthcare Service Unit",
+  "applicable_for": null,
+  "apply_to_all_doctypes": 1,
+  "docstatus": 0,
+  "doctype": "User Permission",
+  "for_value": "JMC - Treadmill 1",
+  "hide_descendants": 0,
+  "is_default": 1,
+  "modified": "2025-06-09 11:20:35.926156",
+  "name": "im7s94nb1l",
   "user": "Administrator"
  }
 ]
