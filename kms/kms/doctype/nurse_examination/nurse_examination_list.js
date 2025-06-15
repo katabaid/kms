@@ -47,6 +47,7 @@ async function open_queue_dialog(listview){
       target: listview,
       date_field: 'date',
       setters: {
+        date: frappe.datetime.now_date(),
         patient: null,
         priority: null,
         queue_no: null,
@@ -57,6 +58,7 @@ async function open_queue_dialog(listview){
             status: ['in', ['Wait for Room Assignment', 'Additional or Retest Request']],
             service_unit: healthcare_service_unit,
             in_room: 0,
+            is_meal_time: 0,
           }
         }
       },

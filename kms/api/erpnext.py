@@ -299,14 +299,22 @@ def _check_appointment_eligibility(name: str) -> list[dict]:
 
 @frappe.whitelist()
 def check_out_appointment(name):
-  frappe.db.set_value('Patient Appointment', name, 'status', 'Checked Out')
-  mcu = frappe.db.get_value('Patient Appointment', name, 'mcu')
-  if mcu:
-    frappe.call('kms.api.create_doctor_result.create_doctor_result', appointment = name)
+  doc = frappe.get_doc('Patient Appointment', name)
+  status = 'Checked Out'
+  if doc.mcu:
+    rescheduled = any(item.status == 'Rescheduled' for item in doc.custom_mcu_exam_items)
+    if not rescheduled and doc.custom_additional_mcu_items:
+      rescheduled = any(item.status == 'Rescheduled' for item in doc.custom_additional_mcu_items)
+    if rescheduled:
+      status = 'Rescheduled'
+    else:
+      frappe.call('kms.api.create_doctor_result.create_doctor_result', appointment=name)    
+  frappe.db.set_value('Patient Appointment', name, 'status', status)
 
 @frappe.whitelist()
 def get_assigned_room(date):
-  return frappe.db.get_all('Room Assignment', filters = {'date': date, 'assigned': 1}, pluck='healthcare_service_unit')
+  return frappe.db.get_all(
+    'Room Assignment', filters = {'date': date, 'assigned': 1}, pluck='healthcare_service_unit')
 
 @frappe.whitelist()
 def set_item_price(item_code, price_list, rate):

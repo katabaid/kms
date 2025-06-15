@@ -154,7 +154,7 @@ frappe.ui.form.on('Nurse Examination Result',{
 
 const apply_cell_styling = (frm, row) => {
   if (row.result_value && row.min_value && row.max_value) {
-    let resultValue = parseFloat(row.result_value);
+    let resultValue = parseFloat(row.result_value.replace(',', '.'));
     let minValue = parseFloat(row.min_value);
     let maxValue = parseFloat(row.max_value);
 		let $row = $(frm.fields_dict["non_selective_result"].grid.grid_rows_by_docname[row.name].row);

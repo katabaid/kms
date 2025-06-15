@@ -110,12 +110,15 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_check_in_button(frm) {
-    if(frm.doc.status === 'Open'||frm.doc.status === 'Scheduled'){
+    if(frm.doc.status === 'Open'||frm.doc.status === 'Scheduled'||frm.doc.status === 'Rescheduled'){
       frm.add_custom_button(
         'Check In',
         () => {
           if(frm.doc.status === 'Scheduled'){
             frm.set_value('appointment_date', frappe.datetime.get_today());
+          }
+          if(frm.doc.status === 'Rescheduled'){
+            frm.set_value('custom_rescheduled_date', frappe.datetime.get_today());
           }
           frm.set_value('status', 'Checked In');
           frm.doc.custom_mcu_exam_items.forEach(row => {

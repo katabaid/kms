@@ -13,7 +13,7 @@ class DoctorResult(Document):
 			row.description.strip()
 			for child_name in self.child_tables
 			for row in (self.get(child_name) or [])
-			if row.grade != "A" and row.description
+			if row.grade and row.grade.split('-')[-1] != "A" and row.description
     }
 		dental_comments = _get_dental_comments(self.appointment) or []
 		self.copied_remark = "\n".join(sorted(remarks) + dental_comments)
@@ -188,19 +188,19 @@ class DoctorResult(Document):
 			})
 
 	def process_group_exam(self):
-		def _get_dental_grade(appt, item):
-			dental_grade = ''
-			if frappe.db.exists('MCU Appointment', {'examination_item': item, 'parent': appt}):
-				de_names = frappe.db.get_all(
-					'Doctor Examination', filters={'appointment': appt, 'docstatus': 1}, pluck='name')
-				for de in de_names:
-					dental_found = frappe.db.exists(
-						'Doctor Examination Request', {'parent': de, 'item': item})
-					if dental_found:
-						dental_grade = frappe.db.get_value('Dental Grading', {'parent': de}, 'grade')
-						return dental_grade
+		#def _get_dental_grade(appt, item):
+		#	dental_grade = ''
+		#	if frappe.db.exists('MCU Appointment', {'examination_item': item, 'parent': appt}):
+		#		de_names = frappe.db.get_all(
+		#			'Doctor Examination', filters={'appointment': appt, 'docstatus': 1}, pluck='name')
+		#		for de in de_names:
+		#			dental_found = frappe.db.exists(
+		#				'Doctor Examination Request', {'parent': de, 'item': item})
+		#			if dental_found:
+		#				dental_grade = frappe.db.get_value('Dental Grading', {'parent': de}, 'grade')
+		#				return dental_grade
 
-		dental_exam = frappe.db.get_single_value('MCU Settings', 'dental_examination', cache=True)
+		#dental_exam = frappe.db.get_single_value('MCU Settings', 'dental_examination', cache=True)
 		self.group_exam = []
 		current_results = []
 		counter = 0
@@ -220,17 +220,17 @@ class DoctorResult(Document):
 						})
 				except Exception as e:
 					frappe.log_error(f"Error processing {table} row: {e}")
-		if current_results:
-			dental_grade = _get_dental_grade(self.appointment)
-			if dental_grade:
-				item_group = frappe.db.get_value('Item', dental_exam, 'item_group')
-				bundle_position = frappe.get_value('Item Group', item_group, 'custom_bundle_position')
-				current_results.append({
-					'contents': item_group,
-					'result': dental_grade,
-					'bundle_position': bundle_position,
-					'idx': 99999,
-				})
+		#if current_results:
+		#	dental_grade = _get_dental_grade(self.appointment)
+		#	if dental_grade:
+		#		item_group = frappe.db.get_value('Item', dental_exam, 'item_group')
+		#		bundle_position = frappe.get_value('Item Group', item_group, 'custom_bundle_position')
+		#		current_results.append({
+		#			'contents': item_group,
+		#			'result': dental_grade,
+		#			'bundle_position': bundle_position,
+		#			'idx': 99999,
+		#		})
 
 		sorted_results = sorted(
 			current_results,
