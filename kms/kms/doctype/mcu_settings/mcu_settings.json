@@ -59,7 +59,14 @@
   "billing_tab",
   "local_price_list",
   "column_break_ajlq",
-  "expatriate_price_list"
+  "expatriate_price_list",
+  "print_format_tab",
+  "radiology_result_section",
+  "omd_print_format",
+  "column_break_topm",
+  "usg_print_format",
+  "column_break_oeqr",
+  "thorax_print_format"
  ],
  "fields": [
   {
@@ -383,12 +390,48 @@
    "fieldname": "queue_pooling_submit_delay",
    "fieldtype": "Int",
    "label": "Queue Pooling Submit Delay"
+  },
+  {
+   "fieldname": "print_format_tab",
+   "fieldtype": "Tab Break",
+   "label": "Print Format"
+  },
+  {
+   "fieldname": "radiology_result_section",
+   "fieldtype": "Section Break",
+   "label": "Radiology Result"
+  },
+  {
+   "fieldname": "omd_print_format",
+   "fieldtype": "Table MultiSelect",
+   "label": "OMD Print Format",
+   "options": "MCU Radiology Format"
+  },
+  {
+   "fieldname": "column_break_topm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "usg_print_format",
+   "fieldtype": "Table MultiSelect",
+   "label": "USG Print Format",
+   "options": "MCU Radiology Format"
+  },
+  {
+   "fieldname": "column_break_oeqr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "thorax_print_format",
+   "fieldtype": "Table MultiSelect",
+   "label": "Thorax Print Format",
+   "options": "MCU Radiology Format"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-22 17:24:37.624336",
+ "modified": "2025-06-17 21:53:19.560114",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
