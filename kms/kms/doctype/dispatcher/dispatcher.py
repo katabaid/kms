@@ -205,7 +205,7 @@ def finish_exam(hsu, status, doctype, docname):
 		doc.save(ignore_permissions=True)
 	elif queue_pooling_id:
 		item_status = ['Started', 'To Retest', 'To be Added']
-		if not frappe.db.exists('MCU Appointment', filters = {'parent': exam_id, status: ['in', item_status]}):
+		if not frappe.db.exists('MCU Appointment', {'parent': exam_id, status: ['in', item_status]}):
 			frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
 		qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
 		meal_time = now()

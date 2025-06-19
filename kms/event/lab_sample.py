@@ -77,7 +77,8 @@ def lab_on_submit(doc, method=None):
         filters['examination'] = item.lab_test_name
         filters['is_item'] = 1
       mcu_grade_name = frappe.db.get_value('MCU Exam Grade', filters, 'name')
-      result_value = float(item.result_value.replace(',', '.'))
+      result_value = float(item.result_value.replace(',', '.') if 
+        isinstance(item.result_value, str) else item.result_value)
       grade_name, description, error = assess_mcu_grade(result_value, item_group, item.custom_item, 
         min_value=item.custom_min_value, max_value=item.custom_max_value, test_name=lab_test_event)
       if result_value > item.custom_max_value:

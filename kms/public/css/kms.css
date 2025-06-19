@@ -11,21 +11,38 @@
 /* Hide specific custom button dropdown items in Sales Invoice view by targeting parent LI */
 .page-container[data-page-route="Sales Invoice"] .dropdown-menu li:has(> a > span.menu-item-label[data-label="Get%20Items%20From%20%3E%20Healthcare%20Services"]),
 .page-container[data-page-route="Sales Invoice"] .dropdown-menu li:has(> a > span.menu-item-label[data-label="Get%20Items%20From%20%3E%20Prescriptions"]) {
-    display: none !important;
+  display: none !important;
 }
 
 /* Hide the default secondary button (e.g., "Create New...") in modal dialogs */
 .modal-footer .btn-modal-secondary {
-    display: none !important;
+  display: none !important;
 }
 
 /* Styles for questionnaire table question cells to improve wrapping and readability */
 .questionnaire-question-cell {
-    white-space: normal !important; /* Ensure text wraps */
-    word-break: break-word;         /* Allow long words/strings to break */
-    line-height: 1.4;               /* Improve readability for multi-line text */
-    /* You might also consider:
-    overflow-wrap: break-word;  -- Another property for word breaking
-    hyphens: auto;              -- If you want hyphenation (browser support varies)
-    */
+  white-space: normal !important; /* Ensure text wraps */
+  word-break: break-word;         /* Allow long words/strings to break */
+  line-height: 1.4;               /* Improve readability for multi-line text */
+  /* You might also consider:
+  overflow-wrap: break-word;  -- Another property for word breaking
+  hyphens: auto;              -- If you want hyphenation (browser support varies)
+  */
+}
+
+/* Remove the "Try the new Print Designer" message in the Print*/
+#page-print .custom-actions .inner-page-message {
+  display: none !important;
+}
+
+/* Remove the Full Page and PDF buttons in the Print */
+#page-print .custom-actions button:nth-of-type(1),
+#page-print .custom-actions button:nth-of-type(2) {
+  display: none !important;
+}
+
+/* Remove Full Page and PDF from the dropdown (in small screens) in the Print*/
+#page-print .dropdown-menu .user-action:has([data-label="Full%20Page"]),
+#page-print .dropdown-menu .user-action:has([data-label="PDF"]) {
+  display: none !important;
 }
