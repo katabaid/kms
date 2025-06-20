@@ -49,7 +49,7 @@ def reset_meal_status():
     return get_datetime(t) + timedelta(minutes=interval) < now
   for doctype, filters, field, update in [
     ('Dispatcher', {'status': 'Meal Time'}, 'meal_time', lambda doc: setattr(doc, 'status', 'In Queue')),
-    ('MCU Queue Pooling', {'is_meal_time': 1}, 'meal_time', lambda doc: setattr(doc, 'is_meal_time', 0))
+    ('MCU Queue Pooling', {'meal_time_block': 1}, 'meal_time', lambda doc: setattr(doc, 'meal_time_block', 0))
   ]:
     for name in frappe.db.get_all(doctype, filters=filters, pluck='name'):
       doc = frappe.get_doc(doctype, name)

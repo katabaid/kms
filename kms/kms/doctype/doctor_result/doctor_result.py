@@ -56,79 +56,119 @@ class DoctorResult(Document):
 		counter = 0
 		for table in self.child_tables:
 			previous_item = ''
+			previous_group = ''
 			for row in getattr(self, table, []):
-				try:
+				#try:
 					item_template = ''
 					if row.parentfield == 'nurse_grade':
 						item_template = frappe.get_value(
 							'Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
 					if row.hidden_item:
+						print(counter, row.hidden_item)
 						if (((item_template and item_template not in vital_sign_templates()) or not item_template)
 							and (row.hidden_item != physical_examination())
 						):
 							counter += 1
-							if previous_item and previous_item != row.hidden_item:
-								item_all_inputs = [
-									p.incdec_category for p in getattr(self, table, []) 
-									if p.hidden_item == previous_item and p.incdec_category]
-								comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
-								current_results.append({
-									'examination': f'Comment: {comments}',
-									'bundle_position': bundle_position if bundle_position else 9999,
-									'idx': counter,
-									'header': 'Item',
-									'item_group': row.hidden_item_group,
-									'item': row.hidden_item
-								})
-								previous_item = row.hidden_item
-								counter += 1
-							if not previous_item:
-								previous_item = row.hidden_item
+							#if previous_item and previous_item != row.hidden_item:
+							#	item_all_inputs = [
+							#		p.incdec_category for p in getattr(self, table, []) 
+							#		if p.hidden_item == previous_item and p.incdec_category]
+							#	comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
+							#	current_results.append({
+							#		'examination': f'Comment: {comments}',
+							#		'bundle_position': bundle_position if bundle_position else 9999,
+							#		'idx': counter,
+							#		'header': 'Item',
+							#		'item_group': row.hidden_item_group,
+							#		'item': row.hidden_item
+							#	})
+							#	previous_item = row.hidden_item
+							#	counter += 1
+							#if not previous_item:
+							#	previous_item = row.hidden_item
 							bundle_position = frappe.get_value(
 								'Item', row.hidden_item, 'custom_bundle_position')
-							if row.incdec == 'Decrease':
-								arrow = '\u2193'
-							elif row.incdec == 'Increase':
-								arrow = '\u2191'
+							arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
+							std_value = row.std_value
+							if not row.hidden_item and row.hidden_item_group:
+								examination = row.hidden_item_group
+								header = 'Group'
+							elif row.hidden_item and row.hidden_item_group and row.is_item:
+								examination = row.examination
+								if row.result:
+									header = None
+									if examination == 'HbA1c':
+										examination += '<br/>Pre - Diabetic<br/>Diabetic'
+										std_value = '&lt; 5.7<br/>5.7 - 6.5<br/>&#8805; 6.5'
+									elif examination == 'Typoid IgM (Tubex)':
+										examination += '<br/>Negative (does not indicate current typhoid fever infection)'
+										examination += '<br/>Inconclusive (repeat the test if still inconclusive, repeat sampling at a later date)'
+										examination += '<br/>Positive (The higher score the stronger is the indication of current typhoid fever infection)'
+										std_value = '&#8804; 2<br/><br/>&gt;2 - &lt;4<br/>4 - 10'
+									elif examination == 'Sputum Direct BTA':
+										examination += '<ul><li>Negative (Tidak ditemukan BTA / 100 Lapang Pandang)</li>'
+										examination += '<li>Scanty (1 - 9 BTA /100 Lapang Pandang)</li>'
+										examination += '<li>(1+) (10 - 99 BTA / 100 Lapang Pandang)</li>'
+										examination += '<li>(2+) (1 - 10 BTA / Lapang Pandang)</li>'
+										examination += '<li>(3+) (>10 BTA / Lapang Pandang)</li></ul>'
+									elif examination == 'Stool Culture' or examination == 'Rectal Swab (Swab Culture)':
+										examination += '<ul><li>Salmonella</li>'
+										examination += '<li>Shigella</li>'
+										examination += '<li>Vibrio</li>'
+										examination += '<li>Escherichia coli O157H7</li></ul>'
+								else:
+									header = 'Item'
 							else:
-								arrow = ''
+								examination = row.examination
+								header = None
 							if isinstance(row.result, (int, float)):
 								row_result = int(row.result) if row.result.is_integer() else row.result
 							else:
 								row_result = row.result
 							current_results.append({
-								'examination': (
-									row.hidden_item_group if not row.hidden_item and row.hidden_item_group else 
-									row.examination),
+								'examination': examination,
 								'result': (row_result or '') + ' ' + arrow,
 								'bundle_position': bundle_position if bundle_position else 9999,
 								'idx': counter,
 								'uom': row.uom,
-								'std_value': row.std_value,
-								'header': (
-									'Group' if not row.hidden_item and row.hidden_item_group else 
-									'Item' if row.hidden_item and row.hidden_item_group and row.is_item else 
-									None),
+								'std_value': std_value,
+								'header': header,
 								'item_group': row.hidden_item_group,
 								'item': row.hidden_item
 							})
 					else:
 						counter += 1
-						if counter > 1:
+						print(counter)
+						#if counter > 1:
+						#	item_all_inputs = [
+						#		p.incdec_category for p in getattr(self, table, []) 
+						#		if p.hidden_item == previous_item and p.incdec_category]
+						#	comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
+						#	current_results.append({
+						#		'examination': f'Comment: {comments}',
+						#		'bundle_position': bundle_position if bundle_position else 9999,
+						#		'idx': counter,
+						#		'header': 'Item',
+						#		'item_group': row.hidden_item_group,
+						#		'item': row.hidden_item
+						#	})
+						#	previous_item = row.hidden_item
+						#	counter += 1
+						if previous_group and previous_group != row.hidden_item_group:
 							item_all_inputs = [
 								p.incdec_category for p in getattr(self, table, []) 
-								if p.hidden_item == previous_item and p.incdec_category]
+								if p.hidden_item_group == previous_group and p.incdec_category]
 							comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
 							current_results.append({
 								'examination': f'Comment: {comments}',
 								'bundle_position': bundle_position if bundle_position else 9999,
 								'idx': counter,
-								'header': 'Item',
-								'item_group': row.hidden_item_group,
-								'item': row.hidden_item
+								'header': 'Group'
 							})
-							previous_item = row.hidden_item
+							previous_group = row.hidden_item_group
 							counter += 1
+						if not previous_group:
+							previous_group = row.hidden_item_group
 						bundle_position = frappe.get_value(
 							'Item Group', row.hidden_item_group, 'custom_bundle_position')
 						current_results.append({
@@ -137,8 +177,8 @@ class DoctorResult(Document):
 							'idx': counter,
 							'header': 'Group'
 						})
-				except Exception as e:
-					frappe.log_error(f"Error processing {table} row: {e}")
+				#except Exception as e:
+				#	frappe.log_error(f"Error processing {table} row: {e}")
 		sorted_results = sorted(
 			current_results,
 			key = lambda x: (x['bundle_position'], x['idx'])
@@ -188,19 +228,6 @@ class DoctorResult(Document):
 			})
 
 	def process_group_exam(self):
-		#def _get_dental_grade(appt, item):
-		#	dental_grade = ''
-		#	if frappe.db.exists('MCU Appointment', {'examination_item': item, 'parent': appt}):
-		#		de_names = frappe.db.get_all(
-		#			'Doctor Examination', filters={'appointment': appt, 'docstatus': 1}, pluck='name')
-		#		for de in de_names:
-		#			dental_found = frappe.db.exists(
-		#				'Doctor Examination Request', {'parent': de, 'item': item})
-		#			if dental_found:
-		#				dental_grade = frappe.db.get_value('Dental Grading', {'parent': de}, 'grade')
-		#				return dental_grade
-
-		#dental_exam = frappe.db.get_single_value('MCU Settings', 'dental_examination', cache=True)
 		self.group_exam = []
 		current_results = []
 		counter = 0
@@ -220,18 +247,6 @@ class DoctorResult(Document):
 						})
 				except Exception as e:
 					frappe.log_error(f"Error processing {table} row: {e}")
-		#if current_results:
-		#	dental_grade = _get_dental_grade(self.appointment)
-		#	if dental_grade:
-		#		item_group = frappe.db.get_value('Item', dental_exam, 'item_group')
-		#		bundle_position = frappe.get_value('Item Group', item_group, 'custom_bundle_position')
-		#		current_results.append({
-		#			'contents': item_group,
-		#			'result': dental_grade,
-		#			'bundle_position': bundle_position,
-		#			'idx': 99999,
-		#		})
-
 		sorted_results = sorted(
 			current_results,
 			key = lambda x: (x['bundle_position'], x['idx'])
@@ -248,7 +263,6 @@ class DoctorResult(Document):
 			order_by = 'created_date desc',
 			limit = 2
 		)
-
 		previous_data = {}
 		last_data = {}
 		if previous_results:

@@ -27,6 +27,7 @@
   "reference_doctype",
   "reference_doc",
   "is_meal_time",
+  "meal_time_block",
   "section_break_1vaha",
   "notes",
   "section_break_qzhw",
@@ -222,6 +223,12 @@
    "fieldname": "delay_time",
    "fieldtype": "Datetime",
    "label": "Delay Time"
+  },
+  {
+   "default": "0",
+   "fieldname": "meal_time_block",
+   "fieldtype": "Check",
+   "label": "Meal Time Block"
   }
  ],
  "grid_page_length": 50,
@@ -229,7 +236,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-05-22 20:11:26.164927",
+ "modified": "2025-06-20 13:38:47.905603",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",

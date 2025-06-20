@@ -58,7 +58,7 @@ async function open_queue_dialog(listview){
             status: ['in', ['Wait for Room Assignment', 'Additional or Retest Request']],
             service_unit: healthcare_service_unit,
             in_room: 0,
-            is_meal_time: 0,
+            meal_time_block: 0,
           }
         }
       },
