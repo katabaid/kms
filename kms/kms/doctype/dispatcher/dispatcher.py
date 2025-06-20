@@ -121,7 +121,8 @@ def is_meal(exam_id, doctype=None, docname=None):
 			'MCU Queue Pooling', {'patient_appointment': exam_id, 'is_meal_time': 1}):
 			return False
 
-	check_list = (getattr(appt, "custom_mcu_exam_items", []) or []) + (getattr(appt, "custom_additional_mcu_items", []) or [])
+	check_list = (getattr(appt, "custom_mcu_exam_items", []) or []) + \
+		(getattr(appt, "custom_additional_mcu_items", []) or [])
 	mcu_setting = frappe.get_doc("MCU Settings", "MCU Settings")
 	radiology = [exam.exam_required for exam in mcu_setting.required_exam]
 	lab_test = frappe.db.get_all(
@@ -185,7 +186,8 @@ def finish_exam(hsu, status, doctype, docname):
 	is_meal_time = is_meal(exam_id)
 	room_count = 0
 	final_count = 0
-	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', 'Ineligible for Testing', 'Finished Collection']
+	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', \
+		'Ineligible for Testing', 'Finished Collection']
 	if dispatcher_id:
 		if status == 'Removed':
 			status = 'Wait for Room Assignment'

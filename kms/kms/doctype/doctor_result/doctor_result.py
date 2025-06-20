@@ -56,18 +56,17 @@ class DoctorResult(Document):
 		counter = 0
 		for table in self.child_tables:
 			#previous_item = ''
-			previous_group = ''
+			previous_group = urine_rbc = urine_wbc = ''
 			for row in getattr(self, table, []):
 				item_template = ''
 				if row.parentfield == 'nurse_grade':
 					item_template = frappe.get_value(
 						'Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
 				if row.hidden_item:
-					print(counter, row.hidden_item)
 					if (((item_template and item_template not in vital_sign_templates()) or not item_template)
 						and (row.hidden_item != physical_examination())
 					):
-						counter += 1
+						add_result = False
 						#if previous_item and previous_item != row.hidden_item:
 						#	item_all_inputs = [
 						#		p.incdec_category for p in getattr(self, table, []) 
@@ -120,21 +119,41 @@ class DoctorResult(Document):
 						else:
 							examination = row.examination
 							header = None
+						row_result = row.result
+						if row.hidden_item == 'MIRU-00001':
+							if row.examination == 'urine RBC atas':
+								urine_rbc = row.result
+								add_result = False
+							elif row.examination == 'urine RBC bawah':
+								row_result = urine_rbc + ' - ' + row.result
+								examination = 'Urine RBC'
+								counter += 1
+								add_result = True
+							elif row.examination == 'urine WBC atas':
+								urine_wbc = row.result
+								add_result = False
+							elif row.examination == 'urine RBC bawah':
+								row_result = urine_wbc + ' - ' + row.result
+								examination = 'Urine WBC'
+								counter += 1
+								add_result = True
+						else:
+							counter += 1
+							add_result = True
 						if isinstance(row.result, (int, float)):
 							row_result = int(row.result) if row.result.is_integer() else row.result
-						else:
-							row_result = row.result
-						current_results.append({
-							'examination': examination,
-							'result': (row_result or '') + ' ' + arrow,
-							'bundle_position': bundle_position if bundle_position else 9999,
-							'idx': counter,
-							'uom': row.uom,
-							'std_value': std_value,
-							'header': header,
-							'item_group': row.hidden_item_group,
-							'item': row.hidden_item
-						})
+						if add_result:
+							current_results.append({
+								'examination': examination,
+								'result': (row_result or '') + ' ' + arrow,
+								'bundle_position': bundle_position if bundle_position else 9999,
+								'idx': counter,
+								'uom': row.uom,
+								'std_value': std_value,
+								'header': header,
+								'item_group': row.hidden_item_group,
+								'item': row.hidden_item
+							})
 				else:
 					counter += 1
 					print(counter)
