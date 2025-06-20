@@ -1,6 +1,5 @@
 import frappe
 
-@frappe.whitelist()
 def update_item_price(doc, method=None):
   ################DocType: Item Price################
   if doc.price_list == "Standard Buying":
@@ -149,14 +148,12 @@ def update_item_price(doc, method=None):
             f"Item Price added for {pb_doc.name} in Price List {selling_price_list}", 
             alert=True)
 
-@frappe.whitelist()
 def update_customer_name(doc, method=None):
   ################DocType: Customer################
   if doc.customer_type not in doc.customer_name and (doc.customer_type == 'PT' or doc.customer_type == 'CV'):
     doc.customer_name = doc.customer_type + ' ' + doc.customer_name
     doc.save()
 
-@frappe.whitelist()
 def set_has_attachment(doc, method=None):
   if (
     doc.attached_to_doctype and doc.attached_to_name and 
@@ -203,7 +200,6 @@ def on_submit_material_request(doc, method=None):
           pe.save(ignore_permissions=True)
           frappe.msgprint(f"{updated_rows} rows in drug_prescription updated to 'On Process'.")
 
-@frappe.whitelist()
 def update_rate_amount_after_amend(doc, method=None):
   ################DocType: Quotation################
   if doc.amended_from:

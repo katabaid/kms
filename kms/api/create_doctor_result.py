@@ -802,7 +802,7 @@ def ____process_dental_examination(doc, item, item_group):
 	return {
 		'result': ', '. join([row.conclusion for row in doc.conclusion]),
 		'grade': doc.grade_table[0].grade if doc.grade_table else None,
-		'description': doc.grade_table[0].suggestion if doc.grade_table else None
+		'description': ', '. join([row.suggestion for row in doc.grade_table])
 	}
 #endregion
 

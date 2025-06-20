@@ -55,91 +55,20 @@ class DoctorResult(Document):
 		current_results = []
 		counter = 0
 		for table in self.child_tables:
-			previous_item = ''
+			#previous_item = ''
 			previous_group = ''
 			for row in getattr(self, table, []):
-				#try:
-					item_template = ''
-					if row.parentfield == 'nurse_grade':
-						item_template = frappe.get_value(
-							'Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
-					if row.hidden_item:
-						print(counter, row.hidden_item)
-						if (((item_template and item_template not in vital_sign_templates()) or not item_template)
-							and (row.hidden_item != physical_examination())
-						):
-							counter += 1
-							#if previous_item and previous_item != row.hidden_item:
-							#	item_all_inputs = [
-							#		p.incdec_category for p in getattr(self, table, []) 
-							#		if p.hidden_item == previous_item and p.incdec_category]
-							#	comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
-							#	current_results.append({
-							#		'examination': f'Comment: {comments}',
-							#		'bundle_position': bundle_position if bundle_position else 9999,
-							#		'idx': counter,
-							#		'header': 'Item',
-							#		'item_group': row.hidden_item_group,
-							#		'item': row.hidden_item
-							#	})
-							#	previous_item = row.hidden_item
-							#	counter += 1
-							#if not previous_item:
-							#	previous_item = row.hidden_item
-							bundle_position = frappe.get_value(
-								'Item', row.hidden_item, 'custom_bundle_position')
-							arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
-							std_value = row.std_value
-							if not row.hidden_item and row.hidden_item_group:
-								examination = row.hidden_item_group
-								header = 'Group'
-							elif row.hidden_item and row.hidden_item_group and row.is_item:
-								examination = row.examination
-								if row.result:
-									header = None
-									if examination == 'HbA1c':
-										examination += '<br/>Pre - Diabetic<br/>Diabetic'
-										std_value = '&lt; 5.7<br/>5.7 - 6.5<br/>&#8805; 6.5'
-									elif examination == 'Typoid IgM (Tubex)':
-										examination += '<br/>Negative (does not indicate current typhoid fever infection)'
-										examination += '<br/>Inconclusive (repeat the test if still inconclusive, repeat sampling at a later date)'
-										examination += '<br/>Positive (The higher score the stronger is the indication of current typhoid fever infection)'
-										std_value = '&#8804; 2<br/><br/>&gt;2 - &lt;4<br/>4 - 10'
-									elif examination == 'Sputum Direct BTA':
-										examination += '<ul><li>Negative (Tidak ditemukan BTA / 100 Lapang Pandang)</li>'
-										examination += '<li>Scanty (1 - 9 BTA /100 Lapang Pandang)</li>'
-										examination += '<li>(1+) (10 - 99 BTA / 100 Lapang Pandang)</li>'
-										examination += '<li>(2+) (1 - 10 BTA / Lapang Pandang)</li>'
-										examination += '<li>(3+) (>10 BTA / Lapang Pandang)</li></ul>'
-									elif examination == 'Stool Culture' or examination == 'Rectal Swab (Swab Culture)':
-										examination += '<ul><li>Salmonella</li>'
-										examination += '<li>Shigella</li>'
-										examination += '<li>Vibrio</li>'
-										examination += '<li>Escherichia coli O157H7</li></ul>'
-								else:
-									header = 'Item'
-							else:
-								examination = row.examination
-								header = None
-							if isinstance(row.result, (int, float)):
-								row_result = int(row.result) if row.result.is_integer() else row.result
-							else:
-								row_result = row.result
-							current_results.append({
-								'examination': examination,
-								'result': (row_result or '') + ' ' + arrow,
-								'bundle_position': bundle_position if bundle_position else 9999,
-								'idx': counter,
-								'uom': row.uom,
-								'std_value': std_value,
-								'header': header,
-								'item_group': row.hidden_item_group,
-								'item': row.hidden_item
-							})
-					else:
+				item_template = ''
+				if row.parentfield == 'nurse_grade':
+					item_template = frappe.get_value(
+						'Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
+				if row.hidden_item:
+					print(counter, row.hidden_item)
+					if (((item_template and item_template not in vital_sign_templates()) or not item_template)
+						and (row.hidden_item != physical_examination())
+					):
 						counter += 1
-						print(counter)
-						#if counter > 1:
+						#if previous_item and previous_item != row.hidden_item:
 						#	item_all_inputs = [
 						#		p.incdec_category for p in getattr(self, table, []) 
 						#		if p.hidden_item == previous_item and p.incdec_category]
@@ -154,31 +83,99 @@ class DoctorResult(Document):
 						#	})
 						#	previous_item = row.hidden_item
 						#	counter += 1
-						if previous_group and previous_group != row.hidden_item_group:
-							item_all_inputs = [
-								p.incdec_category for p in getattr(self, table, []) 
-								if p.hidden_item_group == previous_group and p.incdec_category]
-							comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
-							current_results.append({
-								'examination': f'Comment: {comments}',
-								'bundle_position': bundle_position if bundle_position else 9999,
-								'idx': counter,
-								'header': 'Group'
-							})
-							previous_group = row.hidden_item_group
-							counter += 1
-						if not previous_group:
-							previous_group = row.hidden_item_group
+						#if not previous_item:
+						#	previous_item = row.hidden_item
 						bundle_position = frappe.get_value(
-							'Item Group', row.hidden_item_group, 'custom_bundle_position')
+							'Item', row.hidden_item, 'custom_bundle_position')
+						arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
+						std_value = row.std_value
+						if not row.hidden_item and row.hidden_item_group:
+							examination = row.hidden_item_group
+							header = 'Group'
+						elif row.hidden_item and row.hidden_item_group and row.is_item:
+							examination = row.examination
+							if row.result:
+								header = None
+								if examination == 'HbA1c':
+									examination += '<br/>Pre - Diabetic<br/>Diabetic'
+									std_value = '&lt; 5.7<br/>5.7 - 6.5<br/>&#8805; 6.5'
+								elif examination == 'Typoid IgM (Tubex)':
+									examination += '<br/>Negative (does not indicate current typhoid fever infection)'
+									examination += '<br/>Inconclusive (repeat the test if still inconclusive, repeat sampling at a later date)'
+									examination += '<br/>Positive (The higher score the stronger is the indication of current typhoid fever infection)'
+									std_value = '&#8804; 2<br/><br/>&gt;2 - &lt;4<br/>4 - 10'
+								elif examination == 'Sputum Direct BTA':
+									examination += '<ul><li>Negative (Tidak ditemukan BTA / 100 Lapang Pandang)</li>'
+									examination += '<li>Scanty (1 - 9 BTA /100 Lapang Pandang)</li>'
+									examination += '<li>(1+) (10 - 99 BTA / 100 Lapang Pandang)</li>'
+									examination += '<li>(2+) (1 - 10 BTA / Lapang Pandang)</li>'
+									examination += '<li>(3+) (>10 BTA / Lapang Pandang)</li></ul>'
+								elif examination == 'Stool Culture' or examination == 'Rectal Swab (Swab Culture)':
+									examination += '<ul><li>Salmonella</li>'
+									examination += '<li>Shigella</li>'
+									examination += '<li>Vibrio</li>'
+									examination += '<li>Escherichia coli O157H7</li></ul>'
+							else:
+								header = 'Item'
+						else:
+							examination = row.examination
+							header = None
+						if isinstance(row.result, (int, float)):
+							row_result = int(row.result) if row.result.is_integer() else row.result
+						else:
+							row_result = row.result
 						current_results.append({
-							'examination': row.hidden_item_group,
+							'examination': examination,
+							'result': (row_result or '') + ' ' + arrow,
+							'bundle_position': bundle_position if bundle_position else 9999,
+							'idx': counter,
+							'uom': row.uom,
+							'std_value': std_value,
+							'header': header,
+							'item_group': row.hidden_item_group,
+							'item': row.hidden_item
+						})
+				else:
+					counter += 1
+					print(counter)
+					#if counter > 1:
+					#	item_all_inputs = [
+					#		p.incdec_category for p in getattr(self, table, []) 
+					#		if p.hidden_item == previous_item and p.incdec_category]
+					#	comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
+					#	current_results.append({
+					#		'examination': f'Comment: {comments}',
+					#		'bundle_position': bundle_position if bundle_position else 9999,
+					#		'idx': counter,
+					#		'header': 'Item',
+					#		'item_group': row.hidden_item_group,
+					#		'item': row.hidden_item
+					#	})
+					#	previous_item = row.hidden_item
+					#	counter += 1
+					if previous_group and previous_group != row.hidden_item_group:
+						item_all_inputs = [
+							p.incdec_category for p in getattr(self, table, []) 
+							if p.hidden_item_group == previous_group and p.incdec_category]
+						comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
+						current_results.append({
+							'examination': f'Comment: {comments}',
 							'bundle_position': bundle_position if bundle_position else 9999,
 							'idx': counter,
 							'header': 'Group'
 						})
-				#except Exception as e:
-				#	frappe.log_error(f"Error processing {table} row: {e}")
+						previous_group = row.hidden_item_group
+						counter += 1
+					if not previous_group:
+						previous_group = row.hidden_item_group
+					bundle_position = frappe.get_value(
+						'Item Group', row.hidden_item_group, 'custom_bundle_position')
+					current_results.append({
+						'examination': row.hidden_item_group,
+						'bundle_position': bundle_position if bundle_position else 9999,
+						'idx': counter,
+						'header': 'Group'
+					})
 		sorted_results = sorted(
 			current_results,
 			key = lambda x: (x['bundle_position'], x['idx'])
