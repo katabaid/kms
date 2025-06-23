@@ -140,11 +140,8 @@ class DoctorResult(Document):
 						else:
 							counter += 1
 							add_result = True
-						print(row.result, row_result, isinstance(row.result, (int, float)))
 						if isinstance(row.result, (int, float)):
-							print(row.result)
 							row_result = format_indonesian_safe(row.result)
-							print(row_result)
 						row_result = format_indonesian_safe(row_result)
 						if add_result:
 							current_results.append({
@@ -425,39 +422,25 @@ def _get_dental_comments(appointment):
 		""", (appointment), as_list=True)
 
 def format_indonesian_safe(number_str):
-    """Safe version that returns non-numeric strings unchanged"""
-    # Handle None values
-    if number_str is None:
-        return number_str
-        
-    try:
-        # Strip whitespace
-        number_str = str(number_str).strip()
-        
-        # Convert to float
-        num_float = float(number_str)
-        
-        # Check if it's effectively an integer
-        if num_float.is_integer():
-            number = int(num_float)
-        else:
-            number = num_float
-            
-    except (ValueError, TypeError):
-        # Return original string as is if not a number
-        return number_str
-    
-    # Format the number
-    if isinstance(number, int):
-        return f"{number:,}".replace(',', '.')
-    else:
-        parts = f"{number:,.3f}".split('.')
-        integer_with_commas = parts[0]
-        decimal_part = parts[1].rstrip('0')
-        
-        integer_formatted = integer_with_commas.replace(',', '.')
-        
-        if decimal_part:
-            return f"{integer_formatted},{decimal_part}"
-        else:
-            return integer_formatted
+	if number_str is None:
+		return number_str
+	try:
+		number_str = str(number_str).strip()
+		num_float = float(number_str)
+		if num_float.is_integer():
+			number = int(num_float)
+		else:
+			number = num_float
+	except (ValueError, TypeError):
+		return number_str
+	if isinstance(number, int):
+		return f"{number:,}".replace(',', '.')
+	else:
+		parts = f"{number:,.3f}".split('.')
+		integer_with_commas = parts[0]
+		decimal_part = parts[1].rstrip('0')
+		integer_formatted = integer_with_commas.replace(',', '.')
+		if decimal_part:
+			return f"{integer_formatted},{decimal_part}"
+		else:
+			return integer_formatted
