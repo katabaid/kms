@@ -132,7 +132,7 @@ class DoctorResult(Document):
 							elif row.examination == 'urine WBC atas':
 								urine_wbc = row.result
 								add_result = False
-							elif row.examination == 'urine RBC bawah':
+							elif row.examination == 'urine WBC bawah':
 								row_result = urine_wbc + ' - ' + row.result
 								examination = 'Urine WBC'
 								counter += 1
@@ -140,8 +140,12 @@ class DoctorResult(Document):
 						else:
 							counter += 1
 							add_result = True
+						print(row.result, row_result, isinstance(row.result, (int, float)))
 						if isinstance(row.result, (int, float)):
-							row_result = int(row.result) if row.result.is_integer() else row.result
+							print(row.result)
+							row_result = format_indonesian_safe(row.result)
+							print(row_result)
+						row_result = format_indonesian_safe(row_result)
 						if add_result:
 							current_results.append({
 								'examination': examination,
@@ -156,7 +160,6 @@ class DoctorResult(Document):
 							})
 				else:
 					counter += 1
-					print(counter)
 					#if counter > 1:
 					#	item_all_inputs = [
 					#		p.incdec_category for p in getattr(self, table, []) 
@@ -420,3 +423,41 @@ def _get_dental_comments(appointment):
 		AND field = 'dental_examination') AND parent = td.name
 		AND td.appointment = %s AND td.docstatus = 0) ORDER BY idx
 		""", (appointment), as_list=True)
+
+def format_indonesian_safe(number_str):
+    """Safe version that returns non-numeric strings unchanged"""
+    # Handle None values
+    if number_str is None:
+        return number_str
+        
+    try:
+        # Strip whitespace
+        number_str = str(number_str).strip()
+        
+        # Convert to float
+        num_float = float(number_str)
+        
+        # Check if it's effectively an integer
+        if num_float.is_integer():
+            number = int(num_float)
+        else:
+            number = num_float
+            
+    except (ValueError, TypeError):
+        # Return original string as is if not a number
+        return number_str
+    
+    # Format the number
+    if isinstance(number, int):
+        return f"{number:,}".replace(',', '.')
+    else:
+        parts = f"{number:,.3f}".split('.')
+        integer_with_commas = parts[0]
+        decimal_part = parts[1].rstrip('0')
+        
+        integer_formatted = integer_with_commas.replace(',', '.')
+        
+        if decimal_part:
+            return f"{integer_formatted},{decimal_part}"
+        else:
+            return integer_formatted
