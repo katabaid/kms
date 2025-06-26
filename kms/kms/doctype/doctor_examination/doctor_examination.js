@@ -499,12 +499,12 @@ frappe.ui.form.on('Doctor Examination', {
     addECGButton(frm); // Call the new function to add the ECG button
     handleReadOnlyExams(frm);
     handleQuestionnaire(frm);
-  if (frm.doc.non_selective_result) {
-  	frm.refresh_field('non_selective_result');
-  	frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
-  		apply_cell_styling (frm, row.doc);
-  	})
-  }
+    if (frm.doc.non_selective_result) {
+      frm.refresh_field('non_selective_result');
+      frm.fields_dict['non_selective_result'].grid.grid_rows.forEach((row) =>{
+        apply_cell_styling (frm, row.doc);
+      })
+    }
   },
 
   setup: function (frm) {

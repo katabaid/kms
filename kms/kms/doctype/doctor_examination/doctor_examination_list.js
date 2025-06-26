@@ -60,22 +60,19 @@ async function open_queue_dialog(listview){
         })
       },
     });
+    const bindCheckboxWatcher = setInterval(() => {
+      const $checkboxes = dialog.$wrapper.find('input[type="checkbox"]');
+      if ($checkboxes.length > 0) {
+        clearInterval(bindCheckboxWatcher);
+        dialog.$wrapper.on('change', 'input[type="checkbox"]', function () {
+          if (this.checked) {
+            dialog.$wrapper.find('input[type="checkbox"]').not(this).prop('checked', false);
+          }
+        });
+      }
+    }, 100);
   } else {
     frappe.throw(`The room you are assigned ${healthcare_service_unit} 
       is not for this document type ${listview.doctype} to use.`)
   }
-  const bindCheckboxWatcher = setInterval(() => {
-    const $checkboxes = dialog.$wrapper.find('input[type="checkbox"]');
-    if ($checkboxes.length > 0) {
-      clearInterval(bindCheckboxWatcher);
-      dialog.$wrapper.on('change', 'input[type="checkbox"]', function () {
-        if (this.checked) {
-          dialog.$wrapper
-            .find('input[type="checkbox"]')
-            .not(this)
-            .prop('checked', false);
-        }
-      });
-    }
-  }, 100);
 }
