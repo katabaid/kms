@@ -33,14 +33,17 @@ def set_cancelled_timeout_queue_pooling():
       })
 
 def reset_room_assignment():
-  room_assignment = frappe.db.get_list('Room Assignment', filters={'assigned': 1}, pluck='name')
-  for ra in room_assignment:
-    frappe.db.set_value('Room Assignment', ra, 'assigned', 0)
-  name = frappe.db.get_all('User Permission', pluck = 'user',
-    filters = {'allow', '=', 'Healthcare Service Unit'})
-  for up in name:
-    frappe.core.doctype.user_permission.user_permission.clear_user_permissions(
-      user=up, for_doctype='Healthcare Service Unit')
+  frappe.db.sql("UPDATE `tabRoom Assignment` SET assigned = 0, time_sign_out = %s", (now_datetime(),))
+  frappe.db.sql("DELETE FROM `tabUser Permission` WHERE allow = 'Healthcare Service Unit'")
+  frappe.db.commit()
+  #room_assignment = frappe.db.get_list('Room Assignment', filters={'assigned': 1}, pluck='name')
+  #for ra in room_assignment:
+  #  frappe.db.set_value('Room Assignment', ra, 'assigned', 0)
+  #name = frappe.db.get_all('User Permission', pluck = 'user',
+  #  filters = {'allow', '=', 'Healthcare Service Unit'})
+  #for up in name:
+  #  frappe.core.doctype.user_permission.user_permission.clear_user_permissions(
+  #    user=up, for_doctype='Healthcare Service Unit')
 
 def reset_meal_status():
   interval = frappe.db.get_single_value('MCU Settings', 'meal_time')

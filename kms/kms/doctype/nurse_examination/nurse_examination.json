@@ -141,7 +141,7 @@
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
-   "label": "Created Date",
+   "label": "Exam Date",
    "read_only": 1
   },
   {
@@ -352,7 +352,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-04 13:06:24.066830",
+ "modified": "2025-06-25 21:21:17.276346",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination",

@@ -47,6 +47,7 @@ class DoctorResult(Document):
 		self._process_group_grade()
 
 	def process_physical_exam(self):
+		self.physical_examination = []
 		self._process_nurse_grade()
 		self._process_doctor_grade()
 
@@ -96,9 +97,10 @@ class DoctorResult(Document):
 							if row.result:
 								header = None
 								if examination == 'HbA1c':
-									examination += '<br/>Pre - Diabetic<br/>Diabetic'
-									std_value = '&lt; 5.7<br/>5.7 - 6.5<br/>&#8805; 6.5'
+									examination = '<p>HbA1c</p><p align="right">Pre - Diabetic</p><p align="right">Diabetic</p>'
+									std_value = '<p>&lt; 5.7</p><p align="right">5.7 - 6.5</p><p align="right">&#8805; 6.5</p>'
 								elif examination == 'Typoid IgM (Tubex)':
+									examination = '<p>Typoid IgM (Tubex)</p>'
 									examination += '<br/>Negative (does not indicate current typhoid fever infection)'
 									examination += '<br/>Inconclusive (repeat the test if still inconclusive, repeat sampling at a later date)'
 									examination += '<br/>Positive (The higher score the stronger is the indication of current typhoid fever infection)'
@@ -137,16 +139,23 @@ class DoctorResult(Document):
 								examination = 'Urine WBC'
 								counter += 1
 								add_result = True
+							else:
+								counter += 1
+								add_result = True
 						else:
 							counter += 1
 							add_result = True
 						if isinstance(row.result, (int, float)):
 							row_result = format_indonesian_safe(row.result)
 						row_result = format_indonesian_safe(row_result)
+						if row_result and arrow:
+							final_result = f'<p style="color: red;"> {row_result} {arrow}</p>'
+						else:
+							final_result = row_result
 						if add_result:
 							current_results.append({
 								'examination': examination,
-								'result': (row_result or '') + ' ' + arrow,
+								'result': final_result,
 								'bundle_position': bundle_position if bundle_position else 9999,
 								'idx': counter,
 								'uom': row.uom,
@@ -299,16 +308,32 @@ class DoctorResult(Document):
 
 	def _process_nurse_grade(self):
 		counter = 0
+		bp = ''
+		append = True
 		for nurse_grade in self.nurse_grade:
 			item_template = frappe.get_value(
 				'Nurse Examination Template', {'item_code':nurse_grade.hidden_item}, 'name')
 			if item_template in vital_sign_templates() and nurse_grade.result:
-				counter += 1
-				self.append('physical_examination', {
-					'item_name': 'Vital Sign' if counter == 1 else None,
-					'item_input': nurse_grade.examination,
-					'result': nurse_grade.result + ' ' + nurse_grade.uom,
-				})
+				if nurse_grade.examination == 'Systolic':
+					bp += f'{nurse_grade.result}'
+					append = False
+				elif nurse_grade.examination == 'Diastolic':
+					counter += 1
+					bp += f'/{nurse_grade.result}'
+					final_result = bp + ' ' + nurse_grade.uom
+					item_input = 'Blood Pressure'
+					append = True
+				else:
+					counter += 1
+					item_input = nurse_grade.examination
+					final_result = nurse_grade.result + ' ' + nurse_grade.uom
+					append = True
+				if append:
+					self.append('physical_examination', {
+						'item_name': 'Vital Sign' if counter == 1 else None,
+						'item_input': item_input,
+						'result': final_result,
+					})
 
 	def _process_doctor_grade(self):
 		counter = 0

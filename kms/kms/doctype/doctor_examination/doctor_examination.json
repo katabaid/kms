@@ -345,7 +345,7 @@
    "default": "Today",
    "fieldname": "created_date",
    "fieldtype": "Date",
-   "label": "Created Date",
+   "label": "Exam Date",
    "read_only": 1
   },
   {
@@ -1265,7 +1265,8 @@
   {
    "fieldname": "details_tab",
    "fieldtype": "Tab Break",
-   "label": "Details"
+   "label": "Details",
+   "show_dashboard": 1
   },
   {
    "fieldname": "visual_field_test_section",
@@ -1687,7 +1688,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-23 10:18:14.933637",
+ "modified": "2025-06-26 12:49:07.048772",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
