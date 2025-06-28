@@ -1,20 +1,5 @@
 import frappe
 
-@frappe.whitelist()
-def checkin_rescheduled_dispatcher(appointment):
-  name = frappe.db.get_value('Dispatcher', 
-    {'patient_appointment': appointment, 'status': 'Rescheduled'})
-  if name:
-    dispatcher = frappe.get_doc('Dispatcher', name)
-    dispatcher.status = 'In Queue'
-    for room in dispatcher.assignment_table:
-      if room.status == 'Rescheduled':
-        room.status = 'Wait for Room Assignment'
-    for exam in dispatcher.package:
-      if exam.status == 'Rescheduled':
-        exam.status = 'Started'
-    dispatcher.save(ignore_permissions=True)
-
 def _update_status_if_match(items, key_field, match_list, valid_statuses, new_status='Rescheduled'):
   for item in items:
     if getattr(item, key_field) in match_list and item.status in valid_statuses:

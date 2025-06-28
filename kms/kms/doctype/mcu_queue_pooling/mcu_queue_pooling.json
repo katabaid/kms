@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "naming_series:",
+ "autoname": "field:title",
  "creation": "2025-05-15 09:40:40.245778",
  "default_view": "List",
  "doctype": "DocType",
@@ -33,7 +33,8 @@
   "section_break_qzhw",
   "had_meal",
   "meal_time",
-  "delay_time"
+  "delay_time",
+  "title"
  ],
  "fields": [
   {
@@ -45,7 +46,8 @@
    "reqd": 1
   },
   {
-   "fetch_from": "appointment.patient",
+   "fetch_from": "patient_appointment.patient",
+   "fetch_if_empty": 1,
    "fieldname": "patient",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -82,7 +84,8 @@
    "reqd": 1
   },
   {
-   "fetch_from": "appointment.custom_priority",
+   "fetch_from": "patient_appointment.custom_priority",
+   "fetch_if_empty": 1,
    "fieldname": "priority",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -94,7 +97,8 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "appointment.company",
+   "fetch_from": "patient_appointment.company",
+   "fetch_if_empty": 1,
    "fieldname": "company",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -114,7 +118,8 @@
    "options": "Healthcare Service Unit"
   },
   {
-   "fetch_from": "service_unit.custom_branch",
+   "fetch_from": "patient_appointment.custom_branch",
+   "fetch_if_empty": 1,
    "fieldname": "branch",
    "fieldtype": "Link",
    "in_filter": 1,
@@ -180,7 +185,8 @@
    "in_standard_filter": 1,
    "label": "Appointment",
    "options": "Patient Appointment",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "default": "0",
@@ -229,6 +235,13 @@
    "fieldname": "meal_time_block",
    "fieldtype": "Check",
    "label": "Meal Time Block"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Read Only",
+   "label": "Title",
+   "options": "{patient_appointment}-{date}-{service_unit}",
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
@@ -236,11 +249,11 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-06-20 13:38:47.905603",
+ "modified": "2025-06-28 16:09:34.700499",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",
- "naming_rule": "By \"Naming Series\" field",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -258,6 +271,7 @@
  ],
  "restrict_to_domain": "Healthcare",
  "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
@@ -278,6 +292,7 @@
    "title": "Closed"
   }
  ],
+ "title_field": "title",
  "track_changes": 1,
  "track_seen": 1,
  "track_views": 1

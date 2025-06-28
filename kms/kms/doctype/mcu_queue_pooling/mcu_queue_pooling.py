@@ -6,4 +6,5 @@ from frappe.model.document import Document
 
 
 class MCUQueuePooling(Document):
-	pass
+	def before_insert(self):
+		self.title = f'{self.patient_appointment}-{self.date}-{self.service_unit}'

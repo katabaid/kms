@@ -1,4 +1,10 @@
 import frappe
+from dateutil.relativedelta import relativedelta
+
+def calculate_patient_age(dob, appt_date):
+  if dob and appt_date:
+    delta = relativedelta(appt_date, dob)
+    return f"{delta.years} Year(s) {delta.months} Month(s) {delta.days} Day(s)"
 
 def assess_mcu_grade(
 	result_text, group, item_code, 

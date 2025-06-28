@@ -73,20 +73,18 @@ frappe.ui.form.on('Patient Appointment', {
     // Check if any row in custom_completed_questionnaire has is_completed != 1
 
     // Call the questionnaire utility
-    if (frm.fields_dict.custom_questionnaire_html && kms.utils && kms.utils.fetch_questionnaire_for_doctype) {
-        kms.utils.fetch_questionnaire_for_doctype(
-            frm,
-            "name", // name_field_key for Patient Appointment
-            null,   // questionnaire_type_field_key (optional)
-            "custom_questionnaire_html" // target_wrapper_selector: HTML field name
-        );
+    if (frm.fields_dict.custom_questionnaire_html && kms.utils 
+      && kms.utils.fetch_questionnaire_for_doctype) {
+      kms.utils.fetch_questionnaire_for_doctype(
+        frm, "name", null, "custom_questionnaire_html"
+      );
     } else {
-        if (!frm.fields_dict.custom_questionnaire_html) {
-            console.warn("Patient Appointment form is missing 'custom_questionnaire_html'. Questionnaire cannot be displayed.");
-        }
-        if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
-            console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
-        }
+      if (!frm.fields_dict.custom_questionnaire_html) {
+        console.warn("Patient Appointment form is missing 'custom_questionnaire_html'. Questionnaire cannot be displayed.");
+      }
+      if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
+        console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
+      }
     }
  },
 
@@ -110,7 +108,8 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_check_in_button(frm) {
-    if(frm.doc.status === 'Open'||frm.doc.status === 'Scheduled'||frm.doc.status === 'Rescheduled'){
+    if(frm.doc.status === 'Open'||frm.doc.status === 'Scheduled'
+      ||frm.doc.status === 'Rescheduled'){
       frm.add_custom_button(
         'Check In',
         () => {
@@ -129,15 +128,7 @@ frappe.ui.form.on('Patient Appointment', {
               row.status = 'Started'}});
           frm.refresh_field('custom_mcu_exam_items');
           frm.refresh_field('custom_additional_mcu_items');
-          frm.save().then(()=>{
-            frappe.call({
-              method: 'kms.api.dispatcher.checkin_rescheduled_dispatcher',
-              args: {appointment: frm.doc.name},
-              callback: () => {
-                frappe.msgprint(__('Check in completed.'))
-              }
-            })
-          });
+          frm.save();
       }, 'Status');
     }
   },

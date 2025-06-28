@@ -1,5 +1,5 @@
 import frappe
-from kms.healthcare import calculate_patient_age
+from kms.utils import calculate_patient_age
 from frappe.utils import getdate, today, nowdate, nowtime, now
 
 def patient_appointment_after_insert(doc, method=None):
@@ -14,30 +14,54 @@ def patient_appointment_after_insert(doc, method=None):
 		_set_questionnaire_key(doc.name, doc.custom_temporary_registration)
 	frappe.db.set_value('Patient Appointment', doc.name, 'patient_age', 
 		calculate_patient_age(
-		getdate(doc.custom_patient_date_of_birth), getdate(doc.appointment_date)))
+			getdate(doc.custom_patient_date_of_birth), getdate(doc.appointment_date)))
 	doc.reload()
 
 def patient_appointment_on_update(doc, method=None):
 	################Doctype: Patient Appointment################
-	if not doc.status:
-		doc.status = 'Open'
-	if doc.status == 'Checked In' or doc.status == 'Ready to Check Out':
+	doc.status = doc.status or 'Open'
+	previous_doc = doc.get_doc_before_save()
+	dispatcher_user = frappe.db.get_value(
+		"Dispatcher Settings", 
+		{"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
+		['dispatcher'])
+	if not previous_doc and doc.status == 'Checked In':
+		if dispatcher_user:
+			_create_dispatcher(doc.name, doc.custom_branch)
+		else:
+			_create_mcu_queue_pooling(doc.name, doc.custom_branch)
+		_set_mcu_queue_no(doc.name)
+		return
+	if previous_doc.status in ['Open','Rescheduled'] and doc.status == 'Checked In':
+		if doc.appointment_type == 'MCU':
+			if dispatcher_user:
+				_create_dispatcher(doc.name, doc.custom_branch)
+			else:
+				_create_mcu_queue_pooling(doc.name, doc.custom_branch)
+			_set_mcu_queue_no(doc.name)
+		else:
+			vs_doc = frappe.get_doc(dict(
+				doctype = 'Vital Signs',
+				patient = doc.patient,
+				signs_date = nowdate(),
+				signs_time = nowtime(),
+				appointment = doc.name,
+				custom_branch = doc.custom_branch,
+				custom_patient_sex = doc.patient_sex,
+				custom_patient_age = doc.patient_age,
+				custom_patient_company = doc.custom_patient_company,
+				custom_date_of_birth = doc.custom_patient_date_of_birth,
+				vital_signs_note = doc.notes))
+			vs_doc.insert(ignore_permissions=True)
+	elif doc.status in ['Checked In', 'Ready to Check Out']:
 		validate_with_today_date(doc.appointment_date)
 		if str(doc.appointment_date) == nowdate():
 			if doc.has_value_changed('patient_age'):
 				return
 			if doc.appointment_type == 'MCU':
-				dispatcher_user = frappe.db.get_value(
-					"Dispatcher Settings", 
-					{"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
-					['dispatcher'])
 				if not doc.custom_queue_no:
 					_set_mcu_queue_no(doc.name)
-				# Update Completed Questionnaire when there's additional mcu item
-				previous_doc = doc.get_doc_before_save()
-				previous_row_count = len(previous_doc.custom_additional_mcu_items)
-				current_row_count = len(doc.custom_additional_mcu_items)
-				if current_row_count > previous_row_count:
+				if len(doc.custom_additional_mcu_items) > len(previous_doc.custom_additional_mcu_items):
 					_set_completed_questionnaire_status(doc.name)
 				additional = [row for row in doc.custom_additional_mcu_items if row.status == 'To be Added']
 				if additional:
@@ -48,25 +72,6 @@ def patient_appointment_on_update(doc, method=None):
 							exist_docname, additional, dispatcher_user)
 					else:
 						_add_queue_pooling_additional_mcu_item(doc.name, doc.custom_branch, additional)
-				else:
-					if dispatcher_user:
-						_create_dispatcher(doc.name, doc.custom_branch, doc.custom_mcu_exam_items)
-					else:
-						_create_mcu_queue_pooling(doc.name, doc.custom_branch)
-			else:
-				vs_doc = frappe.get_doc(dict(
-					doctype = 'Vital Signs',
-					patient = doc.patient,
-					signs_date = nowdate(),
-					signs_time = nowtime(),
-					appointment = doc.name,
-					custom_branch = doc.custom_branch,
-					custom_patient_sex = doc.patient_sex,
-					custom_patient_age = doc.patient_age,
-					custom_patient_company = doc.custom_patient_company,
-					custom_date_of_birth = doc.custom_patient_date_of_birth,
-					vital_signs_note = doc.notes))
-				vs_doc.insert(ignore_permissions=True)
 
 def _add_dispatcher_additional_mcu_item(dispatcher, additional_table, dispatcher_user):
 	doc = frappe.get_doc('Dispatcher', dispatcher)
@@ -118,48 +123,15 @@ def _add_dispatcher_additional_mcu_item(dispatcher, additional_table, dispatcher
 		notification_doc.insert(ignore_permissions=True)
 	doc.save(ignore_permissions=True)
 
-def _create_dispatcher(exam_id, branch, item_table):
+def _create_dispatcher(exam_id, branch):
 	doc = frappe.get_doc({
 		'doctype': 'Dispatcher',
 		'patient_appointment': exam_id,
 		'date': today(),
 		'status': 'In Queue'
 	})
-	item_with_sort_order = []
-	for entry in item_table:
-		sort_order = frappe.db.get_value(
-			'Item', entry.examination_item, 'custom_bundle_position')
-		item_with_sort_order.append({
-			'item_code': entry.examination_item,
-			'item_name': entry.item_name,
-			'item_group': entry.item_group,
-			'healthcare_service_unit': entry.healthcare_service_unit,
-			'status': entry.status,
-			'sort_order': sort_order
-		})
-	sorted_items = sorted(item_with_sort_order, key=lambda x: x['sort_order'])
-	for item in sorted_items:
-		new_entry = dict()
-		new_entry['examination_item'] = item['item_code']
-		new_entry['item_name'] = item['item_name']
-		new_entry['item_group'] = item['item_group']
-		new_entry['healthcare_service_unit'] = item['healthcare_service_unit']
-		new_entry['status'] = item['status']
-		doc.append('package', new_entry)
-	rooms = frappe.db.sql("""
-		SELECT distinct tigsu.service_unit, 
-		thsu.custom_default_doctype, thsu.custom_reception_room
-		FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
-		WHERE tigsu.branch = %s
-		AND tigsu.parenttype = 'Item'
-		AND tigsu.service_unit = thsu.name 
-		AND EXISTS (
-			SELECT 1 FROM `tabMCU Appointment` tma
-			WHERE tma.parenttype = 'Patient Appointment'
-			AND tma.parent = %s
-			AND tma.examination_item = tigsu.parent)
-		ORDER BY thsu.custom_room, thsu.custom_default_doctype""", 
-		(branch, doc.patient_appointment), as_dict=1)
+	rooms = __get_mcu_rooms(branch, exam_id)
+	reception_room = __get_reception_room(branch)[0]
 	for room in rooms:
 		new_entry = dict()
 		new_entry['name'] = None
@@ -173,20 +145,27 @@ def _create_dispatcher(exam_id, branch, item_table):
 				for row in doc.assignment_table):
 				new_entry = dict()
 				new_entry['name'] = None
-				new_entry['healthcare_service_unit'] = room.custom_reception_room
+				new_entry['healthcare_service_unit'] = reception_room
 				new_entry['status'] = 'Wait for Sample'
 				doc.append('assignment_table', new_entry)
+	items = frappe.db.sql("""SELECT * FROM `tabMCU Appointment` tma
+		WHERE tma.parenttype = 'Patient Appointment'
+		AND tma.parent = %s AND tma.status = 'Started'
+		AND tma.examination_item = tigsu.parent) ORDER BY idx""", (exam_id), as_dict=True)
+	for item in items:
+		new_entry = dict()
+		new_entry['examination_item'] = item['examination_item']
+		new_entry['item_name'] = item['item_name']
+		new_entry['item_group'] = item['item_group']
+		new_entry['healthcare_service_unit'] = item['healthcare_service_unit']
+		new_entry['status'] = item['status']
+		doc.append('package', new_entry)
 	doc.save(ignore_permissions=True)
 
-def _create_queue_pooling_record(appointment, service_unit, status, reference_doctype=None):
+def _create_queue_pooling_record(exam_id, service_unit, status, reference_doctype=None):
 	doc_data = {
 		'doctype': 'MCU Queue Pooling',
-		'patient_appointment': appointment.name,
-		'appointment_type': appointment.appointment_type,
-		'patient': appointment.patient,
-		'company': appointment.company,
-		'priority': appointment.custom_priority,
-		'branch': appointment.custom_branch,
+		'patient_appointment': exam_id,
 		'date': today(),
 		'arrival_time': nowtime(),
 		'service_unit': service_unit,
@@ -198,9 +177,16 @@ def _create_queue_pooling_record(appointment, service_unit, status, reference_do
 	doc.save(ignore_permissions=True)
 
 def _create_mcu_queue_pooling(exam_id, branch):
-	rooms = frappe.db.sql("""
-		SELECT distinct tigsu.service_unit, 
-		thsu.custom_default_doctype, thsu.custom_reception_room
+	rooms = __get_mcu_rooms(branch, exam_id)
+	reception_room = __get_reception_room(branch)[0]
+	for room in rooms:
+		_create_queue_pooling_record(
+			exam_id, room.service_unit, 'Wait for Room Assignment', room.custom_default_doctype)
+		if room.custom_default_doctype == 'Sample Collection':
+			_create_queue_pooling_record(exam_id, reception_room, 'Wait for Sample')
+			
+def __get_mcu_rooms(branch, exam_id):
+	return frappe.db.sql("""SELECT distinct tigsu.service_unit, thsu.custom_default_doctype
 		FROM `tabItem Group Service Unit` tigsu, `tabHealthcare Service Unit` thsu 
 		WHERE tigsu.branch = %s
 		AND tigsu.parenttype = 'Item'
@@ -208,16 +194,13 @@ def _create_mcu_queue_pooling(exam_id, branch):
 		AND EXISTS (
 			SELECT 1 FROM `tabMCU Appointment` tma
 			WHERE tma.parenttype = 'Patient Appointment'
-			AND tma.parent = %s
+			AND tma.parent = %s AND tma.status = 'Started'
 			AND tma.examination_item = tigsu.parent)
 		ORDER BY thsu.custom_room, thsu.custom_default_doctype""", (branch, exam_id), as_dict=1)
-	pa = frappe.get_doc('Patient Appointment', exam_id)
-	for room in rooms:
-		_create_queue_pooling_record(
-			pa, room.service_unit, 'Wait for Room Assignment', room.custom_default_doctype)
-		if room.custom_default_doctype == 'Sample Collection':
-			_create_queue_pooling_record(
-				pa, room.custom_reception_room, 'Wait for Sample')
+
+def __get_reception_room(branch):
+	return frappe.db.get_all('Healthcare Service Unit', 
+		{'custom_branch': branch, 'service_unit_type': 'Sample Reception'}, pluck='name')
 
 def _add_queue_pooling_additional_mcu_item(exam_id, branch, additional):
 	items = list(set(item.get('examination_item') for item in additional))
@@ -289,29 +272,29 @@ def prescription_duration_autoname(doc, method=None):
 
 def vital_signs_before_submit(doc, method=None):
 	################Doctype: Vital Signs################
-	validate_with_today_date(doc.signs_date)
+	_validate_with_today_date(doc.signs_date)
+	_validate_vs_mandatory_fields(doc, ['temperature', 'pulse', 'bp_systolic', 'bp_diastolic'])
 	appt = frappe.get_doc('Patient Appointment', doc.appointment)
-	process_non_mcu(doc, appt, appt.appointment_for)
-	validate_vs_mandatory_fields(doc, ['temperature', 'pulse', 'bp_systolic', 'bp_diastolic'])
+	_create_queue_pooling(doc, appt)
 
 def patient_before_save(doc, method=None):
 	################Doctype: Patient################
 	doc.custom_age = calculate_patient_age(getdate(doc.dob), getdate(today()))
 
-def validate_with_today_date(validate_date):
+def _validate_with_today_date(validate_date):
 	if str(validate_date) != today():
 		frappe.throw(
 			title = 'Error', 
 			msg=f"Date {validate_date} must be the same as today's date {today()}.", 
 			exc='ValidationError')
 	
-def validate_vs_mandatory_fields(doc, fields):
+def _validate_vs_mandatory_fields(doc, fields):
 	for field in fields:
 		label = doc.meta.get_field(field).label
 		if not doc.get(field):
 			frappe.throw(title=f"{label} is Missing", msg=f"{label} is mandatory.")
 
-def process_non_mcu(doc, appt, type):
+def _create_queue_pooling(doc, appt):
 	frappe.get_doc(dict(
 		doctype = 'Queue Pooling',
 		appointment = doc.appointment,
@@ -323,8 +306,8 @@ def process_non_mcu(doc, appt, type):
 		priority = appt.custom_priority,
 		vital_sign = doc.name,
 		company = doc.company,
-		department = appt.department if type == 'Department' else None,
-		service_unit = appt.service_unit if type == 'Service Unit' else None,
+		department = appt.department if appt.appointment_for == 'Department' else None,
+		service_unit = appt.service_unit if appt.appointment_for == 'Service Unit' else None,
 		branch = doc.custom_branch,
 		note = doc.vital_signs_note)).insert(ignore_permissions=True)
 
