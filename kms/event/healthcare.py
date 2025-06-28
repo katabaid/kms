@@ -21,8 +21,7 @@ def patient_appointment_on_update(doc, method=None):
 	################Doctype: Patient Appointment################
 	doc.status = doc.status or 'Open'
 	previous_doc = doc.get_doc_before_save()
-	dispatcher_user = frappe.db.get_value(
-		"Dispatcher Settings", 
+	dispatcher_user = frappe.db.get_value("Dispatcher Settings", 
 		{"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
 		['dispatcher'])
 	if not previous_doc and doc.status == 'Checked In':
@@ -54,7 +53,7 @@ def patient_appointment_on_update(doc, method=None):
 				vital_signs_note = doc.notes))
 			vs_doc.insert(ignore_permissions=True)
 	elif doc.status in ['Checked In', 'Ready to Check Out']:
-		validate_with_today_date(doc.appointment_date)
+		_validate_with_today_date(doc.appointment_date)
 		if str(doc.appointment_date) == nowdate():
 			if doc.has_value_changed('patient_age'):
 				return
@@ -140,8 +139,7 @@ def _create_dispatcher(exam_id, branch):
 		new_entry['reference_doctype'] = room.custom_default_doctype
 		doc.append('assignment_table', new_entry)
 		if room.custom_default_doctype == 'Sample Collection':
-			if not any(
-				row.get('healthcare_service_unit') == room.custom_default_doctype 
+			if not any(row.get('healthcare_service_unit') == reception_room
 				for row in doc.assignment_table):
 				new_entry = dict()
 				new_entry['name'] = None
@@ -183,7 +181,8 @@ def _create_mcu_queue_pooling(exam_id, branch):
 		_create_queue_pooling_record(
 			exam_id, room.service_unit, 'Wait for Room Assignment', room.custom_default_doctype)
 		if room.custom_default_doctype == 'Sample Collection':
-			_create_queue_pooling_record(exam_id, reception_room, 'Wait for Sample')
+			if not frappe.db.exists('MCU Queue Pooling', f'{exam_id}-{today()}-{reception_room}'):
+				_create_queue_pooling_record(exam_id, reception_room, 'Wait for Sample')
 			
 def __get_mcu_rooms(branch, exam_id):
 	return frappe.db.sql("""SELECT distinct tigsu.service_unit, thsu.custom_default_doctype
