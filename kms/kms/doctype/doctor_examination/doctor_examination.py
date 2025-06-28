@@ -26,11 +26,15 @@ class DoctorExamination(Document):
 							'position': pos,
 							'location': section['loc']
 						})
-		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
-		for package in pa_doc.custom_mcu_exam_items:
-			setup_questionnaire_table(self, package)
-		for package in pa_doc.custom_additional_mcu_items:
-			setup_questionnaire_table(self, package)
+		valid_checker = [
+			frappe.db.get_single_value ('MCU Settings', 'physical_examination'), 
+			frappe.db.get_single_value ('MCU Settings', 'cardiologist')]
+		if any(x in self.examination_item for x in valid_checker):
+			pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
+			for package in pa_doc.custom_mcu_exam_items:
+				setup_questionnaire_table(self, package)
+			for package in pa_doc.custom_additional_mcu_items:
+				setup_questionnaire_table(self, package)
 
 	def on_submit(self):
 		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')

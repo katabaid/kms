@@ -42,9 +42,13 @@ class NurseExamination(Document):
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
 	
 	def before_insert(self):
+		cardiologist = frappe.db.get_single_value ('MCU Settings', 'cardiologist')
 		for exam in self.examination_item:
 			is_internal = frappe.db.get_value('Questionnaire Template', exam.template, 'internal_questionnaire')
 			template = frappe.db.get_value('Questionnaire Template', exam.template, 'template_name')
+			if exam.item == cardiologist:
+				is_internal = True
+				template = 'Treadmill'
 			if is_internal:
 				status = frappe.db.get_value(
 					'Questionnaire', 

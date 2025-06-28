@@ -208,7 +208,8 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_additional_mcu_button(frm) {
-    if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In' || frm.doc.status === 'Ready to Check Out') && frm.doc.mcu) {
+    if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In' 
+      || frm.doc.status === 'Ready to Check Out') && frm.doc.mcu) {
       frm.add_custom_button(
         'Additional MCU',
         () =>{

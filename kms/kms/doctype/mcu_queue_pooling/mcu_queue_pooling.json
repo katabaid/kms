@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_copy": 1,
  "autoname": "field:title",
  "creation": "2025-05-15 09:40:40.245778",
  "default_view": "List",
@@ -21,6 +22,7 @@
   "company",
   "branch",
   "service_unit",
+  "tier",
   "check_in_time",
   "finish_time",
   "refuse_time",
@@ -34,7 +36,8 @@
   "had_meal",
   "meal_time",
   "delay_time",
-  "title"
+  "title",
+  "current_tier"
  ],
  "fields": [
   {
@@ -242,6 +245,19 @@
    "label": "Title",
    "options": "{patient_appointment}-{date}-{service_unit}",
    "unique": 1
+  },
+  {
+   "fetch_from": "service_unit.custom_tier",
+   "fetch_if_empty": 1,
+   "fieldname": "tier",
+   "fieldtype": "Data",
+   "label": "Tier",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_tier",
+   "fieldtype": "Data",
+   "label": "Current Tier"
   }
  ],
  "grid_page_length": 50,
@@ -249,7 +265,7 @@
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2025-06-28 16:09:34.700499",
+ "modified": "2025-06-28 21:46:37.754860",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Queue Pooling",

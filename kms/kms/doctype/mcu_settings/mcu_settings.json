@@ -32,6 +32,10 @@
   "ecg",
   "column_break_dsow",
   "ecg_name",
+  "cardiologist_section",
+  "cardiologist",
+  "column_break_wlkg",
+  "cardiologist_name",
   "assignment_tab",
   "dispatcher_and_room_assignment_section",
   "dispatcher_role",
@@ -367,6 +371,7 @@
    "fieldname": "ecg",
    "fieldtype": "Link",
    "label": "ECG",
+   "link_filters": "[[\"Item\",\"item_group\",\"=\",\"Cardiology Examination\"]]",
    "options": "Item"
   },
   {
@@ -426,12 +431,34 @@
    "fieldtype": "Table MultiSelect",
    "label": "Thorax Print Format",
    "options": "MCU Radiology Format"
+  },
+  {
+   "fieldname": "cardiologist_section",
+   "fieldtype": "Section Break",
+   "label": "Cardiologist"
+  },
+  {
+   "fieldname": "cardiologist",
+   "fieldtype": "Link",
+   "label": "Cardiologist",
+   "link_filters": "[[\"Item\",\"item_group\",\"=\",\"Cardiology Examination\"]]",
+   "options": "Item"
+  },
+  {
+   "fieldname": "column_break_wlkg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "cardiologist.item_name",
+   "fieldname": "cardiologist_name",
+   "fieldtype": "Data",
+   "label": "Name"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-17 21:53:19.560114",
+ "modified": "2025-06-28 20:38:08.749797",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
