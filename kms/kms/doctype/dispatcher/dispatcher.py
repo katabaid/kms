@@ -106,70 +106,8 @@ def get_queued_branch(branch):
 		GROUP BY thsu.name
 		ORDER BY custom_room""", (branch), as_dict=True)
 
-@frappe.whitelist()
-def is_meal(exam_id, doctype=None, docname=None):
-	appt = frappe.get_doc('Patient Appointment', exam_id)
-	if not appt.mcu:
-		return False
-	dispatcher_exists = frappe.db.exists('Dispatcher', 
-		frappe.db.get_value('Dispatcher', {'patient_appointment': exam_id}, 'name'))
-	if dispatcher_exists:
-		if frappe.db.get_value('Dispatcher', {'patient_appointment': exam_id}, 'had_meal'):
-			return False
-	else:
-		if frappe.db.exists(
-			'MCU Queue Pooling', {'patient_appointment': exam_id, 'is_meal_time': 1}):
-			return False
-
-	check_list = (getattr(appt, "custom_mcu_exam_items", []) or []) + \
-		(getattr(appt, "custom_additional_mcu_items", []) or [])
-	mcu_setting = frappe.get_doc("MCU Settings", "MCU Settings")
-	radiology = [exam.exam_required for exam in mcu_setting.required_exam]
-	lab_test = frappe.db.get_all(
-		'Item', pluck='name', 
-		filters=[["item_group", "descendants of (inclusive)", "Laboratory"],["custom_is_mcu_item", "=", 1]])
-	valid_status = ['Finished', 'Refused', 'Rescheduled']
-	lab_test_result = False
-	radiology_items = []
-	if docname and doctype: # for room 
-		if doctype == 'Sample Collection':
-			lab_test_result = True
-			for item in check_list:
-				if item.examination_item in radiology:
-					radiology_items.append(item.status)
-			if radiology_items:
-				radiology_result = all(status in valid_status for status in radiology_items)
-			else:
-				radiology_result = False
-		else:
-			doc = frappe.get_doc(doctype, docname)
-			current_item = False
-			for item in check_list:
-				if item.examination_item in lab_test and item.status in valid_status:
-					lab_test_result = True
-				if item.examination_item in radiology:
-					if any(row.get("item") == item.examination_item for row in doc.examination_item):
-						current_item = True
-					else:
-						radiology_items.append(item.status)
-			if radiology_items:
-				radiology_result = all(status in valid_status for status in radiology_items)
-			else:
-				radiology_result = True if current_item else False
-		return lab_test_result and radiology_result
-	else: # for dispatcher
-		for item in check_list:
-			if item.examination_item in lab_test and item.status in valid_status:
-				lab_test_result = True
-			if item.examination_item in radiology:
-				radiology_items.append(item.status)
-		if radiology_items:
-			radiology_result = all(status in valid_status for status in radiology_items)
-		else:
-			radiology_result = False
-		return lab_test_result and radiology_result
-
 from kms.mcu_dispatcher import _get_related_service_units
+from kms.api.healthcare import is_meal
 
 @frappe.whitelist()
 def finish_exam(hsu, status, doctype, docname):
@@ -207,7 +145,7 @@ def finish_exam(hsu, status, doctype, docname):
 		doc.save(ignore_permissions=True)
 	elif queue_pooling_id:
 		item_status = ['Started', 'To Retest', 'To be Added']
-		if not frappe.db.exists('MCU Appointment', {'parent': exam_id, status: ['in', item_status]}):
+		if not frappe.db.exists('MCU Appointment', {'parent': exam_id, 'status': ['in', item_status]}):
 			frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
 		qps = frappe.get_all('MCU Queue Pooling', filters={'patient_appointment': exam_id}, pluck='name')
 		meal_time = now()

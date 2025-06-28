@@ -33,7 +33,7 @@ frappe.ui.form.on('Sample Collection', {
       .attr('target', '_blank');
 		if(frm.doc.docstatus==0){
       frappe.call({
-        method: 'kms.kms.doctype.dispatcher.dispatcher.is_meal',
+        method: 'kms.api.healtcare.is_meal',
         args: {
           exam_id: frm.doc.custom_appointment,
           doctype: frm.doctype,
@@ -42,12 +42,7 @@ frappe.ui.form.on('Sample Collection', {
         callback: (r) => {
           if (r.message === true) {
             const message = 'Patient can have their meal break after this examination.';
-            frm.page.set_indicator(__(message), 'red');
-            frappe.show_alert({
-              message: message,
-              indicator: 'red'
-            }, 15);
-          
+            frm.dashboard.set_headline(__(message), 'orange', true);
           }
         },
         error: (r) => {

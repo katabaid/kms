@@ -417,7 +417,7 @@ const addECGButton = (frm) => {
         const url = `/app/nurse-examination/${ecg_doc_no}`;
         window.open(url, '_blank');
       },
-      __('Navigate') // Adding under a 'Navigate' group, adjust if needed
+      __('Reports') // Adding under a 'Navigate' group, adjust if needed
     );
   }
 };

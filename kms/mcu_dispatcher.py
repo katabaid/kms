@@ -239,32 +239,20 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
     frappe.throw(f"Database error occurred while updating '{exam_item}' status.")
 
 @frappe.whitelist()
-def count_last_room(exam_id):
-  dispatcher_list = frappe.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')
-  finished_disp_rooms = frappe.db.count('Dispatcher Room',
-    {
-      'parent': ['in', dispatcher_list],
-      'status': [
-        'in', 
-        ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 'Ineligible for Testing']]
-    })
-  all_disp_rooms = frappe.db.count('Dispatcher Room',
-    {'parent': ['in', dispatcher_list],})
-  if finished_disp_rooms and all_disp_rooms:
-    return all_disp_rooms - finished_disp_rooms
+def check_last_room(exam_id, doctype, docname):
+  finished = ['Wait for Room Assignment', 'Waiting to Enter the Room', 'Ongoing Examination', 
+		'Additional or Retest Request', 'Wait for Sample', 'Meal Time']
+  doc = frappe.get_doc(doctype, docname)
+  hsu = doc.custom_service_unit if doctype == 'Sample Collection' else doc.service_unit
+  hsu_list = _get_related_service_units(hsu, exam_id)
+  disp = frappe.db.get_all('Dispatcher', filters={'patient_appointment': exam_id}, pluck='name')
+  if disp:
+    last_item = not frappe.db.exists('Dispatcher Room', 
+      {'parent': disp[0], 'healthcare_service_unit': ['not in', hsu_list], 'status': ['in', finished]})
   else:
-    finished_mqp_rooms = frappe.db.count('MCU Queue Pooling',
-      {
-        'patient_appointment': exam_id,
-        'status': [
-          'in', 
-          ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 'Ineligible for Testing']]
-      })
-    all_mqp_rooms = frappe.db.count('MCU Queue Pooling',
-      {'patient_appointment': exam_id,})
-    if all_mqp_rooms and finished_mqp_rooms:
-      return all_mqp_rooms - finished_mqp_rooms
-  return 0
+    last_item = not frappe.db.exists('MCU Queue Pooling', 
+      {'patient_appointment': exam_id, 'service_unit': ['not in', hsu_list], 'status': ['in', finished]})
+  return last_item
 
 @frappe.whitelist()
 def set_in_room_flag(exam_id):

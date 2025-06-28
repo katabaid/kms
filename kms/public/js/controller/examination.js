@@ -128,6 +128,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         utilsLoaded = true;
       });
     },
+    onload_post_render: function(frm){
+      checkLastRoom(frm, utils.getExamId(frm))
+    },
     refresh: function (frm) {
       frm.trigger('process_custom_buttons');
       utils.disableChildsBeforeCheckin(frm, config.childTables);
@@ -137,7 +140,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         frm.trigger('setup_child_table_custom_buttons');
       }
       frm.trigger('check_room_assignment');
-      checkLastRoom(utils.getExamId(frm))
+      //checkLastRoom(utils.getExamId(frm))
     },
 
     before_submit: function (frm) {
@@ -398,17 +401,19 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     }
   }
 
-  function checkLastRoom(exam_id) {
+  function checkLastRoom(frm, exam_id) {
     frappe.call({
-      method: 'kms.mcu_dispatcher.count_last_room',
-      args:{exam_id: exam_id},
+      method: 'kms.mcu_dispatcher.check_last_room',
+      args: {
+        'exam_id': exam_id,
+        'doctype': frm.doc.doctype,
+        'docname': frm.doc.name,
+      },
       callback: (r) => {
-        if(r.message){
-          count = parseInt(r.message);
-          if(count == 1) {
-            frm.page.set_indicator(__(
-              'This is the last examination room. Patient can check outafter this examination.'), 'red');
-          }
+        if(r.message===true){
+          frm.dashboard.set_headline(
+            'This is the last examination room. Patient can check out after this examination.', 
+            'orange', true);
         }
       }
     })
