@@ -1014,32 +1014,6 @@
   "user": "aliya@kyoai123.co.id"
  },
  {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Consultation 1",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-04-25 09:13:01.129537",
-  "name": "n63gsc40bl",
-  "user": "aliya@kyoai123.co.id"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Treadmill 1",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-04-28 10:46:19.661714",
-  "name": "h3knq0d8dq",
-  "user": "amandaamelia@kyoai123.co.id"
- },
- {
   "allow": "Employee",
   "applicable_for": null,
   "apply_to_all_doctypes": 1,
@@ -1196,45 +1170,6 @@
   "user": "desti@kyoai123.co.id"
  },
  {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Radiology",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-14 10:00:45.589200",
-  "name": "id7pn7q6h3",
-  "user": "lita@kyoai123.co.id"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Consultation 2",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-14 10:29:11.546468",
-  "name": "32bpjin6ev",
-  "user": "aini@kms.co.id"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Vital Sign",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-14 13:56:40.794673",
-  "name": "skng96vb56",
-  "user": "habib@kyoai123.co.id"
- },
- {
   "allow": "Employee",
   "applicable_for": null,
   "apply_to_all_doctypes": 1,
@@ -1259,32 +1194,6 @@
   "modified": "2025-05-15 14:58:53.529727",
   "name": "cr71mrg4ak",
   "user": "sudirman@kyoai123.co.id"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Dental",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-17 10:52:36.866377",
-  "name": "k1g3egcma7",
-  "user": "amel@kyoai123.co.id"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Eye Exam",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-05-20 13:35:41.344180",
-  "name": "mr6l6q2pph",
-  "user": "ardel@kyoai123.co.id"
  },
  {
   "allow": "Employee",
@@ -1331,24 +1240,11 @@
   "apply_to_all_doctypes": 1,
   "docstatus": 0,
   "doctype": "User Permission",
-  "for_value": "JMC - Sample Reception - KMS",
+  "for_value": "JMC - Vital Sign",
   "hide_descendants": 0,
   "is_default": 1,
-  "modified": "2025-06-16 08:02:12.726382",
-  "name": "gmfuk9qlms",
-  "user": "denissa@kyoai123.co.id"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - ECG 1",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-06-19 11:52:12.388820",
-  "name": "qmr5dresda",
+  "modified": "2025-06-28 09:35:36.154038",
+  "name": "kdh7mdmfgp",
   "user": "Administrator"
  }
 ]
