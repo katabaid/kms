@@ -129,7 +129,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       });
     },
     onload_post_render: function(frm){
-      checkLastRoom(frm, utils.getExamId(frm))
+      if(frm.doc.docstatus == 0) checkLastRoom(frm, utils.getExamId(frm))
     },
     refresh: function (frm) {
       frm.trigger('process_custom_buttons');
