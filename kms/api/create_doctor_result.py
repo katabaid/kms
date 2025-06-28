@@ -509,6 +509,7 @@ def ____fetch_nurse_result_per_item(appointment, item_code, item_group):
 
 def ____create_BMI_record(row, item, item_group):
 	bmi = float(row.result_text)
+	row.result_text = round(float(row.result_text), 1)
 	bmi_data = frappe.db.get_value('BMI Classification', 
 		{'min_value': ['<=', bmi], 'max_value': ['>', bmi]}, 
 		['name', 'grade'], as_dict=True)
