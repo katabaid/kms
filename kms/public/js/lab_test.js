@@ -171,21 +171,7 @@ const hide_standard_buttons = (frm, fields) => {
 		frm.set_df_property(field, 'cannot_add_rows', true);
 		frm.set_df_property(field, 'cannot_delete_rows', true);
 		frm.set_df_property(field, 'cannot_delete_all_rows', true);
-		/* let child = frm.fields_dict[field];
-		if (child) {
-			if (child.grid.grid_rows) {
-				setTimeout(()=>{
-					$(child.grid.wrapper).find('.grid-add-row, .grid-remove-rows, .row-index').hide();
-				}, 500) // Corrected timeout back to 500ms
-				child.grid.grid_rows.forEach(function(row) {
-					row.wrapper.find('.btn-open-row').on('click', function() {
-						setTimeout(function() {
-							$('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
-						}, 100);
-					});
-				});
-			}
-		} */
+		frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
 	});
 }
 

@@ -37,22 +37,10 @@ const createDocTypeController = (doctype, customConfig = {}) => {
     },
     hideStandardButtons(frm, fields) {
       fields.forEach((field) => {
-        const child = frm.fields_dict[field];
-        if (child) {
-          if (child.grid && child.grid.grid_rows) {
-            setTimeout(function() {
-              child.grid.wrapper.find('.grid-add-row, .grid-remove-rows, .row-index').hide();
-              child.grid.grid_rows.forEach(function(row) {
-                //row.wrapper.find('.row-check').hide(); // Hide the checkbox
-                row.wrapper.find('.btn-open-row').on('click', function() {
-                  setTimeout(function() {
-                    $('.grid-row-open').find('.grid-delete-row, .grid-insert-row-below, .grid-duplicate-row, .grid-insert-row, .grid-move-row, .grid-append-row').hide();
-                  }, 100);
-                });
-              });
-            }, 250);
-          }
-        }
+        frm.set_df_property(field, 'cannot_add_rows', true);
+        frm.set_df_property(field, 'cannot_delete_rows', true);
+        frm.set_df_property(field, 'cannot_delete_all_rows', true);
+        frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
       });
     },
     disableChildsBeforeCheckin(frm, fields) {

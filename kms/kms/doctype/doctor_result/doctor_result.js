@@ -126,6 +126,7 @@ const hide_standard_buttons = (frm, fields) => {
 			frm.set_df_property(field, 'cannot_add_rows', true);
 			frm.set_df_property(field, 'cannot_delete_rows', true);
 			frm.set_df_property(field, 'cannot_delete_all_rows', true);
+      frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
 		}
 	});
 };

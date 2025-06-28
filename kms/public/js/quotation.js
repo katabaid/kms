@@ -48,12 +48,11 @@ const getExamItemSelection = (frm) => {
 };
 
 const hideStandardButtons = (frm, fields) => {
-  setTimeout(() => {
-    $(frm.wrapper).find('[data-label="Get%20Items%20From"]').remove();
-  }, 250);
   fields.forEach(field => {
-    const grid = frm.fields_dict[field].grid;
-    $(grid.wrapper).find('.grid-footer').remove();
+    frm.set_df_property(field, 'cannot_add_rows', true);
+    frm.set_df_property(field, 'cannot_delete_rows', true);
+    frm.set_df_property(field, 'cannot_delete_all_rows', true);
+    frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
   });
 }
 
