@@ -34,6 +34,7 @@ async function open_queue_dialog(listview){
         patient: null,
         priority: null,
         queue_no: null,
+        current_tier: null
       },
       get_query: function() {
         return {
