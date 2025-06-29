@@ -19,25 +19,65 @@ class DoctorResult(Document):
 		self.copied_remark = '\n'.join(sorted(remarks) + dental_comments)
 
 	def before_submit(self):
+		validation_result = self.validate_before_submit()
+		if not validation_result['is_valid']:
+			error_message = 'All results must be submitted, and all gradable must be graded.\n\nInvalid entries found:\n'
+			for error in validation_result['errors']:
+				error_message += f"Table: {error['table']}, Row: {error['row_idx']}, Item: {error['item_name']}\n"
+			frappe.throw(error_message)
 		if not self.validate_before_submit():
 			frappe.throw('All results must be submitted, and all gradable must be graded.')
 		# self.process_auto_grading()
 		self.process_physical_exam()
-		self.process_other_exam()		
-	
-# Server Script: before_submit for DoctorResult
+		self.process_other_exam()
+
 	def validate_before_submit(self):
 		def is_valid(row):
 			return not (
 				(row.get('gradable') == 1 and not row.get('grade')) or
-				(row.get(
-					'hidden_item_group') and row.get('hidden_item') and 
+				(row.get('hidden_item_group') and row.get('hidden_item') and 
 					row.get('is_item') == 0 and not row.get('result')
 				)
 			)
-		return all(
-			all(is_valid(row) for row in self.get(table)) for table in self.child_tables if self.get(table)
-		)
+		def get_validation_reason(row):
+			"""Helper function to determine why a row failed validation"""
+			if row.get('gradable') == 1 and not row.get('grade'):
+				return 'Missing grade for gradable item'
+			elif (row.get('hidden_item_group') and row.get('hidden_item') and 
+					row.get('is_item') == 0 and not row.get('result')):
+				return 'Missing result for required item'
+			else:
+				return 'Unknown validation error'
+		
+		validation_errors = []
+		for table in self.child_tables:
+			if self.get(table):
+				for row in self.get(table):
+					if not is_valid(row):
+						validation_errors.append({
+							'table': table,
+							'row_idx': row.idx,
+							'item_name': row.get('item_name', 'Unknown Item'),
+							'reason': get_validation_reason(row)
+						})
+		return {
+			'is_valid': len(validation_errors) == 0,
+			'errors': validation_errors
+		}
+		
+# Server Script: before_submit for DoctorResult
+	#def validate_before_submit(self):
+	#	def is_valid(row):
+	#		return not (
+	#			(row.get('gradable') == 1 and not row.get('grade')) or
+	#			(row.get(
+	#				'hidden_item_group') and row.get('hidden_item') and 
+	#				row.get('is_item') == 0 and not row.get('result')
+	#			)
+	#		)
+	#	return all(
+	#		all(is_valid(row) for row in self.get(table)) for table in self.child_tables if self.get(table)
+	#	)
 
 	def on_submit(self):
 		self.process_group_exam()
@@ -48,6 +88,7 @@ class DoctorResult(Document):
 
 	def process_physical_exam(self):
 		self.physical_examination = []
+		self._process_questionnaire()
 		self._process_nurse_grade()
 		self._process_doctor_grade()
 
@@ -306,6 +347,58 @@ class DoctorResult(Document):
 			})
 		self.save()
 
+	def _process_questionnaire(self):
+		def _process_disease_history(row_dict, indices, last_index=None):
+			disease_list = []
+			all_tidak_ada = True
+			last_index_empty = True
+			for idx in indices:
+				if idx in row_dict and row_dict[idx].answer != 'Tidak Ada':
+					all_tidak_ada = False
+					break
+			if last_index is not None and last_index in row_dict and row_dict[last_index].answer:
+				last_index_empty = False
+			if all_tidak_ada and last_index_empty:
+				return 'Tidak Ada'
+			else:
+				for idx in indices:
+					if idx in row_dict and row_dict[idx].answer == 'Ada':
+						next_idx = idx + 1
+						if next_idx in row_dict and row_dict[next_idx].answer:
+							disease_list.append(row_dict[next_idx].answer)
+				if last_index is not None and last_index in row_dict and row_dict[last_index].answer:
+					disease_list.append(row_dict[last_index].answer)
+				if disease_list:
+					return ', '.join(disease_list)
+				else:
+					return 'Tidak Ada'
+				
+		q = next(iter(frappe.db.get_all('Questionnaire', pluck='name',
+			filters={'patient_appointment': self.appointment, 'template': 'MCU'})), None)
+		doc = frappe.get_doc('Questionnaire', q) if q else None
+		if doc:
+			row_dict = {row.idx: row for row in doc.detail}
+			self.append('physical_examination',{
+				'item_name': 'Chief Complaint',
+				'result': row_dict[2].answer if row_dict[2].answer else row_dict[1].answer
+			})
+			row_dict = {row.idx: row for row in doc.detail}
+			self.append('physical_examination',{
+				'item_name': 'Life Style',
+				'result': _process_disease_history(
+					row_dict, [45, 47, 49])
+			})
+			self.append('physical_examination',{
+				'item_name': 'Past Medical History',
+				'result': _process_disease_history(
+					row_dict, [3, 5, 7, 9, 11, 13, 15, 17, 19], 21)
+			})
+			self.append('physical_examination',{
+				'item_name': 'Family Medical History',
+				'result': _process_disease_history(
+					row_dict, [22, 24, 26, 28, 30, 32, 34, 36], 38)
+			})
+
 	def _process_nurse_grade(self):
 		counter = 0
 		bp = ''
@@ -337,14 +430,25 @@ class DoctorResult(Document):
 
 	def _process_doctor_grade(self):
 		counter = 0
+		item_name = None
 		for doctor_grade in self.doctor_grade:
 			if doctor_grade.hidden_item == physical_examination() and doctor_grade.status:
 				counter += 1
+				if counter == 1:
+					item_name = 'Physical Examination'
+					girth = frappe.db.get_value('Doctor Examination', doctor_grade.document_name, 'abdominal_girth')
+				else:
+					item_name = None
 				self.append('physical_examination', {
-					'item_name': 'Physical Examination' if counter == 1 else None,
+					'item_name': item_name,
 					'item_input': doctor_grade.examination,
 					'result': doctor_grade.result,
 				})
+		if counter:
+			self.append('physical_examination', {
+				'item_input': 'Abdominal Girth',
+				'result': girth,
+			})
 
 	def _process_item_grade(self):
 		for table in self.child_tables:
