@@ -5,7 +5,7 @@ import frappe
 from frappe.model.document import Document
 
 class DoctorResult(Document):
-	child_tables = ["nurse_grade", "doctor_grade", "radiology_grade", "lab_test_grade"]
+	child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 	grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
 
 	def before_save(self):
@@ -13,15 +13,15 @@ class DoctorResult(Document):
 			row.description.strip()
 			for child_name in self.child_tables
 			for row in (self.get(child_name) or [])
-			if row.grade and row.grade.split('-')[-1] != "A" and row.description
+			if row.grade and row.grade.split('-')[-1] != 'A' and row.description
     }
 		dental_comments = _get_dental_comments(self.appointment) or []
-		self.copied_remark = "\n".join(sorted(remarks) + dental_comments)
+		self.copied_remark = '\n'.join(sorted(remarks) + dental_comments)
 
 	def before_submit(self):
-		#if not self.validate_before_submit():
-		#	frappe.throw('All results must be submitted, and all gradable must be graded.')
-		self.process_auto_grading()
+		if not self.validate_before_submit():
+			frappe.throw('All results must be submitted, and all gradable must be graded.')
+		# self.process_auto_grading()
 		self.process_physical_exam()
 		self.process_other_exam()		
 	
@@ -29,10 +29,10 @@ class DoctorResult(Document):
 	def validate_before_submit(self):
 		def is_valid(row):
 			return not (
-				(row.get("gradable") == 1 and not row.get("grade")) or
+				(row.get('gradable') == 1 and not row.get('grade')) or
 				(row.get(
-					"hidden_item_group") and row.get("hidden_item") and 
-					row.get("is_item") == 0 and not row.get("result")
+					'hidden_item_group') and row.get('hidden_item') and 
+					row.get('is_item') == 0 and not row.get('result')
 				)
 			)
 		return all(
@@ -443,8 +443,7 @@ def _get_dental_comments(appointment):
 		(SELECT parent FROM `tabDoctor Examination Request` tder, `tabDoctor Examination` td 
 		WHERE item = (SELECT value FROM tabSingles ts WHERE doctype = 'MCU Settings'
 		AND field = 'dental_examination') AND parent = td.name
-		AND td.appointment = %s AND td.docstatus = 0) ORDER BY idx
-		""", (appointment), as_list=True)
+		AND td.appointment = %s AND td.docstatus = 0) ORDER BY idx""", (appointment), as_list=True)
 
 def format_indonesian_safe(number_str):
 	if number_str is None:
