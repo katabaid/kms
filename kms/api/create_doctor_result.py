@@ -564,6 +564,13 @@ def ____process_physical_examination(doc, item, item_group):
 	result.append(_____process_gent(doc, item, item_group))
 	result.append(_____process_neur(doc, item, item_group))
 	result.append(_____process_skin(doc, item, item_group))
+	result.append(['doctor_grade', {
+		'examination': 'Abdominal Girth',
+		'result': doc.abdominal_girth,
+		'hidden_item_group': item_group,
+		'hidden_item': item,
+		'is_item': 0
+	}])
 	return result
 
 def _____process_eyes(doc, item, item_group):
