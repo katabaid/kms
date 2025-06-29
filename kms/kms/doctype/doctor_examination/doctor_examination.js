@@ -441,7 +441,7 @@ frappe.ui.form.on('Doctor Examination', {
     const get_mcu_settings = () => {
       return new Promise((resolve) => {
         frappe.call({
-          method: 'kms.healthcare.get_mcu_settings',
+          method: 'kms.api.healthcare.get_mcu_settings',
           callback: (r) => resolve(r.message || [])
         });
       });
@@ -449,7 +449,7 @@ frappe.ui.form.on('Doctor Examination', {
     const get_ecg = (exam_id) => {
       return new Promise((resolve) => {
         frappe.call({
-          method: 'kms.healthcare.get_ecg',
+          method: 'kms.api.healthcare.get_ecg',
           args: {exam_id: exam_id},
           callback: (r) => resolve(r.message || '')
         })

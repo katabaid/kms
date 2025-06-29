@@ -40,7 +40,7 @@ let json_data = {};
 
 const getExamItemSelection = (frm) => {
   frappe.call({
-    method: 'kms.healthcare.get_exam_items',
+    method: 'kms.api.healthcare.get_exam_items',
     args: { root: 'Examination' },
     freeze: true,
     callback: (r) => { json_data = r.message; frm.bundle_dialog = createDialog(frm);; }
