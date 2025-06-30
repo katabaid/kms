@@ -16,13 +16,12 @@ class MCUQueuePooling(Document):
 		if self.is_new() and self.current_tier == 3:
 			return
 		current_tier = frappe.db.exists('MCU Queue Pooling', 
-			filters={
-				'patient_appointment': self.patient_appointment, 
+			{'patient_appointment': self.patient_appointment, 
 				'tier': self.current_tier, 
-				'status': ['in', finished]})
+				'status': ['in', finished]}) or 1
 		if not current_tier:
 			mqps = frappe.db.get_all('MCU Queue Pooling', 
 				filters={'patient_appointment': self.patient_appointment, 'name': ['!=', self.name]})
 			for mqp in mqps:
-				frappe.db.set_value('MCU Queue Pooling', mqp, 'current_tier', current_tier + 1)
-			self.current_tier = current_tier + 1
+				frappe.db.set_value('MCU Queue Pooling', mqp, 'current_tier', int(current_tier) + 1)
+			self.current_tier = int(current_tier) + 1

@@ -21,9 +21,9 @@ def patient_appointment_on_update(doc, method=None):
 	################Doctype: Patient Appointment################
 	doc.status = doc.status or 'Open'
 	previous_doc = doc.get_doc_before_save()
+	date = doc.custom_rescheduled_date if doc.custom_rescheduled_date else doc.appointment_date
 	dispatcher_user = frappe.db.get_value("Dispatcher Settings", 
-		{"branch": doc.custom_branch, 'enable_date': doc.appointment_date}, 
-		['dispatcher'])
+		{"branch": doc.custom_branch, 'enable_date': date}, ['dispatcher'])
 	if not previous_doc and doc.status == 'Checked In':
 		if dispatcher_user:
 			_create_dispatcher(doc.name, doc.custom_branch)
@@ -148,8 +148,7 @@ def _create_dispatcher(exam_id, branch):
 				doc.append('assignment_table', new_entry)
 	items = frappe.db.sql("""SELECT * FROM `tabMCU Appointment` tma
 		WHERE tma.parenttype = 'Patient Appointment'
-		AND tma.parent = %s AND tma.status = 'Started'
-		AND tma.examination_item = tigsu.parent) ORDER BY idx""", (exam_id), as_dict=True)
+		AND tma.parent = %s AND tma.status = 'Started' ORDER BY idx""", (exam_id), as_dict=True)
 	for item in items:
 		new_entry = dict()
 		new_entry['examination_item'] = item['examination_item']
@@ -340,12 +339,17 @@ def _set_mcu_queue_no(name):
 		filters={
 			'company': 'Kyoai Medical Services',
 			'custom_branch': 'Jakarta Main Clinic', 
-			'appointment_date': today(),
 			'appointment_type': 'MCU'
+		},
+		or_filters={
+			'appointment_date': today(),
+			'custom_rescheduled_date': today(),
 		},
 		fields=['max(custom_queue_no)+1 as maks'],
 		pluck='maks'
 	)[0]
+	if not custom_queue_no:
+		custom_queue_no = 1
 	frappe.db.set_value(
 		'Patient Appointment', name, 'custom_queue_no', custom_queue_no, update_modified=False)
 
