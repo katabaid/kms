@@ -70,15 +70,17 @@
    "read_only": 1
   }
  ],
+ "grid_page_length": 50,
  "istable": 1,
  "links": [],
- "modified": "2025-01-12 17:50:32.623133",
+ "modified": "2025-07-03 08:22:23.553316",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Result",
  "owner": "Administrator",
  "permissions": [],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

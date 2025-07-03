@@ -321,7 +321,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-25 21:21:40.586006",
+ "modified": "2025-07-03 08:22:12.602349",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",
@@ -347,7 +347,5 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "appointment",
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

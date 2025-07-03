@@ -38,7 +38,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-03-10 22:36:54.239095",
+ "modified": "2025-07-03 08:22:20.555398",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Conclusion",
@@ -58,6 +58,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "show_preview_popup": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

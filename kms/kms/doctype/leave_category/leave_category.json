@@ -20,9 +20,10 @@
    "unique": 1
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-13 11:51:10.255878",
+ "modified": "2025-07-03 08:22:30.150551",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Leave Category",
@@ -43,6 +44,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

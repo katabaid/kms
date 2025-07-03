@@ -292,7 +292,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-18 15:38:15.259822",
+ "modified": "2025-07-03 08:22:19.113834",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",
@@ -317,7 +317,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

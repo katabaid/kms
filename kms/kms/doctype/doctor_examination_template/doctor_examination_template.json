@@ -84,7 +84,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-06-06 20:57:50.541136",
+ "modified": "2025-07-03 08:22:13.471764",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Template",
@@ -108,7 +108,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

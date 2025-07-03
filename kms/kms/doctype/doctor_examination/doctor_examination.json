@@ -1688,7 +1688,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-06-26 12:49:07.048772",
+ "modified": "2025-07-03 08:22:11.820867",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",
@@ -1714,7 +1714,5 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "appointment",
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

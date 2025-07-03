@@ -210,11 +210,12 @@
    "options": "Medical Department"
   }
  ],
+ "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_calendar_and_gantt": 1,
  "links": [],
- "modified": "2024-12-24 11:59:33.503719",
+ "modified": "2025-07-03 08:22:23.920871",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Queue Pooling",
@@ -235,6 +236,7 @@
   }
  ],
  "restrict_to_domain": "Healthcare",
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
@@ -255,7 +257,5 @@
    "title": "Closed"
   }
  ],
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

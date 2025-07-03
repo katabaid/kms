@@ -314,7 +314,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-25 17:05:53.196865",
+ "modified": "2025-07-03 08:22:15.792687",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",
@@ -339,7 +339,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

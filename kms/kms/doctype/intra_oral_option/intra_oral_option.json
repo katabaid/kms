@@ -20,9 +20,10 @@
    "unique": 1
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-13 08:46:45.319099",
+ "modified": "2025-07-03 08:22:26.999953",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Intra Oral Option",
@@ -43,6 +44,7 @@
   }
  ],
  "quick_entry": 1,
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

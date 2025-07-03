@@ -31,7 +31,7 @@ def patient_appointment_on_update(doc, method=None):
 			_create_mcu_queue_pooling(doc.name, doc.custom_branch)
 		_set_mcu_queue_no(doc.name)
 		return
-	if previous_doc.status in ['Open','Rescheduled'] and doc.status == 'Checked In':
+	if previous_doc and previous_doc.status in ['Open','Rescheduled'] and doc.status == 'Checked In':
 		if doc.appointment_type == 'MCU':
 			if dispatcher_user:
 				_create_dispatcher(doc.name, doc.custom_branch)

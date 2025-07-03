@@ -108,9 +108,10 @@
    "reqd": 1
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-29 13:49:55.819921",
+ "modified": "2025-07-03 08:22:15.319916",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Questionnaire Template",
@@ -130,6 +131,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

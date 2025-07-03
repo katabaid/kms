@@ -265,7 +265,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-27 08:08:13.933232",
+ "modified": "2025-07-03 08:22:16.300170",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",
@@ -306,7 +306,5 @@
    "title": "Cancelled"
   }
  ],
- "track_changes": 1,
- "track_seen": 1,
- "track_views": 1
+ "track_changes": 1
 }

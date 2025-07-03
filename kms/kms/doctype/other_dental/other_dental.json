@@ -32,15 +32,17 @@
    "label": "Selective Value"
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-06-26 11:33:45.134936",
+ "modified": "2025-07-03 08:22:27.678622",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Other Dental",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

@@ -16,9 +16,10 @@
    "unique": 1
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-12-30 13:18:03.680944",
+ "modified": "2025-07-03 08:22:22.964416",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Dosage Instruction",
@@ -38,6 +39,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []
