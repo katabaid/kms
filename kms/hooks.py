@@ -207,6 +207,7 @@ doc_events = {
     "on_submit": "kms.event.lab_sample.lab_on_submit",
     "before_submit": "kms.event.lab_sample.lab_before_submit",
     "before_save": "kms.event.lab_sample.lab_before_save",
+    "before_update_after_submit": "kms.event.lab_sample.lab_before_update_after_submit"
   },
   "Sample Collection": {
     "before_insert": "kms.event.lab_sample.sample_before_insert",

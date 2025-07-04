@@ -56,7 +56,7 @@ frappe.ui.form.on('Lab Test', {
 		frm.doc.normal_test_items.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
-    if(frm.doc.custom_selective_test_result&&frm.doc.docstatus===0){
+    if (frm.doc?.custom_selective_test_result && [0, 1].includes(frm.doc.docstatus)) {
 			frm.refresh_field('custom_selective_test_result');
       $.each(frm.doc.custom_selective_test_result, (key, value) => {
 				frappe.meta.get_docfield('Selective Test Template', 'result', value.name).options = value.result_set;

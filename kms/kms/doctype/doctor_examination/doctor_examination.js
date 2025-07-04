@@ -39,15 +39,15 @@ const shouldShowDentalSections = (frm, settings) => {
   let dentalTemplateName = '';
   // Ensure settings is loaded and is an array
   if (Array.isArray(settings)) {
-      const dentalSetting = settings.find(item => item.field === 'dental_examination_name');
-      if (dentalSetting) {
-          dentalTemplateName = dentalSetting.value;
-      }
+    const dentalSetting = settings.find(item => item.field === 'dental_examination_name');
+    if (dentalSetting) {
+      dentalTemplateName = dentalSetting.value;
+    }
   }
 
   // Ensure examination_item exists and dentalTemplateName was found
   if (dentalTemplateName && Array.isArray(frm.doc.examination_item)) {
-      return frm.doc.examination_item.some(item => item.template === dentalTemplateName);
+    return frm.doc.examination_item.some(item => item.template === dentalTemplateName);
   }
   return false; // Return false if conditions aren't met
 }
@@ -335,7 +335,7 @@ const prepareOtherDentalOptions = (frm) => {
   }
 }
 
-const addSidebarUserAction = (frm) => {
+const addCustomButtons = (frm) => {
   frm.add_custom_button(
     __('Exam Notes'),
     () => {
@@ -371,6 +371,18 @@ const addSidebarUserAction = (frm) => {
     },
     __('Reports')
   )
+  if (ecg_doc_no && frm.doc.docstatus !== 2) {
+    frm.add_custom_button(
+      __('View ECG'),
+      () => {
+        // Construct the URL and open in a new tab
+        const url = `/app/nurse-examination/${ecg_doc_no}`;
+        window.open(url, '_blank');
+      },
+      __('Reports') // Adding under a 'Navigate' group, adjust if needed
+    );
+  }
+
 };
 
 const handleReadOnlyExams = (frm) => {
@@ -405,21 +417,6 @@ const handleReadOnlyExams = (frm) => {
       if (exam === 'rectal_test_name') rect_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
       //if (exam === 'dental_examination_name') dent_fields.forEach(section => frm.set_df_property(section, 'read_only', 1));
     })
-};
-
-// Function to add the View ECG button conditionally
-const addECGButton = (frm) => {
-  if (ecg_doc_no && frm.doc.docstatus !== 2) {
-    frm.add_custom_button(
-      __('View ECG'),
-      () => {
-        // Construct the URL and open in a new tab
-        const url = `/app/nurse-examination/${ecg_doc_no}`;
-        window.open(url, '_blank');
-      },
-      __('Reports') // Adding under a 'Navigate' group, adjust if needed
-    );
-  }
 };
 
 // Use the common controller with custom before_submit function for Doctor Examination
@@ -457,29 +454,24 @@ frappe.ui.form.on('Doctor Examination', {
     };
     promises = [get_mcu_settings()];
     promises.push(frm.doc.appointment ? get_ecg(frm.doc.appointment) : Promise.resolve(null));
-    Promise.all(promises)
-      .then(([settings, ecg]) => {
-        mcu_settings = settings;
-        ecg_doc_no = ecg && ecg[0] ? ecg[0].parent : null;
-      });
+    Promise.all(promises).then(([settings, ecg]) => {
+      mcu_settings = settings;
+      ecg_doc_no = ecg && ecg[0] ? ecg[0].parent : null;
+    });
   },
 
   refresh: function (frm) {
     // Call the questionnaire utility
     if (frm.fields_dict.questionnaire_html && kms.utils && kms.utils.fetch_questionnaire_for_doctype) {
-        kms.utils.fetch_questionnaire_for_doctype(
-            frm,
-            "appointment", // name_field_key for Doctor Examination
-            null,          // questionnaire_type_field_key (optional)
-            "questionnaire_html" // target_wrapper_selector: HTML field name
-        );
+      kms.utils.fetch_questionnaire_for_doctype(frm, "appointment", null, "questionnaire_html"
+    );
     } else {
-        if (!frm.fields_dict.questionnaire_html) {
-            console.warn("Doctor Examination form is missing 'questionnaire_html'. Questionnaire cannot be displayed.");
-        }
-        if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
-            console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
-        }
+      if (!frm.fields_dict.questionnaire_html) {
+        console.warn("Doctor Examination form is missing 'questionnaire_html'. Questionnaire cannot be displayed.");
+      }
+      if (!kms.utils || !kms.utils.fetch_questionnaire_for_doctype) {
+        console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
+      }
     }
     doctorExaminationController.refresh(frm);
     frm.dirtyDentalOptions = frm.dirtyDentalOptions || {}; // Initialize or preserve dental options cache
@@ -487,16 +479,15 @@ frappe.ui.form.on('Doctor Examination', {
 
     // Check if dental sections should be shown and handled
     if (shouldShowDentalSections(frm, mcu_settings)) {
-        // Hide the questionnaire table when handling dental sections
-        frm.set_df_property('questionnaire', 'hidden', 1);
-        handleDentalSections(frm);
+      // Hide the questionnaire table when handling dental sections
+      frm.set_df_property('questionnaire', 'hidden', 1);
+      handleDentalSections(frm);
     } else {
-        // Ensure questionnaire is visible if dental sections are not shown
-        frm.set_df_property('questionnaire', 'hidden', 0);
+      // Ensure questionnaire is visible if dental sections are not shown
+      frm.set_df_property('questionnaire', 'hidden', 0);
     }
 
-    addSidebarUserAction(frm);
-    addECGButton(frm); // Call the new function to add the ECG button
+    addCustomButtons(frm);
     handleReadOnlyExams(frm);
     handleQuestionnaire(frm);
     if (frm.doc.non_selective_result) {

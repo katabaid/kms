@@ -17,7 +17,7 @@
   "hide_custom": 0,
   "icon": "crm",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "CRM",
   "links": [
    {
@@ -723,7 +723,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2023-09-14 12:11:03.968048",
+  "modified": "2025-07-03 11:39:32.264427",
   "module": "CRM",
   "name": "CRM",
   "number_cards": [],
@@ -796,7 +796,7 @@
     "parent": "CRM",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Sales Order",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -7148,7 +7148,7 @@
   "hide_custom": 0,
   "icon": "organization",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Manufacturing",
   "links": [
    {
@@ -7674,7 +7674,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-10-21 14:13:38.777556",
+  "modified": "2025-07-03 11:39:32.481432",
   "module": "Manufacturing",
   "name": "Manufacturing",
   "number_cards": [],
@@ -7815,7 +7815,7 @@
     "parent": "Manufacturing",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Sales Order",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -7832,7 +7832,7 @@
     "parent": "Manufacturing",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "BOM",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -7849,7 +7849,7 @@
     "parent": "Manufacturing",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Work Order",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -7868,7 +7868,7 @@
   "hide_custom": 0,
   "icon": "integration",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "ERPNext Integrations",
   "links": [
    {
@@ -8212,63 +8212,9 @@
     "parenttype": "Workspace",
     "report_ref_doctype": null,
     "type": "Card Break"
-   },
-   {
-    "dependencies": null,
-    "description": null,
-    "hidden": 0,
-    "icon": null,
-    "is_query_report": 0,
-    "label": "GoCardless Settings",
-    "link_count": 0,
-    "link_to": "GoCardless Settings",
-    "link_type": "DocType",
-    "onboard": 0,
-    "only_for": null,
-    "parent": "ERPNext Integrations",
-    "parentfield": "links",
-    "parenttype": "Workspace",
-    "report_ref_doctype": null,
-    "type": "Link"
-   },
-   {
-    "dependencies": null,
-    "description": null,
-    "hidden": 0,
-    "icon": null,
-    "is_query_report": 0,
-    "label": "Mpesa Settings",
-    "link_count": 0,
-    "link_to": "Mpesa Settings",
-    "link_type": "DocType",
-    "onboard": 0,
-    "only_for": null,
-    "parent": "ERPNext Integrations",
-    "parentfield": "links",
-    "parenttype": "Workspace",
-    "report_ref_doctype": null,
-    "type": "Link"
-   },
-   {
-    "dependencies": null,
-    "description": null,
-    "hidden": 0,
-    "icon": null,
-    "is_query_report": 0,
-    "label": "Plaid Settings",
-    "link_count": 0,
-    "link_to": "Plaid Settings",
-    "link_type": "DocType",
-    "onboard": 0,
-    "only_for": null,
-    "parent": "ERPNext Integrations",
-    "parentfield": "links",
-    "parenttype": "Workspace",
-    "report_ref_doctype": null,
-    "type": "Link"
    }
   ],
-  "modified": "2023-08-29 15:48:59.010704",
+  "modified": "2025-07-03 11:41:50.404734",
   "module": "ERPNext Integrations",
   "name": "ERPNext Integrations",
   "number_cards": [],
@@ -15200,7 +15146,7 @@
   "hide_custom": 0,
   "icon": "website",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Website",
   "links": [
    {
@@ -15582,7 +15528,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2023-05-24 14:47:23.879036",
+  "modified": "2025-07-03 11:39:32.828318",
   "module": "Website",
   "name": "Website",
   "number_cards": [],
@@ -16354,7 +16300,7 @@
   "hide_custom": 0,
   "icon": "project",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Projects",
   "links": [
    {
@@ -16664,7 +16610,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-08-01 17:37:56.734556",
+  "modified": "2025-07-03 11:40:40.295597",
   "module": "Projects",
   "name": "Projects",
   "number_cards": [],
@@ -16773,7 +16719,7 @@
   "hide_custom": 0,
   "icon": "support",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Support",
   "links": [
    {
@@ -17065,7 +17011,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2023-11-18 12:29:51.037414",
+  "modified": "2025-07-03 11:39:32.724023",
   "module": "Support",
   "name": "Support",
   "number_cards": [],
@@ -17140,7 +17086,7 @@
   "hide_custom": 0,
   "icon": "quality",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Quality",
   "links": [
    {
@@ -17378,7 +17324,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-08-01 17:37:53.793922",
+  "modified": "2025-07-03 11:39:32.633567",
   "module": "Quality Management",
   "name": "Quality",
   "number_cards": [],
@@ -22761,7 +22707,7 @@
   "hide_custom": 0,
   "icon": "tool",
   "indicator_color": null,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "label": "Build",
   "links": [
    {
@@ -23305,7 +23251,7 @@
     "type": "Link"
    }
   ],
-  "modified": "2024-01-24 12:27:44.769958",
+  "modified": "2025-07-03 11:39:32.036088",
   "module": "Core",
   "name": "Build",
   "number_cards": [],

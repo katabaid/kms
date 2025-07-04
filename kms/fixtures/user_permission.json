@@ -1233,18 +1233,5 @@
   "modified": "2025-05-25 16:50:56.672412",
   "name": "40693ms0uk",
   "user": "Administrator"
- },
- {
-  "allow": "Healthcare Service Unit",
-  "applicable_for": null,
-  "apply_to_all_doctypes": 1,
-  "docstatus": 0,
-  "doctype": "User Permission",
-  "for_value": "JMC - Vital Sign",
-  "hide_descendants": 0,
-  "is_default": 1,
-  "modified": "2025-06-28 09:35:36.154038",
-  "name": "kdh7mdmfgp",
-  "user": "Administrator"
  }
 ]
