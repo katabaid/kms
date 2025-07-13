@@ -198,7 +198,7 @@ def refuse_to_test(name, room):
           f"Cannot make patient refuse to test, because server status of room: {room} is {hsu.status}.")
   _, template_doctype = _get_exam_template_rel(room)
   if (template_doctype != 'Lab Test Template'):
-    exam_items = _fetch_exam_items(doc.appointment, room, doc.branch, template_doctype)
+    exam_items = _fetch_exam_items(doc.patient_appointment, room, doc.branch, template_doctype)
     for package_item in doc.package:
       for exam_item in exam_items:
         if package_item.examination_item == exam_item.item_code:

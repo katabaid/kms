@@ -35,6 +35,7 @@ def set_cancelled_timeout_queue_pooling():
 def reset_room_assignment():
   frappe.db.sql("UPDATE `tabRoom Assignment` SET assigned = 0, time_sign_out = %s", (now_datetime(),))
   frappe.db.sql("DELETE FROM `tabUser Permission` WHERE allow = 'Healthcare Service Unit'")
+  frappe.db.sql("UPDATE FROM `tabDispatcher Room` SET healthcare_practitioner = ''")
   frappe.db.commit()
   #room_assignment = frappe.db.get_list('Room Assignment', filters={'assigned': 1}, pluck='name')
   #for ra in room_assignment:

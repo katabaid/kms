@@ -79,7 +79,7 @@ def lab_before_update_after_submit(doc, method=None):
   doctor_result_name, doctor_result_status = frappe.db.get_value('Doctor Result', 
     {'appointment': doc.custom_appointment}, ['name', 'docstatus'])
   if doctor_result_name:
-    if doctor_result_status:
+    if doctor_result_status == 0:
       apply_calculated_exam_results(doc.normal_test_items)
       if not all_results_filled(doc.normal_test_items, doc.custom_selective_test_result):
         frappe.throw('All results must have value before submitting.')
