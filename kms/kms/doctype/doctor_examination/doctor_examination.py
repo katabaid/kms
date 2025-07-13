@@ -29,12 +29,12 @@ class DoctorExamination(Document):
 		valid_checker = [
 			frappe.db.get_single_value ('MCU Settings', 'physical_examination'), 
 			frappe.db.get_single_value ('MCU Settings', 'cardiologist')]
-		if any(x in self.examination_item for x in valid_checker):
+		if any(item.item in valid_checker for item in self.examination_item):
 			pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
-			for package in pa_doc.custom_mcu_exam_items:
-				setup_questionnaire_table(self, package)
-			for package in pa_doc.custom_additional_mcu_items:
-				setup_questionnaire_table(self, package)
+			all_packages = pa_doc.custom_mcu_exam_items + pa_doc.custom_additional_mcu_items
+			for package in all_packages:
+				if package.examination_item == 'CARD-00002':
+					setup_questionnaire_table(self, package)
 
 	def on_submit(self):
 		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')

@@ -33,7 +33,7 @@ frappe.ui.form.on('Sample Collection', {
       .attr('target', '_blank');
 		if(frm.doc.docstatus==0){
       frappe.call({
-        method: 'kms.api.healtcare.is_meal',
+        method: 'kms.api.healthcare.is_meal',
         args: {
           exam_id: frm.doc.custom_appointment,
           doctype: frm.doctype,

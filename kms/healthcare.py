@@ -119,6 +119,8 @@ def _check_room_tier_completion(doctype, docname, room):
   tier = int(frappe.db.get_value('Healthcare Service Unit', room, 'custom_tier') or 0)
   if not tier or tier <= 1:
     return True
+  if tier == 3:
+    return _questionnaire_completed(doctype, docname)
   if doctype == 'Dispatcher':
     return not _has_unfinished_lower_tier('Dispatcher Room', 'parent', docname, tier)
   else:
@@ -134,6 +136,11 @@ def _has_unfinished_lower_tier(doctype, field, value, tier):
   return frappe.db.exists(
     doctype, {field: value, 'status': ['in', unfinished_status], 'service_unit': ['in', rooms_list]}
   )
+
+def _questionnaire_completed(doctype, docname):
+  exam_id = frappe.db.get_value(doctype, docname, 'patient_appointment')
+  return frappe.db.exists('Questionnaire', 
+    {'patient_appointment': exam_id, 'template': 'Treadmill', 'status': 'Approved'})
 
 def get_rooms_by_item_branch (item, branch):
   return frappe.get_all(

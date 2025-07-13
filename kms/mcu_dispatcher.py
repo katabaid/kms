@@ -225,6 +225,7 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
         existing_notes = room.get('notes', '')
         notes_to_save = existing_notes + '\n' + note if existing_notes else note
         frappe.db.set_value('Dispatcher Room', room.name, 'notes', notes_to_save)
+      return f'Dispatcher {dispatcher} item status is updated.'
     elif qp:
       rooms = frappe.get_all(
         'MCU Queue Pooling', 
@@ -235,6 +236,7 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
         existing_notes = room.get('notes', '')
         notes_to_save = existing_notes + '\n' + note if existing_notes else note
         frappe.db.set_value('Dispatcher Room', room.name, 'notes', notes_to_save)
+      return f'Appointment {exam_id} item status is updated.'
   except Exception as e:
     frappe.throw(f"Database error occurred while updating '{exam_item}' status.")
 
