@@ -6045,7 +6045,7 @@
   "property": "reqd",
   "property_type": null,
   "row_name": null,
-  "value": "0"
+  "value": "Hour"
  },
  {
   "default_value": null,
