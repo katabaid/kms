@@ -7,7 +7,8 @@ from frappe.model.document import Document
 
 class MCUQueuePooling(Document):
 	def before_insert(self):
-		self.title = f'{self.patient_appointment}-{frappe.utils.getdate(self.date).strftime('%y%m%d')}-{self.service_unit}'
+		formatted_date = frappe.utils.getdate(self.date).strftime('%y%m%d')
+		self.title = f'{self.patient_appointment}-{formatted_date}-{self.service_unit}'
 		self.current_tier = 1
 
 	def before_save(self):
