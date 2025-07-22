@@ -223,7 +223,9 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
         filters={'parent': dispatcher, 'healthcare_service_unit': ['in', related_rooms]}, 
         fields=['name', 'notes', 'healthcare_service_unit'])
       for room in rooms:
-        note = f'<{frappe.utils.now()}>{status} {doctype} {docname} {reason if reason else ''}'
+        current_time = frappe.utils.now()
+        reason_text = reason if reason else ''
+        note = f'<{current_time}>{status} {doctype} {docname} {reason_text}'
         existing_notes = room.get('notes', '')
         notes_to_save = existing_notes + '\n' + note if existing_notes else note
         frappe.db.set_value('Dispatcher Room', room.name, 'notes', notes_to_save)
