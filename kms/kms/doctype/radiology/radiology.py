@@ -69,7 +69,8 @@ def create_exam(name):
 		doc.save(ignore_permissions=True)
 		result.append(doc.name)
 		update_radiology_requests(enc.name, doc.name, doc.examination_item)
-	return f'Radiology {', '.join(result)} ordered.'
+		result_text = ', '.join(result)
+	return f'Radiology {result_text} ordered.'
 
 def update_radiology_requests(encounter_name, radiology_name, examination_items):
 	# Update Radiology Request records for matching templates
