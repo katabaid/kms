@@ -214,6 +214,8 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
     AND (examination_item IN (SELECT lab_test_code FROM `tabLab Test Template` tltt WHERE sample = %s) 
     OR examination_item = %s))"""
   update_val = (status, dispatcher, exam_id, exam_item, exam_item)
+  current_time = frappe.utils.now()
+  reason_text = reason if reason else ''
   try:
     frappe.db.sql(update_sql, update_val)
     related_rooms = _get_related_service_units(hsu, exam_id)
@@ -223,8 +225,6 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
         filters={'parent': dispatcher, 'healthcare_service_unit': ['in', related_rooms]}, 
         fields=['name', 'notes', 'healthcare_service_unit'])
       for room in rooms:
-        current_time = frappe.utils.now()
-        reason_text = reason if reason else ''
         note = f'<{current_time}>{status} {doctype} {docname} {reason_text}'
         existing_notes = room.get('notes', '')
         notes_to_save = existing_notes + '\n' + note if existing_notes else note
@@ -236,7 +236,7 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
         filters={'appointment': exam_id, 'service_unit': ['in', related_rooms]}, 
         fields=['name', 'notes', 'service_unit'])
       for room in rooms:
-        note = f'<{frappe.utils.now()}>{status} {doctype} {docname} {reason if reason else ''}'
+        note = f'<{current_time}>{status} {doctype} {docname} {reason_text}'
         existing_notes = room.get('notes', '')
         notes_to_save = existing_notes + '\n' + note if existing_notes else note
         frappe.db.set_value('Dispatcher Room', room.name, 'notes', notes_to_save)
