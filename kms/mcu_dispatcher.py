@@ -113,7 +113,9 @@ def _update_related_rooms_status(params):
     status,         clear_reference, related_rooms,   exam_id=None):
     rooms = frappe.get_all(doctype_name, filters=filters, fields=fields)
     for room in rooms:
-      note = f'<{frappe.utils.now()}>{status} {doctype} {docname} {reason if reason else ''}'
+      current_time = frappe.utils.now()
+      reason_text = reason if reason else ''
+      note = f'<{current_time}>{status} {doctype} {docname} {reason_text}'
       existing_notes = room.get('notes', '')
       notes_to_save = existing_notes + '\n' + note if existing_notes else note
       if room.get(hsu_field) == hsu:
