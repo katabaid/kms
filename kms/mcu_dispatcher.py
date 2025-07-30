@@ -233,7 +233,7 @@ def update_exam_item_status(dispatcher, qp, doctype, docname, hsu, exam_id, exam
     elif qp:
       rooms = frappe.get_all(
         'MCU Queue Pooling', 
-        filters={'appointment': exam_id, 'service_unit': ['in', related_rooms]}, 
+        filters={'patient_appointment': exam_id, 'service_unit': ['in', related_rooms]}, 
         fields=['name', 'notes', 'service_unit'])
       for room in rooms:
         note = f'<{current_time}>{status} {doctype} {docname} {reason_text}'

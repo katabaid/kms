@@ -228,7 +228,7 @@ def create_mr_from_encounter(enc):
   create_or_update_mr(compound_items_2)
   create_or_update_mr(compound_items_3)
   if message:
-    return f'Pharmacy Order {', '.join(message)} created.'
+    return f"Pharmacy Order {', '.join(message)} created."
   else:
     return 'No Pharmacy Order created.'
 
