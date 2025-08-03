@@ -26,7 +26,6 @@ def create_doctor_result(appointment):
 def _get_exam_dict(appointment):
 	return frappe.db.sql('''
 		SELECT examination_item, item_name, item_group,
-			(SELECT custom_gradable FROM `tabItem Group` tig WHERE tig.name = item_group) AS group_gradable,
 			(SELECT custom_bundle_position FROM `tabItem Group` tig WHERE tig.name = item_group) AS group_position,
 			(SELECT custom_gradable FROM `tabItem` ti WHERE ti.name = examination_item) AS item_gradable,
 			(SELECT custom_bundle_position FROM `tabItem` ti WHERE ti.name = examination_item) AS item_position,
@@ -47,7 +46,7 @@ def _get_exam_dict(appointment):
 			END AS exam_type
 		FROM `tabMCU Appointment`
 		WHERE parent = %s AND status = 'Finished'
-		ORDER BY 8, 5, 7''', (appointment), as_dict = True)
+		ORDER BY 7, 4, 6''', (appointment), as_dict = True)
 
 def _create_examination_items(appointment, exam_dict):
 	result = []
@@ -63,7 +62,7 @@ def _create_examination_items(appointment, exam_dict):
 		if group not in grouped_exams[category]:
 			grouped_exams[category][group] = {
 				'item_group': group,
-				'group_gradable': exam.get('group_gradable'),
+				'group_gradable': 1,
 				'group_position': exam.get('group_position'),
 				'items': []
 			}
@@ -411,9 +410,9 @@ def ___create_blood_pressure_exam(appointment, item, item_group):
 	if not incdec:
 		return None
 	incdec_category = frappe.db.get_value(
-		'MCU Category', f'{item_group}.{item['examination_item']}..{incdec}', 'description')
+		'MCU Category', f"{item_group}.{item['examination_item']}..{incdec}", 'description')
 	if systolic_a_grade and diastolic_a_grade:
-		grade = f'{item_group}.{item['examination_item']}.-A'
+		grade = f"{item_group}.{item['examination_item']}.-A"
 	item_line =  ['nurse_grade', {
 		'examination': item['item_name'],
 		'gradable': item.get('item_gradable', 0),
@@ -808,9 +807,9 @@ def ____process_rectal_test(doc, item, item_group):
 
 def ____process_dental_examination(doc, item, item_group):
 	return {
-		'result': ', '. join([row.conclusion for row in doc.conclusion]),
-		'grade': doc.grade_table[0].grade if doc.grade_table else None,
-		'description': ', '. join([row.suggestion for row in doc.grade_table])
+		'result': ', '.join([str(row.conclusion or '') for row in getattr(doc, 'conclusion', [])]),
+		'grade': (doc.grade_table[0].grade if getattr(doc, 'grade_table', []) else '') or '',
+		'description': ', '.join([str(row.suggestion or '') for row in getattr(doc, 'grade_table', [])])
 	}
 #endregion
 

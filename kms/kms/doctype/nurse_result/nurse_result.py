@@ -15,6 +15,12 @@ class NurseResult(Document):
 				examination_item.status = 'Finished'
 
 	def on_submit(self):
+		self._update_linked_records()
+
+	def before_update_after_submit(self):
+		self._update_linked_records()
+
+	def _update_linked_records(delf):
 		doctor_result_name = frappe.db.get_value('Doctor Result', {
 			'appointment': self.appointment,
 			'docstatus': 0
@@ -24,15 +30,19 @@ class NurseResult(Document):
 			if conclusion_text:
 				conclusion_result = ', '.join(conclusion_text)
 			item_group = frappe.db.get_value('Item', exam.item, 'item_group')
-			mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-				'hidden_item': exam.item,
-				'hidden_item_group': item_group,
-				'parent': doctor_result_name,
-				'is_item': 1
-			}, 'name')
-			frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-				'result': conclusion_result,
-				'status': self.get('workflow_state', 'Finished'),
-				'document_type': 'Nurse Result',
-				'document_name': self.name,
+			self._update_mcu_grade(doctor_result_name, exam, item_group, conclusion_result)
+
+	def _update_mcu_grade(self, doctor_result, exam, item_group, conclusion):
+		filters = {
+			"hidden_item": exam.item,
+			"hidden_item_group": item_group,
+			"parent": doctor_result,
+			"is_item": 1
+		}
+		if frappe.db.exists("MCU Exam Grade", filters):
+			frappe.db.set_value("MCU Exam Grade", filters, {
+				"result": conclusion,
+				"status": self.workflow_state or "Finished",
+				"document_type": "Nurse Result",
+				"document_name": self.name,
 			})
