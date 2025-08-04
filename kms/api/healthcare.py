@@ -10,41 +10,55 @@ def set_mqp_meal_time(exam_id):
 
 @frappe.whitelist()
 def is_meal(exam_id, doctype=None, docname=None):
-	appt = frappe.get_doc('Patient Appointment', exam_id)
-	if not appt.mcu:
+	def any_lab_done():
+		return any(item.examination_item in lab_tests and item.status in valid_status for item in check_list)
+	def all_radiology_done(statuses):
+		return all(status in valid_status for status in statuses) if statuses else False
+
+  appt_exams = frappe.db.get_all(
+    'MCU Appointment', filters={'parent': exam_id}, fields=['examination_item', 'status'])
+	radiology = [exam.exam_required for exam in frappe.get_doc('MCU Settings', 'MCU Settings').required_exam]
+	lab_tests = frappe.db.get_all('Item', pluck='name', 
+		filters=[['item_group', 'descendants of (inclusive)', 'Laboratory'],['custom_is_mcu_item', '=', 1]])
+	#appt = frappe.get_doc('Patient Appointment', exam_id)
+	if not frappe.db.exists('Patient Appointment', {'name': exam_id, 'appointment_type': 'MCU'}):
 		return False
 	if frappe.db.get_value('Dispatcher', {'patient_appointment': exam_id}, 'had_meal'):
 		return False
 	if frappe.db.exists('MCU Queue Pooling', {'patient_appointment': exam_id, 'is_meal_time': 1}):
 		return False
-
-	check_list = (getattr(appt, 'custom_mcu_exam_items', []) or []) + \
-		(getattr(appt, 'custom_additional_mcu_items', []) or [])
-	radiology = [exam.exam_required for exam in frappe.get_doc('MCU Settings', 'MCU Settings').required_exam]
-	lab_tests = frappe.db.get_all('Item', pluck='name', 
-		filters=[['item_group', 'descendants of (inclusive)', 'Laboratory'],['custom_is_mcu_item', '=', 1]])
+  radiology_exist = any(exam in [item['examination_item'] for item in appt_exams] for exam in radiology)
+  lab_test_exist = any(exam in [item['examination_item'] for item in appt_exams] for exam in lab_tests)
+  if not radiology_exist and not lab_test_exist:
+    return False
+	#check_list = (getattr(appt, 'custom_mcu_exam_items', []) or []) + \
+	#	(getattr(appt, 'custom_additional_mcu_items', []) or [])
 	valid_status = ['Finished', 'Refused', 'Rescheduled']
-	def any_lab_done():
-		return any(item.examination_item in lab_tests and item.status in valid_status for item in check_list)
-	def all_radiology_done(statuses):
-		return all(status in valid_status for status in statuses) if statuses else False
-	if docname and doctype: # for room 
+	if docname and doctype: # for room
+    if doctype not in {'Sample Collection', 'Radiology'}:
+      return False
 		doc = frappe.get_doc(doctype, docname)
-		radiology_statuses = [item.status for item in check_list if item.examination_item in radiology]
+		radiology_statuses = [item.status for item in appt_exams if item.examination_item in radiology]
 		if doctype == 'Sample Collection':
-			return all_radiology_done(radiology_statuses)
-		else:
-			current_radiology = [
-				item.examination_item for item in check_list
-				if item.examination_item in radiology and
-				any(row.get("item") == item.examination_item for row in doc.examination_item)]
-			other_radiology_statuses = [
-				item.status for item in check_list
-				if item.examination_item in radiology and
-				item.examination_item not in current_radiology]
-			return any_lab_done() and all_radiology_done(other_radiology_statuses) and bool(current_radiology)
+      return all_radiology_done(radiology_statuses) if radiology_exist else True
+    current_radiology = [
+      item.examination_item for item in appt_exams
+      if item.examination_item in radiology and
+      any(row.get("item") == item.examination_item for row in doc.examination_item)]
+    other_radiology_statuses = [
+      item.status for item in appt_exams
+      if item.examination_item in radiology and
+      item.examination_item not in current_radiology]
+    if lab_test_exist:
+      return any_lab_done() and all_radiology_done(other_radiology_statuses) and bool(current_radiology)
+    else:
+      all_radiology_done(other_radiology_statuses) and bool(current_radiology)
 	else: # for dispatcher
-		radiology_statuses = [item.status for item in check_list if item.examination_item in radiology]
+		radiology_statuses = [item.status for item in appt_exams if item.examination_item in radiology]
+    if not lab_test_exist:
+      return all_radiology_done(radiology_statuses)
+    elif not radiology_exist:
+      return any_lab_done()  
 		return any_lab_done() and all_radiology_done(radiology_statuses)
 
 @frappe.whitelist()

@@ -5,7 +5,6 @@ frappe.ui.form.on("MCU Queue Pooling", {
 	refresh(frm) {
     const meal_status = 
       ['Wait for Room Assignment', 'Additional or Retest Request', 'Wait for Sample']
-      console.log(frm.doc.is_meal_time, frm.doc.status, meal_status)
     if(frm.doc.is_meal_time && meal_status.includes(frm.doc.status)){
       frm.add_custom_button('Set Meal Time', () =>{
         frappe.call(
