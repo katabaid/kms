@@ -259,20 +259,25 @@ def reopen_appointment(name: str) -> None:
   deleted_records = False
   # Delete Vital Signs if exists
   vital_signs = frappe.db.get_value('Vital Signs', {'appointment': name}, 'name')
+  dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': name}, 'name')
+  mqps = frappe.db.get_list('MCU Queue Pooling', {'patient_appointment': name}, pluck='name')
   if vital_signs:
     frappe.delete_doc('Vital Signs', vital_signs, ignore_missing=True, force=True)
     deleted_records = True
   # Delete Dispatcher if exists
-  dispatcher = frappe.db.get_value('Dispatcher', {'patient_appointment': name}, 'name')
-  if dispatcher:
+  elif dispatcher:
     frappe.delete_doc('Dispatcher', dispatcher, ignore_missing=True, force=True)
     deleted_records = True
+  elif mqps:
+    for mqp in mqps:
+      frappe.delete_doc('MCU Queue Pooling', mqp, ignore_missing=True, force=True)
+      deleted_records = True
+  else:
+    frappe.throw('No related records found to delete - cannot reopen appointment')
   # Update appointment status if records were deleted
   if deleted_records:
     frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
     frappe.msgprint(f'Appointment {name} reopened successfully')
-  else:
-    frappe.throw('No related records found to delete - cannot reopen appointment')
 
 def _check_appointment_eligibility(name: str) -> list[dict]:
     """Shared validation function for appointment operations."""
