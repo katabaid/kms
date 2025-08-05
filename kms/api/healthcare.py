@@ -11,7 +11,7 @@ def set_mqp_meal_time(exam_id):
 @frappe.whitelist()
 def is_meal(exam_id, doctype=None, docname=None):
 	def any_lab_done():
-		return any(item.examination_item in lab_tests and item.status in valid_status for item in check_list)
+		return any(item.examination_item in lab_tests and item.status in valid_status for item in appt_exams)
 	def all_radiology_done(statuses):
 		return all(status in valid_status for status in statuses) if statuses else False
 
