@@ -20,7 +20,7 @@ class NurseResult(Document):
 	def before_update_after_submit(self):
 		self._update_linked_records()
 
-	def _update_linked_records(delf):
+	def _update_linked_records(self):
 		doctor_result_name = frappe.db.get_value('Doctor Result', {
 			'appointment': self.appointment,
 			'docstatus': 0
@@ -42,7 +42,7 @@ class NurseResult(Document):
 		if frappe.db.exists("MCU Exam Grade", filters):
 			frappe.db.set_value("MCU Exam Grade", filters, {
 				"result": conclusion,
-				"status": self.workflow_state or "Finished",
+				"status": self.get("workflow_state") or "Finished",
 				"document_type": "Nurse Result",
 				"document_name": self.name,
 			})
