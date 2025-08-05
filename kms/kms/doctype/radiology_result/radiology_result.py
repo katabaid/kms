@@ -31,6 +31,8 @@ class RadiologyResult(Document):
 				conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
 				if conclusion_text:
 					conclusion_result = ', '.join(conclusion_text)
+				else:
+					frappe.throw('Conclusion must be entered before submitting this document.')
 				item_group = frappe.db.get_value('Item', exam.item, 'item_group')
 				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
 					'hidden_item': exam.item,
