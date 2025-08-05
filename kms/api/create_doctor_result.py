@@ -171,6 +171,8 @@ def __create_lab_test_category(appointment, item, item_group):
 		SELECT 1 FROM `tabLab Test Request` tltr 
 		WHERE parent = tlt.custom_sample_collection 
 		AND tltr.item_code = %s)""", (appointment, item['examination_item']), as_dict=True)[0]
+	if not doc_no:
+		frappe.throw('Lab Test is not created. Please report this error to System Administrator.')
 	result.append(['lab_test_grade', {
 		'examination': item['item_name'],
 		'gradable': item.get('item_gradable', 0),
