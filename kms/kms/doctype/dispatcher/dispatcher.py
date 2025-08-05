@@ -7,6 +7,8 @@ from frappe.utils import today, now, now_datetime
 from frappe import _
 from statistics import mean
 from datetime import timedelta
+from kms.mcu_dispatcher import _get_related_service_units
+from kms.api.healthcare import is_meal
 
 FINISHED_STATUSES = {
   'Refused', 
@@ -89,25 +91,22 @@ def is_within_range(value, min_value, max_value):
 
 @frappe.whitelist()
 def get_queued_branch(branch):
-	return frappe.db.sql(f"""
-		SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, 
-			tra.`user`, thsu.custom_default_doctype
-		FROM `tabHealthcare Service Unit` thsu
-		LEFT JOIN `tabDispatcher Room` tdr 
-			ON thsu.name = tdr.healthcare_service_unit 
-			AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
-			AND EXISTS (SELECT 1 FROM tabDispatcher td WHERE td.name = tdr.parent and td.`date` = CURDATE())
-		LEFT JOIN `tabRoom Assignment` tra 
-			ON thsu.name = tra.healthcare_service_unit 
-			AND tra.`date` = CURDATE()
-		WHERE thsu.custom_branch = %s
-		AND thsu.is_group = 0 
-		AND thsu.custom_default_doctype IS NOT NULL
-		GROUP BY thsu.name
-		ORDER BY custom_room""", (branch), as_dict=True)
-
-from kms.mcu_dispatcher import _get_related_service_units
-from kms.api.healthcare import is_meal
+	sql = """SELECT thsu.name, COALESCE(COUNT(tdr.healthcare_service_unit), 0) AS status_count, 
+		tra.`user`, thsu.custom_default_doctype
+	FROM `tabHealthcare Service Unit` thsu
+	LEFT JOIN `tabDispatcher Room` tdr 
+		ON thsu.name = tdr.healthcare_service_unit 
+		AND tdr.status in ('Waiting to Enter the Room', 'Ongoing Examination')
+		AND EXISTS (SELECT 1 FROM tabDispatcher td WHERE td.name = tdr.parent and td.`date` = CURDATE())
+	LEFT JOIN `tabRoom Assignment` tra 
+		ON thsu.name = tra.healthcare_service_unit 
+		AND tra.`date` = CURDATE()
+	WHERE thsu.custom_branch = %s
+	AND thsu.is_group = 0 
+	AND thsu.custom_default_doctype IS NOT NULL
+	GROUP BY thsu.name
+	ORDER BY custom_room"""
+	return frappe.db.sql(sql, (branch,), as_dict=True)
 
 @frappe.whitelist()
 def finish_exam(hsu, status, doctype, docname):

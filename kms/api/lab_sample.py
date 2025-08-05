@@ -2,20 +2,17 @@ import frappe
 
 @frappe.whitelist()
 def get_items():
-  item_group = frappe.db.sql("""
-    WITH RECURSIVE ItemHierarchy AS (
+  item_group_sql = """WITH RECURSIVE ItemHierarchy AS (
+      SELECT name, parent_item_group, is_group
+      FROM `tabItem Group` tig 
+      WHERE parent_item_group = 'Laboratory'
+      UNION ALL
+      SELECT t.name, t.parent_item_group, t.is_group
+      FROM `tabItem Group` t
+      INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name)
     SELECT name, parent_item_group, is_group
-    FROM `tabItem Group` tig 
-    WHERE parent_item_group = 'Laboratory'
-    UNION ALL
-    SELECT t.name, t.parent_item_group, t.is_group
-    FROM `tabItem Group` t
-    INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
-    )
-    SELECT name, parent_item_group, is_group
-    FROM ItemHierarchy""", as_dict=True)
-  item = frappe.db.sql("""
-    SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `tabLab Test Template` tltt
+    FROM ItemHierarchy"""
+  item_sql = """SELECT tltt.name, tltt.item, tltt.lab_test_group FROM `tabLab Test Template` tltt
     WHERE EXISTS (SELECT 1 FROM tabItem ti WHERE tltt.item = ti.name) 
     AND EXISTS (
       SELECT 1 FROM (WITH RECURSIVE ItemHierarchy AS (
@@ -27,7 +24,9 @@ def get_items():
         FROM `tabItem Group` t
         INNER JOIN ItemHierarchy ih ON t.parent_item_group = ih.name
       ) SELECT name, parent_item_group, is_group FROM ItemHierarchy) ih 
-    WHERE tltt.lab_test_group = ih.name)""", as_dict=True)
+    WHERE tltt.lab_test_group = ih.name)"""
+  item_group = frappe.db.sql(item_group_sql, as_dict=True)
+  item = frappe.db.sql(item_sql, as_dict=True)
   return {'item_group': item_group, 'item': item}
 
 @frappe.whitelist()
@@ -37,13 +36,13 @@ def create_sc(name, appointment):
     filters = {'custom_appointment': appointment, 'docstatus': 0},
     pluck = 'name')
   #how to determine service unit if more than 1 per branch is registered in item group (i.e. : usg male/usg female, sample1/sample2)
-  sus = frappe.db.sql("""
-    SELECT DISTINCT tigsu.service_unit
+  sus_sql = """SELECT DISTINCT tigsu.service_unit
     FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp 
     WHERE tlp.parent = %s
     AND tlp.custom_exam_item = tigsu.parent
     AND branch = %s
-    AND custom_sample_collection IS NULL""", (name, appt_doc.custom_branch), as_dict=True)
+    AND custom_sample_collection IS NULL"""
+  sus = frappe.db.sql(sus_sql, (name, appt_doc.custom_branch), as_dict=True)
   resp = []
   if sus:
     for su in sus:
@@ -69,16 +68,16 @@ def create_sc(name, appointment):
           'custom_document_date': frappe.utils.now(),
           'custom_encounter': name
         })
-      samples = frappe.db.sql("""SELECT distinct tltt.sample
-      FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
-      WHERE tlp.parent = %s
-      AND tlp.custom_exam_item = tigsu.parent
-      AND branch = %s
-      AND tigsu.service_unit = %s
-      AND tltt.name = tlp.lab_test_name
-      AND tltt.sample IS NOT NULL
-      AND custom_sample_collection IS NULL""", 
-      (name, appt_doc.custom_branch, su.service_unit), as_dict=True)
+      sample_sql = """SELECT distinct tltt.sample
+        FROM `tabItem Group Service Unit` tigsu, `tabLab Prescription` tlp, `tabLab Test Template` tltt 
+        WHERE tlp.parent = %s
+        AND tlp.custom_exam_item = tigsu.parent
+        AND branch = %s
+        AND tigsu.service_unit = %s
+        AND tltt.name = tlp.lab_test_name
+        AND tltt.sample IS NOT NULL
+        AND custom_sample_collection IS NULL"""
+      samples = frappe.db.sql(sample_sql, (name, appt_doc.custom_branch, su.service_unit), as_dict=True)
       existing_samples = {row.sample for row in sample_doc.get('custom_sample_table', [])}
       for sample in samples:
         if sample.sample not in existing_samples:
@@ -103,4 +102,4 @@ def create_sc(name, appointment):
       enc_doc.save(ignore_permissions=True)
   else:
     frappe.throw('Lab Test already prescribed.')
-  return f'Sample Collection {', '.join(resp)} created.'
+  return f"Sample Collection {', '.join(resp)} created."
