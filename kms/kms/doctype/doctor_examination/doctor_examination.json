@@ -241,7 +241,6 @@
   "dental_detail_html",
   "other_dental",
   "is_dental_record_inserted",
-  "conclusion",
   "grade_section",
   "grade_table",
   "grade",
@@ -1598,13 +1597,6 @@
    "label": "Exam Note"
   },
   {
-   "allow_on_submit": 1,
-   "fieldname": "conclusion",
-   "fieldtype": "Table",
-   "label": "Conclusion",
-   "options": "Radiology Conclusion Table"
-  },
-  {
    "fieldname": "grade_section",
    "fieldtype": "Section Break",
    "label": "Grade"
@@ -1688,7 +1680,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-03 08:22:11.820867",
+ "modified": "2025-08-06 16:55:46.895124",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination",

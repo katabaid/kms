@@ -17,7 +17,7 @@ def create_doctor_result(appointment):
 	results = _create_examination_items(appointment, exam_dict)
 	for result in results:
 		if len(result) != 2:
-			frappe.log_error(f"Invalid row format: {result}")
+			frappe.log_error(f"Invalid row format: {str(result)[:100]}")
 			continue
 		grade_type, data_dict = result
 		doc.append(grade_type, data_dict)
@@ -809,9 +809,9 @@ def ____process_rectal_test(doc, item, item_group):
 
 def ____process_dental_examination(doc, item, item_group):
 	return {
-		'result': ', '.join([str(row.conclusion or '') for row in getattr(doc, 'conclusion', [])]),
+		'result': ', '.join([str(row.suggestion or '') for row in getattr(doc, 'grade_table', [])]),
 		'grade': (doc.grade_table[0].grade if getattr(doc, 'grade_table', []) else '') or '',
-		'description': ', '.join([str(row.suggestion or '') for row in getattr(doc, 'grade_table', [])])
+		'description': (doc.grade_table[0].suggestion if getattr(doc, 'grade_table', []) else '') or ''
 	}
 #endregion
 
