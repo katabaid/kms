@@ -198,14 +198,14 @@ def create_result_doc(doc, target):
 		})
 		for item in doc.custom_sample_table:
 			if item.status == 'Finished':
-				lab_test = frappe.db.sql("""
-					SELECT tltt.name, tltt.lab_test_code FROM `tabLab Test Template` tltt, tabItem ti
+				lab_test_sql = """SELECT tltt.name, tltt.lab_test_code FROM `tabLab Test Template` tltt, tabItem ti
 					WHERE tltt.sample = %s AND ti.name = tltt.lab_test_code
 					AND EXISTS (SELECT 1 FROM `tabLab Test Request` tltr
 						WHERE tltr.item_code = tltt.item AND tltr.parent = %s
 						AND tltr.parentfield = 'custom_examination_item'
 						AND tltr.parenttype = 'Sample Collection')
-					ORDER BY ti.custom_bundle_position""", (item.sample, doc.name), as_dict=True)
+					ORDER BY ti.custom_bundle_position"""
+				lab_test = frappe.db.sql(lab_test_sql, (item.sample, doc.name), as_dict=True)
 				for exam in lab_test:
 					template_doc = frappe.get_doc('Lab Test Template', exam.name)
 					non_selective = template_doc.get('normal_test_templates')
@@ -213,21 +213,18 @@ def create_result_doc(doc, target):
 					if non_selective:
 						match = re.compile(r'(\d+) Years?').match(doc.patient_age)
 						age = int(match.group(1)) if match else None
-						minmax = frappe.db.sql("""
-							WITH ranked AS (
+						minmax_sql = """WITH ranked AS (
 								SELECT parent, lab_test_event, lab_test_uom, custom_age,
 									custom_sex, custom_min_value, custom_max_value, idx,
 									ROW_NUMBER() OVER (PARTITION BY parent, lab_test_event ORDER BY custom_age DESC) as rn
 								FROM `tabNormal Test Template`
 								WHERE parent = %(test)s
 									AND (%(sex)s IS NULL OR custom_sex = %(sex)s)
-									AND custom_age <= %(age)s
-							)
+									AND custom_age <= %(age)s)
 							SELECT lab_test_event, lab_test_uom, custom_min_value, custom_max_value
-							FROM ranked
-							WHERE rn = 1
-							ORDER BY idx""", 
-							{'age': age, 'test': exam.name, 'sex': doc.patient_sex}, as_dict=True)
+							FROM ranked WHERE rn = 1 ORDER BY idx"""
+						minmax_val = {'age': age, 'test': exam.name, 'sex': doc.patient_sex}
+						minmax = frappe.db.sql(minmax_sql, minmax_val, as_dict=True)
 						for mm in minmax:
 							new_doc.append('normal_test_items', {
 								'lab_test_name': exam.name, 
@@ -269,12 +266,12 @@ def create_result_doc(doc, target):
 			'exam': doc.name
 		})
 		if target == 'Nurse Result':
-			count_nurse_result = frappe.db.sql("""
-				SELECT count(*) count 
+			cnr_sql = """SELECT count(*) count 
 				FROM `tabNurse Examination Template` tnet
 				WHERE EXISTS (SELECT * FROM `tabNurse Examination Request` tner 
 				WHERE tner.parent = %s AND tnet.name = tner.template)
-				AND tnet.result_in_exam = 0""", (doc.name), as_dict = True)
+				AND tnet.result_in_exam = 0"""
+			count_nurse_result = frappe.db.sql(cnr_sql, (doc.name), as_dict = True)
 			if count_nurse_result[0].count == 0:
 				return None, None
 		for item in doc.examination_item:
