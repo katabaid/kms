@@ -17,7 +17,7 @@
   "hide_custom": 0,
   "icon": "crm",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "CRM",
   "links": [
    {
@@ -1780,7 +1780,7 @@
     "parent": "Buying",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Purchase Order",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -1797,7 +1797,7 @@
     "parent": "Buying",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Purchase Order",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -2649,7 +2649,7 @@
     "parent": "Users",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "DocShare",
     "type": "Link"
    },
    {
@@ -4376,7 +4376,7 @@
     "parent": "Accounting",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Sales Invoice",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -4393,7 +4393,7 @@
     "parent": "Accounting",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "GL Entry",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -4410,7 +4410,7 @@
     "parent": "Accounting",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "GL Entry",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -4994,7 +4994,7 @@
     "parent": "Stock",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Serial No",
     "type": "Link"
    },
    {
@@ -5012,7 +5012,7 @@
     "parent": "Stock",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Serial No",
     "type": "Link"
    },
    {
@@ -5030,7 +5030,7 @@
     "parent": "Stock",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Serial No",
     "type": "Link"
    },
    {
@@ -5444,7 +5444,7 @@
     "parent": "Stock",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Stock Ledger Entry",
     "type": "Link"
    },
    {
@@ -5864,7 +5864,7 @@
     "parent": "Stock",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Stock Ledger Entry",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -5881,7 +5881,7 @@
     "parent": "Stock",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Stock Ledger Entry",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -6213,7 +6213,7 @@
     "parent": "Assets",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Asset Maintenance",
     "type": "Link"
    },
    {
@@ -6231,7 +6231,7 @@
     "parent": "Assets",
     "parentfield": "links",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Asset Activity",
     "type": "Link"
    }
   ],
@@ -6291,7 +6291,7 @@
     "parent": "Assets",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Asset",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -7148,7 +7148,7 @@
   "hide_custom": 0,
   "icon": "organization",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Manufacturing",
   "links": [
    {
@@ -7868,7 +7868,7 @@
   "hide_custom": 0,
   "icon": "integration",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "ERPNext Integrations",
   "links": [
    {
@@ -11046,7 +11046,7 @@
     "parent": "Salary Payout",
     "parentfield": "shortcuts",
     "parenttype": "Workspace",
-    "report_ref_doctype": null,
+    "report_ref_doctype": "Salary Slip",
     "restrict_to_domain": null,
     "stats_filter": null,
     "type": "Report",
@@ -12351,7 +12351,7 @@
   "hide_custom": 0,
   "icon": "sell",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Selling",
   "links": [
    {
@@ -15146,7 +15146,7 @@
   "hide_custom": 0,
   "icon": "website",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Website",
   "links": [
    {
@@ -16300,7 +16300,7 @@
   "hide_custom": 0,
   "icon": "project",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Projects",
   "links": [
    {
@@ -16719,7 +16719,7 @@
   "hide_custom": 0,
   "icon": "support",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Support",
   "links": [
    {
@@ -17086,7 +17086,7 @@
   "hide_custom": 0,
   "icon": "quality",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Quality",
   "links": [
    {
@@ -22707,7 +22707,7 @@
   "hide_custom": 0,
   "icon": "tool",
   "indicator_color": null,
-  "is_hidden": 1,
+  "is_hidden": 0,
   "label": "Build",
   "links": [
    {

@@ -169,7 +169,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         callback: function (r) {
           if (r.message) {
             if (utilsLoaded && kms.utils) {
-              kms.utils.show_alert(`${r.message.message} ${r.message.docname}`, 'green');
+              kms.utils.show_alert(`${r.message.message} ${r.message.docname} for ${r.message.patient}`, 'green');
             }
             resolve();
           } else {

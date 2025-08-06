@@ -176,8 +176,8 @@ def finish_exam(hsu, status, doctype, docname):
 			case 'Sample Collection':
 				target = 'Lab Test'
 		if target:
-			result_doc_name = create_result_doc(source_doc, target)
-			return {'message': 'Finished', 'docname': result_doc_name}
+			result_doc_name, patient = create_result_doc(source_doc, target)
+			return {'message': 'Finished', 'docname': result_doc_name, 'patient': patient}
 	return {'message': 'Finished'}
 
 def create_result_doc(doc, target):
@@ -276,7 +276,7 @@ def create_result_doc(doc, target):
 				WHERE tner.parent = %s AND tnet.name = tner.template)
 				AND tnet.result_in_exam = 0""", (doc.name), as_dict = True)
 			if count_nurse_result[0].count == 0:
-				return
+				return None, None
 		for item in doc.examination_item:
 			if item.status == 'Finished':
 				item_status = 'Started'
@@ -368,4 +368,4 @@ def create_result_doc(doc, target):
 						frappe.throw(f"Unhandled Template for {target} DocType.")
 	if not not_created:
 		new_doc.insert(ignore_permissions=True)
-	return new_doc.name
+	return new_doc.name, new_doc.patient_name
