@@ -6,6 +6,12 @@ from frappe.utils import now
 from frappe.model.document import Document
 
 class RadiologyResult(Document):
+	def before_submit(self):
+		self.status = 'Finished'
+		for examination_item in self.examination_item:
+			if examination_item.status == 'Started':
+				examination_item.status = 'Finished'
+
 	def on_submit(self):
 		if self.patient_encounter:
 			enc = frappe.get_doc('Patient Encounter', self.patient_encounter)
@@ -23,26 +29,37 @@ class RadiologyResult(Document):
 						radiology_request.status_time = now()
 						enc.save(ignore_permissions=True)
 		else:
-			doctor_result_name = frappe.db.get_value('Doctor Result', {
-				'appointment': self.appointment,
-				'docstatus': 0
-			}, 'name')
-			for exam in self.examination_item:
-				conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
-				if conclusion_text:
-					conclusion_result = ', '.join(conclusion_text)
-				else:
-					frappe.throw('Conclusion must be entered before submitting this document.')
-				item_group = frappe.db.get_value('Item', exam.item, 'item_group')
-				mcu_grade_name = frappe.db.get_value('MCU Exam Grade', {
-					'hidden_item': exam.item,
-					'hidden_item_group': item_group,
-					'parent': doctor_result_name,
-					'is_item': 1
-				}, 'name')
-				frappe.db.set_value('MCU Exam Grade', mcu_grade_name, {
-					'result': conclusion_result,
-					'status': self.get('workflow_state', 'Finished'),
-					'document_type': 'Radiology Result',
-					'document_name': self.name,
-				})
+			self._update_linked_records()
+
+	def before_update_after_submit(self):
+		if self.need_review:
+			self._update_linked_records()
+		else:
+			frappe.throw('Need Review flag must be active.')
+
+	def _update_linked_records(self):
+		doctor_result_name = frappe.db.get_value('Doctor Result', {
+			'appointment': self.appointment,
+			'docstatus': 0
+		}, 'name')
+		for exam in self.examination_item:
+			conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
+			if conclusion_text:
+				conclusion_result = ', '.join(conclusion_text)
+			item_group = frappe.db.get_value('Item', exam.item, 'item_group')
+			self._update_mcu_grade(doctor_result_name, exam, item_group, conclusion_result)
+
+	def _update_mcu_grade(self, doctor_result, exam, item_group, conclusion):
+		filters = {
+			"hidden_item": exam.item,
+			"hidden_item_group": item_group,
+			"parent": doctor_result,
+			"is_item": 1
+		}
+		if frappe.db.exists("MCU Exam Grade", filters):
+			frappe.db.set_value("MCU Exam Grade", filters, {
+				"result": conclusion,
+				"status": self.get("workflow_state") or "Finished",
+				"document_type": "Radiology Result",
+				"document_name": self.name,
+			})
