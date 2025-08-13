@@ -39,7 +39,14 @@ frappe.ui.form.on('Nurse Examination', {
 			}
     }
 	},
-
+	submit: function(frm){
+		frappe.confirm('test', ()=>{
+			frm.docstatus = 1;
+			frm.save('Submit', null, null, () =>{
+				frm.reload_doc()
+			})
+		})
+	},
 	refresh: function (frm) {
 		nurseExaminationController.refresh(frm);
 		// Call the questionnaire utility

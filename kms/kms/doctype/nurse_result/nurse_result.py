@@ -18,7 +18,10 @@ class NurseResult(Document):
 		self._update_linked_records()
 
 	def before_update_after_submit(self):
-		self._update_linked_records()
+		if self.need_review:
+			self._update_linked_records()
+		else:
+			frappe.throw('Need Review flag must be active.')
 
 	def _update_linked_records(self):
 		doctor_result_name = frappe.db.get_value('Doctor Result', {

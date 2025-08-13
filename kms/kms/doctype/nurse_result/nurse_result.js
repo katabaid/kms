@@ -25,7 +25,7 @@ frappe.ui.form.on('Nurse Result', {
 		hide_standard_buttons (frm, ['examination_item', 'result', 'non_selective_result']);
 	},
 	setup: function (frm) {
-		if(frm.doc.docstatus === 0){
+		if(frm.doc.docstatus !== 2){
 			if (frm.doc.result) {
 				frm.refresh_field('result');
 				$.each(frm.doc.result, (key, value) => {
