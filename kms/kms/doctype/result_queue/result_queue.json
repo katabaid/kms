@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{doc_name}",
+ "creation": "2025-08-14 12:57:22.814619",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "doc_type",
+  "doc_name",
+  "column_break_cxmv",
+  "assignee",
+  "user",
+  "column_break_npty",
+  "status",
+  "due_date",
+  "finished_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "doc_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Reference Doctype",
+   "link_filters": "[[\"DocType\",\"name\",\"in\",[\"Radiology Result\",\"Nurse Result\"]]]",
+   "options": "Nurse Result\nRadiology Result",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "doc_name",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Reference Docname",
+   "options": "doc_type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "assignee",
+   "fieldtype": "Link",
+   "label": "Assignee",
+   "options": "Healthcare Practitioner",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "assignee.user_id",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_cxmv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_npty",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Assigned\nFinished",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "finished_date",
+   "fieldtype": "Date",
+   "label": "Finished Date",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-14 13:28:20.596033",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "Result Queue",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
