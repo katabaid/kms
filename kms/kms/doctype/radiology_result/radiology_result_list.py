@@ -28,10 +28,7 @@ def assign_results(selected_rows, practitioner, due_date):
 	practitioner_user = frappe.db.get_value("Healthcare Practitioner", practitioner, "user_id")
 	if not practitioner_user:
 		frappe.throw(_("Healthcare Practitioner {0} does not have a linked user").format(practitioner))
-	
-	
-	frappe.log_error(frappe.get_traceback(),selected_rows)
-
+		
 	for doc_name in doc_names_list:
 		# Check if Result Queue document already exists
 		existing_queue = frappe.db.exists("Result Queue", {"doc_name": doc_name})
