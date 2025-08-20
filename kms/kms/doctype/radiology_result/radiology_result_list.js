@@ -74,6 +74,7 @@ frappe.listview_settings['Radiology Result'] = {
 					frappe.call({
             method: "kms.kms.doctype.radiology_result.radiology_result_list.assign_results",
 						args: {
+							doc_type: 'Radiology Result',
               selected_rows: selected_names,
 							practitioner: values.practitioner,
 							due_date: values.due_date

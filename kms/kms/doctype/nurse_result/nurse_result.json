@@ -28,6 +28,7 @@
   "section_break_iyot",
   "status",
   "exam",
+  "assignee",
   "column_break_catl",
   "queue_no",
   "created_date",
@@ -319,13 +320,20 @@
    "fieldtype": "Check",
    "label": "Need Review",
    "read_only": 1
+  },
+  {
+   "fieldname": "assignee",
+   "fieldtype": "Link",
+   "label": "Assignee",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-13 14:40:20.023796",
+ "modified": "2025-08-20 13:20:12.911337",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

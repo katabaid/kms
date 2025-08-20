@@ -22,6 +22,14 @@ class NurseResult(Document):
 			self._update_linked_records()
 		else:
 			frappe.throw('Need Review flag must be active.')
+	
+	def on_update(self):
+		result_queue_exists = frappe.db.exists('Result Queue', {'doc_name': self.name, 'doc_type': 'Nurse Result'})
+		workflow_state_changed = self.has_value_changed('workflow_state')
+		if result_queue_exists and workflow_state_changed:
+			frappe.db.set_value('Result Queue', {'doc_name': self.name, 'doc_type': 'Nurse Result'}, {
+				'status': self.workflow_state or 'Finished',
+			})
 
 	def _update_linked_records(self):
 		doctor_result_name = frappe.db.get_value('Doctor Result', {

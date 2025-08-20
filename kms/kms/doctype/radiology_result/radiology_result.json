@@ -230,7 +230,7 @@
    "fieldname": "assignee",
    "fieldtype": "Link",
    "label": "Assignee",
-   "options": "Healthcare Practitioner"
+   "options": "User"
   },
   {
    "fetch_from": "patient.custom_company",
@@ -302,7 +302,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-14 14:28:53.265227",
+ "modified": "2025-08-19 14:33:59.020884",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",

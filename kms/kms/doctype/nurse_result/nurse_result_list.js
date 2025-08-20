@@ -72,9 +72,10 @@ frappe.listview_settings['Nurse Result'] = {
 					let new_docs = 0;
 					
 					frappe.call({
-						method: "kms.kms.doctype.nurse_result.nurse_result_list.assign_results",
+						method: "kms.kms.doctype.radiology_result.radiology_result_list.assign_results",
 						args: {
-							selected_rows: selected_names,
+							doc_type: 'Nurse Result',
+              selected_rows: selected_names,
 							practitioner: values.practitioner,
 							due_date: values.due_date
 						},

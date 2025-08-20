@@ -2,18 +2,7 @@ import frappe, json
 from frappe import _
 
 @frappe.whitelist()
-def assign_results(selected_rows, practitioner, due_date):
-	"""
-	Assign selected radiology results to a healthcare practitioner
-	
-	Args:
-		selected_rows (list): List of selected radiology result documents
-		practitioner (str): Healthcare Practitioner to assign to
-		due_date (str): Due date for the assignment
-	
-	Returns:
-		dict: Count of unchanged, changed, and new documents
-	"""
+def assign_results(doc_type, selected_rows, practitioner, due_date):
 	try:
 		doc_names_list = json.loads(selected_rows)
 		if not isinstance(doc_names_list, list):
@@ -45,17 +34,19 @@ def assign_results(selected_rows, practitioner, due_date):
 				queue_doc.user = practitioner_user
 				queue_doc.due_date = due_date
 				queue_doc.save()
+				frappe.db.set_value(doc_type, doc_name, "assignee", practitioner_user)
 				changed_rows += 1
 		else:
 			# Create new Result Queue document
 			queue_doc = frappe.new_doc("Result Queue")
-			queue_doc.doc_type = "Radiology Result"
+			queue_doc.doc_type = doc_type
 			queue_doc.doc_name = doc_name
 			queue_doc.assignee = practitioner
 			queue_doc.user = practitioner_user
 			queue_doc.status = "Assigned"
 			queue_doc.due_date = due_date
 			queue_doc.insert()
+			frappe.db.set_value(doc_type, doc_name, "assignee", practitioner_user)
 			new_docs += 1
 	
 	# Commit all changes
