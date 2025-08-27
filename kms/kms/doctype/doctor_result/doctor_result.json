@@ -194,24 +194,28 @@
    "options": "Doctor Result Comment"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "nurse_grade",
    "fieldtype": "Table",
    "label": "Nurse Exam",
    "options": "MCU Exam Grade"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "doctor_grade",
    "fieldtype": "Table",
    "label": "Doctor Exam",
    "options": "MCU Exam Grade"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "radiology_grade",
    "fieldtype": "Table",
    "label": "Radiology",
    "options": "MCU Exam Grade"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "lab_test_grade",
    "fieldtype": "Table",
    "label": "Lab Test",
@@ -349,7 +353,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-03 08:22:10.800537",
+ "modified": "2025-08-27 14:49:48.822866",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

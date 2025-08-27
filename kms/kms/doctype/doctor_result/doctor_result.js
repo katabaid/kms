@@ -22,76 +22,76 @@ frappe.ui.form.on('Doctor Result', {
 // Utility functions
 const utilities = {
   processChildTable: (frm, tableName) => {
-  if (!frm.doc[tableName] || !frm.fields_dict[tableName] || !frm.fields_dict[tableName].grid) {
-  	return;
-  }
-  const grid = frm.fields_dict[tableName].grid;
+    if (!frm.doc[tableName] || !frm.fields_dict[tableName] || !frm.fields_dict[tableName].grid) {
+      return;
+    }
+    const grid = frm.fields_dict[tableName].grid;
 
-  const runGridCustomizations = () => {
-  	setTimeout(() => {
-  		if (!grid.wrapper) {
-  			return;
-  		}
+    const runGridCustomizations = () => {
+      setTimeout(() => {
+        if (!grid.wrapper) {
+          return;
+        }
 
-  		$(grid.wrapper).find('.row-index').css('display', 'none', 'important');
-  		$(grid.wrapper).find(
-  			`div.grid-heading-cell[data-col-idx="1"], div.grid-row-cell[data-col-idx="1"], ` +
-  			`th[data-col-idx="1"], td[data-col-idx="1"], ` +
-  			`.dt-cell-header[data-col-idx="1"], .dt-cell[data-col-idx="1"]`
-  		).css('display', 'none', 'important');
-  		$(grid.wrapper).find(
-  			`div.grid-heading-cell[data-fieldname="idx"], div.grid-row-cell[data-fieldname="idx"], ` +
-  			`th[data-fieldname="idx"], td[data-fieldname="idx"], ` +
-  			`.dt-cell-header[data-fieldname="idx"], .dt-cell[data-fieldname="idx"]`
-  		).css('display', 'none', 'important');
-  		const specificFilterInputRowSelector = "div.grid-heading-row.with-filter > div.grid-row:has(div.filter-row)";
-  		const $specificFilterInputRow = $(grid.wrapper).find(specificFilterInputRowSelector);
-  		if ($specificFilterInputRow.length > 0) {
-  			$specificFilterInputRow.css('display', 'none', 'important');
-  		} else {
-  		}
-  		const headingRowWithFilterSelector = "div.grid-heading-row.with-filter";
-  		const $headingRowWithFilter = $(grid.wrapper).find(headingRowWithFilterSelector);
-  		if ($headingRowWithFilter.length > 0) {
-  			$headingRowWithFilter.removeClass('with-filter');
-  			$headingRowWithFilter.children('div.grid-row:has(div.filter-row)').css('display', 'none', 'important');
-  		}
-      if (grid.grid_rows) {
-        grid.grid_rows.forEach(grid_row => {
-          if (!grid_row.doc) return;
-          const row = grid_row.doc;
-          if (frm.doc.docstatus === 0) {
-            utilities.handleGradeField(frm, row, grid_row);
-          }
-          apply_cell_styling(frm, row, tableName);
-        });
-      }
-  	}, 150);
+        $(grid.wrapper).find('.row-index').css('display', 'none', 'important');
+        $(grid.wrapper).find(
+          `div.grid-heading-cell[data-col-idx="1"], div.grid-row-cell[data-col-idx="1"], ` +
+          `th[data-col-idx="1"], td[data-col-idx="1"], ` +
+          `.dt-cell-header[data-col-idx="1"], .dt-cell[data-col-idx="1"]`
+        ).css('display', 'none', 'important');
+        $(grid.wrapper).find(
+          `div.grid-heading-cell[data-fieldname="idx"], div.grid-row-cell[data-fieldname="idx"], ` +
+          `th[data-fieldname="idx"], td[data-fieldname="idx"], ` +
+          `.dt-cell-header[data-fieldname="idx"], .dt-cell[data-fieldname="idx"]`
+        ).css('display', 'none', 'important');
+        const specificFilterInputRowSelector = "div.grid-heading-row.with-filter > div.grid-row:has(div.filter-row)";
+        const $specificFilterInputRow = $(grid.wrapper).find(specificFilterInputRowSelector);
+        if ($specificFilterInputRow.length > 0) {
+          $specificFilterInputRow.css('display', 'none', 'important');
+        } else {
+        }
+        const headingRowWithFilterSelector = "div.grid-heading-row.with-filter";
+        const $headingRowWithFilter = $(grid.wrapper).find(headingRowWithFilterSelector);
+        if ($headingRowWithFilter.length > 0) {
+          $headingRowWithFilter.removeClass('with-filter');
+          $headingRowWithFilter.children('div.grid-row:has(div.filter-row)').css('display', 'none', 'important');
+        }
+        if (grid.grid_rows) {
+          grid.grid_rows.forEach(grid_row => {
+            if (!grid_row.doc) return;
+            const row = grid_row.doc;
+            if (frm.doc.docstatus !== 2) {
+              utilities.handleGradeField(frm, row, grid_row);
+            }
+            apply_cell_styling(frm, row, tableName);
+          });
+        }
+      }, 150);
 
-  };
+    };
 
-  grid.wrapper.off('grid-refresh.doctorResultCustom')
-    .on('grid-refresh.doctorResultCustom', () => {
-  	runGridCustomizations();
-  });
+    grid.wrapper.off('grid-refresh.doctorResultCustom')
+      .on('grid-refresh.doctorResultCustom', () => {
+        runGridCustomizations();
+      });
 
-  grid.wrapper.off('click.doctorResultPagination', '.grid-pagination .btn')
-    .on('click.doctorResultPagination', '.grid-pagination .btn', function() {
-  	setTimeout(() => {
-  		runGridCustomizations();
-  	}, 250);
-  });
+    grid.wrapper.off('click.doctorResultPagination', '.grid-pagination .btn')
+      .on('click.doctorResultPagination', '.grid-pagination .btn', function () {
+        setTimeout(() => {
+          runGridCustomizations();
+        }, 250);
+      });
 
-  if (grid.wrapper && typeof grid.wrapper.trigger === 'function') {
-  	setTimeout(() => {
-  		if (grid.wrapper) {
-  			grid.wrapper.trigger('grid-refresh');
-  		}
-  	}, 100);
-  } else {
-  	setTimeout(runGridCustomizations, 350);
-  }
-},
+    if (grid.wrapper && typeof grid.wrapper.trigger === 'function') {
+      setTimeout(() => {
+        if (grid.wrapper) {
+          grid.wrapper.trigger('grid-refresh');
+        }
+      }, 100);
+    } else {
+      setTimeout(runGridCustomizations, 350);
+    }
+  },
 
   handleGradeField: (frm, row, grid_row) => {
     const docfield = frappe.meta.get_docfield('MCU Exam Grade', 'grade', row.name);
@@ -121,14 +121,14 @@ const utilities = {
 };
 
 const hide_standard_buttons = (frm, fields) => {
-	fields.forEach((field) => {
-		if (frm.fields_dict[field]) {
-			frm.set_df_property(field, 'cannot_add_rows', true);
-			frm.set_df_property(field, 'cannot_delete_rows', true);
-			frm.set_df_property(field, 'cannot_delete_all_rows', true);
+  fields.forEach((field) => {
+    if (frm.fields_dict[field]) {
+      frm.set_df_property(field, 'cannot_add_rows', true);
+      frm.set_df_property(field, 'cannot_delete_rows', true);
+      frm.set_df_property(field, 'cannot_delete_all_rows', true);
       frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
-		}
-	});
+    }
+  });
 };
 
 const apply_cell_styling = (frm, row, table_name) => {
@@ -139,23 +139,23 @@ const apply_cell_styling = (frm, row, table_name) => {
     let minValue = parseFloat(row.min_value);
     let maxValue = parseFloat(row.max_value);
     if (resultValue < minValue || resultValue > maxValue) {
-      $row.css({'font-weight': 'Bold', 'color': 'Maroon'});
+      $row.css({ 'font-weight': 'Bold', 'color': 'Maroon' });
     } else {
-      $row.css({'font-weight': 'Normal', 'color': 'Dimgray'});
+      $row.css({ 'font-weight': 'Normal', 'color': 'Dimgray' });
     }
   }
   if (row.gradable) {
     if (row.hidden_item_group && !row.hidden_item) {
-      $row.css({'background-color': '#ffac23'})
+      $row.css({ 'background-color': '#ffac23' })
     } else {
-      $row.css({'background-color': '#f1f5f9'})
+      $row.css({ 'background-color': '#f1f5f9' })
     }
   }
   if (row.hidden_item_group && !row.hidden_item) {
-    $row.css({'font-weight': 'Bold', 'color': 'midnightblue', 'background-color': '#ffac23'});
+    $row.css({ 'font-weight': 'Bold', 'color': 'midnightblue', 'background-color': '#ffac23' });
   }
   if (row.hidden_item_group && row.hidden_item && row.is_item) {
-    $row.css({'font-weight': 'normal', 'color': 'midnightblue'});
+    $row.css({ 'font-weight': 'normal', 'color': 'midnightblue' });
   }
 }
 
