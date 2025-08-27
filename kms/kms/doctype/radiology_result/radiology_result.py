@@ -29,10 +29,12 @@ class RadiologyResult(Document):
 						radiology_request.status_time = now()
 						enc.save(ignore_permissions=True)
 		else:
+			self._validate_conclusion()
 			self._update_linked_records()
 
 	def before_update_after_submit(self):
 		if self.need_review:
+			self._validate_conclusion()
 			self._update_linked_records()
 		else:
 			frappe.throw('Need Review flag must be active.')
@@ -71,3 +73,9 @@ class RadiologyResult(Document):
 				"document_type": "Radiology Result",
 				"document_name": self.name,
 			})
+	
+	def _validate_conclusion(self):
+		for exam in self.examination_item:
+			conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
+			if not conclusion_text:
+				frappe.throw(f'Conclusion for examination item {exam.item} is required before submit.')	

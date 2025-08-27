@@ -15,10 +15,12 @@ class NurseResult(Document):
 				examination_item.status = 'Finished'
 
 	def on_submit(self):
+		self._validate_conclusion()
 		self._update_linked_records()
 
 	def before_update_after_submit(self):
 		if self.need_review:
+			self._validate_conclusion()
 			self._update_linked_records()
 		else:
 			frappe.throw('Need Review flag must be active.')
@@ -57,3 +59,9 @@ class NurseResult(Document):
 				"document_type": "Nurse Result",
 				"document_name": self.name,
 			})
+	
+	def _validate_conclusion(self):
+		for exam in self.examination_item:
+			conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
+			if not conclusion_text:
+				frappe.throw(f'Conclusion for examination item {exam.item} is required before submit.')	
