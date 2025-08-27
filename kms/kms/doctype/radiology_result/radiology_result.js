@@ -11,11 +11,11 @@ frappe.ui.form.on('Radiology Result', {
 		};
   },
 	refresh: function(frm) {
-		frappe.require('assets/kms/js/controller/result.js', function() {
+		/* frappe.require('assets/kms/js/controller/result.js', function() {
 			if (typeof kms.assign_result_dialog_setup === 'function') {
 				kms.assign_result_dialog_setup(frm);
 			}
-		});
+		}); */
 		hideStandardButtonOnChildTable(frm, childTables);
 		if (frm.doc.result&&frm.doc.docstatus === 0) {
 			setTimeout(()=>{updateOptions(frm)}, 500);
