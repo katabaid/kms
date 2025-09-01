@@ -30,7 +30,7 @@ frappe.listview_settings['Nurse Result'] = {
 		}, 100);
 		console.log(frappe.user);
 		frappe.db.get_single_value('MCU Settings', 'external_doctor_role').then(external_doctor_role =>{
-			if (!frappe.user.has_role(external_doctor_role)) {
+			if (!frappe.user.has_role(external_doctor_role) || frappe.user.name == 'Administrator') {
 				listview.page.add_action_item(__("Result Assignment"), function () {
 					// Get selected rows with docstatus == 0
 					const selected_rows = listview.get_checked_items().filter(row => row.docstatus === 0);
