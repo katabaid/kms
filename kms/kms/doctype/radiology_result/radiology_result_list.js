@@ -28,81 +28,83 @@ frappe.listview_settings['Radiology Result'] = {
 			listview.page.wrapper.find('span[data-label="Clear%20Assignment"]').closest('li').remove();
 			listview.page.wrapper.find('span[data-label="Apply%20Assignment%20Rule"]').closest('li').remove();
 		}, 100);
-		if (!frappe.user.has_role("HC Doctor External")) {
-			listview.page.add_action_item(__("Result Assignment"), function () {
-				// Get selected rows with docstatus == 0
-				const selected_rows = listview.get_checked_items().filter(row => row.docstatus === 0);
-
-				if (selected_rows.length === 0) {
-					frappe.msgprint(__("Please select at least one row with draft status (docstatus = 0)"));
-					return;
-				}
-
-				// Show dialog to select Healthcare Practitioner
-				const selected_names = selected_rows.map(row => row.name);
-				const dialog = new frappe.ui.Dialog({
-					title: __("Select Healthcare Practitioner"),
-					fields: [
-						{
-							fieldtype: "Link",
-							fieldname: "practitioner",
-							label: __("Healthcare Practitioner"),
-							options: "Healthcare Practitioner",
-							reqd: 1
-						},
-						{
-							fieldtype: "Date",
-							fieldname: "due_date",
-							label: __("Due Date"),
-							reqd: 1,
-							default: frappe.datetime.nowdate()
-						}
-					],
-					primary_action_label: __("Assign"),
-					primary_action: function (values) {
-						if (!values.practitioner) {
-							frappe.msgprint(__("Please select a Healthcare Practitioner"));
-							return;
-						}
-
-						dialog.hide();
-
-						// Process each selected row
-						let unchanged_rows = 0;
-						let changed_rows = 0;
-						let new_docs = 0;
-
-						frappe.call({
-							method: "kms.kms.doctype.radiology_result.radiology_result_list.assign_results",
-							args: {
-								doc_type: 'Radiology Result',
-								selected_rows: selected_names,
-								practitioner: values.practitioner,
-								due_date: values.due_date
-							},
-							callback: function (r) {
-								if (r.message) {
-									unchanged_rows = r.message.unchanged_rows;
-									changed_rows = r.message.changed_rows;
-									new_docs = r.message.new_docs;
-
-									frappe.msgprint(
-										__("Assignment completed:<br>" +
-											"Unchanged rows: {0}<br>" +
-											"Changed rows: {1}<br>" +
-											"New documents: {2}", [unchanged_rows, changed_rows, new_docs])
-									);
-
-									// Refresh the list view
-									listview.refresh();
-								}
-							}
-						});
+		frappe.db.get_single_value('MCU Settings', 'external_doctor_role').then(external_doctor_role =>{
+			if (!frappe.user.has_role(external_doctor_role)) {
+				listview.page.add_action_item(__("Result Assignment"), function () {
+					// Get selected rows with docstatus == 0
+					const selected_rows = listview.get_checked_items().filter(row => row.docstatus === 0);
+	
+					if (selected_rows.length === 0) {
+						frappe.msgprint(__("Please select at least one row with draft status (docstatus = 0)"));
+						return;
 					}
+	
+					// Show dialog to select Healthcare Practitioner
+					const selected_names = selected_rows.map(row => row.name);
+					const dialog = new frappe.ui.Dialog({
+						title: __("Select Healthcare Practitioner"),
+						fields: [
+							{
+								fieldtype: "Link",
+								fieldname: "practitioner",
+								label: __("Healthcare Practitioner"),
+								options: "Healthcare Practitioner",
+								reqd: 1
+							},
+							{
+								fieldtype: "Date",
+								fieldname: "due_date",
+								label: __("Due Date"),
+								reqd: 1,
+								default: frappe.datetime.nowdate()
+							}
+						],
+						primary_action_label: __("Assign"),
+						primary_action: function (values) {
+							if (!values.practitioner) {
+								frappe.msgprint(__("Please select a Healthcare Practitioner"));
+								return;
+							}
+	
+							dialog.hide();
+	
+							// Process each selected row
+							let unchanged_rows = 0;
+							let changed_rows = 0;
+							let new_docs = 0;
+	
+							frappe.call({
+								method: "kms.kms.doctype.radiology_result.radiology_result_list.assign_results",
+								args: {
+									doc_type: 'Radiology Result',
+									selected_rows: selected_names,
+									practitioner: values.practitioner,
+									due_date: values.due_date
+								},
+								callback: function (r) {
+									if (r.message) {
+										unchanged_rows = r.message.unchanged_rows;
+										changed_rows = r.message.changed_rows;
+										new_docs = r.message.new_docs;
+	
+										frappe.msgprint(
+											__("Assignment completed:<br>" +
+												"Unchanged rows: {0}<br>" +
+												"Changed rows: {1}<br>" +
+												"New documents: {2}", [unchanged_rows, changed_rows, new_docs])
+										);
+	
+										// Refresh the list view
+										listview.refresh();
+									}
+								}
+							});
+						}
+					});
+	
+					dialog.show();
 				});
-
-				dialog.show();
-			});
-		}
+			}
+		})
 	}
 }

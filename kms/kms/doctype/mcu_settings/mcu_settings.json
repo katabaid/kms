@@ -42,6 +42,7 @@
   "queue_pooling_submit_delay",
   "column_break_ytemr",
   "room_assignment_role",
+  "external_doctor_role",
   "section_break_qrmv",
   "nurse_result_assignment_role",
   "lab_test_assignment_role",
@@ -453,12 +454,19 @@
    "fieldname": "cardiologist_name",
    "fieldtype": "Data",
    "label": "Name"
+  },
+  {
+   "description": "Role to consider as external/specialist doctor, so the user can be restricted in the Nurse or Radiology Result documents.",
+   "fieldname": "external_doctor_role",
+   "fieldtype": "Link",
+   "label": "External Doctor Role",
+   "options": "Role"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-07-03 08:22:11.355695",
+ "modified": "2025-08-28 13:53:02.862431",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
