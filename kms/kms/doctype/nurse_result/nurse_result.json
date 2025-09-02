@@ -40,14 +40,14 @@
   "examination_item",
   "result",
   "non_selective_result",
-  "consumables_section",
-  "items",
   "remark_section",
-  "remark",
-  "suggestion",
   "conclusion",
+  "suggestion",
+  "remark",
   "amended_from",
-  "has_attachment"
+  "has_attachment",
+  "consumables_section",
+  "items"
  ],
  "fields": [
   {
@@ -281,7 +281,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Patient Comapny",
+   "label": "Patient Company",
    "read_only": 1
   },
   {
@@ -333,7 +333,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-20 13:20:12.911337",
+ "modified": "2025-09-02 13:48:08.337120",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",
@@ -358,5 +358,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "appointment",
  "track_changes": 1
 }
