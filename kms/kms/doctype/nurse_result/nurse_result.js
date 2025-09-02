@@ -17,12 +17,8 @@ frappe.ui.form.on('Nurse Result', {
 		};
   },
 	refresh: function (frm) {
-		/* frappe.require('assets/kms/js/controller/result.js', function() {
-			if (typeof kms.assign_result_dialog_setup === 'function') {
-				kms.assign_result_dialog_setup(frm);
-			}
-		}); */
 		hide_standard_buttons (frm, ['examination_item', 'result', 'non_selective_result']);
+		render_attachment(frm)
 	},
 	setup: function (frm) {
 		if(frm.doc.docstatus !== 2){
@@ -106,5 +102,47 @@ const hide_standard_buttons = (frm, fields) => {
 		frm.set_df_property(field, 'cannot_delete_rows', true);
 		frm.set_df_property(field, 'cannot_delete_all_rows', true);
 		frm.fields_dict[field].grid.wrapper.find('.row-index').hide();
+	});
+}
+
+const render_attachment = (frm) => {
+	frappe.db.get_list('File', {
+		filters: {
+			'attached_to_doctype': frm.doctype,
+			'attached_to_name': frm.doc.name
+		}, fields: ['file_url', 'file_name', 'is_private']
+	}).then(files => {
+		let options = '';
+		files.forEach(file => {
+			let url = frappe.urllib.get_full_url(file.file_url);
+			if (/\.(jpe?g|png|gif)$/i.test(file.file_name)) {
+				options += `
+					<div style="display:inline-block; margin:5px; text-align:center;">
+						<img src="${url}" style="max-width:150px; max-height:150px; border:1px solid #ccc;" />
+						<div>${file.file_name}</div>
+					</div>`;
+			} else if (/\.pdf$/i.test(file.file_name)) {
+				options += `
+					<div style="margin:10px 0;">
+						<embed src="${url}" type="application/pdf" style="width:100%; height:400px; border:1px solid #ccc;" />
+						<div><a href="${url}" target="_blank">${file.file_name}</a></div>
+					</div>`;
+			} else if (/\.(mp4|webm)$/i.test(file.file_name)) {
+				options += `	
+					<div style="margin:10px 0;">
+						<video controls style="max-width:100%; height:200px; border:1px solid #ccc;">
+							<source src="${url}" type="video/mp4">
+							${__("Your browser does not support the video tag.")}
+						</video>
+						<div><a href="${url}" target="_blank">${file.file_name}</a></div>
+					</div>`;
+			} else {
+				options += `
+					<div style="margin:5px;">
+						<a href="${url}" target="_blank">${file.file_name}</a>
+					</div>`;
+			}
+		});
+		frm.set_df_property('attachment', 'options', options);
 	});
 }

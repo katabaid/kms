@@ -11,16 +11,12 @@ frappe.ui.form.on('Radiology Result', {
 		};
   },
 	refresh: function(frm) {
-		/* frappe.require('assets/kms/js/controller/result.js', function() {
-			if (typeof kms.assign_result_dialog_setup === 'function') {
-				kms.assign_result_dialog_setup(frm);
-			}
-		}); */
 		hideStandardButtonOnChildTable(frm, childTables);
 		if (frm.doc.result&&frm.doc.docstatus === 0) {
 			setTimeout(()=>{updateOptions(frm)}, 500);
 			frm.refresh_field('result');
 		}
+		render_attachment(frm)
 	}
 });
 
@@ -45,24 +41,18 @@ const hideStandardButtonOnChildTable = (frm, childTablesArray) => {
 
 const updateOptions = (frm) => {
 	frm.fields_dict.result.grid.grid_rows.forEach(row => {
-		//frappe.meta.get_docfield('Radiology Results', 'result_text', row.doc.name).read_only = (row.doc.result_check === row.doc.normal_value) ? 1 : 0;
-    //frappe.meta.get_docfield('Radiology Results', 'result_text', row.doc.name).reqd = (row.doc.result_check === row.doc.mandatory_value) ? 1 : 0;
 		row.toggle_reqd('result_text', row.doc.result_check === row.doc.mandatory_value)
 		row.toggle_editable('result_text', row.doc.result_check !== row.doc.normal_value)
 		row.refresh();
 
 		const $cell = $(row.row).find('[data-fieldname="result_check"]');
-		if (!$cell.find('select').length) {  // Only add if select doesn't exist
+		if (!$cell.find('select').length) {
 			const rowDoc = locals[row.doc.doctype][row.doc.name];
 			const options = (rowDoc.result_options || '').split('\n').filter(o => o.trim());
-			
-			// Create select element
 			const $select = $('<select>')
 				.addClass('form-control')
 				.css('height', '28px')
 				.css('padding', '2px');
-					
-			// Add options
 			options.forEach(opt => {
 				$select.append($('<option>')
 					.val(opt)
@@ -70,27 +60,60 @@ const updateOptions = (frm) => {
 					.prop('selected', rowDoc.result_check === opt)
 				);
 			});
-			
-			// Handle change event
 			$select.on('change', function() {
 				const value = $(this).val();
 				frappe.model.set_value(row.doc.doctype, row.doc.name, 'result_check', value);
 				let grid_row = frm.fields_dict["result"].grid.get_row(row.doc.name);
-
-				// Set read_only and reqd dynamically for this row only
 				let is_read_only = (value === rowDoc.normal_value) ? 1 : 0;
 				let is_required = (value === rowDoc.mandatory_value) ? 1 : 0;
-
 				grid_row.get_field("result_text").df.read_only = is_read_only;
 				grid_row.get_field("result_text").df.reqd = is_required;
-				
-				// Refresh the field for changes to take effect
 				grid_row.refresh();
 			});
-			
-			// Replace cell content with select
 			$cell.html($select);
 			row.refresh();
 		}
+	});
+}
+
+const render_attachment = (frm) => {
+	frappe.db.get_list('File', {
+		filters: {
+			'attached_to_doctype': frm.doctype,
+			'attached_to_name': frm.doc.name
+		}, fields: ['file_url', 'file_name', 'is_private']
+	}).then(files => {
+		let options = '';
+		files.forEach(file => {
+			let url = frappe.urllib.get_full_url(file.file_url);
+			if (/\.(jpe?g|png|gif)$/i.test(file.file_name)) {
+				options += `
+					<div style="display:inline-block; margin:5px; text-align:center;">
+						<img src="${url}" style="max-width:150px; max-height:150px; border:1px solid #ccc;" />
+						<div>${file.file_name}</div>
+					</div>`;
+			} else if (/\.pdf$/i.test(file.file_name)) {
+				options += `
+					<div style="margin:10px 0;">
+						<embed src="${url}" type="application/pdf" style="width:100%; height:400px; border:1px solid #ccc;" />
+						<div><a href="${url}" target="_blank">${file.file_name}</a></div>
+					</div>`;
+			} else if (/\.(mp4|webm)$/i.test(file.file_name)) {
+				options += `	
+					<div style="margin:10px 0;">
+						<video controls style="max-width:100%; height:200px; border:1px solid #ccc;">
+							<source src="${url}" type="video/mp4">
+							${__("Your browser does not support the video tag.")}
+						</video>
+						<div><a href="${url}" target="_blank">${file.file_name}</a></div>
+					</div>`;
+			} else {
+				options += `
+					<div style="margin:5px;">
+						<a href="${url}" target="_blank">${file.file_name}</a>
+					</div>`;
+			}
+		});
+		frm.set_df_property('attachment', 'options', options);
 	});
 }

@@ -45,7 +45,9 @@
   "suggestion",
   "remark",
   "amended_from",
-  "has_attachment"
+  "has_attachment",
+  "attachment_preview_tab",
+  "attachment"
  ],
  "fields": [
   {
@@ -296,13 +298,24 @@
    "fieldtype": "Check",
    "label": "Need Review",
    "read_only": 1
+  },
+  {
+   "fieldname": "attachment_preview_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attachment Preview"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "HTML",
+   "label": "Attachment",
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-02 13:46:52.486361",
+ "modified": "2025-09-02 17:52:42.045098",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",
