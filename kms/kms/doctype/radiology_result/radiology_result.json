@@ -35,6 +35,8 @@
   "created_date",
   "expected_result_date",
   "expected_result_time",
+  "attachment_preview_tab",
+  "attachment",
   "result_section",
   "examination_item",
   "result",
@@ -45,9 +47,7 @@
   "suggestion",
   "remark",
   "amended_from",
-  "has_attachment",
-  "attachment_preview_tab",
-  "attachment"
+  "has_attachment"
  ],
  "fields": [
   {
@@ -301,7 +301,7 @@
   },
   {
    "fieldname": "attachment_preview_tab",
-   "fieldtype": "Tab Break",
+   "fieldtype": "Section Break",
    "label": "Attachment Preview"
   },
   {
@@ -315,7 +315,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-02 17:52:42.045098",
+ "modified": "2025-09-03 14:11:51.177392",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result",

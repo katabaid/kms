@@ -15,6 +15,8 @@ def patient_appointment_after_insert(doc, method=None):
 	frappe.db.set_value('Patient Appointment', doc.name, 'patient_age', 
 		calculate_patient_age(
 			getdate(doc.custom_patient_date_of_birth), getdate(doc.appointment_date)))
+	frappe.db.set_value('Patient Appointment', doc.name, 'notes', frappe.db.get_value(
+		'Patient', doc.patient, 'patient_details'))
 	doc.reload()
 
 def patient_appointment_on_update(doc, method=None):
