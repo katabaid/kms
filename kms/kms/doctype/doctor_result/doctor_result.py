@@ -1,8 +1,11 @@
 # Copyright (c) 2024, GIS and contributors
 # For license information, please see license.txt
 
-import frappe
+import frappe, io
 from frappe.model.document import Document
+from frappe.utils.pdf import get_pdf
+from frappe.utils.file_manager import save_file
+from PyPDF2 import PdfMerger
 
 class DoctorResult(Document):
 	child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
@@ -81,6 +84,49 @@ class DoctorResult(Document):
 
 	def on_submit(self):
 		self.process_group_exam()
+		self.save()
+		self.create_pdf_report()
+
+	def on_update_before_submit(self):
+		self.process_group_exam()
+		self.create_pdf_report()
+
+	def create_pdf_report(self):
+		print_format = 'MCU Format'
+		html = frappe.get_print(self.doctype, self.name, print_format)
+		main_pdf = get_pdf(html)
+		docs = frappe.db.get_all('MCU Exam Grade', {'parent':self.name}, ['document_type', 'document_name'])
+		unique_docs = list({doc['document_name']: doc for doc in docs if doc.document_name}.values())
+		merger = PdfMerger()
+		merger.append(io.BytesIO(main_pdf))
+		for doc in unique_docs:
+			related_files = frappe.get_all('File', filters={
+				"attached_to_doctype": doc['document_type'],
+				"attached_to_name": doc['document_name'],
+				"file_url": ["like", f"%{doc['document_name']}%.pdf"]
+			}, pluck='name')
+			for f in related_files:
+				file_doc = frappe.get_doc('File', f)
+				file_content = file_doc.get_content()
+				merger.append(io.BytesIO(file_content))
+		output = io.BytesIO()
+		merger.write(output)
+		merger.close()
+		filename = f'{self.name}.pdf'
+		existing_file = frappe.db.exists('File', {
+			'file_name': ["like", f"{self.name}%.pdf"],
+			'attached_to_doctype': self.doctype,
+			'attached_to_name': self.name
+		})
+		if existing_file:
+			frappe.delete_doc('File', existing_file)
+		save_file(
+			filename,
+			output.getvalue(),
+			self.doctype,
+			self.name,
+		)
+		self.reload()
 
 	def process_auto_grading(self):
 		self._process_item_grade()
@@ -345,7 +391,6 @@ class DoctorResult(Document):
 				'previous_result': previous_data.get(result['contents'], '') if result['result'] else None,
 				'last_result': last_data.get(result['contents'], '') if result['result'] else None,
 			})
-		self.save()
 
 	def _process_questionnaire(self):
 		def _process_disease_history(row_dict, indices, last_index=None):
