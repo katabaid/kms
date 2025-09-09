@@ -46,6 +46,7 @@
   "section_break_qrmv",
   "nurse_result_assignment_role",
   "lab_test_assignment_role",
+  "eye_specialist_rooms",
   "column_break_pwgp",
   "doctor_result_assignment_role",
   "radiology_result_assignment_role",
@@ -461,12 +462,19 @@
    "fieldtype": "Link",
    "label": "External Doctor Role",
    "options": "Role"
+  },
+  {
+   "description": "Rooms to include on creating Result button before submitting the document.",
+   "fieldname": "eye_specialist_rooms",
+   "fieldtype": "Table MultiSelect",
+   "label": "Eye Specialist Rooms",
+   "options": "MCU Eye Specialist"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-28 13:53:02.862431",
+ "modified": "2025-09-09 20:57:51.479685",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

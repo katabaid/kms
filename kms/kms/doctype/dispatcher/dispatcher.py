@@ -118,6 +118,7 @@ def finish_exam(hsu, status, doctype, docname):
 	queue_pooling_id = source_doc.custom_queue_pooling if is_sc else source_doc.queue_pooling
 	child = source_doc.custom_sample_table if is_sc else source_doc.examination_item
 	related_rooms = _get_related_service_units(hsu, exam_id)
+	no_target = frappe.db.exists('MCU Eye Specialist', {'eye_specialist_room': hsu})
 	exists_to_retest = any(item.status == 'To Retest' for item in child)
 	target = ''
 	is_meal_time = is_meal(exam_id)
@@ -167,7 +168,7 @@ def finish_exam(hsu, status, doctype, docname):
 				frappe.db.set_value('MCU Queue Pooling', qp, 'status', status_to_set)
 		#if  final_count+1 >= room_count:
 		#	frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
-	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest:
+	if (status == 'Finished' or status == 'Partial Finished') and not exists_to_retest and not no_target:
 		match doctype:
 			case 'Radiology':
 				target = 'Radiology Result'
