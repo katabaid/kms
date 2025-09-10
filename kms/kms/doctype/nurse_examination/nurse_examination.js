@@ -1,23 +1,20 @@
 const nurseExaminationController = kms.controller.createDocTypeController('Nurse Examination', {
-  before_submit: {},
-});
-frappe.ui.form.on('Nurse Examination', {
-	...nurseExaminationController,
-  onload: function (frm) {
-    frappe.breadcrumbs.add('Healthcare', 'Nurse Examination');
+	before_submit: {},
+	onload: function (frm) {
+		frappe.breadcrumbs.add('Healthcare', 'Nurse Examination');
 		frm._show_dialog_on_change = false;
 		if (frm.fields_dict.non_selective_result) {
-			frm.fields_dict.non_selective_result.grid.grid_setup = function() {
-				frm.doc.non_selective_result.forEach(row=>{
+			frm.fields_dict.non_selective_result.grid.grid_setup = function () {
+				frm.doc.non_selective_result.forEach(row => {
 					row._original_result_value = row.result_value;
-				})	
+				})
 			}
 		}
-  },
-	submit: function(frm){
-		frappe.confirm('test', ()=>{
+	},
+	submit: function (frm) {
+		frappe.confirm('test', () => {
 			frm.docstatus = 1;
-			frm.save('Submit', null, null, () =>{
+			frm.save('Submit', null, null, () => {
 				frm.reload_doc()
 			})
 		})
@@ -25,13 +22,13 @@ frappe.ui.form.on('Nurse Examination', {
 	refresh: function (frm) {
 		nurseExaminationController.refresh(frm);
 		if (frm.doc.docstatus === 0 && frm.doc.status === 'Checked In') {
-			this.setupSelectiveResult(frm);
-			this.setupNonSelectiveResult(frm);
+			setupSelectiveResult(frm);
+			setupNonSelectiveResult(frm);
 		}
-		this.setupQuestionnaire(frm);
-		this.addCustomButtons(frm);
-		this.applyStyling(frm);
-		this.addSidebarActions(frm);
+		setupQuestionnaire(frm);
+		addCustomButtons(frm);
+		applyStyling(frm);
+		addSidebarActions(frm);
 	},
 	before_save: function (frm) {
 		if (frm.doc.docstatus !== 0) {
@@ -41,12 +38,12 @@ frappe.ui.form.on('Nurse Examination', {
 			frm.continue_save = false;
 			return;
 		}
-		if (this.hasOutOfRangeResults(frm) && frm._show_dialog_on_change) {
-			this.handleOutOfRangeResults(frm);
+		if (hasOutOfRangeResults(frm) && frm._show_dialog_on_change) {
+			handleOutOfRangeResults(frm);
 		}
 	},
 	after_save: function (frm) {
-		frm.doc.non_selective_result.forEach(row=>{
+		frm.doc.non_selective_result.forEach(row => {
 			row._original_result_value = row.result_value;
 		})
 		frm._show_dialog_on_change = false;
@@ -77,8 +74,12 @@ frappe.ui.form.on('Nurse Examination', {
 		});
 	},
 	setupQuestionnaire: function (frm) {
-		const { questionnaire_html } = frm.fields_dict;
-		const { utils } = kms;
+		const {
+			questionnaire_html
+		} = frm.fields_dict;
+		const {
+			utils
+		} = kms;
 		if (questionnaire_html && utils && utils.fetch_questionnaire_for_doctype) {
 			utils.fetch_questionnaire_for_doctype(frm, "appointment", null, "questionnaire_html");
 		} else {
@@ -86,13 +87,18 @@ frappe.ui.form.on('Nurse Examination', {
 				console.warn("Nurse Examination form is missing 'questionnaire_html'. Questionnaire cannot be displayed.");
 			}
 			if (!utils || !utils.fetch_questionnaire_for_doctype) {
-				console.warn("kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded.");
+				console.warn(
+					"kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded."
+				);
 			}
 		}
 	},
 	addCustomButtons: function (frm) {
 		frm.add_custom_button(__('Result History'), () => {
-			frappe.route_options = { exam_id: frm.doc.appointment, room: frm.doc.service_unit };
+			frappe.route_options = {
+				exam_id: frm.doc.appointment,
+				room: frm.doc.service_unit
+			};
 			frappe.set_route('query-report', 'Nurse Examination History');
 		}, __('Reports'));
 		frm.add_custom_button(__('Patient Result'), () => {
@@ -125,7 +131,12 @@ frappe.ui.form.on('Nurse Examination', {
 			return false;
 		}
 		return frm.doc.non_selective_result.some(row => {
-			const { result_value, min_value, max_value, _original_result_value } = row;
+			const {
+				result_value,
+				min_value,
+				max_value,
+				_original_result_value
+			} = row;
 			const isOutOfRange = result_value < min_value || result_value > max_value;
 			const isValueChanged = result_value !== _original_result_value;
 			return isOutOfRange && min_value != 0 && max_value != 0 && result_value && isValueChanged;
@@ -147,6 +158,7 @@ frappe.ui.form.on('Nurse Examination', {
 		);
 	},
 });
+frappe.ui.form.on('Nurse Examination', nurseExaminationController);
 
 frappe.ui.form.on('Nurse Examination Selective Result',{
 	result_check(frm, cdt, cdn) {

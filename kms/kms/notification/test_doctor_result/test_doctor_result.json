@@ -1,0 +1,30 @@
+{
+ "attach_print": 0,
+ "channel": "System Notification",
+ "condition": "doc.workflow_state == \"Approved\" or doc.workflow_state == \"Draft\"",
+ "creation": "2025-09-04 11:05:40.462688",
+ "date_changed": "expected_result_date",
+ "days_in_advance": 2,
+ "docstatus": 0,
+ "doctype": "Notification",
+ "document_type": "Doctor Result",
+ "enabled": 1,
+ "event": "Days After",
+ "idx": 0,
+ "is_standard": 1,
+ "message": "<p>Hasil MCU dengan nama Pasien {{doc.patient_name}} dengan tanggal pemeriksaan {{doc.created_date}} belum di selesaikan</p><p>hasilnya beda.</p>",
+ "message_type": "HTML",
+ "modified": "2025-09-10 14:55:36.000494",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "test-doctor-result",
+ "owner": "Administrator",
+ "recipients": [
+  {
+   "receiver_by_role": "HC Nurse"
+  }
+ ],
+ "send_system_notification": 0,
+ "send_to_all_assignees": 0,
+ "subject": "Doctor Result: {{doc.name}} belum diselesaikan"
+}

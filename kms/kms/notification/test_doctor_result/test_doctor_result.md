@@ -1,0 +1,1 @@
+Hasil MCU dengan nama Pasien {{doc.patient_name}} dengan tanggal pemeriksaan {{doc.created_date}} belum di selesaikan 

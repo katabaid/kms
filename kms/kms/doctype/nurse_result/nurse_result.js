@@ -4,6 +4,8 @@
 frappe.ui.form.on('Nurse Result', {
   onload: function (frm) {
     frappe.breadcrumbs.add('Healthcare', 'Nurse Result');
+		frm.set_df_property('attachment', 'options', '');
+		frm.refresh_field('attachment');
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
@@ -17,6 +19,8 @@ frappe.ui.form.on('Nurse Result', {
 		};
   },
 	refresh: function (frm) {
+		frm.set_df_property('attachment', 'options', '');
+		frm.refresh_field('attachment');
 		hide_standard_buttons (frm, ['examination_item', 'result', 'non_selective_result']);
 		render_attachment(frm)
 	},
@@ -106,43 +110,47 @@ const hide_standard_buttons = (frm, fields) => {
 }
 
 const render_attachment = (frm) => {
+	const attachment_wrapper = frm.fields_dict.attachment.wrapper;
+	attachment_wrapper.innerHTML = '';
 	frappe.db.get_list('File', {
 		filters: {
 			'attached_to_doctype': frm.doctype,
 			'attached_to_name': frm.doc.name
 		}, fields: ['file_url', 'file_name', 'is_private']
 	}).then(files => {
-		let options = '';
-		files.forEach(file => {
-			let url = frappe.urllib.get_full_url(file.file_url);
-			if (/\.(jpe?g|png|gif)$/i.test(file.file_name)) {
-				options += `
-					<div style="display:inline-block; margin:5px; text-align:center;">
-						<img src="${url}" style="max-width:150px; max-height:150px; border:1px solid #ccc;" />
-						<div>${file.file_name}</div>
-					</div>`;
-			} else if (/\.pdf$/i.test(file.file_name)) {
-				options += `
-					<div style="margin:10px 0;">
-						<embed src="${url}" type="application/pdf" style="width:100%; height:400px; border:1px solid #ccc;" />
-						<div><a href="${url}" target="_blank">${file.file_name}</a></div>
-					</div>`;
-			} else if (/\.(mp4|webm)$/i.test(file.file_name)) {
-				options += `	
-					<div style="margin:10px 0;">
-						<video controls style="max-width:100%; height:200px; border:1px solid #ccc;">
-							<source src="${url}" type="video/mp4">
-							${__("Your browser does not support the video tag.")}
-						</video>
-						<div><a href="${url}" target="_blank">${file.file_name}</a></div>
-					</div>`;
-			} else {
-				options += `
-					<div style="margin:5px;">
-						<a href="${url}" target="_blank">${file.file_name}</a>
-					</div>`;
-			}
-		});
-		frm.set_df_property('attachment', 'options', options);
+		if (files && files.length > 0) {
+			let options = '';
+			files.forEach(file => {
+				let url = frappe.urllib.get_full_url(file.file_url);
+				if (/\.(jpe?g|png|gif)$/i.test(file.file_name)) {
+					options += `
+						<div style="display:inline-block; margin:5px; text-align:center;">
+							<img src="${url}" style="max-width:150px; max-height:150px; border:1px solid #ccc;" />
+							<div>${file.file_name}</div>
+						</div>`;
+				} else if (/\.pdf$/i.test(file.file_name)) {
+					options += `
+						<div style="margin:10px 0;">
+							<embed src="${url}" type="application/pdf" style="width:100%; height:400px; border:1px solid #ccc;" />
+							<div><a href="${url}" target="_blank">${file.file_name}</a></div>
+						</div>`;
+				} else if (/\.(mp4|webm)$/i.test(file.file_name)) {
+					options += `
+						<div style="margin:10px 0;">
+							<video controls style="max-width:100%; height:200px; border:1px solid #ccc;">
+								<source src="${url}" type="video/mp4">
+								${__("Your browser does not support the video tag.")}
+							</video>
+							<div><a href="${url}" target="_blank">${file.file_name}</a></div>
+						</div>`;
+				} else {
+					options += `
+						<div style="margin:5px;">
+							<a href="${url}" target="_blank">${file.file_name}</a>
+						</div>`;
+				}
+			});
+			attachment_wrapper.innerHTML = options;
+		}
 	});
 }
