@@ -35,25 +35,14 @@ def patient_appointment_on_update(doc, method=None):
 		return
 	if previous_doc and previous_doc.status in ['Open','Rescheduled'] and doc.status == 'Checked In':
 		if doc.appointment_type == 'MCU':
+			_validate_mcu_templates(doc)
 			if dispatcher_user:
 				_create_dispatcher(doc.name, doc.custom_branch)
 			else:
 				_create_mcu_queue_pooling(doc.name, doc.custom_branch)
 			_set_mcu_queue_no(doc.name)
 		else:
-			vs_doc = frappe.get_doc(dict(
-				doctype = 'Vital Signs',
-				patient = doc.patient,
-				signs_date = nowdate(),
-				signs_time = nowtime(),
-				appointment = doc.name,
-				custom_branch = doc.custom_branch,
-				custom_patient_sex = doc.patient_sex,
-				custom_patient_age = doc.patient_age,
-				custom_patient_company = doc.custom_patient_company,
-				custom_date_of_birth = doc.custom_patient_date_of_birth,
-				vital_signs_note = doc.notes))
-			vs_doc.insert(ignore_permissions=True)
+			_create_vital_signs(doc)
 	elif doc.status in ['Checked In', 'Ready to Check Out']:
 		_validate_with_today_date(doc.appointment_date)
 		if str(doc.appointment_date) == nowdate():
@@ -73,6 +62,21 @@ def patient_appointment_on_update(doc, method=None):
 							exist_docname, additional, dispatcher_user)
 					else:
 						_add_queue_pooling_additional_mcu_item(doc.name, doc.custom_branch, additional)
+
+def _create_vital_signs(doc):
+	vs_doc = frappe.get_doc(dict(
+		doctype = 'Vital Signs',
+		patient = doc.patient,
+		signs_date = nowdate(),
+		signs_time = nowtime(),
+		appointment = doc.name,
+		custom_branch = doc.custom_branch,
+		custom_patient_sex = doc.patient_sex,
+		custom_patient_age = doc.patient_age,
+		custom_patient_company = doc.custom_patient_company,
+		custom_date_of_birth = doc.custom_patient_date_of_birth,
+		vital_signs_note = doc.notes))
+	vs_doc.insert(ignore_permissions=True)
 
 def _add_dispatcher_additional_mcu_item(dispatcher, additional_table, dispatcher_user):
 	doc = frappe.get_doc('Dispatcher', dispatcher)
@@ -360,3 +364,31 @@ def _set_questionnaire_key(name, temp_reg):
 		'Questionnaire', filters={'temporary_registration': temp_reg}, pluck='name')
 	for q in q_list:
 		frappe.db.set_value('Questionnaire', q, 'patient_appointment', name)
+
+def _validate_mcu_templates(doc):
+	mcu_items = doc.get('custom_mcu_exam_items', []) + doc.get('custom_additional_mcu_items', [])
+	if not mcu_items:
+		return
+	missing_templates = []
+	template_doctypes = [
+		'Lab Test Template',
+		'Nurse Examination Template',
+		'Doctor Examination Template',
+		'Radiology Result Template'
+	]
+	for item in mcu_items:
+		item_code = item.get('examination_item')
+		if not item_code:
+			continue
+		found = False
+		for doctype in template_doctypes:
+			if frappe.db.exists(doctype, item_code):
+				found = True
+				break
+		if not found:
+			missing_templates.append(item.get('item_name') or item_code)
+	if missing_templates:
+		err_str = ', '.join(missing_templates)
+		frappe.throw(title='Missing Templates',
+			msg=f"The following MCU examination items do not have a corresponding template: {err_str}"
+		)

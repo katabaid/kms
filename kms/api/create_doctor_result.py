@@ -55,6 +55,9 @@ def _create_examination_items(appointment, exam_dict):
 		'Nurse Examination Template', template, 'item_code') if template else None
 	grouped_exams = {}
 	for exam in exam_dict:
+		if not exam.get('exam_type'):
+			frappe.throw(f"Examination Item {exam.get('item_name')} does not have a corresponding template. "
+				"Please report this error to System Administrator.")
 		category = exam.get('exam_type')
 		group = exam.get('item_group')
 		if category not in grouped_exams:
