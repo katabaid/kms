@@ -414,6 +414,9 @@ def create_result_doc(doc, target):
 								})
 					case _:
 						frappe.throw(f"Unhandled Template for {target} DocType.")
+			else:
+				if target == 'Nurse Result' and frappe.db.exists('MCU Eye Specialist', {'eye_specialist_room': doc.service_unit}):
+					frappe.throw(f"Examination Item {item.template} must be finished before submitting the document.")
 	if not not_created:
 		new_doc.insert(ignore_permissions=True)
 	return new_doc.name, new_doc.patient_name

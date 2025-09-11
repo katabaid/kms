@@ -9,7 +9,7 @@ const addCustomButtons = (frm) => {
 	frm.add_custom_button(__('Patient Result'), () => {
 		window.open(`/app/query-report/Result per Appointment?exam_id=${frm.doc.appointment}`, '_blank');
 	}, __('Reports'));
-	if(!frm.doc.exam_result) {
+	if(!frm.doc.exam_result && frm.doc.status === 'Finished') {
 		frappe.call('kms.api.healthcare.is_eye_specialist_exam', {
 			hsu: frm.doc.service_unit
 		}).then(r => {
