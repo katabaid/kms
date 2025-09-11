@@ -159,7 +159,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   function finishExam(frm) {
     return new Promise((resolve, reject) => {
       frappe.call({
-        method: 'kms.kms.doctype.dispatcher.dispatcher.finish_exam',
+        method: 'kms.api.healthcare.finish_exam',
         args: {
           'hsu': utils.getHsu(frm),
           'status': utils.getStatus(frm),

@@ -76,7 +76,7 @@ function create_dialog(branch_list, default_branch) {
 
 async function load_branch_data(dialog, branch) {
   const r = await frappe.call({
-    method: 'kms.kms.doctype.dispatcher.dispatcher.get_queued_branch',
+    method: 'kms.api.healthcare.get_queued_branch',
     freeze: true,
     freeze_message: 'Getting Queue',
     args: { branch: branch },
