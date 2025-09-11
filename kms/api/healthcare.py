@@ -128,8 +128,7 @@ def create_eye_specialist_result(docname):
 	exam = frappe.get_doc('Nurse Examination', docname)
 	if not exam.service_unit:
 		frappe.throw("Service Unit is required to create Eye Specialist Result.")
-	exists = frappe.db.exists('MCU Eye Specialist', {'eye_specialist_room': exam.service_unit})
-	if not exists:
+	if not frappe.db.exists('MCU Eye Specialist', {'eye_specialist_room': exam.service_unit}):
 		frappe.throw(f"No Eye Specialist found for Service Unit: {exam.service_unit}")
 	if frappe.db.exists('Nurse Result', {'exam': exam.name}):
 		frappe.throw("Eye Specialist Result already exists for this appointment.")
