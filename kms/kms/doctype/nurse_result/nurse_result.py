@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from kms.kms.doctype.doctor_result.doctor_result import _create_result_pdf_report
 
 class NurseResult(Document):
 	def before_submit (self):
@@ -17,6 +18,7 @@ class NurseResult(Document):
 	def on_submit(self):
 		self._validate_conclusion()
 		self._update_linked_records()
+		_create_result_pdf_report('Nurse Result', self.name)
 
 	def before_update_after_submit(self):
 		if self.need_review:
@@ -24,6 +26,14 @@ class NurseResult(Document):
 			self._update_linked_records()
 		else:
 			frappe.throw('Need Review flag must be active.')
+		existing_file = frappe.db.exists('File', {
+			'file_name': ["like", f"{self.name}%.pdf"],
+			'attached_to_doctype': self.doctype,
+			'attached_to_name': self.name
+		})
+		if existing_file:
+			frappe.delete_doc('File', existing_file)
+			_create_result_pdf_report('Nurse Result', self.name)
 	
 	def on_update(self):
 		result_queue_exists = frappe.db.exists('Result Queue', {'doc_name': self.name, 'doc_type': 'Nurse Result'})
