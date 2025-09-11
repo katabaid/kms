@@ -85,17 +85,21 @@ class DoctorResult(Document):
 	def on_submit(self):
 		self.process_group_exam()
 		self.save()
-		self.create_pdf_report()
+		self.create_doctor_result_pdf_report()
 
 	def on_update_before_submit(self):
 		self.process_group_exam()
-		self.create_pdf_report()
+		self.create_doctor_result_pdf_report()
 
-	def create_pdf_report(self):
-		print_format = 'MCU Format'
+	def create_doctor_result_pdf_report(self):
+		print_format = frappe.db.get_single_value('MCU Settings', 'doctor_result_print_format')
+		if not print_format:
+			frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
 		html = frappe.get_print(self.doctype, self.name, print_format)
 		main_pdf = get_pdf(html)
-		docs = frappe.db.get_all('MCU Exam Grade', {'parent':self.name}, ['document_type', 'document_name'])
+		docs = frappe.db.get_all('MCU Exam Grade', 
+			filters={'parent': self.name, 'document_type': ('in', ['Radiology Result', 'Nurse Result'])}, 
+			fields=['document_type', 'document_name'])
 		unique_docs = list({doc['document_name']: doc for doc in docs if doc.document_name}.values())
 		merger = PdfMerger()
 		merger.append(io.BytesIO(main_pdf))
@@ -105,10 +109,16 @@ class DoctorResult(Document):
 				"attached_to_name": doc['document_name'],
 				"file_url": ["like", f"%{doc['document_name']}%.pdf"]
 			}, pluck='name')
-			for f in related_files:
+			if not related_files:
+				f = _create_result_pdf_report(doc['document_type'], doc['document_name'])
 				file_doc = frappe.get_doc('File', f)
 				file_content = file_doc.get_content()
 				merger.append(io.BytesIO(file_content))
+			else:
+				for f in related_files:
+					file_doc = frappe.get_doc('File', f)
+					file_content = file_doc.get_content()
+					merger.append(io.BytesIO(file_content))
 		output = io.BytesIO()
 		merger.write(output)
 		merger.close()
@@ -120,12 +130,7 @@ class DoctorResult(Document):
 		})
 		if existing_file:
 			frappe.delete_doc('File', existing_file)
-		save_file(
-			filename,
-			output.getvalue(),
-			self.doctype,
-			self.name,
-		)
+		save_file(filename, output.getvalue(), self.doctype, self.name, is_private=1)
 		self.reload()
 
 	def process_auto_grading(self):
@@ -617,3 +622,32 @@ def format_indonesian_safe(number_str):
 			return f"{integer_formatted},{decimal_part}"
 		else:
 			return integer_formatted
+		
+def _create_result_pdf_report(doctype, name):
+	hsu = frappe.db.get_value(doctype, name, 'service_unit')
+	if not hsu:
+		frappe.throw(f'Healthcare Service Unit is not set for {doctype} {name}. Cannot create PDF report.')
+	pf = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format')
+	if not pf:
+		frappe.throw(f'Please set the Default Print Format for Healthcare Service Unit {hsu}. Cannot create PDF report.')
+	html = frappe.get_print(doctype, name, pf)
+	pdf = get_pdf(html)
+	merger = PdfMerger()
+	merger.append(io.BytesIO(pdf))
+	if not pdf:
+		frappe.throw(f'Failed to generate PDF for {doctype} {name}.')
+	related_files = frappe.get_all('File', filters={
+		"attached_to_doctype": doctype,
+		"attached_to_name": name,
+		"file_type": 'PDF',
+		}, pluck='name')
+	if related_files:
+		for f in related_files:
+			file_doc = frappe.get_doc('File', f)
+			file_content = file_doc.get_content()
+			merger.append(io.BytesIO(file_content))
+	output = io.BytesIO()
+	merger.write(output)
+	merger.close()
+	filename = f'{name}.pdf'
+	return save_file(filename, output.getvalue(), doctype, name, is_private=1)

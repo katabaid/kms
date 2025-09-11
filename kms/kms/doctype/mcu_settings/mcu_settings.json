@@ -50,6 +50,7 @@
   "column_break_pwgp",
   "doctor_result_assignment_role",
   "radiology_result_assignment_role",
+  "doctor_result_print_format",
   "section_break_kcub",
   "meal_time",
   "max_room_queue",
@@ -65,14 +66,7 @@
   "billing_tab",
   "local_price_list",
   "column_break_ajlq",
-  "expatriate_price_list",
-  "print_format_tab",
-  "radiology_result_section",
-  "omd_print_format",
-  "column_break_topm",
-  "usg_print_format",
-  "column_break_oeqr",
-  "thorax_print_format"
+  "expatriate_price_list"
  ],
  "fields": [
   {
@@ -399,42 +393,6 @@
    "label": "Queue Pooling Submit Delay"
   },
   {
-   "fieldname": "print_format_tab",
-   "fieldtype": "Tab Break",
-   "label": "Print Format"
-  },
-  {
-   "fieldname": "radiology_result_section",
-   "fieldtype": "Section Break",
-   "label": "Radiology Result"
-  },
-  {
-   "fieldname": "omd_print_format",
-   "fieldtype": "Table MultiSelect",
-   "label": "OMD Print Format",
-   "options": "MCU Radiology Format"
-  },
-  {
-   "fieldname": "column_break_topm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "usg_print_format",
-   "fieldtype": "Table MultiSelect",
-   "label": "USG Print Format",
-   "options": "MCU Radiology Format"
-  },
-  {
-   "fieldname": "column_break_oeqr",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "thorax_print_format",
-   "fieldtype": "Table MultiSelect",
-   "label": "Thorax Print Format",
-   "options": "MCU Radiology Format"
-  },
-  {
    "fieldname": "cardiologist_section",
    "fieldtype": "Section Break",
    "label": "Cardiologist"
@@ -469,12 +427,19 @@
    "fieldtype": "Table MultiSelect",
    "label": "Eye Specialist Rooms",
    "options": "MCU Eye Specialist"
+  },
+  {
+   "description": "Print Format to use for automatically creating and merging complete MCU report.",
+   "fieldname": "doctor_result_print_format",
+   "fieldtype": "Link",
+   "label": "Doctor Result Print Format",
+   "options": "Print Format"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-09 20:57:51.479685",
+ "modified": "2025-09-11 10:46:52.533826",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",
