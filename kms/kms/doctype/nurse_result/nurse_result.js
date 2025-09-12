@@ -7,6 +7,7 @@ frappe.ui.form.on('Nurse Result', {
 		setup_attachment_field(frm);
 		store_original_results(frm);
 		set_conclusion_query(frm);
+		set_result_properties(frm);
 	},
 	refresh: function (frm) {
 		setup_attachment_field(frm);
@@ -97,9 +98,8 @@ const hide_standard_buttons = (frm, fields) => {
 		frm.set_df_property(field, 'cannot_add_rows', true);
 		frm.set_df_property(field, 'cannot_delete_rows', true);
 		frm.set_df_property(field, 'cannot_delete_all_rows', true);
-		const grid = frm.fields_dict[field].grid;
-		const row_index_elements = grid.wrapper.querySelectorAll('.row-index');
-		row_index_elements.forEach(el => el.style.display = 'none');
+		let rows = frm.fields_dict[field].wrapper.querySelectorAll('.row-index');
+		rows.forEach(el => el.style.display = "none");
 	});
 }
 
@@ -154,6 +154,8 @@ const render_attachment = (frm) => {
 				options += get_attachment_html(file);
 			});
 			attachment_wrapper.innerHTML = options;
+			frm.set_df_property('attachment', 'options', options);
+			frm.refresh_field('attachment');
 		}
 	});
 }

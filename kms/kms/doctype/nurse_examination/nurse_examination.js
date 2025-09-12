@@ -98,7 +98,7 @@ const applyStyling = (frm) => {
 	if (!frm.doc.non_selective_result) return;
 	frm.refresh_field('non_selective_result');
 	frm.fields_dict['non_selective_result'].grid.grid_rows.forEach(row => {
-		this.apply_cell_styling(frm, row.doc);
+		apply_cell_styling(frm, row.doc);
 	});
 	frm.fields_dict.non_selective_result.grid.wrapper.find('.grid-row .row-index').hide();
 };
@@ -218,7 +218,7 @@ frappe.ui.form.on('Nurse Examination Selective Result',{
 frappe.ui.form.on('Nurse Examination Result',{
 	result_value(frm, cdt, cdn) {
 		let row = locals[cdt][cdn];
-    this.apply_cell_styling(frm, row);
+    apply_cell_styling(frm, row);
 		frm._show_dialog_on_change = true;
 	}
 })
