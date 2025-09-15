@@ -374,7 +374,7 @@ def _validate_mcu_templates(doc):
 	template_doctypes = [
 		'Nurse Examination Template',
 		'Doctor Examination Template',
-		'Radiology Result Template'
+		'Radiology Result Template',
 	]
 	for item in mcu_items:
 		item_code = item.get('examination_item')
@@ -382,6 +382,9 @@ def _validate_mcu_templates(doc):
 			continue
 		found = False
 		for doctype in template_doctypes:
+			if frappe.db.exists('Lab Test Template', {'lab_test_code': item_code}):
+				found = True
+				break
 			if frappe.db.exists(doctype, {'item_code': item_code}):
 				found = True
 				break
