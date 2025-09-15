@@ -2,7 +2,7 @@ import frappe, re
 from frappe.utils import now, today, now_datetime
 from datetime import timedelta
 from kms.mcu_dispatcher import _get_related_service_units
-
+from kms.utils import set_pa_notes
 
 @frappe.whitelist()
 def set_mqp_meal_time(exam_id):
@@ -167,6 +167,7 @@ def finish_exam(hsu, status, doctype, docname):
 	dispatcher_id = source_doc.custom_dispatcher if is_sc else source_doc.dispatcher
 	queue_pooling_id = source_doc.custom_queue_pooling if is_sc else source_doc.queue_pooling
 	child = source_doc.custom_sample_table if is_sc else source_doc.examination_item
+	note = source_doc.custom_exam_note if is_sc else source_doc.exam_note
 	related_rooms = _get_related_service_units(hsu, exam_id)
 	no_target = frappe.db.exists('MCU Eye Specialist', {'eye_specialist_room': hsu})
 	exists_to_retest = any(item.status == 'To Retest' for item in child)
@@ -177,6 +178,7 @@ def finish_exam(hsu, status, doctype, docname):
 	final_status = ['Finished', 'Refused', 'Rescheduled', 'Partial Finished', \
 		'Ineligible for Testing', 'Finished Collection']
 	if dispatcher_id:
+		set_pa_notes(exam_id, note)
 		if status == 'Removed':
 			status = 'Wait for Room Assignment'
 		doc = frappe.get_doc('Dispatcher', dispatcher_id)
@@ -194,6 +196,7 @@ def finish_exam(hsu, status, doctype, docname):
 			doc.meal_time = now()
 		doc.save(ignore_permissions=True)
 	elif queue_pooling_id:
+		set_pa_notes(exam_id, note)
 		item_status = ['Started', 'To Retest', 'To be Added']
 		if not frappe.db.exists('MCU Appointment', {'parent': exam_id, 'status': ['in', item_status]}):
 			frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')

@@ -13,7 +13,7 @@ def sample_before_insert(doc, method=None):
     doc.custom_purple_tubes = pb.custom_number_of_purple_tubes
     doc.custom_blue_tubes = pb.custom_number_of_blue_tubes
     if notes:
-      doc.custom_exam_notes = notes
+      doc.custom_exam_note = notes
   
 def sample_after_submit(doc, method=None):
   if doc.amended_from:
@@ -23,8 +23,6 @@ def sample_after_submit(doc, method=None):
     for item in doc.custom_sample_table:
       item.status = 'Started'
     doc.save()
-  if doc.custom_dispatcher or doc.custom_queue_pooling:
-    set_pa_notes(doc.custom_appointment, doc.custom_exam_notes)
 
 def sample_before_submit(doc, method=None):
   if not doc.collected_by:

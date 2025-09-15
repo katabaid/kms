@@ -3,13 +3,11 @@
 
 import frappe
 from frappe.model.document import Document
-from kms.utils import set_pa_notes
 
 class NurseExamination(Document):
 	def on_submit(self):
 		self._update_exam_result()
 		self.db_set('submitted_date', frappe.utils.now_datetime())
-		set_pa_notes(self.appointment, self.exam_notes)
 
 	def on_update(self):
 		old = self.get_doc_before_save()
@@ -22,8 +20,7 @@ class NurseExamination(Document):
 
 	def before_insert(self):
 		self._fetch_questionnaire_data()
-		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
-		self.exam_notes = pa_doc.notes
+		self.exam_note = frappe.db.get_value('Patient Appointment', self.appointment, 'notes')
 
 	def _update_exam_result(self):
 		exam_result = frappe.db.exists('Nurse Result', {'exam': self.name}, 'name')

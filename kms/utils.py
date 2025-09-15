@@ -31,4 +31,5 @@ def assess_mcu_grade(
 
 def set_pa_notes(exam, exam_notes):
 	pa = frappe.get_doc('Patient Appointment', exam)
+	pa.flags.ignore_permissions = True
 	pa.db_set('notes', exam_notes)

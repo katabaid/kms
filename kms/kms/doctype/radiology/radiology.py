@@ -4,7 +4,6 @@
 import frappe
 from frappe.utils import now
 from frappe.model.document import Document
-from kms.utils import set_pa_notes
 
 class Radiology(Document):
 	def on_submit(self):
@@ -12,7 +11,6 @@ class Radiology(Document):
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:
 			self.db_set('exam_result', exam_result)
-		set_pa_notes(self.appointment, self.exam_notes)
 
 	def before_insert(self):
 		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)

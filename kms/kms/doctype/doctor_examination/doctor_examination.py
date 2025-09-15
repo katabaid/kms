@@ -45,7 +45,6 @@ class DoctorExamination(Document):
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:
 			self.db_set('exam_result', exam_result)
-		set_pa_notes(self.appointment, self.exam_notes)
 	
 	def on_update(self):
 		old = self.get_doc_before_save()
