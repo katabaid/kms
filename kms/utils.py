@@ -28,3 +28,7 @@ def assess_mcu_grade(
 			return grade_data[0], grade_data[1], None
 		return None, None, "No matching grade found"
 	return None, None, "Result does not meet grading criteria"
+
+def set_pa_notes(exam, exam_notes):
+	pa = frappe.get_doc('Patient Appointment', exam)
+	pa.db_set('notes', exam_notes)

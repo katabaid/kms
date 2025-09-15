@@ -28,14 +28,14 @@
   "dental_examination",
   "column_break_npqjw",
   "dental_examination_name",
-  "ecg_section",
-  "ecg",
-  "column_break_dsow",
-  "ecg_name",
   "cardiologist_section",
   "cardiologist",
+  "ecg",
+  "treadmill",
   "column_break_wlkg",
   "cardiologist_name",
+  "ecg_name",
+  "treadmill_name",
   "assignment_tab",
   "dispatcher_and_room_assignment_section",
   "dispatcher_role",
@@ -359,20 +359,11 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "ecg_section",
-   "fieldtype": "Section Break",
-   "label": "ECG"
-  },
-  {
    "fieldname": "ecg",
    "fieldtype": "Link",
    "label": "ECG",
    "link_filters": "[[\"Item\",\"item_group\",\"=\",\"Cardiology Examination\"]]",
    "options": "Item"
-  },
-  {
-   "fieldname": "column_break_dsow",
-   "fieldtype": "Column Break"
   },
   {
    "fetch_from": "ecg.item_name",
@@ -434,12 +425,26 @@
    "fieldtype": "Link",
    "label": "Doctor Result Print Format",
    "options": "Print Format"
+  },
+  {
+   "fieldname": "treadmill",
+   "fieldtype": "Link",
+   "label": "Treadmill",
+   "link_filters": "[[\"Item\",\"item_group\",\"=\",\"Cardiology Examination\"]]",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "treadmill.item_name",
+   "fieldname": "treadmill_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "read_only": 1
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-11 10:46:52.533826",
+ "modified": "2025-09-15 08:50:43.200325",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

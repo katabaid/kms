@@ -3,9 +3,12 @@
 
 import frappe
 from frappe.model.document import Document
+from kms.utils import set_pa_notes
 
 class DoctorExamination(Document):
 	def before_insert(self):
+		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
+		self.exam_notes = pa_doc.notes
 		if not self.is_dental_record_inserted:
 			item_name = frappe.db.get_single_value ('MCU Settings', 'dental_examination_name')
 			if any(exam_item.template == item_name for exam_item in self.examination_item):
@@ -30,17 +33,19 @@ class DoctorExamination(Document):
 			frappe.db.get_single_value ('MCU Settings', 'physical_examination'), 
 			frappe.db.get_single_value ('MCU Settings', 'cardiologist')]
 		if any(item.item in valid_checker for item in self.examination_item):
-			pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
 			all_packages = pa_doc.custom_mcu_exam_items + pa_doc.custom_additional_mcu_items
 			for package in all_packages:
-				if package.examination_item == 'CARD-00002':
-					setup_questionnaire_table(self, package)
+				treadmill = frappe.db.get_single_value ('MCU Settings', 'treadmill')
+				if treadmill:
+					if package.examination_item == 'CARD-00002':
+						setup_questionnaire_table(self, package)
 
 	def on_submit(self):
 		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:
 			self.db_set('exam_result', exam_result)
+		set_pa_notes(self.appointment, self.exam_notes)
 	
 	def on_update(self):
 		old = self.get_doc_before_save()
@@ -48,6 +53,7 @@ class DoctorExamination(Document):
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
 	
 	def on_update_after_submit(self):
+		set_pa_notes(self.appointment, self.exam_notes)
 		old_doc = self.get_doc_before_save()
 		if self.grade != old_doc.grade:
 			if hasattr(self, 'appointment') and self.appointment:

@@ -1,17 +1,19 @@
 import frappe
 from frappe.utils import now
-from kms.utils import assess_mcu_grade
+from kms.utils import assess_mcu_grade, set_pa_notes
 
 #region SAMPLE COLLECTION HOOKS
 def sample_before_insert(doc, method=None):
   doc.custom_barcode_label = doc.custom_appointment
-  mcu = frappe.db.get_value('Patient Appointment', doc.custom_appointment, 'mcu')
+  mcu, notes = frappe.db.get_value('Patient Appointment', doc.custom_appointment, ['mcu', 'notes'])
   if mcu:
     pb = frappe.get_doc('Product Bundle', mcu)
     doc.custom_yellow_tubes = pb.custom_number_of_yellow_tubes
     doc.custom_red_tubes = pb.custom_number_of_red_tubes
     doc.custom_purple_tubes = pb.custom_number_of_purple_tubes
     doc.custom_blue_tubes = pb.custom_number_of_blue_tubes
+    if notes:
+      doc.custom_exam_notes = notes
   
 def sample_after_submit(doc, method=None):
   if doc.amended_from:
@@ -21,6 +23,8 @@ def sample_after_submit(doc, method=None):
     for item in doc.custom_sample_table:
       item.status = 'Started'
     doc.save()
+  if doc.custom_dispatcher or doc.custom_queue_pooling:
+    set_pa_notes(doc.custom_appointment, doc.custom_exam_notes)
 
 def sample_before_submit(doc, method=None):
   if not doc.collected_by:

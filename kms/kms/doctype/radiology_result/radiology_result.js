@@ -6,13 +6,16 @@ frappe.ui.form.on('Radiology Result', {
 		setup_breadcrumbs();
 		setup_attachment_field(frm);
 		set_conclusion_query(frm);
-		set_selective_result_properties(frm);
+		//set_selective_result_properties(frm);
 	},
 	refresh: function (frm) {
 		setup_attachment_field(frm);
 		hide_standard_buttons(frm, ['examination_item', 'result']);
 		render_attachment(frm);
-		set_selective_result_properties(frm);
+		setTimeout(() => {
+			
+			set_selective_result_properties(frm);
+		}, 1000);
 	},
 });
 
@@ -52,14 +55,42 @@ const hide_standard_buttons = (frm, fields) => {
 }
 
 const set_selective_result_properties = (frm) => {
-	if (frm.doc.result && frm.doc.docstatus !== 2) {
-		frm.refresh_field('result');
-		frm.doc.result.forEach(value => {
-			frappe.meta.get_docfield('Radiology Results', 'result_check', value.name).options = value.result_options;
-			frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).read_only = (value.result_check === value.normal_value) ? 1 : 0;
-			frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).reqd = (value.result_check === value.mandatory_value) ? 1 : 0;
-		});
+	if (!frm.doc.result || frm.doc.docstatus === 2) return;
+	const field = frm.fields_dict.result;
+	if (!field || !field.grid || !field.grid.grid_rows) {
+		console.log("Grid not ready yet for 'result' field");
+		return;
 	}
+	const grid = field.grid;
+	frm.doc.result.forEach((value, index) => {
+		const row = grid.grid_rows[index];
+		if (!row || !row.doc) {
+			console.log("Row not rendered yet at index", index);
+			return;
+		}
+		console.log(value.doctype, value.name, value.result_options);
+		const $select = $(grid).find(`select[data-fieldname="result_check"]`);
+		if ($select.length) {
+			$select.empty();
+			if (value.result_options) {
+				value.result_options.split('\n').forEach(option => {
+					const trimmedOption = option.trim();
+					if (trimmedOption) {
+						$select.append(new Option(trimmedOption, trimmedOption));
+					}
+				});
+				$select.val(value.result_check).trigger('change');
+			} 
+		}	else {
+			console.warn(`[Row ${index}] Select element not found for 'result_check'`);
+		}
+		//frm.set_df_property(value.doctype, 'result_check', 'options', value.result_options, value.name);
+			//frm.fields_dict.result.grid.update_docfield_property('result_check', 'options', value.result_options, value.name);
+			//frappe.meta.get_docfield('Radiology Results', 'result_check', value.name).options = value.result_options;
+			//frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).read_only = (value.result_check === value.normal_value) ? 1 : 0;
+			//frappe.meta.get_docfield('Radiology Results', 'result_text', value.name).reqd = (value.result_check === value.mandatory_value) ? 1 : 0;
+	});
+	setTimeout(()=>grid.refresh(),200);
 }
 const render_attachment = (frm) => {
 	const attachment_wrapper = frm.fields_dict.attachment.wrapper;
