@@ -8,7 +8,7 @@ from kms.utils import set_pa_notes
 class DoctorExamination(Document):
 	def before_insert(self):
 		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
-		self.exam_notes = pa_doc.notes
+		self.exam_note = pa_doc.notes
 		if not self.is_dental_record_inserted:
 			item_name = frappe.db.get_single_value ('MCU Settings', 'dental_examination_name')
 			if any(exam_item.template == item_name for exam_item in self.examination_item):

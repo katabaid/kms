@@ -14,6 +14,7 @@ frappe.ui.form.on('Nurse Result', {
 		hide_standard_buttons(frm, ['examination_item', 'result', 'non_selective_result']);
 		render_attachment(frm);
 		set_result_properties(frm);
+		applyStyling(frm);
 	},
 	before_save: function (frm) {
 		if (frm.doc.docstatus === 0) {
@@ -69,7 +70,7 @@ const validate_results_range = (frm) => {
 		let has_out_of_range = false;
 		frm.doc.non_selective_result.forEach(row => {
 			const is_out_of_range = row.result_value < row.min_value || row.result_value > row.max_value;
-			const has_valid_range = row.min_value != 0 && row.max_value != 0;
+			const has_valid_range = row.min_value != 0 || row.max_value != 0;
 			const has_changed = row.result_value && row.result_value !== row._original_result_value;
 			if (is_out_of_range && has_valid_range && has_changed) {
 				has_out_of_range = true;
@@ -188,5 +189,34 @@ const get_attachment_html = (file) => {
 			<div style="margin:5px;">
 				<a href="${url}" target="_blank">${file.file_name}</a>
 			</div>`;
+	}
+}
+
+const applyStyling = (frm) => {
+	if (!frm.doc.non_selective_result) return;
+	frm.refresh_field('non_selective_result');
+	frm.fields_dict['non_selective_result'].grid.grid_rows.forEach(row => {
+		apply_cell_styling(frm, row.doc);
+	});
+	frm.fields_dict.non_selective_result.grid.wrapper.find('.grid-row .row-index').hide();
+};
+
+const apply_cell_styling = (frm, row) =>{
+	if (row.result_value && (row.min_value || row.max_value)) {
+		let resultValue = parseFloat(row.result_value.replace(',', '.'));
+		let minValue = parseFloat(row.min_value);
+		let maxValue = parseFloat(row.max_value);
+		let $row = $(frm.fields_dict["non_selective_result"].grid.grid_rows_by_docname[row.name].row);
+		if (resultValue < minValue || resultValue > maxValue) {
+			$row.css({
+				'font-weight': 'bold',
+				'color': 'red'
+			});
+		} else {
+			$row.css({
+				'font-weight': 'normal',
+				'color': 'black'
+			});
+		}
 	}
 }

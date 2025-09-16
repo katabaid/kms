@@ -13,21 +13,25 @@
  ],
  "fields": [
   {
+   "allow_on_submit": 1,
    "fieldname": "contents",
    "fieldtype": "Data",
    "label": "Contents"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "result",
    "fieldtype": "Data",
    "label": "Result"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "previous_result",
    "fieldtype": "Data",
    "label": "Previous Result"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "last_result",
    "fieldtype": "Data",
    "label": "Last Result"
@@ -37,7 +41,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-03 08:22:24.659124",
+ "modified": "2025-09-15 17:28:34.804865",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result Group Exam",

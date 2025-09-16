@@ -83,35 +83,54 @@ class DoctorResult(Document):
 	#	)
 
 	def on_submit(self):
+		frappe.msgprint("on_submit called")	
 		self.process_group_exam()
 		self.save()
-		self.create_doctor_result_pdf_report()
+		self._create_doctor_result_pdf_report()
 
-	def on_update_before_submit(self):
-		self.process_group_exam()
-		self.create_doctor_result_pdf_report()
-
-	def create_doctor_result_pdf_report(self):
+	def on_update_after_submit(self):
+		if hasattr(self, '_in_on_update_after_submit'):
+			return
+		try:
+			self._in_on_update_after_submit = True
+			frappe.msgprint("on_update_before_submit called")
+			self.process_group_exam()
+			self.save()
+			self._create_doctor_result_pdf_report()
+		finally:
+			self._in_on_update_after_submit = False
+			
+	def _create_doctor_result_pdf_report(self):
 		print_format = frappe.db.get_single_value('MCU Settings', 'doctor_result_print_format')
 		if not print_format:
 			frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
 		html = frappe.get_print(self.doctype, self.name, print_format)
 		main_pdf = get_pdf(html)
 		docs = frappe.db.get_all('MCU Exam Grade', 
-			filters={'parent': self.name, 'document_type': ('in', ['Radiology Result', 'Nurse Result'])}, 
+			filters={'parent': self.name, 'document_type': ('in', ['Radiology Result', 'Nurse Examination'])}, 
 			fields=['document_type', 'document_name'])
 		unique_docs = list({doc['document_name']: doc for doc in docs if doc.document_name}.values())
 		merger = PdfMerger()
 		merger.append(io.BytesIO(main_pdf))
 		for doc in unique_docs:
+			docname = frappe.get_value(doc['document_type'], doc['document_name'], 'exam_result')
+			if docname:
+				doctype = 'Nurse Result'
+			else:
+				continue
 			related_files = frappe.get_all('File', filters={
-				"attached_to_doctype": doc['document_type'],
-				"attached_to_name": doc['document_name'],
-				"file_url": ["like", f"%{doc['document_name']}%.pdf"]
+				"attached_to_doctype": doctype,
+				"attached_to_name": docname,
+				"file_url": ["like", f"%{docname}%.pdf"]
 			}, pluck='name')
 			if not related_files:
-				f = _create_result_pdf_report(doc['document_type'], doc['document_name'])
-				file_doc = frappe.get_doc('File', f)
+				_create_result_pdf_report(doctype, docname)
+				f = frappe.get_all('File', filters={
+					"attached_to_doctype": doctype,
+					"attached_to_name": docname,
+					"file_url": ["like", f"%{docname}%.pdf"]
+				}, pluck='name')
+				file_doc = frappe.get_doc('File', f[0])
 				file_content = file_doc.get_content()
 				merger.append(io.BytesIO(file_content))
 			else:
@@ -350,20 +369,22 @@ class DoctorResult(Document):
 		counter = 0
 		for table in self.child_tables:
 			for row in getattr(self, table, []):
-				try:
-					if not row.hidden_item:
-						counter += 1
-						bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
-						grade = frappe.get_value('MCU Grade', row.grade, 'grade')
-						grade_on_report = frappe.get_value('MCU Grade', row.grade, 'grade_on_report')
-						current_results.append({
-							'contents': row.hidden_item_group,
-							'result': grade if not grade_on_report else grade_on_report,
-							'bundle_position': bundle_position if bundle_position else 9999,
-							'idx': counter,
-						})
-				except Exception as e:
-					frappe.log_error(f"Error processing {table} row: {e}")
+				#try:
+				if not row.hidden_item:
+					counter += 1
+					bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
+					grade = frappe.get_value('MCU Grade', row.grade, 'grade')
+					grade_on_report = frappe.get_value('MCU Grade', row.grade, 'grade_on_report')
+					if row.hidden_item_group == 'Basic Examination':
+						frappe.msgprint(grade)
+					current_results.append({
+						'contents': row.hidden_item_group,
+						'result': grade if not grade_on_report else grade_on_report,
+						'bundle_position': bundle_position if bundle_position else 9999,
+						'idx': counter,
+					})
+				#except Exception as e:
+				#	frappe.log_error(f"Error processing {table} row: {e}")
 		sorted_results = sorted(
 			current_results,
 			key = lambda x: (x['bundle_position'], x['idx'])
@@ -390,6 +411,7 @@ class DoctorResult(Document):
 				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
 				last_data = {d.contents: d.result for d in last_doc.group_exam}
 		for result in sorted_results:
+			frappe.msgprint(f"{result['contents']}: {result['result']}")
 			self.append('group_exam', {
 				'contents': result['contents'],
 				'result': result['result'],
@@ -650,4 +672,4 @@ def _create_result_pdf_report(doctype, name):
 	merger.write(output)
 	merger.close()
 	filename = f'{name}.pdf'
-	return save_file(filename, output.getvalue(), doctype, name, is_private=1)
+	save_file(filename, output.getvalue(), doctype, name, is_private=1)

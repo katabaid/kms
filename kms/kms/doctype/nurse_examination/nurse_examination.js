@@ -32,7 +32,7 @@ const addCustomButtons = (frm) => {
 }
 
 const apply_cell_styling = (frm, row) =>{
-	if (row.result_value && row.min_value && row.max_value) {
+	if (row.result_value && (row.min_value || row.max_value)) {
 		let resultValue = parseFloat(row.result_value.replace(',', '.'));
 		let minValue = parseFloat(row.min_value);
 		let maxValue = parseFloat(row.max_value);
