@@ -229,20 +229,21 @@ def __create_nurse_category(appointment, item, item_group, bp):
 					filters={'appointment': appointment, 'docstatus': 1})],
 			'item': item['examination_item']
 		}, 'parent')
+	doctype = 'Nurse Examination' if result_in_exam else 'Nurse Result'
 	result.append(['nurse_grade', {
 		'examination': item['item_name'],
 		'gradable': item.get('item_gradable', 0),
 		'hidden_item_group': item_group,
 		'hidden_item': item['examination_item'],
 		'is_item': 1, 
-		'document_type': 'Nurse Examination', 
+		'document_type': doctype, 
 		'document_name': doc_no
 	}])
 	if not is_single_result and result_in_exam:
 		result.extend(
 			___create_nurse_result_per_item_in_exam(appointment, item['examination_item'], item_group))
 	else:
-		if result_in_exam:
+		if not result_in_exam:
 			nurse_result = frappe.db.get_value('Nurse Examination', doc_no, 'exam_result')
 			nr_doc = frappe.get_doc('Nurse Result', nurse_result)
 			if nr_doc:

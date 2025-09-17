@@ -10,14 +10,14 @@ from PyPDF2 import PdfMerger
 class DoctorResult(Document):
 	child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
 	grade_order = ['A', 'B', 'BF', 'C', 'D', 'E', 'F']
+	max_print_lines = 20
 
 	def before_save(self):
 		remarks = {
 			row.description.strip()
 			for child_name in self.child_tables
 			for row in (self.get(child_name) or [])
-			if row.grade and row.grade.split('-')[-1] != 'A' and row.description
-    }
+			if row.grade and row.grade.split('-')[-1] != 'A' and row.description}
 		dental_comments = _get_dental_comments(self.appointment) or []
 		self.copied_remark = '\n'.join(sorted(remarks) + dental_comments)
 
@@ -28,8 +28,6 @@ class DoctorResult(Document):
 			for error in validation_result['errors']:
 				error_message += f"Table: {error['table']}, Row: {error['row_idx']}, Item: {error['item_name']}\n"
 			frappe.throw(error_message)
-		if not self.validate_before_submit():
-			frappe.throw('All results must be submitted, and all gradable must be graded.')
 		# self.process_auto_grading()
 		self.process_physical_exam()
 		self.process_other_exam()
@@ -43,7 +41,6 @@ class DoctorResult(Document):
 				)
 			)
 		def get_validation_reason(row):
-			"""Helper function to determine why a row failed validation"""
 			if row.get('gradable') == 1 and not row.get('grade'):
 				return 'Missing grade for gradable item'
 			elif (row.get('hidden_item_group') and row.get('hidden_item') and 
@@ -61,29 +58,13 @@ class DoctorResult(Document):
 							'table': table,
 							'row_idx': row.idx,
 							'item_name': row.get('item_name', 'Unknown Item'),
-							'reason': get_validation_reason(row)
-						})
+							'reason': get_validation_reason(row)})
 		return {
 			'is_valid': len(validation_errors) == 0,
 			'errors': validation_errors
 		}
-		
-# Server Script: before_submit for DoctorResult
-	#def validate_before_submit(self):
-	#	def is_valid(row):
-	#		return not (
-	#			(row.get('gradable') == 1 and not row.get('grade')) or
-	#			(row.get(
-	#				'hidden_item_group') and row.get('hidden_item') and 
-	#				row.get('is_item') == 0 and not row.get('result')
-	#			)
-	#		)
-	#	return all(
-	#		all(is_valid(row) for row in self.get(table)) for table in self.child_tables if self.get(table)
-	#	)
 
 	def on_submit(self):
-		frappe.msgprint("on_submit called")	
 		self.process_group_exam()
 		self.save()
 		self._create_doctor_result_pdf_report()
@@ -93,7 +74,6 @@ class DoctorResult(Document):
 			return
 		try:
 			self._in_on_update_after_submit = True
-			frappe.msgprint("on_update_before_submit called")
 			self.process_group_exam()
 			self.save()
 			self._create_doctor_result_pdf_report()
@@ -101,55 +81,33 @@ class DoctorResult(Document):
 			self._in_on_update_after_submit = False
 			
 	def _create_doctor_result_pdf_report(self):
+		pdf_contents = []
 		print_format = frappe.db.get_single_value('MCU Settings', 'doctor_result_print_format')
 		if not print_format:
 			frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
-		html = frappe.get_print(self.doctype, self.name, print_format)
-		main_pdf = get_pdf(html)
+		pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
 		docs = frappe.db.get_all('MCU Exam Grade', 
-			filters={'parent': self.name, 'document_type': ('in', ['Radiology Result', 'Nurse Examination'])}, 
+			filters={'parent': self.name, 'document_type': ('in', ['Radiology Result', 'Nurse Result'])}, 
 			fields=['document_type', 'document_name'])
 		unique_docs = list({doc['document_name']: doc for doc in docs if doc.document_name}.values())
-		merger = PdfMerger()
-		merger.append(io.BytesIO(main_pdf))
 		for doc in unique_docs:
-			docname = frappe.get_value(doc['document_type'], doc['document_name'], 'exam_result')
-			if docname:
-				doctype = 'Nurse Result'
+			related_pdfs = _get_related_pdf_attachments(doc['document_type'], doc['document_name'])
+			if related_pdfs:
+				pdf_contents = _create_pdf_list(pdf_contents, related_pdfs)
 			else:
-				continue
-			related_files = frappe.get_all('File', filters={
-				"attached_to_doctype": doctype,
-				"attached_to_name": docname,
-				"file_url": ["like", f"%{docname}%.pdf"]
-			}, pluck='name')
-			if not related_files:
-				_create_result_pdf_report(doctype, docname)
-				f = frappe.get_all('File', filters={
-					"attached_to_doctype": doctype,
-					"attached_to_name": docname,
-					"file_url": ["like", f"%{docname}%.pdf"]
-				}, pluck='name')
-				file_doc = frappe.get_doc('File', f[0])
-				file_content = file_doc.get_content()
-				merger.append(io.BytesIO(file_content))
-			else:
-				for f in related_files:
-					file_doc = frappe.get_doc('File', f)
-					file_content = file_doc.get_content()
-					merger.append(io.BytesIO(file_content))
-		output = io.BytesIO()
-		merger.write(output)
-		merger.close()
+				created_filename = _create_result_pdf_report(doc['document_type'], doc['document_name'])
+				file_doc = frappe.get_doc('File', created_filename)
+				pdf_contents.append(file_doc.get_content())
+		output = _merge_pdfs(pdf_contents)
 		filename = f'{self.name}.pdf'
 		existing_file = frappe.db.exists('File', {
 			'file_name': ["like", f"{self.name}%.pdf"],
 			'attached_to_doctype': self.doctype,
-			'attached_to_name': self.name
-		})
+			'attached_to_name': self.name})
 		if existing_file:
 			frappe.delete_doc('File', existing_file)
-		save_file(filename, output.getvalue(), self.doctype, self.name, is_private=1)
+		save_file(filename, output, self.doctype, self.name, is_private=1)
+		frappe.msgprint('MCU Print is ready and attached.')
 		self.reload()
 
 	def process_auto_grading(self):
@@ -179,23 +137,6 @@ class DoctorResult(Document):
 						and (row.hidden_item != physical_examination())
 					):
 						add_result = False
-						#if previous_item and previous_item != row.hidden_item:
-						#	item_all_inputs = [
-						#		p.incdec_category for p in getattr(self, table, []) 
-						#		if p.hidden_item == previous_item and p.incdec_category]
-						#	comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
-						#	current_results.append({
-						#		'examination': f'Comment: {comments}',
-						#		'bundle_position': bundle_position if bundle_position else 9999,
-						#		'idx': counter,
-						#		'header': 'Item',
-						#		'item_group': row.hidden_item_group,
-						#		'item': row.hidden_item
-						#	})
-						#	previous_item = row.hidden_item
-						#	counter += 1
-						#if not previous_item:
-						#	previous_item = row.hidden_item
 						bundle_position = frappe.get_value(
 							'Item', row.hidden_item, 'custom_bundle_position')
 						arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
@@ -273,25 +214,9 @@ class DoctorResult(Document):
 								'std_value': std_value,
 								'header': header,
 								'item_group': row.hidden_item_group,
-								'item': row.hidden_item
-							})
+								'item': row.hidden_item})
 				else:
 					counter += 1
-					#if counter > 1:
-					#	item_all_inputs = [
-					#		p.incdec_category for p in getattr(self, table, []) 
-					#		if p.hidden_item == previous_item and p.incdec_category]
-					#	comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
-					#	current_results.append({
-					#		'examination': f'Comment: {comments}',
-					#		'bundle_position': bundle_position if bundle_position else 9999,
-					#		'idx': counter,
-					#		'header': 'Item',
-					#		'item_group': row.hidden_item_group,
-					#		'item': row.hidden_item
-					#	})
-					#	previous_item = row.hidden_item
-					#	counter += 1
 					if previous_group and previous_group != row.hidden_item_group:
 						item_all_inputs = [
 							p.incdec_category for p in getattr(self, table, []) 
@@ -301,8 +226,7 @@ class DoctorResult(Document):
 							'examination': f'Comment: {comments}',
 							'bundle_position': bundle_position if bundle_position else 9999,
 							'idx': counter,
-							'header': 'Group'
-						})
+							'header': 'Group'})
 						previous_group = row.hidden_item_group
 						counter += 1
 					if not previous_group:
@@ -313,24 +237,19 @@ class DoctorResult(Document):
 						'examination': row.hidden_item_group,
 						'bundle_position': bundle_position if bundle_position else 9999,
 						'idx': counter,
-						'header': 'Group'
-					})
-		sorted_results = sorted(
-			current_results,
-			key = lambda x: (x['bundle_position'], x['idx'])
-		)
+						'header': 'Group'})
+		sorted_results = sorted(current_results,
+			key = lambda x: (x['bundle_position'], x['idx']))
 		previous_results = frappe.get_all(
 			'Doctor Result',
 			filters = {
 				'patient': self.patient,
 				'docstatus': 1,
 				'created_date': ("<", self.created_date),
-				'name': ('!=', self.name)
-			},
+				'name': ('!=', self.name)},
 			fields=["name"],
 			order_by = 'created_date desc',
-			limit = 2
-		)
+			limit = 2)
 
 		previous_data = {}
 		last_data = {}
@@ -351,8 +270,7 @@ class DoctorResult(Document):
 					row_index += 1
 					self.append('other_examination', {
 						'content': frappe.db.get_value('Item', result.get('item'), 'item_name'),
-						'header': 'Item'
-					})
+						'header': 'Item'})
 			self.append('other_examination', {
 				'content': result.get('examination'),
 				'result': result.get('result'),
@@ -375,8 +293,6 @@ class DoctorResult(Document):
 					bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
 					grade = frappe.get_value('MCU Grade', row.grade, 'grade')
 					grade_on_report = frappe.get_value('MCU Grade', row.grade, 'grade_on_report')
-					if row.hidden_item_group == 'Basic Examination':
-						frappe.msgprint(grade)
 					current_results.append({
 						'contents': row.hidden_item_group,
 						'result': grade if not grade_on_report else grade_on_report,
@@ -385,22 +301,18 @@ class DoctorResult(Document):
 					})
 				#except Exception as e:
 				#	frappe.log_error(f"Error processing {table} row: {e}")
-		sorted_results = sorted(
-			current_results,
-			key = lambda x: (x['bundle_position'], x['idx'])
-		)
+		sorted_results = sorted(current_results,
+			key = lambda x: (x['bundle_position'], x['idx']))
 		previous_results = frappe.get_all(
 			'Doctor Result',
 			filters = {
 				'patient': self.patient,
 				'docstatus': 1,
 				'created_date': ("<", self.created_date),
-				'name': ('!=', self.name)
-			},
+				'name': ('!=', self.name)},
 			fields=["name"],
 			order_by = 'created_date desc',
-			limit = 2
-		)
+			limit = 2)
 		previous_data = {}
 		last_data = {}
 		if previous_results:
@@ -411,7 +323,6 @@ class DoctorResult(Document):
 				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
 				last_data = {d.contents: d.result for d in last_doc.group_exam}
 		for result in sorted_results:
-			frappe.msgprint(f"{result['contents']}: {result['result']}")
 			self.append('group_exam', {
 				'contents': result['contents'],
 				'result': result['result'],
@@ -645,31 +556,55 @@ def format_indonesian_safe(number_str):
 		else:
 			return integer_formatted
 		
-def _create_result_pdf_report(doctype, name):
-	hsu = frappe.db.get_value(doctype, name, 'service_unit')
+def _create_result_pdf_report(doctype, docname):
+	pdf_contents = []
+	print_format = _get_print_format(doctype, docname)
+	pdf_contents.append(_generate_primary_pdf(doctype, docname, print_format))
+	related_pdfs = _get_related_pdf_attachments(doctype, docname)
+	merged_pdf = _merge_pdfs(_create_pdf_list(pdf_contents, related_pdfs))
+	filename = f'{docname}.pdf'
+	file = save_file(filename, merged_pdf, doctype, docname, is_private=1)
+	return file.name
+
+def _get_print_format(doctype, docname):
+	hsu = frappe.db.get_value(doctype, docname, 'service_unit')
 	if not hsu:
-		frappe.throw(f'Healthcare Service Unit is not set for {doctype} {name}. Cannot create PDF report.')
-	pf = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format')
-	if not pf:
-		frappe.throw(f'Please set the Default Print Format for Healthcare Service Unit {hsu}. Cannot create PDF report.')
-	html = frappe.get_print(doctype, name, pf)
-	pdf = get_pdf(html)
+		raise frappe.ValidationError(
+			f"Healthcare Service Unit is not set for {doctype} {docname}. Cannot create PDF report.")
+	print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format')
+	if not print_format:
+		raise frappe.ValidationError(
+			f"Please set the Default Print Format for Healthcare Service Unit {hsu}. Cannot create PDF report.")
+	return print_format
+
+def _generate_primary_pdf(doctype, docname, print_format):
+	html = frappe.get_print(doctype, docname, print_format)
+	pdf_content = get_pdf(html)
+	if not pdf_content:
+		raise frappe.ValidationError(f"Failed to generate primary PDF for {doctype} {docname}.")
+	return pdf_content
+
+def _get_related_pdf_attachments(doctype, docname):
+	return frappe.get_all('File', 
+		filters={"attached_to_doctype": doctype, "attached_to_name": docname, "file_type": 'PDF'},
+		pluck='name') or []
+
+def _create_pdf_list(pdf_list, related_files):
+	for file_name in related_files:
+		try:
+			file_doc = frappe.get_doc('File', file_name)
+			pdf_list.append(file_doc.get_content())
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"Failed to read content of attached file: {file_name}")
+	return pdf_list
+
+def _merge_pdfs(pdf_contents):
+	if not pdf_contents:
+		return b''
 	merger = PdfMerger()
-	merger.append(io.BytesIO(pdf))
-	if not pdf:
-		frappe.throw(f'Failed to generate PDF for {doctype} {name}.')
-	related_files = frappe.get_all('File', filters={
-		"attached_to_doctype": doctype,
-		"attached_to_name": name,
-		"file_type": 'PDF',
-		}, pluck='name')
-	if related_files:
-		for f in related_files:
-			file_doc = frappe.get_doc('File', f)
-			file_content = file_doc.get_content()
-			merger.append(io.BytesIO(file_content))
-	output = io.BytesIO()
-	merger.write(output)
-	merger.close()
-	filename = f'{name}.pdf'
-	save_file(filename, output.getvalue(), doctype, name, is_private=1)
+	for content in pdf_contents:
+		merger.append(io.BytesIO(content))
+	with io.BytesIO() as output:
+		merger.write(output)
+		merger.close()
+		return output.getvalue()
