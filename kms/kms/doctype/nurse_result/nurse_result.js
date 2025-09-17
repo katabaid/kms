@@ -15,6 +15,15 @@ frappe.ui.form.on('Nurse Result', {
 		render_attachment(frm);
 		set_result_properties(frm);
 		applyStyling(frm);
+		frm.add_custom_button('Test Print', ()=>{
+			frappe.call('kms.kms.doctype.nurse_result.nurse_result.test_print', {
+				dt: 'Nurse Result',
+				dn: frm.doc.name
+			}).then(r=>{
+				frappe.msgprint('New print ready')
+				frm.refresh();
+			})
+		})
 	},
 	before_save: function (frm) {
 		if (frm.doc.docstatus === 0) {

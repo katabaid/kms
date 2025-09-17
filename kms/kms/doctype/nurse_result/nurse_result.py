@@ -75,3 +75,15 @@ class NurseResult(Document):
 			conclusion_text = [row.conclusion for row in self.conclusion if row.item == exam.item]
 			if not conclusion_text:
 				frappe.throw(f'Conclusion for examination item {exam.item} is required before submit.')	
+
+@frappe.whitelist()
+def test_print(dt, dn):
+	related_files = frappe.get_all('File', filters={
+		"attached_to_doctype": dt,
+		"attached_to_name": dn,
+		"file_type": 'PDF',
+		}, pluck='name')
+	if related_files:
+		for f in related_files:
+			frappe.delete_doc('File', f)
+	_create_result_pdf_report(dt, dn)
