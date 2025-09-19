@@ -50,7 +50,12 @@
   "column_break_pwgp",
   "doctor_result_assignment_role",
   "radiology_result_assignment_role",
+  "section_break_vbfq",
   "doctor_result_print_format",
+  "column_break_qdma",
+  "doctor_result_print_format_no_logo",
+  "column_break_clcb",
+  "max_lines_per_page",
   "section_break_kcub",
   "meal_time",
   "max_room_queue",
@@ -439,12 +444,37 @@
    "fieldtype": "Data",
    "label": "Name",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_vbfq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_qdma",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Print Format to use for automatically creating and merging complete MCU report but without printing logo.",
+   "fieldname": "doctor_result_print_format_no_logo",
+   "fieldtype": "Link",
+   "label": "Doctor Result Print Format No Logo",
+   "options": "Print Format"
+  },
+  {
+   "fieldname": "column_break_clcb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Maximum lines of MCU result per page.",
+   "fieldname": "max_lines_per_page",
+   "fieldtype": "Int",
+   "label": "Max Lines per Page"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-15 08:50:43.200325",
+ "modified": "2025-09-19 20:55:23.278296",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

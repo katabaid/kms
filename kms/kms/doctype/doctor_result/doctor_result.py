@@ -30,6 +30,8 @@ class DoctorResult(Document):
 			frappe.throw(error_message)
 		self.process_physical_exam()
 		self.process_other_exam()
+		self.process_group_exam()
+		self._create_doctor_result_pdf_report()
 
 	def validate_before_submit(self):
 		def is_valid(row):
@@ -63,17 +65,13 @@ class DoctorResult(Document):
 			'errors': validation_errors
 		}
 
-	def on_submit(self):
-		self.process_group_exam()
-		self.save()
-		self._create_doctor_result_pdf_report()
-
 	def on_update_after_submit(self):
 		if hasattr(self, '_in_on_update_after_submit'):
 			return
 		try:
 			self._in_on_update_after_submit = True
 			self.process_group_exam()
+			self.process_other_exam()
 			self.save()
 			self._create_doctor_result_pdf_report()
 		finally:
@@ -85,10 +83,7 @@ class DoctorResult(Document):
 		if not print_format:
 			frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
 		pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
-		docs = frappe.db.get_all('MCU Exam Grade', 
-			filters={'parent': self.name, 'document_type': ('in', ['Radiology Result', 'Nurse Result'])}, 
-			fields=['document_type', 'document_name'])
-		unique_docs = list({doc['document_name']: doc for doc in docs if doc.document_name}.values())
+		unique_docs = _get_related_exam_docs(self)
 		for doc in unique_docs:
 			related_pdfs = _get_related_pdf_attachments(doc['document_type'], doc['document_name'])
 			if related_pdfs:
@@ -131,8 +126,7 @@ class DoctorResult(Document):
 						and (row.hidden_item != physical_examination())
 					):
 						add_result = False
-						bundle_position = frappe.get_value(
-							'Item', row.hidden_item, 'custom_bundle_position')
+						bundle_position = frappe.get_value('Item', row.hidden_item, 'custom_bundle_position')
 						arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
 						std_value = row.std_value
 						if not row.hidden_item and row.hidden_item_group:
@@ -232,18 +226,14 @@ class DoctorResult(Document):
 						'bundle_position': bundle_position if bundle_position else 9999,
 						'idx': counter,
 						'header': 'Group'})
-		sorted_results = sorted(current_results,
-			key = lambda x: (x['bundle_position'], x['idx']))
-		previous_results = frappe.get_all(
-			'Doctor Result',
+		sorted_results = sorted(current_results, key = lambda x: (x['bundle_position'], x['idx']))
+		previous_results = frappe.get_all('Doctor Result',
 			filters = {
 				'patient': self.patient,
 				'docstatus': 1,
 				'created_date': ("<", self.created_date),
 				'name': ('!=', self.name)},
-			fields=["name"],
-			order_by = 'created_date desc',
-			limit = 2)
+			order_by = 'created_date desc', limit = 2)
 		previous_data = {}
 		last_data = {}
 		if previous_results:
@@ -253,15 +243,7 @@ class DoctorResult(Document):
 			if len(previous_results) >= 2:
 				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
 				last_data = {d.content: d.result for d in last_doc.other_examination}
-		row_index = 0
 		for result in sorted_results:
-			row_index += 1
-			if row_index>1 and (row_index-1)%15 == 0:
-				if result.get('header') is None:
-					row_index += 1
-					self.append('other_examination', {
-						'content': frappe.db.get_value('Item', result.get('item'), 'item_name'),
-						'header': 'Item'})
 			self.append('other_examination', {
 				'content': result.get('examination'),
 				'result': result.get('result'),
@@ -269,8 +251,7 @@ class DoctorResult(Document):
 				'std_value': result.get('std_value'),
 				'header': result.get('header'),
 				'previous_result': previous_data.get(result['examination'], '') if result.get('result') else None,
-				'last_result': last_data.get(result['examination'], '') if result.get('result') else None,
-			})
+				'last_result': last_data.get(result['examination'], '') if result.get('result') else None,})
 
 	def process_group_exam(self):
 		self.group_exam = []
@@ -515,3 +496,18 @@ def _merge_pdfs(pdf_contents):
 def recreate_doctor_result_pdf_report(id):
 	doc = frappe.get_doc('Doctor Result', id)
 	doc._create_doctor_result_pdf_report()
+
+def _get_related_exam_docs(doc):
+	child_mappings = [
+		{'nurse_grade': 'Nurse Result'},
+		{'radiology_grade': 'Radiology Result'},
+	]
+	docs = []
+	for table_name, expected_type in child_mappings:
+		for row in getattr(doc, table_name, []):
+			if row.document_type == expected_type and row.document_name:
+				docs.append({
+					'document_type': row.document_type,
+					'document_name': row.document_name,
+				})
+	return list({d['document_name']: d for d in docs}.values())

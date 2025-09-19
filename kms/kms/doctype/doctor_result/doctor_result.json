@@ -255,6 +255,7 @@
    "label": "Hidden"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "physical_examination",
    "fieldtype": "Table",
    "hidden": 1,
@@ -263,6 +264,7 @@
    "options": "Doctor Result Physical Exam"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "other_examination",
    "fieldtype": "Table",
    "hidden": 1,
@@ -353,7 +355,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-27 14:49:48.822866",
+ "modified": "2025-09-19 20:49:26.204712",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",
