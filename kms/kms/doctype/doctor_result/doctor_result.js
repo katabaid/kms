@@ -178,6 +178,12 @@ const add_custom_buttons = (frm) => {
           })
       })
     };
+  } else if (frm.doc.workflow_state === 'Approved') {
+    frm.add_custom_button('Recreate MCU Report', () => {
+      frappe.call('kms.api.healthcare.recreate_mcu_report', {id: frm.doc.name}).then(r => {
+        if (r.message) frappe.msgprint('MCU Report recreated and attached.')
+      })
+    })
   }
 }
 

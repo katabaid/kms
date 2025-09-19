@@ -229,7 +229,7 @@ scheduler_events = {
     "kms.scheduled.set_no_show_queue_pooling",
     "kms.scheduled.set_cancelled_timeout_queue_pooling",
     "kms.scheduled.reset_room_assignment",
-    "kms.scheduled.calculate_patient_age"
+    "kms.scheduled.update_patient_age"
   ],
   "cron": {
     "*/2 * * * *": [

@@ -28,7 +28,6 @@ class DoctorResult(Document):
 			for error in validation_result['errors']:
 				error_message += f"Table: {error['table']}, Row: {error['row_idx']}, Item: {error['item_name']}\n"
 			frappe.throw(error_message)
-		# self.process_auto_grading()
 		self.process_physical_exam()
 		self.process_other_exam()
 
@@ -110,10 +109,6 @@ class DoctorResult(Document):
 		frappe.msgprint('MCU Print is ready and attached.')
 		self.reload()
 
-	def process_auto_grading(self):
-		self._process_item_grade()
-		self._process_group_grade()
-
 	def process_physical_exam(self):
 		self.physical_examination = []
 		self._process_questionnaire()
@@ -125,7 +120,6 @@ class DoctorResult(Document):
 		current_results = []
 		counter = 0
 		for table in self.child_tables:
-			#previous_item = ''
 			previous_group = urine_rbc = urine_wbc = ''
 			for row in getattr(self, table, []):
 				item_template = ''
@@ -250,7 +244,6 @@ class DoctorResult(Document):
 			fields=["name"],
 			order_by = 'created_date desc',
 			limit = 2)
-
 		previous_data = {}
 		last_data = {}
 		if previous_results:
@@ -260,9 +253,7 @@ class DoctorResult(Document):
 			if len(previous_results) >= 2:
 				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
 				last_data = {d.content: d.result for d in last_doc.other_examination}
-
 		row_index = 0
-
 		for result in sorted_results:
 			row_index += 1
 			if row_index>1 and (row_index-1)%15 == 0:
@@ -287,7 +278,6 @@ class DoctorResult(Document):
 		counter = 0
 		for table in self.child_tables:
 			for row in getattr(self, table, []):
-				#try:
 				if not row.hidden_item:
 					counter += 1
 					bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
@@ -299,8 +289,6 @@ class DoctorResult(Document):
 						'bundle_position': bundle_position if bundle_position else 9999,
 						'idx': counter,
 					})
-				#except Exception as e:
-				#	frappe.log_error(f"Error processing {table} row: {e}")
 		sorted_results = sorted(current_results,
 			key = lambda x: (x['bundle_position'], x['idx']))
 		previous_results = frappe.get_all(
@@ -433,91 +421,6 @@ class DoctorResult(Document):
 				'result': girth,
 			})
 
-	def _process_item_grade(self):
-		for table in self.child_tables:
-			for row in getattr(self, table, []):
-				if row.is_item == 1 and row.gradable == 1:
-					item_group = row.hidden_item_group
-					item_code = row.hidden_item
-					item_name = row.examination
-					item_grade = row.grade
-					# determine children
-					children = [
-						e for e in getattr(self, table, [])
-						if e.get('hidden_item_group') == item_group
-						and e.get('hidden_item') == item_code
-						and e.get('is_item') == 0
-						and e.get('gradable') == 1
-					]
-					if not children and not item_grade:
-						frappe.throw(f'{item_name} must grade manually.')
-					# check missing grades
-					missing_grades = [e for e in children if not e.get('grade')]
-					if missing_grades:
-						frappe.throw(f"Grade missing for examination(s) {[e.examination for e in missing_grades]} under item {row.get('examination')} in {table}")
-					# check invalid grades
-					invalid_entries = []
-					actual_grades = []
-					for e in children:
-						mcu_grade_name = e.grade
-						if not frappe.db.exists('MCU Grade', mcu_grade_name):
-							invalid_entries.append("MCU Grade '{mcu_grade_name}' not found for {e.examination}")
-							continue
-						mcu_grade = frappe.get_doc("MCU Grade", mcu_grade_name)
-						actual_grade = mcu_grade.get("grade_on_report") or mcu_grade.get("grade")
-						if not actual_grade:
-							invalid_entries.append(f"MCU Grade '{mcu_grade_name}' has no grade configured for {e.examination}")
-						elif actual_grade not in self.grade_order:
-							invalid_entries.append(f"Invalid grade '{actual_grade}' from MCU Grade '{mcu_grade_name}' for {e.examination}")
-						else:
-							actual_grades.append(actual_grade)
-						if invalid_entries:
-							frappe.throw("<br>".join(invalid_entries))
-					# determine worst grade
-					if actual_grades:
-						worst_grade = max(actual_grades, key=lambda g: self.grade_order.index(g))
-						row.grade = item_group+'.'+item_code+'.-'+worst_grade
-
-	def _process_group_grade(self):
-		for table in self.child_tables:
-			for row in getattr(self, table, []):
-				if not row.hidden_item and row.gradable:
-					# determine children
-					children = [
-						e for e in getattr(self, table, [])
-						if e.get('hidden_item_group') == row.hidden_item_group
-						and e.get('is_item') == 1
-						and e.get('gradable') == 1
-					]
-					# check missing grades
-					missing_grades = [e for e in children if not e.get('grade')]
-					if not children and not row.grade:
-						frappe.throw(f'{row.hidden_item_group} must grade manually.')
-					if missing_grades:
-						frappe.throw(f"Grade missing for item(s) {[e.examination for e in missing_grades]} in {table}")
-					# check invalid grades
-					invalid_entries = []
-					actual_grades = []
-					for e in children:
-						mcu_grade_name = e.grade
-						if not frappe.db.exists('MCU Grade', mcu_grade_name):
-							invalid_entries.append(f"MCU Grade '{mcu_grade_name}' not found for {e.examination}")
-							continue
-						mcu_grade = frappe.get_doc("MCU Grade", mcu_grade_name)
-						actual_grade = mcu_grade.get("grade_on_report") or mcu_grade.get("grade")
-						if not actual_grade:
-							invalid_entries.append(f"MCU Grade '{mcu_grade_name}' has no grade configured for {e.examination}")
-						elif actual_grade not in self.grade_order:
-							invalid_entries.append(f"Invalid grade '{actual_grade}' from MCU Grade '{mcu_grade_name}' for {e.examination}")
-						else:
-							actual_grades.append(actual_grade)
-					if invalid_entries:
-						frappe.throw("<br>".join(invalid_entries))
-					# determine worst grade
-					if actual_grades:
-						worst_grade = max(actual_grades, key=lambda g: self.grade_order.index(g))
-						row.grade = row.hidden_item_group+'..-'+worst_grade
-
 def vital_sign_templates(): 
 	return frappe.get_all(
 		'MCU Vital Sign', filters = {'parentfield': 'vital_sign_on_report'}, pluck = "template")
@@ -555,7 +458,7 @@ def format_indonesian_safe(number_str):
 			return f"{integer_formatted},{decimal_part}"
 		else:
 			return integer_formatted
-		
+
 def _create_result_pdf_report(doctype, docname):
 	pdf_contents = []
 	print_format = _get_print_format(doctype, docname)
@@ -608,3 +511,7 @@ def _merge_pdfs(pdf_contents):
 		merger.write(output)
 		merger.close()
 		return output.getvalue()
+	
+def recreate_doctor_result_pdf_report(id):
+	doc = frappe.get_doc('Doctor Result', id)
+	doc._create_doctor_result_pdf_report()

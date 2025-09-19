@@ -72,7 +72,7 @@ def reset_qp_in_room():
   except Exception as e:
     frappe.log_error(f"Failed to reset_qp_in_room: {str(e)}")
 
-def calculate_patient_age():
+def update_patient_age():
   try:
     affected_rows = frappe.db.sql("""
       UPDATE tabPatient

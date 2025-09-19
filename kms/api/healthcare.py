@@ -3,6 +3,11 @@ from frappe.utils import now, today, now_datetime
 from datetime import timedelta
 from kms.mcu_dispatcher import _get_related_service_units
 from kms.utils import set_pa_notes
+from kms.kms.doctype.doctor_result.doctor_result import recreate_doctor_result_pdf_report
+
+@frappe.whitelist()
+def recreate_mcu_report(id):
+	recreate_doctor_result_pdf_report(id)
 
 @frappe.whitelist()
 def set_mqp_meal_time(exam_id):
