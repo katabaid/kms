@@ -3,6 +3,7 @@
 
 import frappe, io
 from frappe.model.document import Document
+from frappe.utils import cint
 from frappe.utils.pdf import get_pdf
 from frappe.utils.file_manager import save_file
 from PyPDF2 import PdfMerger
@@ -78,30 +79,55 @@ class DoctorResult(Document):
 			self._in_on_update_after_submit = False
 			
 	def _create_doctor_result_pdf_report(self):
-		pdf_contents = []
-		print_format = frappe.db.get_single_value('MCU Settings', 'doctor_result_print_format')
-		if not print_format:
-			frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
-		pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
-		unique_docs = _get_related_exam_docs(self)
-		for doc in unique_docs:
-			related_pdfs = _get_related_pdf_attachments(doc['document_type'], doc['document_name'])
-			if related_pdfs:
-				pdf_contents = _create_pdf_list(pdf_contents, related_pdfs)
-			else:
-				created_filename = _create_result_pdf_report(doc['document_type'], doc['document_name'])
-				file_doc = frappe.get_doc('File', created_filename)
-				pdf_contents.append(file_doc.get_content())
-		output = _merge_pdfs(pdf_contents)
-		filename = f'{self.name}.pdf'
-		existing_file = frappe.db.exists('File', {
-			'file_name': ["like", f"{self.name}%.pdf"],
-			'attached_to_doctype': self.doctype,
-			'attached_to_name': self.name})
-		if existing_file:
-			frappe.delete_doc('File', existing_file)
-		save_file(filename, output, self.doctype, self.name, is_private=1)
-		frappe.msgprint('MCU Print is ready and attached.')
+		prefixes = [
+			{'logo', 'doctor_result_print_format'},{'nologo', 'doctor_result_print_format_no_logo'}]
+		for prefix, field_name in prefixes:
+			pdf_contents = []
+			print_format = frappe.db.get_single_value('MCU Settings', field_name)
+			if not print_format:
+				raise frappe.ValidationError('Print Format not found. Please set up using MCU Settings.')
+			pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
+			unique_docs = _get_related_exam_docs(self)
+			for doc in unique_docs:
+				related_pdfs = _get_created_pdf_attachments(doc['document_type'], doc['document_name'], prefix)
+				if related_pdfs:
+					pdf_contents = _create_pdf_list(pdf_contents, related_pdfs)
+				else:
+					created_filename = _create_result_pdf_report(doc['document_type'], doc['document_name'], prefix)
+					file_doc = frappe.get_doc('File', created_filename)
+					pdf_contents.append(file_doc.get_content())
+			output = _merge_pdfs(pdf_contents)
+			filename = f'{self.name}{prefix}.pdf'
+			existing_file = frappe.db.exists('File', {
+				'file_name': ["like", f"{self.name}{prefix}%.pdf"],
+				'attached_to_doctype': self.doctype,
+				'attached_to_name': self.name})
+			if existing_file:
+				frappe.delete_doc('File', existing_file)
+			save_file(filename, output, self.doctype, self.name, is_private=1)
+		#print_format = frappe.db.get_single_value('MCU Settings', 'doctor_result_print_format')
+		#if not print_format:
+		#	frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
+		#pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
+		#unique_docs = _get_related_exam_docs(self)
+		#for doc in unique_docs:
+		#	related_pdfs = _get_created_pdf_attachments(doc['document_type'], doc['document_name'])
+		#	if related_pdfs:
+		#		pdf_contents = _create_pdf_list(pdf_contents, related_pdfs)
+		#	else:
+		#		created_filename = _create_result_pdf_report(doc['document_type'], doc['document_name'])
+		#		file_doc = frappe.get_doc('File', created_filename)
+		#		pdf_contents.append(file_doc.get_content())
+		#output = _merge_pdfs(pdf_contents)
+		#filename = f'{self.name}.pdf'
+		#existing_file = frappe.db.exists('File', {
+		#	'file_name': ["like", f"{self.name}%.pdf"],
+		#	'attached_to_doctype': self.doctype,
+		#	'attached_to_name': self.name})
+		#if existing_file:
+		#	frappe.delete_doc('File', existing_file)
+		#save_file(filename, output, self.doctype, self.name, is_private=1)
+		frappe.msgprint('MCU Result prints are ready and attached.')
 		self.reload()
 
 	def process_physical_exam(self):
@@ -112,192 +138,198 @@ class DoctorResult(Document):
 
 	def process_other_exam(self):
 		self.other_examination = []
-		current_results = []
-		counter = 0
-		for table in self.child_tables:
-			previous_group = urine_rbc = urine_wbc = ''
-			for row in getattr(self, table, []):
-				item_template = ''
-				if row.parentfield == 'nurse_grade':
-					item_template = frappe.get_value(
-						'Nurse Examination Template', {'item_code':row.hidden_item}, 'name')
-				if row.hidden_item:
-					if (((item_template and item_template not in vital_sign_templates()) or not item_template)
-						and (row.hidden_item != physical_examination())
-					):
-						add_result = False
-						bundle_position = frappe.get_value('Item', row.hidden_item, 'custom_bundle_position')
-						arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
-						std_value = row.std_value
-						if not row.hidden_item and row.hidden_item_group:
-							examination = row.hidden_item_group
-							header = 'Group'
-						elif row.hidden_item and row.hidden_item_group and row.is_item:
-							examination = row.examination
-							if row.result:
-								header = None
-								if examination == 'HbA1c':
-									examination = '<p>HbA1c</p><p align="right">Pre - Diabetic</p><p align="right">Diabetic</p>'
-									std_value = '<p>&lt; 5.7</p><p align="right">5.7 - 6.5</p><p align="right">&#8805; 6.5</p>'
-								elif examination == 'Typoid IgM (Tubex)':
-									examination = '<p>Typoid IgM (Tubex)</p>'
-									examination += '<br/>Negative (does not indicate current typhoid fever infection)'
-									examination += '<br/>Inconclusive (repeat the test if still inconclusive, repeat sampling at a later date)'
-									examination += '<br/>Positive (The higher score the stronger is the indication of current typhoid fever infection)'
-									std_value = '&#8804; 2<br/><br/>&gt;2 - &lt;4<br/>4 - 10'
-								elif examination == 'Sputum Direct BTA':
-									examination += '<ul><li>Negative (Tidak ditemukan BTA / 100 Lapang Pandang)</li>'
-									examination += '<li>Scanty (1 - 9 BTA /100 Lapang Pandang)</li>'
-									examination += '<li>(1+) (10 - 99 BTA / 100 Lapang Pandang)</li>'
-									examination += '<li>(2+) (1 - 10 BTA / Lapang Pandang)</li>'
-									examination += '<li>(3+) (>10 BTA / Lapang Pandang)</li></ul>'
-								elif examination == 'Stool Culture' or examination == 'Rectal Swab (Swab Culture)':
-									examination += '<ul><li>Salmonella</li>'
-									examination += '<li>Shigella</li>'
-									examination += '<li>Vibrio</li>'
-									examination += '<li>Escherichia coli O157H7</li></ul>'
-							else:
-								header = 'Item'
-						else:
-							examination = row.examination
-							header = None
-						row_result = row.result
-						if row.hidden_item == 'MIRU-00001':
-							if row.examination == 'urine RBC atas':
-								urine_rbc = row.result
-								add_result = False
-							elif row.examination == 'urine RBC bawah':
-								row_result = urine_rbc + ' - ' + row.result
-								examination = 'Urine RBC'
-								counter += 1
-								add_result = True
-							elif row.examination == 'urine WBC atas':
-								urine_wbc = row.result
-								add_result = False
-							elif row.examination == 'urine WBC bawah':
-								row_result = urine_wbc + ' - ' + row.result
-								examination = 'Urine WBC'
-								counter += 1
-								add_result = True
-							else:
-								counter += 1
-								add_result = True
-						else:
-							counter += 1
-							add_result = True
-						if isinstance(row.result, (int, float)):
-							row_result = format_indonesian_safe(row.result)
-						row_result = format_indonesian_safe(row_result)
-						if row_result and arrow:
-							final_result = f'<p style="color: red;"> {row_result} {arrow}</p>'
-						else:
-							final_result = row_result
-						if add_result:
-							current_results.append({
-								'examination': examination,
-								'result': final_result,
-								'bundle_position': bundle_position if bundle_position else 9999,
-								'idx': counter,
-								'uom': row.uom,
-								'std_value': std_value,
-								'header': header,
-								'item_group': row.hidden_item_group,
-								'item': row.hidden_item})
-				else:
-					counter += 1
-					if previous_group and previous_group != row.hidden_item_group:
-						item_all_inputs = [
-							p.incdec_category for p in getattr(self, table, []) 
-							if p.hidden_item_group == previous_group and p.incdec_category]
-						comments = ", ".join(item_all_inputs) if item_all_inputs else "Dalam batas normal."
-						current_results.append({
-							'examination': f'Comment: {comments}',
-							'bundle_position': bundle_position if bundle_position else 9999,
-							'idx': counter,
-							'header': 'Group'})
-						previous_group = row.hidden_item_group
-						counter += 1
-					if not previous_group:
-						previous_group = row.hidden_item_group
-					bundle_position = frappe.get_value(
-						'Item Group', row.hidden_item_group, 'custom_bundle_position')
-					current_results.append({
-						'examination': row.hidden_item_group,
-						'bundle_position': bundle_position if bundle_position else 9999,
-						'idx': counter,
-						'header': 'Group'})
-		sorted_results = sorted(current_results, key = lambda x: (x['bundle_position'], x['idx']))
-		previous_results = frappe.get_all('Doctor Result',
-			filters = {
-				'patient': self.patient,
-				'docstatus': 1,
-				'created_date': ("<", self.created_date),
-				'name': ('!=', self.name)},
-			order_by = 'created_date desc', limit = 2)
-		previous_data = {}
-		last_data = {}
-		if previous_results:
-			if len(previous_results) >= 1:
-				prev_doc = frappe.get_doc('Doctor Result', previous_results[0].name)
-				previous_data = {d.content: d.result for d in prev_doc.other_examination}
-			if len(previous_results) >= 2:
-				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
-				last_data = {d.content: d.result for d in last_doc.other_examination}
-		for result in sorted_results:
+		current_results = self._collect_other_exam_results()
+		prev_data, last_data = self._get_previous_results_map('other_examination', key='content', value='result')
+		limit_per_page = cint(frappe.get_single_value('MCU Settings', 'max_lines_per_page'))
+		if not limit_per_page:
+			frappe.throw('Please set Max Lines per Page in MCU Settings. Please contact Administrator.')
+		idx = 0
+		for result in current_results:
+			idx += 1
+			additional_rows = get_additional_lines(idx, limit_per_page, 3)
+			if additional_rows and result.get('header') == 'Group':
+				for _ in range(additional_rows):
+					idx += 1
+					self.append('other_examination', {'header': result.get('header'),})
 			self.append('other_examination', {
 				'content': result.get('examination'),
 				'result': result.get('result'),
 				'uom': result.get('uom'),
 				'std_value': result.get('std_value'),
 				'header': result.get('header'),
-				'previous_result': previous_data.get(result['examination'], '') if result.get('result') else None,
+				'previous_result': prev_data.get(result['examination'], '') if result.get('result') else None,
 				'last_result': last_data.get(result['examination'], '') if result.get('result') else None,})
 
 	def process_group_exam(self):
 		self.group_exam = []
-		current_results = []
+		current_results = self._collect_group_exam_results()
+		prev_data, last_data = self._get_previous_results_map('group_exam', key='contents', value='result')
+		for result in current_results:
+			self.append('group_exam', {
+				'contents': result['contents'],
+				'result': result['result'],
+				'previous_result': prev_data.get(result['contents'], '') if result['result'] else None,
+				'last_result': last_data.get(result['contents'], '') if result['result'] else None,
+			})
+
+	def _collect_group_exam_results(self):
+		results = []
 		counter = 0
 		for table in self.child_tables:
 			for row in getattr(self, table, []):
 				if not row.hidden_item:
 					counter += 1
-					bundle_position = frappe.get_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
-					grade = frappe.get_value('MCU Grade', row.grade, 'grade')
-					grade_on_report = frappe.get_value('MCU Grade', row.grade, 'grade_on_report')
-					current_results.append({
-						'contents': row.hidden_item_group,
-						'result': grade if not grade_on_report else grade_on_report,
-						'bundle_position': bundle_position if bundle_position else 9999,
-						'idx': counter,
-					})
-		sorted_results = sorted(current_results,
-			key = lambda x: (x['bundle_position'], x['idx']))
-		previous_results = frappe.get_all(
-			'Doctor Result',
-			filters = {
+					pos = frappe.get_cached_value('Item Group', row.hidden_item_group, 'custom_bundle_position')
+					if row.grade:
+						if values := frappe.get_cached_value('MCU Grade', row.grade, ['grade', 'grade_on_report']):
+							grade, grade_or = values
+						else:
+							grade, grade_or = None, None
+					results.append({
+							'contents': row.hidden_item_group,
+							'result': grade if not grade_or else grade_or,
+							'bundle_position': pos if pos else 9999,
+							'idx': counter,})
+		return sorted(results, key=lambda x: (x['bundle_position'], x['idx']))
+	
+	def _collect_other_exam_results(self):
+		results, counter = [], 0
+		for table in self.child_tables:
+			for row in getattr(self, table, []):
+				normalized = self._normalize_other_exam_row(row, table)
+				if normalized:
+					counter += 1
+					normalized['idx'] = counter
+					results.append(normalized)
+		return sorted(results, key=lambda x: (x['bundle_position'], x['idx']))
+
+	def _get_previous_results_map(self, child_table_name, key, value):
+		prev_results = frappe.get_all('Doctor Result',
+			filters={
 				'patient': self.patient,
 				'docstatus': 1,
-				'created_date': ("<", self.created_date),
+				'created_date': ('<', self.created_date),
 				'name': ('!=', self.name)},
-			fields=["name"],
-			order_by = 'created_date desc',
-			limit = 2)
-		previous_data = {}
-		last_data = {}
-		if previous_results:
-			if len(previous_results) >= 1:
-				prev_doc = frappe.get_doc('Doctor Result', previous_results[0].name)
-				previous_data = {d.contents: d.result for d in prev_doc.group_exam}
-			if len(previous_results) >= 2:
-				last_doc = frappe.get_doc('Doctor Result', previous_results[1].name)
-				last_data = {d.contents: d.result for d in last_doc.group_exam}
-		for result in sorted_results:
-			self.append('group_exam', {
-				'contents': result['contents'],
-				'result': result['result'],
-				'previous_result': previous_data.get(result['contents'], '') if result['result'] else None,
-				'last_result': last_data.get(result['contents'], '') if result['result'] else None,
-			})
+			order_by = 'created_date desc', limit = 2)
+		prev_data, last_data = {}, {}
+		if prev_results:
+			if len(prev_results) >= 1:
+				prev_doc = frappe.get_doc("Doctor Result", prev_results[0].name)
+				prev_data = {getattr(d, key): getattr(d, value) for d in getattr(prev_doc, child_table_name, [])}
+			if len(prev_results) >= 2:
+				last_doc = frappe.get_doc("Doctor Result", prev_results[1].name)
+				last_data = {getattr(d, key): getattr(d, value) for d in getattr(last_doc, child_table_name, [])}
+		return prev_data, last_data
+
+	def _normalize_other_exam_row(self, row, table):
+		if not row.hidden_item and row.hidden_item_group:
+			return self._normalize_group_row(row, table)
+		if row.hidden_item:
+			if self._is_excluded_nurse_exam(row):
+				return None
+			exam, std_value, header = self._apply_special_case(row)
+			urine_case = self._handle_urine_cases(row)
+			if urine_case:
+				return urine_case
+			return self._build_exam_result(row, exam, std_value, header)
+		return None
+
+	def _normalize_group_row(self, row, table):
+		pos = frappe.get_cached_value('Item Group', row.hidden_item_group, 'custom_bundle_position') or 9999
+		comments = [
+			p.incdec_category for p in getattr(self, table, [])
+			if p.hidden_item_group == row.hidden_item_group and p.incdec_category
+		]
+		return {
+			'examination': row.hidden_item_group,
+			'result': None,
+			'bundle_position': pos,
+			'header': 'Group',
+			'comments': ', '.join(comments) if comments else 'Dalam batas normal.'
+		}
+
+	def _is_excluded_nurse_exam(self, row):
+		if row.parentfield not in ('nurse_grade', 'doctor_grade'):
+			return False
+		item_template = frappe.get_cached_value(
+			'Nurse Examination Template', {'item_code': row.hidden_item}, 'name'
+		)
+		return (
+			(item_template and item_template in vital_sign_templates()) 
+			or row.hidden_item == physical_examination()
+		)
+
+	def _apply_special_case(self, row):
+		exam, std_value, header = row.examination, row.std_value, None
+		if exam == "HbA1c":
+			exam = "<p>HbA1c</p><p align='right'>Pre - Diabetic</p><p align='right'>Diabetic</p>"
+			std_value = "<p>&lt; 5.7</p><p align='right'>5.7 - 6.5</p><p align='right'>&#8805; 6.5</p>"
+		elif exam == "Typoid IgM (Tubex)":
+			exam = "<p>Typoid IgM (Tubex)</p>"
+			exam += "<br/>Negative (does not indicate current typhoid fever infection)"
+			exam += "<br/>Inconclusive (repeat test later)"
+			exam += "<br/>Positive (higher score indicates stronger infection)"
+			std_value = "&#8804; 2<br/><br/>&gt;2 - &lt;4<br/>4 - 10"
+		elif exam == "Sputum Direct BTA":
+			exam += (
+				"<ul><li>Negative (Tidak ditemukan BTA / 100 Lapang Pandang)</li>"
+				"<li>Scanty (1 - 9 BTA /100 Lapang Pandang)</li>"
+				"<li>(1+) (10 - 99 BTA / 100 Lapang Pandang)</li>"
+				"<li>(2+) (1 - 10 BTA / Lapang Pandang)</li>"
+				"<li>(3+) (>10 BTA / Lapang Pandang)</li></ul>"
+			)
+		elif exam in ("Stool Culture", "Rectal Swab (Swab Culture)"):
+			exam += (
+				"<ul><li>Salmonella</li><li>Shigella</li>"
+				"<li>Vibrio</li><li>Escherichia coli O157H7</li></ul>"
+			)
+		# mark as "Item" if it has hidden item + group + is_item flag
+		if row.hidden_item and row.hidden_item_group and row.is_item and not row.result:
+			header = "Item"
+		return exam, std_value, header
+
+	def _handle_urine_cases(self, row):
+		if not hasattr(self, "_urine_state"):
+			self._urine_state = {"rbc": "", "wbc": ""}
+		if row.hidden_item != "MIRU-00001":
+			return None
+		if row.examination == "urine RBC atas":
+			self._urine_state["rbc"] = row.result
+			return None
+		elif row.examination == "urine RBC bawah":
+			return self._build_exam_result(
+				row,
+				examination="Urine RBC",
+				result=self._urine_state["rbc"] + " - " + row.result,
+			)
+		elif row.examination == "urine WBC atas":
+			self._urine_state["wbc"] = row.result
+			return None
+		elif row.examination == "urine WBC bawah":
+			return self._build_exam_result(
+				row,
+				examination="Urine WBC",
+				result=self._urine_state["wbc"] + " - " + row.result,
+			)
+		return None
+
+	def _build_exam_result(self, row, examination=None, std_value=None, header=None, result=None):
+		pos = frappe.get_cached_value('Item Group', row.hidden_item_group, 'custom_bundle_position') or 9999
+		row_result = result or row.result
+		row_result = format_indonesian_safe(row_result)
+		arrow = '\u2193' if row.incdec == 'Decrease' else '\u2191' if row.incdec == 'Increase' else ''
+		if row_result and arrow:
+			row_result = f"<p style='color: red;'>{row_result} {arrow}</p>"
+		return {
+			'examination': examination or row.examination,
+			'result': row_result,
+			'bundle_position': pos,
+			'uom': row.uom,
+			'std_value': std_value or row.std_value,
+			'header': header,
+			'item_group': row.hidden_item_group,
+			'item': row.hidden_item,
+		}
 
 	def _process_questionnaire(self):
 		def _process_disease_history(row_dict, indices, last_index=None):
@@ -404,7 +436,7 @@ class DoctorResult(Document):
 
 def vital_sign_templates(): 
 	return frappe.get_all(
-		'MCU Vital Sign', filters = {'parentfield': 'vital_sign_on_report'}, pluck = "template")
+		'MCU Vital Sign', filters = {'parentfield': 'vital_sign_on_report'}, pluck = 'template')
 
 def physical_examination():
 	return frappe.db.get_single_value('MCU Settings', 'physical_examination', cache=True)
@@ -440,22 +472,36 @@ def format_indonesian_safe(number_str):
 		else:
 			return integer_formatted
 
-def _create_result_pdf_report(doctype, docname):
-	pdf_contents = []
-	print_format = _get_print_format(doctype, docname)
-	pdf_contents.append(_generate_primary_pdf(doctype, docname, print_format))
-	related_pdfs = _get_related_pdf_attachments(doctype, docname)
-	merged_pdf = _merge_pdfs(_create_pdf_list(pdf_contents, related_pdfs))
-	filename = f'{docname}.pdf'
-	file = save_file(filename, merged_pdf, doctype, docname, is_private=1)
-	return file.name
+def _create_result_pdf_report(doctype, docname, prefix = None):
+	def generate_pdf_for_prefix(prefix):
+		print_format = _get_print_format(doctype, docname, prefix)
+		pdf_contents = [_generate_primary_pdf(doctype, docname, print_format)]
+		related_pdfs = _get_uploaded_pdf_attachments(doctype, docname)
+		merged_pdf = _merge_pdfs(_create_pdf_list(pdf_contents, related_pdfs))
+		filename = f'{docname}{prefix}.pdf'
+		file = save_file(filename, merged_pdf, doctype, docname, is_private=1)
+		return file.name
 
-def _get_print_format(doctype, docname):
+	prefixes = ['logo', 'nologo']
+	file_names = []
+	if not prefix:
+		for p in prefixes:
+			file_names.append(generate_pdf_for_prefix(p))
+	elif prefix in prefixes:
+		file_names.append(generate_pdf_for_prefix(prefix))
+	else:
+		raise frappe.ValidationError('Unknown Print Format prefix. Please contact Administrator.')
+	return file_names[0] if prefix else None
+
+def _get_print_format(doctype, docname, prefix):
 	hsu = frappe.db.get_value(doctype, docname, 'service_unit')
 	if not hsu:
 		raise frappe.ValidationError(
 			f"Healthcare Service Unit is not set for {doctype} {docname}. Cannot create PDF report.")
-	print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format')
+	if prefix == 'logo':
+		print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format')
+	else:
+		print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format_without_logo')
 	if not print_format:
 		raise frappe.ValidationError(
 			f"Please set the Default Print Format for Healthcare Service Unit {hsu}. Cannot create PDF report.")
@@ -468,9 +514,18 @@ def _generate_primary_pdf(doctype, docname, print_format):
 		raise frappe.ValidationError(f"Failed to generate primary PDF for {doctype} {docname}.")
 	return pdf_content
 
-def _get_related_pdf_attachments(doctype, docname):
+def _get_uploaded_pdf_attachments(doctype, docname):
 	return frappe.get_all('File', 
-		filters={"attached_to_doctype": doctype, "attached_to_name": docname, "file_type": 'PDF'},
+		filters={
+			"attached_to_doctype": doctype, "attached_to_name": docname, 
+			"file_type": 'PDF', 'file_name': ('not like', f'{docname}%')},
+		pluck='name') or []
+
+def _get_created_pdf_attachments(doctype, docname, prefix):
+	return frappe.get_all('File', 
+		filters={
+			"attached_to_doctype": doctype, "attached_to_name": docname, 
+			"file_type": 'PDF', 'file_name': ('not like', f'{docname}{prefix}%')},
 		pluck='name') or []
 
 def _create_pdf_list(pdf_list, related_files):
@@ -499,8 +554,8 @@ def recreate_doctor_result_pdf_report(id):
 
 def _get_related_exam_docs(doc):
 	child_mappings = [
-		{'nurse_grade': 'Nurse Result'},
-		{'radiology_grade': 'Radiology Result'},
+		{'nurse_grade', 'Nurse Result'},
+		{'radiology_grade', 'Radiology Result'},
 	]
 	docs = []
 	for table_name, expected_type in child_mappings:
@@ -511,3 +566,13 @@ def _get_related_exam_docs(doc):
 					'document_name': row.document_name,
 				})
 	return list({d['document_name']: d for d in docs}.values())
+
+def get_additional_lines(row_number: int, base_number: int, limit: int = 3) -> int:
+	if base_number < limit:
+		raise ValueError(f'Base number must be bigger than limit ({limit}).')
+	offset = row_number % base_number
+	if offset == 0:
+		return 1
+	elif offset > base_number - limit:
+		return base_number - offset + 1
+	return 0

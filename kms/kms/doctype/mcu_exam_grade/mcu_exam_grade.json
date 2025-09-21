@@ -110,6 +110,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "columns": 2,
    "fieldname": "result",
    "fieldtype": "Small Text",
@@ -197,7 +198,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-27 14:51:33.215812",
+ "modified": "2025-09-20 13:36:30.793675",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Exam Grade",

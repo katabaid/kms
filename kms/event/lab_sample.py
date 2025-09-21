@@ -79,16 +79,13 @@ def lab_before_save(doc, method=None):
 
 def lab_before_update_after_submit(doc, method=None):
   if doc.custom_need_review:
-    doctor_result_name, doctor_result_status = frappe.db.get_value('Doctor Result', 
-      {'appointment': doc.custom_appointment}, ['name', 'docstatus'])
-    if doctor_result_name:
-      if doctor_result_status == 0:
-        apply_calculated_exam_results(doc.normal_test_items)
-        if not all_results_filled(doc.normal_test_items, doc.custom_selective_test_result):
-          frappe.throw('All results must have value before submitting.')
-        update_doctor_result_grades(doc, doctor_result_name)
-      else:
-        frappe.throw(f'Doctor Result {doctor_result_name} is already submitted.')
+    dr = frappe.db.get_value('Doctor Result', {'appointment': doc.custom_appointment}, 'name')
+    if dr:
+      apply_calculated_exam_results(doc.normal_test_items)
+      if not all_results_filled(doc.normal_test_items, doc.custom_selective_test_result):
+        frappe.throw('All results must have value before submitting.')
+      update_doctor_result_grades(doc, dr)
+      frappe.msgprint('updated doctor result.')
   else:
     frappe.throw('Need Review flag must be active.')
 
