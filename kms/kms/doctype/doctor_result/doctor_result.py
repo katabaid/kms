@@ -80,12 +80,12 @@ class DoctorResult(Document):
 			
 	def _create_doctor_result_pdf_report(self):
 		prefixes = [
-			{'logo', 'doctor_result_print_format'},{'nologo', 'doctor_result_print_format_no_logo'}]
+			('logo', 'doctor_result_print_format'),('nologo', 'doctor_result_print_format_no_logo')]
 		for prefix, field_name in prefixes:
 			pdf_contents = []
 			print_format = frappe.db.get_single_value('MCU Settings', field_name)
 			if not print_format:
-				raise frappe.ValidationError('Print Format not found. Please set up using MCU Settings.')
+				frappe.throw('Print Format not found. Please set up using MCU Settings.')
 			pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
 			unique_docs = _get_related_exam_docs(self)
 			for doc in unique_docs:
@@ -490,20 +490,20 @@ def _create_result_pdf_report(doctype, docname, prefix = None):
 	elif prefix in prefixes:
 		file_names.append(generate_pdf_for_prefix(prefix))
 	else:
-		raise frappe.ValidationError('Unknown Print Format prefix. Please contact Administrator.')
+		frappe.throw('Unknown Print Format prefix. Please contact Administrator.')
 	return file_names[0] if prefix else None
 
 def _get_print_format(doctype, docname, prefix):
 	hsu = frappe.db.get_value(doctype, docname, 'service_unit')
 	if not hsu:
-		raise frappe.ValidationError(
+		frappe.throw(
 			f"Healthcare Service Unit is not set for {doctype} {docname}. Cannot create PDF report.")
 	if prefix == 'logo':
 		print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format')
 	else:
 		print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format_without_logo')
 	if not print_format:
-		raise frappe.ValidationError(
+		frappe.throw(
 			f"Please set the Default Print Format for Healthcare Service Unit {hsu}. Cannot create PDF report.")
 	return print_format
 
@@ -511,7 +511,7 @@ def _generate_primary_pdf(doctype, docname, print_format):
 	html = frappe.get_print(doctype, docname, print_format)
 	pdf_content = get_pdf(html)
 	if not pdf_content:
-		raise frappe.ValidationError(f"Failed to generate primary PDF for {doctype} {docname}.")
+		frappe.throw(f"Failed to generate primary PDF for {doctype} {docname}.")
 	return pdf_content
 
 def _get_uploaded_pdf_attachments(doctype, docname):
@@ -569,7 +569,7 @@ def _get_related_exam_docs(doc):
 
 def get_additional_lines(row_number: int, base_number: int, limit: int = 3) -> int:
 	if base_number < limit:
-		raise ValueError(f'Base number must be bigger than limit ({limit}).')
+		frappe.throw(f'Base number must be bigger than limit ({limit}).')
 	offset = row_number % base_number
 	if offset == 0:
 		return 1
