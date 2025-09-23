@@ -166,16 +166,17 @@ def __create_doctor_category(appt, item_group):
 
 def __create_lab_test_category(appointment, item, item_group):
 	result = []
-	doc_no = frappe.db.sql("""
+	rows = frappe.db.sql("""
 	SELECT name FROM `tabLab Test` tlt
 	WHERE custom_appointment = %s
 	AND docstatus IN (0, 1)
 	AND EXISTS (
 		SELECT 1 FROM `tabLab Test Request` tltr 
 		WHERE parent = tlt.custom_sample_collection 
-		AND tltr.item_code = %s)""", (appointment, item['examination_item']), as_dict=True)[0]
-	if not doc_no:
+		AND tltr.item_code = %s)""", (appointment, item['examination_item']), as_dict=True)
+	if not rows:
 		frappe.throw('Lab Test is not created. Please report this error to System Administrator.')
+	doc_no = rows[0]
 	result.append(['lab_test_grade', {
 		'examination': item['item_name'],
 		'gradable': item.get('item_gradable', 0),

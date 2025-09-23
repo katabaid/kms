@@ -12,8 +12,16 @@ frappe.ui.form.on('Radiology Result', {
 		setup_attachment_field(frm);
 		hide_standard_buttons(frm, ['examination_item', 'result']);
 		render_attachment(frm);
+		frm.add_custom_button('Test Print', ()=>{
+			frappe.call('kms.kms.doctype.nurse_result.nurse_result.test_print', {
+				dt: 'Radiology Result',
+				dn: frm.doc.name
+			}).then(r=>{
+				frappe.msgprint('New print ready')
+				frm.refresh();
+			})
+		})
 		setTimeout(() => {
-			
 			set_selective_result_properties(frm);
 		}, 1000);
 	},
