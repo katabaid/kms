@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from kms.utils import set_pa_notes
+from kms.api.healthcare import finish_exam
 
 class DoctorExamination(Document):
 	def before_insert(self):
@@ -41,6 +42,7 @@ class DoctorExamination(Document):
 						setup_questionnaire_table(self, package)
 
 	def on_submit(self):
+		finish_exam(self.service_unit, self.status, self.doctype, self.name)
 		exam_result = frappe.db.exists('Doctor Examination Result', {'exam': self.name}, 'name')
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:

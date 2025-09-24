@@ -3,9 +3,11 @@
 
 import frappe
 from frappe.model.document import Document
+from kms.api.healthcare import finish_exam
 
 class NurseExamination(Document):
 	def on_submit(self):
+		finish_exam(self.service_unit, self.status, self.doctype, self.name)
 		self._update_exam_result()
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 

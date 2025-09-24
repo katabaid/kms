@@ -1,9 +1,4 @@
 const customBeforeSubmit = (frm) => {
-  if (frm.doc.some_field === 'some_value') {
-    frappe.throw('Cannot submit when some_field is some_value');
-  } else {
-    doctorExaminationController.utils.handleBeforeSubmit(frm);
-  }
 };
 
 const handleTabVisibility = (frm) => {
@@ -532,14 +527,6 @@ frappe.ui.form.on('Doctor Examination', {
 		frm.doc.non_selective_result.forEach(row=>{
 			row._original_result_value = row.result_value;
 		})
-		frm.fields_dict['conclusion'].grid.get_field('conclusion_code').get_query = function(doc, cdt, cdn) {
-			let item_codes = (frm.doc.examination_item || []).map(row => row.item);
-			return {
-				filters: [
-					['item', 'in', item_codes]
-				]
-			};
-		};
   },
 
 	before_save: function (frm) {

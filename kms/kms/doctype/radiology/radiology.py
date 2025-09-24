@@ -4,9 +4,11 @@
 import frappe
 from frappe.utils import now
 from frappe.model.document import Document
+from kms.api.healthcare import finish_exam
 
 class Radiology(Document):
 	def on_submit(self):
+		finish_exam(self.service_unit, self.status, self.doctype, self.name)
 		exam_result = frappe.db.exists('Radiology Result', {'exam': self.name}, 'name')
 		self.db_set('submitted_date', frappe.utils.now_datetime())
 		if exam_result:

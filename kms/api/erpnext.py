@@ -259,11 +259,11 @@ def reopen_appointment(name: str) -> None:
 		for mqp in mqps:
 			frappe.delete_doc('MCU Queue Pooling', mqp, ignore_missing=True, force=True)
 			deleted_records = True
-	else:
-		frappe.throw('No related records found to delete - cannot reopen appointment')
+	#else:
+	#	frappe.throw('No related records found to delete - cannot reopen appointment')
 	# Update appointment status if records were deleted
+	frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
 	if deleted_records:
-		frappe.db.set_value('Patient Appointment', name, 'status', 'Open')
 		frappe.msgprint(f'Appointment {name} reopened successfully')
 
 def _check_appointment_eligibility(name: str) -> list[dict]:

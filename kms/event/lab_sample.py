@@ -1,6 +1,7 @@
 import frappe
 from frappe.utils import now
-from kms.utils import assess_mcu_grade, set_pa_notes
+from kms.utils import assess_mcu_grade
+from kms.api.healthcare import finish_exam
 
 #region SAMPLE COLLECTION HOOKS
 def sample_before_insert(doc, method=None):
@@ -25,6 +26,7 @@ def sample_after_submit(doc, method=None):
     doc.save()
 
 def sample_before_submit(doc, method=None):
+  finish_exam(doc.custom_service_unit, doc.custom_status, doc.doctype, doc.name)
   if not doc.collected_by:
     doc.collected_by = frappe.session.user
   if not doc.collected_time:

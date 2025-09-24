@@ -23,7 +23,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
 
   // Utility functions
   const utils = {
-    handleBeforeSubmit(frm) {
+    /* handleBeforeSubmit(frm) {
       const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed', 'To Retest'];
       if (validStatuses.includes(utils.getStatus(frm))) {
         finishExam(frm).then(()=>{
@@ -34,7 +34,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       } else {
         frappe.throw('All examinations must have final status to submit.');
       }
-    },
+    }, */
     hideStandardButtons(frm, fields) {
       fields.forEach((field) => {
         frm.set_df_property(field, 'cannot_add_rows', true);
@@ -131,9 +131,9 @@ const createDocTypeController = (doctype, customConfig = {}) => {
       //checkLastRoom(utils.getExamId(frm))
     },
 
-    before_submit: function (frm) {
+    /* before_submit: function (frm) {
       utils.handleBeforeSubmit(frm);
-    },
+    }, */
 
     hide_standard_child_tables_buttons: function (frm) {
       utils.hideStandardButtons(frm, config.childTables);
@@ -149,6 +149,16 @@ const createDocTypeController = (doctype, customConfig = {}) => {
 
     check_room_assignment: function (frm) {
       checkRoomAssignment(frm);
+    },
+
+    on_submit: function(frm) {
+      frappe.show_alert({
+        message: __(`✅ Result <b>${frm.doc.result_doc_name}</b> created for <b>${frm.doc.patient_name}</b>`),
+        indicator: 'green'
+      }, 5);
+      setTimeout(() => {
+        frappe.set_route('List', frm.doctype, 'List');
+      }, 5000);
     }
   };
 
@@ -156,7 +166,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   controller.utils = utils;
   controller.config = config;
 
-  function finishExam(frm) {
+  /* function finishExam(frm) {
     return new Promise((resolve, reject) => {
       frappe.call({
         method: 'kms.api.healthcare.finish_exam',
@@ -184,7 +194,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         }
       });
     });
-  }
+  } */
 
   function addParentCustomButton(frm, label, newStatus, prompt = false) {
     function callMethod(reason = null) {
