@@ -6,6 +6,15 @@ from frappe.model.document import Document
 from kms.kms.doctype.doctor_result.doctor_result import _create_result_pdf_report
 
 class NurseResult(Document):
+	def before_insert(self):
+		remark = []
+		for item in self.examination_item:
+			rt, rie = frappe.db.get_value(
+				'Nurse Examination Template', item.template, ['remark_template', 'result_in_exam'])
+			if rt and not rie:
+				remark.append(rt)
+		self.remark = '\n'.join(remark)
+
 	def before_submit (self):
 		self.status = 'Finished'
 		for non_selective_result in self.non_selective_result:

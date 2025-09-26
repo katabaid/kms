@@ -20,7 +20,8 @@
   "items",
   "normal_items",
   "calculated_exam",
-  "consumables"
+  "consumables",
+  "remark_template"
  ],
  "fields": [
   {
@@ -94,11 +95,16 @@
   {
    "fieldname": "section_break_cbwu",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remark_template",
+   "fieldtype": "Small Text",
+   "label": "Remark Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-03 08:22:13.698626",
+ "modified": "2025-09-26 14:06:19.331863",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Examination Template",

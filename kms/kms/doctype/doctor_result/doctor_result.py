@@ -29,9 +29,12 @@ class DoctorResult(Document):
 			for error in validation_result['errors']:
 				error_message += f"Table: {error['table']}, Row: {error['row_idx']}, Item: {error['item_name']}\n"
 			frappe.throw(error_message)
+	
+	def after_submit(self):
 		self.process_physical_exam()
 		self.process_other_exam()
 		self.process_group_exam()
+		self.save()
 		self._create_doctor_result_pdf_report()
 
 	def validate_before_submit(self):
@@ -71,6 +74,7 @@ class DoctorResult(Document):
 			return
 		try:
 			self._in_on_update_after_submit = True
+			self.process_physical_exam()
 			self.process_group_exam()
 			self.process_other_exam()
 			self.save()
@@ -105,28 +109,6 @@ class DoctorResult(Document):
 			if existing_file:
 				frappe.delete_doc('File', existing_file)
 			save_file(filename, output, self.doctype, self.name, is_private=1)
-		#print_format = frappe.db.get_single_value('MCU Settings', 'doctor_result_print_format')
-		#if not print_format:
-		#	frappe.throw('Please set the Doctor Result Print Format in MCU Settings.')
-		#pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
-		#unique_docs = _get_related_exam_docs(self)
-		#for doc in unique_docs:
-		#	related_pdfs = _get_created_pdf_attachments(doc['document_type'], doc['document_name'])
-		#	if related_pdfs:
-		#		pdf_contents = _create_pdf_list(pdf_contents, related_pdfs)
-		#	else:
-		#		created_filename = _create_result_pdf_report(doc['document_type'], doc['document_name'])
-		#		file_doc = frappe.get_doc('File', created_filename)
-		#		pdf_contents.append(file_doc.get_content())
-		#output = _merge_pdfs(pdf_contents)
-		#filename = f'{self.name}.pdf'
-		#existing_file = frappe.db.exists('File', {
-		#	'file_name': ["like", f"{self.name}%.pdf"],
-		#	'attached_to_doctype': self.doctype,
-		#	'attached_to_name': self.name})
-		#if existing_file:
-		#	frappe.delete_doc('File', existing_file)
-		#save_file(filename, output, self.doctype, self.name, is_private=1)
 		frappe.msgprint('MCU Result prints are ready and attached.')
 		self.reload()
 
@@ -231,6 +213,8 @@ class DoctorResult(Document):
 			urine_case = self._handle_urine_cases(row)
 			if urine_case:
 				return urine_case
+			if row.hidden_item == "MIRU-00001" and row.examination in ("urine RBC atas", "urine WBC atas"):
+				return None
 			return self._build_exam_result(row, exam, std_value, header)
 		return None
 

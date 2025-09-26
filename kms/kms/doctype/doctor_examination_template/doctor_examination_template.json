@@ -18,7 +18,8 @@
   "section_break_pklf",
   "items",
   "normal_items",
-  "consumables"
+  "consumables",
+  "remark_template"
  ],
  "fields": [
   {
@@ -80,11 +81,16 @@
   {
    "fieldname": "section_break_pklf",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remark_template",
+   "fieldtype": "Small Text",
+   "label": "Remark Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-03 08:22:13.471764",
+ "modified": "2025-09-26 14:06:37.466553",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Examination Template",

@@ -40,6 +40,12 @@ class DoctorExamination(Document):
 				if treadmill:
 					if package.examination_item == 'CARD-00002':
 						setup_questionnaire_table(self, package)
+		remark = []
+		for item in self.examination_item:
+			rt = frappe.db.get_value('Doctor Examination Template', item.template, 'remark_template')
+			if rt:
+				remark.append(rt)
+		self.remark = '\n'.join(remark)
 
 	def on_submit(self):
 		finish_exam(self.service_unit, self.status, self.doctype, self.name)

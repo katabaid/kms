@@ -7,6 +7,14 @@ from frappe.model.document import Document
 from kms.kms.doctype.doctor_result.doctor_result import _create_result_pdf_report
 
 class RadiologyResult(Document):
+	def before_insert(self):
+		remark = []
+		for item in self.examination_item:
+			rt = frappe.db.get_value('Radiology Result Template', item.template, 'remark_template')
+			if rt:
+				remark.append(rt)
+		self.remark = '\n'.join(remark)
+		
 	def before_submit(self):
 		self.status = 'Finished'
 		for examination_item in self.examination_item:

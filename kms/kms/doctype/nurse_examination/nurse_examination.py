@@ -23,6 +23,13 @@ class NurseExamination(Document):
 	def before_insert(self):
 		self._fetch_questionnaire_data()
 		self.exam_note = frappe.db.get_value('Patient Appointment', self.appointment, 'notes')
+		remark = []
+		for item in self.examination_item:
+			rt, rie = frappe.db.get_value(
+				'Nurse Examination Template', item.template, ['remark_template', 'result_in_exam'])
+			if rt and rie:
+				remark.append(rt)
+		self.remark = '\n'.join(remark)
 
 	def _update_exam_result(self):
 		exam_result = frappe.db.exists('Nurse Result', {'exam': self.name}, 'name')

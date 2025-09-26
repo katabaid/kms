@@ -23,18 +23,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
 
   // Utility functions
   const utils = {
-    /* handleBeforeSubmit(frm) {
-      const validStatuses = ['Finished', 'Partial Finished', 'Refused', 'Rescheduled', 'Removed', 'To Retest'];
-      if (validStatuses.includes(utils.getStatus(frm))) {
-        finishExam(frm).then(()=>{
-          frappe.set_route('List', frm.doctype, 'List');
-        }).catch(err=>{
-          frappe.throw(`Error finishing exam: ${err.message}`);
-        });
-      } else {
-        frappe.throw('All examinations must have final status to submit.');
-      }
-    }, */
     hideStandardButtons(frm, fields) {
       fields.forEach((field) => {
         frm.set_df_property(field, 'cannot_add_rows', true);
@@ -128,12 +116,7 @@ const createDocTypeController = (doctype, customConfig = {}) => {
         frm.trigger('setup_child_table_custom_buttons');
       }
       frm.trigger('check_room_assignment');
-      //checkLastRoom(utils.getExamId(frm))
     },
-
-    /* before_submit: function (frm) {
-      utils.handleBeforeSubmit(frm);
-    }, */
 
     hide_standard_child_tables_buttons: function (frm) {
       utils.hideStandardButtons(frm, config.childTables);
@@ -165,36 +148,6 @@ const createDocTypeController = (doctype, customConfig = {}) => {
   // Attach utils and config to the controller
   controller.utils = utils;
   controller.config = config;
-
-  /* function finishExam(frm) {
-    return new Promise((resolve, reject) => {
-      frappe.call({
-        method: 'kms.api.healthcare.finish_exam',
-        args: {
-          'hsu': utils.getHsu(frm),
-          'status': utils.getStatus(frm),
-          'doctype': frm.doc.doctype,
-          'docname': frm.doc.name,
-        },
-        callback: function (r) {
-          if (r.message) {
-            if (utilsLoaded && kms.utils) {
-              const message = r.message.message || '';
-              const docname = r.message.docname || '';
-              const patient = r.message.patient || '';
-              const alertMessage = docname || patient
-                ? `${message} ${docname} for ${patient}`.trim()
-                : message;
-              kms.utils.show_alert(alertMessage, 'green');
-            }
-            resolve();
-          } else {
-            reject(new Error('No message returned from server.'));
-          }
-        }
-      });
-    });
-  } */
 
   function addParentCustomButton(frm, label, newStatus, prompt = false) {
     function callMethod(reason = null) {

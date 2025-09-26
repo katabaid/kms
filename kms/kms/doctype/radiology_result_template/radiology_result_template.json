@@ -17,7 +17,8 @@
   "is_single_result",
   "section_break_qnbe",
   "items",
-  "consumables"
+  "consumables",
+  "remark_template"
  ],
  "fields": [
   {
@@ -73,11 +74,16 @@
   {
    "fieldname": "section_break_qnbe",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remark_template",
+   "fieldtype": "Small Text",
+   "label": "Remark Template"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-03 08:22:13.972868",
+ "modified": "2025-09-26 14:05:40.473278",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology Result Template",

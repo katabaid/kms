@@ -63,14 +63,14 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Started\nFinished\nRefused\nCancelled\nRescheduled\nTo Retest\nTo be Added",
-   "read_only": 1
+   "permlevel": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-11 14:21:45.352649",
+ "modified": "2025-09-24 09:40:20.130262",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Appointment",
