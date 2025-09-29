@@ -50,6 +50,9 @@
   "physical_examination",
   "other_examination",
   "group_exam",
+  "certificate_of_fitness_section",
+  "fitness_level",
+  "fitness_note",
   "questionnaire_tab",
   "questionnaire_html"
  ],
@@ -349,13 +352,30 @@
    "fieldname": "questionnaire_html",
    "fieldtype": "HTML",
    "label": "Questionnaire"
+  },
+  {
+   "fieldname": "certificate_of_fitness_section",
+   "fieldtype": "Section Break",
+   "label": "Certificate of Fitness"
+  },
+  {
+   "fieldname": "fitness_level",
+   "fieldtype": "Select",
+   "label": "Fitness Level",
+   "options": "Fit\nUnfit"
+  },
+  {
+   "depends_on": "eval:docfitness_level!='Fit'",
+   "fieldname": "fitness_note",
+   "fieldtype": "Small Text",
+   "label": "Fitness Note"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-19 20:49:26.204712",
+ "modified": "2025-09-29 12:09:20.695845",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Doctor Result",

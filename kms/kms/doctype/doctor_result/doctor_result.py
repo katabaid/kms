@@ -34,8 +34,8 @@ class DoctorResult(Document):
 		self.process_physical_exam()
 		self.process_other_exam()
 		self.process_group_exam()
-		self.save()
 		self._create_doctor_result_pdf_report()
+		self.save()
 
 	def validate_before_submit(self):
 		def is_valid(row):
@@ -75,10 +75,10 @@ class DoctorResult(Document):
 		try:
 			self._in_on_update_after_submit = True
 			self.process_physical_exam()
-			self.process_group_exam()
 			self.process_other_exam()
-			self.save()
+			self.process_group_exam()
 			self._create_doctor_result_pdf_report()
+			self.save()
 		finally:
 			self._in_on_update_after_submit = False
 			
@@ -98,8 +98,9 @@ class DoctorResult(Document):
 					pdf_contents = _create_pdf_list(pdf_contents, related_pdfs)
 				else:
 					created_filename = _create_result_pdf_report(doc['document_type'], doc['document_name'], prefix)
-					file_doc = frappe.get_doc('File', created_filename)
-					pdf_contents.append(file_doc.get_content())
+					if created_filename:
+						file_doc = frappe.get_doc('File', created_filename)
+						pdf_contents.append(file_doc.get_content())
 			output = _merge_pdfs(pdf_contents)
 			filename = f'{self.name}{prefix}.pdf'
 			existing_file = frappe.db.exists('File', {
@@ -113,13 +114,13 @@ class DoctorResult(Document):
 		self.reload()
 
 	def process_physical_exam(self):
-		self.physical_examination = []
+		self.set('physical_examination', [])
 		self._process_questionnaire()
 		self._process_nurse_grade()
 		self._process_doctor_grade()
 
 	def process_other_exam(self):
-		self.other_examination = []
+		self.set('other_examination', [])
 		current_results = self._collect_other_exam_results()
 		prev_data, last_data = self._get_previous_results_map('other_examination', key='content', value='result')
 		limit_per_page = cint(frappe.get_single_value('MCU Settings', 'max_lines_per_page'))
@@ -143,7 +144,7 @@ class DoctorResult(Document):
 				'last_result': last_data.get(result['examination'], '') if result.get('result') else None,})
 
 	def process_group_exam(self):
-		self.group_exam = []
+		self.set('group_exam', [])
 		current_results = self._collect_group_exam_results()
 		prev_data, last_data = self._get_previous_results_map('group_exam', key='contents', value='result')
 		for result in current_results:
@@ -183,7 +184,53 @@ class DoctorResult(Document):
 					counter += 1
 					normalized['idx'] = counter
 					results.append(normalized)
-		return sorted(results, key=lambda x: (x['bundle_position'], x['idx']))
+		normalized_results = sorted(results, key=lambda x: (x['bundle_position'], x['idx']))
+		final_result = []
+		current_group = None
+		current_table = None
+		current_bundle_pos = None
+		group_buffer = []
+		for i, row in enumerate(normalized_results):
+			if row['header'] == 'Group':
+				current_group = row['examination']
+				current_table = self._find_group_table(current_group)
+				current_bundle_pos = row.get('bundle_position', 9999)
+				group_buffer = [row]
+			else:
+				group_buffer.append(row)
+			next_row = normalized_results[i + 1] if i + 1 < len(normalized_results) else None
+			if current_group and (not next_row or next_row.get('header') == 'Group'):
+				has_items = any(r for r in group_buffer if r.get('header') != 'Group')
+				if has_items:
+					final_result.extend(group_buffer)
+					comments_row = self._make_group_comment_row(current_group, current_table, current_bundle_pos)
+					final_result.append(comments_row)
+				current_group = None
+				current_table = None
+				current_bundle_pos = None
+				group_buffer = []
+		return final_result
+
+	def _find_group_table(self, group_name):
+		for table in self.child_tables:
+			for p in getattr(self, table, []):
+				if p.hidden_item_group == group_name:
+					return table
+		return None
+	
+	def _make_group_comment_row(self, group_name, table, bundle_position):
+		comments = None
+		if table:
+			comments = ', '.join(
+				p.incdec_category for p in getattr(self, table, [])
+				if p.hidden_item_group == group_name and p.incdec_category
+			)
+		comments = comments or 'Dalam batas normal.'
+		return {
+			'examination': f'Comment: {comments}',
+			'bundle_position': bundle_position,
+			'header': 'Group'
+		}
 
 	def _get_previous_results_map(self, child_table_name, key, value):
 		prev_results = frappe.get_all('Doctor Result',
@@ -459,6 +506,8 @@ def format_indonesian_safe(number_str):
 def _create_result_pdf_report(doctype, docname, prefix = None):
 	def generate_pdf_for_prefix(prefix):
 		print_format = _get_print_format(doctype, docname, prefix)
+		if not print_format:
+			return None
 		pdf_contents = [_generate_primary_pdf(doctype, docname, print_format)]
 		related_pdfs = _get_uploaded_pdf_attachments(doctype, docname)
 		merged_pdf = _merge_pdfs(_create_pdf_list(pdf_contents, related_pdfs))
@@ -487,7 +536,7 @@ def _get_print_format(doctype, docname, prefix):
 	else:
 		print_format = frappe.db.get_value('Healthcare Service Unit', hsu, 'custom_default_print_format_without_logo')
 	if not print_format:
-		frappe.throw(
+		frappe.log_error(
 			f"Please set the Default Print Format for Healthcare Service Unit {hsu}. Cannot create PDF report.")
 	return print_format
 
@@ -509,7 +558,7 @@ def _get_created_pdf_attachments(doctype, docname, prefix):
 	return frappe.get_all('File', 
 		filters={
 			"attached_to_doctype": doctype, "attached_to_name": docname, 
-			"file_type": 'PDF', 'file_name': ('not like', f'{docname}{prefix}%')},
+			"file_type": 'PDF', 'file_name': ('like', f'{docname}{prefix}%')},
 		pluck='name') or []
 
 def _create_pdf_list(pdf_list, related_files):
@@ -534,17 +583,21 @@ def _merge_pdfs(pdf_contents):
 	
 def recreate_doctor_result_pdf_report(id):
 	doc = frappe.get_doc('Doctor Result', id)
+	doc.process_physical_exam()
+	doc.process_other_exam()
+	doc.process_group_exam()
+	doc.save()
 	doc._create_doctor_result_pdf_report()
 
 def _get_related_exam_docs(doc):
 	child_mappings = [
-		{'nurse_grade', 'Nurse Result'},
-		{'radiology_grade', 'Radiology Result'},
+		("nurse_grade", ["Nurse Result", "Nurse Examination"]),
+		("radiology_grade", ["Radiology Result"]),
 	]
 	docs = []
 	for table_name, expected_type in child_mappings:
 		for row in getattr(doc, table_name, []):
-			if row.document_type == expected_type and row.document_name:
+			if row.document_type in expected_type and row.document_name:
 				docs.append({
 					'document_type': row.document_type,
 					'document_name': row.document_name,
