@@ -6,7 +6,10 @@ from frappe.model.document import Document
 from frappe.utils import cint
 from frappe.utils.pdf import get_pdf
 from frappe.utils.file_manager import save_file
-from PyPDF2 import PdfMerger
+from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
 
 class DoctorResult(Document):
 	child_tables = ['nurse_grade', 'doctor_grade', 'radiology_grade', 'lab_test_grade']
@@ -90,7 +93,10 @@ class DoctorResult(Document):
 			print_format = frappe.db.get_single_value('MCU Settings', field_name)
 			if not print_format:
 				frappe.throw('Print Format not found. Please set up using MCU Settings.')
-			pdf_contents.append(_generate_primary_pdf(self.doctype, self.name, print_format))
+			primary_pdf = _generate_primary_pdf(self.doctype, self.name, print_format)
+			if prefix == 'logo':
+				primary_pdf = self._embed_logo_in_pdf(primary_pdf, y_margin=30, width=120, height=60)
+			pdf_contents.append(primary_pdf)
 			unique_docs = _get_related_exam_docs(self)
 			for doc in unique_docs:
 				related_pdfs = _get_created_pdf_attachments(doc['document_type'], doc['document_name'], prefix)
@@ -464,6 +470,30 @@ class DoctorResult(Document):
 				'item_input': 'Abdominal Girth',
 				'result': girth,
 			})
+	
+	def _embed_logo_in_pdf(self, pdf_bytes, logo_path, y_margin=30, width=120, height=60):
+		reader = PdfReader(io.BytesIO(pdf_bytes))
+		writer = PdfWriter()
+		for page in reader.pages:
+			packet = io.BytesIO()
+			c = canvas.Canvas(packet, pagesize=(float(page.mediabox.width), float(page.mediabox.height)))
+			page_width = float(page.mediabox.width)
+			page_height = float(page.mediabox.height)
+			x_pos = (page_width - width) / 2
+			y_pos = page_height - height - y_margin
+			if not logo_path:
+				logo = frappe.get_value(
+					'File', {'attached_to_doctype': 'Company', 'attached_to_name': self.company}, 'file_url')
+				logo_path = frappe.utils.get_url(logo)
+			c.drawImage(ImageReader(logo_path), x_pos, y_pos, width=width, height=height, preserveAspectRatio=True, mask='auto')
+			c.save()
+			packet.seek(0)
+			overlay_pdf = PdfReader(packet)
+			page.merge_page(overlay_pdf.pages[0])
+			writer.add_page(page)
+		output_stream = io.BytesIO()
+		writer.write(output_stream)
+		return output_stream.getvalue()
 
 def vital_sign_templates(): 
 	return frappe.get_all(
