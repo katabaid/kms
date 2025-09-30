@@ -7,25 +7,31 @@ from frappe.model.document import Document
 
 class SampleReception(Document):
 	def on_submit(self):
-		collection_doc = frappe.get_doc('Sample Collection', self.sample_collection)
-		if collection_doc.docstatus != 1:
-			frappe.throw(f'Sample Collection {collection_doc.name} must be Submitted.')
+		sc = frappe.get_doc('Sample Collection', self.sample_collection)
+		if not sc:
+			frappe.throw(f'Sample Collection {self.sample_collection} not found.')
+		if sc.docstatus != 1:
+			frappe.throw(f'Sample Collection {sc.name} must be Submitted.')
 		else:
 			self.collected_by = frappe.session.user
 			self.collection_time = now()
-			update_sample_collection(collection_doc, self.lab_test_sample)
-			if collection_doc.custom_lab_test:
-				update_lab_test(collection_doc.custom_lab_test, self.lab_test_sample, self.name)
-			if collection_doc.custom_dispatcher:
+			update_sample_collection(sc, self.lab_test_sample)
+			if sc.custom_lab_test:
+				update_lab_test(sc.custom_lab_test, self.lab_test_sample, self.name)
+			if sc.custom_dispatcher:
 				update_dispatcher_status(
 					self.name, 
-					collection_doc.custom_dispatcher, 
+					sc.custom_dispatcher, 
 					self.healthcare_service_unit)
-			elif collection_doc.custom_queue_pooling:
+			elif sc.custom_queue_pooling:
 				update_queue_pooling_status(
 					self.name, 
 					self.appointment, 
 					self.healthcare_service_unit)
+			elif sc.custom_encounter:
+				pass
+			else:
+				update_patient_appointment_status(self.appointment)
 
 
 def update_sample_collection(doc, sample):
@@ -45,24 +51,31 @@ def update_lab_test(lab_test, sample, sr_name):
 	lab_test.save(ignore_permissions=True)
 
 def update_dispatcher_status(sr_no, disp_no, sr_room):
-	count1 = count_samples(sr_no)[0][0]
-	if count1 > 0:
-		count2 = count_received_samples(sr_no)[0][0]
-		if count1 == count2:
-			disp_doc = frappe.get_doc('Dispatcher', disp_no)
-			for room in disp_doc.assignment_table:
-				if room.healthcare_service_unit == sr_room:
-					room.status = 'Finished Collection'
-			disp_doc.save(ignore_permissions=True)
+	count1 = count_samples(sr_no)
+	if count1:
+		count2 = count_received_samples(sr_no)
+		if count2:
+			if count1[0][0] == count2[0][0]:
+				disp_doc = frappe.get_doc('Dispatcher', disp_no)
+				for room in disp_doc.assignment_table:
+					if room.healthcare_service_unit == sr_room:
+						room.status = 'Finished Collection'
+				disp_doc.save(ignore_permissions=True)
 
 def update_queue_pooling_status(sr_no, exam_id, sr_room):
-	count1 = count_samples(sr_no)[0][0]
-	if count1 > 0:
-		count2 = count_received_samples(sr_no)[0][0]
-		if count1 == count2:
-			frappe.db.set_value('MCU Queue Pooling', {'patient_appointment': exam_id, 'service_unit': sr_room}, 'status', 'Finished Collection')
-			if check_final_room(exam_id):
-				frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
+	count1 = count_samples(sr_no)
+	if count1:
+		count2 = count_received_samples(sr_no)
+		if count2:
+			if count1[0][0] == count2[0][0]:
+				frappe.db.set_value(
+					'MCU Queue Pooling', {'patient_appointment': exam_id, 'service_unit': sr_room}, 
+					'status', 'Finished Collection')
+				if check_final_room(exam_id):
+					frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
+
+def update_patient_appointment_status(exam_id):
+	frappe.db.set_value('Patient Appointment', exam_id, 'status', 'Ready to Check Out')
 
 def count_samples(sr_no):
 	sql = """

@@ -27,6 +27,7 @@ def patient_appointment_on_update(doc, method=None):
 	date = doc.custom_rescheduled_date if doc.custom_rescheduled_date else doc.appointment_date
 	dispatcher_user = frappe.db.get_value("Dispatcher Settings", 
 		{"branch": doc.custom_branch, 'enable_date': date}, ['dispatcher'])
+	atvs = frappe.get_all('Vital Sign Appointment Type', pluck='appointment_type')
 	if not previous_doc and doc.status == 'Checked In':
 		if dispatcher_user:
 			_create_dispatcher(doc.name, doc.custom_branch)
@@ -43,7 +44,11 @@ def patient_appointment_on_update(doc, method=None):
 				_create_mcu_queue_pooling(doc.name, doc.custom_branch)
 			_set_mcu_queue_no(doc.name)
 		else:
-			_create_vital_signs(doc)
+			if doc.appointment_type in atvs:
+				_create_vital_signs(doc)
+			else:
+				if doc.appointment_type == 'Laboratorium':
+					_create_sample_collection(doc)
 	elif doc.status in ['Checked In', 'Ready to Check Out']:
 		_validate_with_today_date(doc.appointment_date)
 		if str(doc.appointment_date) == nowdate():
@@ -78,6 +83,45 @@ def _create_vital_signs(doc):
 		custom_date_of_birth = doc.custom_patient_date_of_birth,
 		vital_signs_note = doc.notes))
 	vs_doc.insert(ignore_permissions=True)
+
+def _create_sample_collection(doc):
+	if not doc.custom_additional_mcu_items:
+		frappe.throw(title='Error', msg='No Laboratory Item found to create Sample Collection.')
+	sc_doc = frappe.get_doc(dict(
+		doctype = 'Sample Collection',
+		patient = doc.patient,
+		patient_name = doc.patient_name,
+		patient_sex = doc.patient_sex,
+		patient_age = doc.patient_age,
+		custom_date_of_birth = doc.custom_patient_date_of_birth,
+		custom_priority = doc.custom_priority,
+		custom_patient_company = doc.custom_patient_company,
+		custom_status = 'Started',
+		company = doc.company,
+		exam_date = nowdate(),
+		custom_locker = doc.custom_locker_room_key_number,
+		custom_queue_no = doc.custom_queue_no,
+		custom_service_unit = doc.service_unit,
+		custom_appointment = doc.name,
+		custom_branch = doc.custom_branch))
+	unique_samples = set()
+	for row in doc.custom_additional_mcu_items:
+		if not row.examination_item:
+			continue
+		template, sample = frappe.db.get_value(
+			'Lab Test Template', {'lab_test_code': row.examination_item}, ['name', 'sample'])
+		if template:
+			sc_doc.append('custom_examination_item', {
+				'item_code': row.examination_item,
+				'template': template,
+			})
+		if sample and sample not in unique_samples:
+			unique_samples.add(sample)
+			sc_doc.append('custom_sample_table', {
+				'sample': sample,
+				'status_time': now(),
+			})	
+	sc_doc.insert(ignore_permissions=True)
 
 def _add_dispatcher_additional_mcu_item(dispatcher, additional_table, dispatcher_user):
 	doc = frappe.get_doc('Dispatcher', dispatcher)

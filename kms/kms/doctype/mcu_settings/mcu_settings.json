@@ -68,6 +68,8 @@
   "vital_sign_with_systolicdiastolic",
   "column_break_lbwj",
   "vital_sign_on_report",
+  "outpatient_section",
+  "appointment_type_with_vital_sign",
   "billing_tab",
   "local_price_list",
   "column_break_ajlq",
@@ -469,12 +471,23 @@
    "fieldname": "max_lines_per_page",
    "fieldtype": "Int",
    "label": "Max Lines per Page"
+  },
+  {
+   "fieldname": "outpatient_section",
+   "fieldtype": "Section Break",
+   "label": "Outpatient"
+  },
+  {
+   "fieldname": "appointment_type_with_vital_sign",
+   "fieldtype": "Table MultiSelect",
+   "label": "Appointment Type with Vital Sign",
+   "options": "Vital Sign Appointment Type"
   }
  ],
  "hide_toolbar": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-09-19 20:55:23.278296",
+ "modified": "2025-09-29 16:11:19.111794",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "MCU Settings",

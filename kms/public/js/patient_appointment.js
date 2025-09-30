@@ -29,6 +29,7 @@ frappe.ui.form.on('Patient Appointment', {
       frm.enable_save();
     } else {
       frm.set_value('custom_priority', '3. Outpatient');
+      frm.set_value('service_unit', null);
       frm.enable_save();
     }
 	},
@@ -208,10 +209,17 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_additional_mcu_button(frm) {
-    if ((frm.doc.status === 'Open' || frm.doc.status === 'Checked In' 
-      || frm.doc.status === 'Ready to Check Out') && frm.doc.mcu) {
+    if (['Open', 'Checked In', 'Ready to Check Out'].includes(frm.doc.status)) {
+      const label = frm.doc.mcu ? 'Additional MCU' : 'Pick Laboratory Item';
+      const filters = [
+        ['Item', 'is_stock_item', '=', 0],
+        ['Item', 'disabled', '=', 0],
+        ['Item', 'is_sales_item', '=', 1],
+        ['Item', 'custom_is_mcu_item', '=', 1],
+        ['Item', 'item_group', '!=', 'Exam Course'],
+      ];
       frm.add_custom_button(
-        'Additional MCU',
+        label,
         () =>{
           let dialog = new frappe.ui.Dialog({
             title: 'Enter Exam Item',
@@ -221,29 +229,30 @@ frappe.ui.form.on('Patient Appointment', {
               fieldtype: 'Link',
               options: 'Item',
               get_query: () => {
-                let exam_items = frm.doc.custom_mcu_exam_items
-                  ? frm.doc.custom_mcu_exam_items.map(row => row.examination_item).filter(item => item)
-                  : [];
-                let additional_items = frm.doc.custom_additional_mcu_items
-                  ? frm.doc.custom_additional_mcu_items.map(row => row.examination_item).filter(item => item)
-                  : [];
-                let existing_items = [...new Set([...exam_items, ...additional_items])];
-                return { filters: [
-                  ['Item', 'is_stock_item', '=', 0],
-                  ['Item', 'disabled', '=', 0],
-                  ['Item', 'is_sales_item', '=', 1],
-                  ['Item', 'custom_is_mcu_item', '=', 1],
-                  ['Item', 'item_group', '!=', 'Exam Course'],
-                  ['Item', 'name', 'not in', existing_items]
-                ]}
+                let exam_items = (frm.doc.custom_mcu_exam_items || [])
+                  .map(row => row.examination_item).filter(Boolean);
+                let additional_items = (frm.doc.custom_additional_mcu_items || [])
+                  .map(row => row.examination_item).filter(Boolean)
+                const existing_items = Array.from(new Set([...exam_items, ...additional_items]));
+                if (existing_items.length) {
+                  filters.push(['Item', 'name', 'not in', existing_items]);
+                }
+                if (!frm.doc.mcu) {
+                  filters.push(['Item', 'item_group', 'descendants of', 'Laboratory'] );
+                };
+                return { filters }
               }
             }],
             primary_action_label: 'Submit',
             primary_action(values) {
-              let row = frm.add_child('custom_additional_mcu_items')
-              row.examination_item = values.item
-              row.status = 'To be Added'
-              refresh_field("custom_additional_mcu_items");
+              if (!values.item) {
+                frappe.msgprint('Item is required');
+                return;
+              }
+              const row = frm.add_child('custom_additional_mcu_items', {
+                examination_item: values.item,
+              })
+              frm.refresh_field("custom_additional_mcu_items");
               dialog.hide()
             }
           });

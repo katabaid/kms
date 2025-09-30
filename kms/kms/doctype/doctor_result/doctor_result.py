@@ -471,7 +471,7 @@ class DoctorResult(Document):
 				'result': girth,
 			})
 	
-	def _embed_logo_in_pdf(self, pdf_bytes, logo_path, y_margin=30, width=120, height=60):
+	def _embed_logo_in_pdf(self, pdf_bytes, logo_path=None, y_margin=30, width=120, height=60):
 		reader = PdfReader(io.BytesIO(pdf_bytes))
 		writer = PdfWriter()
 		for page in reader.pages:
