@@ -137,45 +137,43 @@ frappe.ui.form.on('Patient Appointment', {
     let method = 'kms.invoice.get_invoice_item_from_encounter';
     if (frm.doc.appointment_for==='MCU') method = 'kms.invoice.get_invoice_item_from_mcu';
     if(frm.doc.status === 'Checked Out'){
-      try {
-        const item_resp = await frappe.call({
-          method: method,
-          args: { exam_id: frm.doc.name }
-        })
+      const response = await frappe.call({
+        method: method,
+        args: { exam_id: frm.doc.name }
+      })
+      if (response && response.message) {
+        const message = response.message[0]; 
         frm.add_custom_button(
           'Create Invoice',
           () => {
             frappe.new_doc('Sales Invoice', {company: frm.doc.company}, doc => {
               doc.due_date = frappe.datetime.get_today();
-              doc.patient = item_resp?.message[0].patient;
-              doc.customer = item_resp?.message[0].customer;
-              doc.ref_practitioner = item_resp?.message[0].practitioner;
-              doc.service_unit = item_resp?.message[0].custom_service_unit;
-              doc.cost_center = item_resp?.message[0].cc;
-              doc.debit_to = item_resp?.message[0].rec;
+              doc.patient = message.patient;
+              doc.customer = message.customer;
+              doc.ref_practitioner = message.practitioner;
+              doc.service_unit = message.custom_service_unit;
+              doc.cost_center = message.cc;
+              doc.debit_to = message.rec;
               doc.custom_exam_id = frm.doc.name;
               doc.items = [];
               let row = frappe.model.add_child(doc, 'items');
               if (frm.doc.appointment_for==='MCU') {
-                row.item_code = item_resp?.message[0].title;
-                row.item_name = item_resp?.message[0].item_name;
+                row.item_code = message.title;
+                row.item_name = message.item_name;
               } else {
                 row.item_name = frm.doc.title;
               }
               row.qty = 1;
-              row.uom = item_resp?.message[0].uom || 'Unit';
-              row.rate = item_resp?.message[0].harga || 0;
+              row.uom = message.uom || 'Unit';
+              row.rate = message.harga || 0;
               row.reference_dt = 'Patient Appointment';
               row.reference_dn = frm.doc.name;
-              row.cost_center = item_resp?.message[0].cc;
-              row.income_account = item_resp?.message[0].acc;
+              row.cost_center = message.cc;
+              row.income_account = message.acc;
             })
           },
           'Status'
         );
-      } catch (err) {
-        frappe.msgprint(`Error fetching related data: ${err.message}`);
-        console.error('Get value error:', err);
       }
     }
   },
@@ -211,7 +209,7 @@ frappe.ui.form.on('Patient Appointment', {
   add_additional_mcu_button(frm) {
     if (['Open', 'Checked In', 'Ready to Check Out'].includes(frm.doc.status)) {
       const label = frm.doc.mcu ? 'Additional MCU' : 'Pick Laboratory Item';
-      const filters = [
+      const default_filters = [
         ['Item', 'is_stock_item', '=', 0],
         ['Item', 'disabled', '=', 0],
         ['Item', 'is_sales_item', '=', 1],
@@ -229,6 +227,7 @@ frappe.ui.form.on('Patient Appointment', {
               fieldtype: 'Link',
               options: 'Item',
               get_query: () => {
+                let filters = JSON.parse(JSON.stringify(default_filters));
                 let exam_items = (frm.doc.custom_mcu_exam_items || [])
                   .map(row => row.examination_item).filter(Boolean);
                 let additional_items = (frm.doc.custom_additional_mcu_items || [])
@@ -268,9 +267,10 @@ frappe.ui.form.on('Patient Appointment', {
     if (incompleteRow) {
       const template = incompleteRow.template;
       const link = `https://kyomedic.vercel.app/questionnaire?template=${template||frm.doc.appointment_type}&appt=${frm.doc.name}`;
+      const encoded_link = encodeURIComponent(link); 
       frm.sidebar
       .add_user_action(__('QR Code'))
-      .attr('href', `/qr_code.html?data=${link}`)
+      .attr('href', `/qr_code.html?data=${encoded_link}`)
       .attr('target', '_blank');
       if (frm.doc.custom_mobile) {
         let phoneNumber;
