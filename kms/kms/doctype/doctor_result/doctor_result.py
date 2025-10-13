@@ -334,15 +334,23 @@ class DoctorResult(Document):
 			self._urine_state["rbc"] = row.result
 			return None
 		elif row.examination == "urine RBC bawah":
+			if self._urine_state["rbc"] or row.result:
+				result=self._urine_state["rbc"] + " - " + row.result
+			else:
+				result = '-'
 			return self._build_exam_result(
 				row,
 				examination="Urine RBC",
-				result=self._urine_state["rbc"] + " - " + row.result,
+				result=result,
 			)
 		elif row.examination == "urine WBC atas":
 			self._urine_state["wbc"] = row.result
 			return None
 		elif row.examination == "urine WBC bawah":
+			if self._urine_state["wbc"] or row.result:
+				result=self._urine_state["wbc"] + " - " + row.result
+			else:
+				result = '-'
 			return self._build_exam_result(
 				row,
 				examination="Urine WBC",
