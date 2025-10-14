@@ -16,7 +16,7 @@ class Radiology(Document):
 
 	def before_insert(self):
 		pa_doc = frappe.get_doc('Patient Appointment', self.appointment)
-		self.exam_notes = pa_doc.notes
+		self.exam_note = pa_doc.notes
 
 	def on_update(self):
 		old = self.get_doc_before_save()

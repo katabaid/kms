@@ -60,7 +60,7 @@ class DoctorExamination(Document):
 			self.db_set('checked_in_time', frappe.utils.now_datetime())
 	
 	def on_update_after_submit(self):
-		set_pa_notes(self.appointment, self.exam_notes)
+		set_pa_notes(self.appointment, self.exam_note)
 		old_doc = self.get_doc_before_save()
 		if self.grade != old_doc.grade:
 			if hasattr(self, 'appointment') and self.appointment:
