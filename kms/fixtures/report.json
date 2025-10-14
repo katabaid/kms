@@ -10,6 +10,44 @@
   "is_standard": "Yes",
   "javascript": null,
   "json": null,
+  "letter_head": null,
+  "modified": "2025-09-30 12:23:02.273574",
+  "module": "KMS",
+  "name": "MCU Recapitulation",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Doctor Result",
+  "reference_report": null,
+  "report_name": "MCU Recapitulation",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "MCU Recapitulation",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HC Dokter Internal"
+   },
+   {
+    "parent": "MCU Recapitulation",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "HC Medical Record"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
   "letter_head": "Kyoai",
   "modified": "2025-04-22 16:15:08.739242",
   "module": "KMS",
