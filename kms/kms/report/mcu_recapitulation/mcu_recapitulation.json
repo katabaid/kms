@@ -1,0 +1,31 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-09-30 12:11:47.219471",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letterhead": null,
+ "modified": "2025-09-30 12:23:02.273574",
+ "modified_by": "Administrator",
+ "module": "KMS",
+ "name": "MCU Recapitulation",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Doctor Result",
+ "report_name": "MCU Recapitulation",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "HC Dokter Internal"
+  },
+  {
+   "role": "HC Medical Record"
+  }
+ ],
+ "timeout": 0
+}
