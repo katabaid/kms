@@ -2,10 +2,8 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:occupation",
- "creation": "2024-10-24 10:26:31.952930",
- "default_view": "List",
+ "creation": "2025-10-14 10:44:17.971104",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "occupation"
@@ -14,20 +12,17 @@
   {
    "fieldname": "occupation",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Occupation",
-   "reqd": 1,
    "unique": 1
   }
  ],
  "grid_page_length": 50,
- "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-03 08:22:25.177620",
+ "modified": "2025-10-14 10:45:35.757826",
  "modified_by": "Administrator",
  "module": "KMS",
- "name": "Occupation",
+ "name": "Job Occupation",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
@@ -44,7 +39,6 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",

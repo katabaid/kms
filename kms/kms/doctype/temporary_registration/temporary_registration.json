@@ -251,7 +251,7 @@
    "fieldname": "occupation",
    "fieldtype": "Link",
    "label": "Occupation",
-   "options": "Occupation",
+   "options": "Job Occupation",
    "read_only_depends_on": "eval:doc.patient"
   },
   {
@@ -265,7 +265,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-03 08:22:16.300170",
+ "modified": "2025-10-14 11:27:13.516250",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Temporary Registration",

@@ -2,8 +2,15 @@ frappe.listview_settings['Sample Collection'] = {
   onload: (listview) => {
     listview.page.add_inner_button(__('Add from Queue'), function() {
       open_queue_dialog(listview);
-    })
-  }
+    });
+    const style = document.createElement('style');
+    style.textContent = `
+      [data-page-route="List/Sample Collection/List"] [data-label="Submit"] {
+        display: none;
+      }
+    `;
+    document.head.appendChild(style);
+  },
 }
 
 async function open_queue_dialog(listview){
