@@ -64,7 +64,6 @@ def lab_on_submit(doc, method=None):
   if doctor_result_name:
     update_doctor_result_grades(doc, doctor_result_name)
     return
-  
   encounter = frappe.db.get_value(
     'Sample Collection', doc.custom_sample_collection, 'custom_encounter')
   if not encounter:
@@ -75,6 +74,9 @@ def lab_on_submit(doc, method=None):
 def lab_before_submit(doc, method=None):
   if not all_results_filled(doc.normal_test_items, doc.custom_selective_test_result):
     frappe.throw('All results must have value before submitting.')
+  hpn = frappe.db.get_value('Healthcare Practitioner', {'user_id': frappe.session.user}, 'name')
+  if hpn:
+    doc.employee = hpn
 
 def lab_before_save(doc, method=None):
   apply_calculated_exam_results(doc.normal_test_items)
