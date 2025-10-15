@@ -167,6 +167,8 @@ def get_queued_branch(branch):
 def finish_exam(hsu, status, doctype, docname):
 	exists_to_retest = False
 	source_doc = frappe.get_doc(doctype, docname)
+	if not _check_all_items_finished(source_doc):
+		frappe.throw("All Examination Items must be finished before submitting the document.")
 	is_sc = doctype == 'Sample Collection'
 	exam_id = source_doc.custom_appointment if is_sc else source_doc.appointment
 	dispatcher_id = source_doc.custom_dispatcher if is_sc else source_doc.dispatcher
@@ -428,3 +430,9 @@ def create_result_doc(doc, target):
 	if not not_created:
 		new_doc.insert(ignore_permissions=True)
 	return new_doc.name, new_doc.patient_name
+
+def _check_all_items_finished(doc):
+	if doc.doctype == 'Sample Collection':
+		return all(item.status != 'Started' for item in doc.custom_sample_table)
+	else:
+		return all(item.status != 'Started' for item in doc.examination_item)
