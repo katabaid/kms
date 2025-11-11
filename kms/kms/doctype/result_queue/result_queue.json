@@ -10,6 +10,7 @@
   "doc_type",
   "doc_name",
   "patient",
+  "healthcare_service_unit",
   "column_break_cxmv",
   "assignee",
   "user",
@@ -98,12 +99,19 @@
    "fieldname": "date_of_birth",
    "fieldtype": "Date",
    "label": "Date of Birth"
+  },
+  {
+   "fieldname": "healthcare_service_unit",
+   "fieldtype": "Link",
+   "label": "Healthcare Service Unit",
+   "options": "Healthcare Service Unit",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-03 14:59:22.592400",
+ "modified": "2025-11-11 18:07:47.838508",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Result Queue",

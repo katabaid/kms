@@ -61,5 +61,6 @@ def _create_new_queue(doc_type, doc_name, practitioner, practitioner_user, due_d
 	queue_doc.user = practitioner_user
 	queue_doc.status = "Assigned"
 	queue_doc.due_date = due_date
+	queue_doc.healthcare_service_unit = frappe.db.get_value(doc_type, doc_name, "service_unit")
 	queue_doc.insert()
 	frappe.db.set_value(doc_type, doc_name, "assignee", practitioner_user)

@@ -36,6 +36,8 @@
   "column_break_pmac",
   "created_date",
   "checked_in_time",
+  "exam_note_section",
+  "exam_note",
   "result_section",
   "examination_item",
   "result",
@@ -44,9 +46,7 @@
   "remark_section",
   "remark",
   "amended_from",
-  "has_attachment",
-  "exam_note_section",
-  "exam_note"
+  "has_attachment"
  ],
  "fields": [
   {
@@ -321,7 +321,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-07-03 08:22:12.602349",
+ "modified": "2025-10-17 22:13:43.957653",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Radiology",

@@ -262,7 +262,7 @@ frappe.ui.form.on('Patient Appointment', {
     }
   },
   add_questionnaire_link(frm) {
-    const incompleteRow = frm.doc.custom_completed_questionnaire.find(row => row.is_completed !== 1);
+    const incompleteRow = frm.doc.custom_completed_questionnaire.filter(row => row.is_completed !== 1);
     frm.sidebar.clear_user_actions();
     if (incompleteRow) {
       const template = incompleteRow.template;

@@ -48,7 +48,8 @@ def get_result_columns(filters):
 			is_single = template.get('custom_is_single_result') or template.get('is_single_result')
 			final_columns.append(
 				{'label': item['item_name'], 'fieldname': f"{group_name}__{item['name']}", 'fieldtype': 'Data'})
-			if not template.get('result_in_exam') or is_single:
+			if (not template.get('result_in_exam') and template.get('doctype') == 'Nurse Examination Template') or is_single:
+				frappe.log_error(f"Skip {item['name']}", 'MCU Recapitulation')
 				continue
 			if template.get('doctype') in ['Lab Test Template', 'Nurse Examination Template']:
 				if template.get('doctype') == 'Lab Test Template':
@@ -76,9 +77,12 @@ def get_result_columns(filters):
 							'fieldname': f"{group_name}__{item['name']}__{frappe.scrub(event)}", 
 							'fieldtype': 'Data'})
 				for selective in template.get(selective_field) or []:
+					value = selective.get(selective_key) if isinstance(selective, dict) else getattr(selective, selective_key, None)
+					if not value:
+						continue
 					final_columns.append(
-						{ 'label': selective[selective_key], 
-							'fieldname': f"{group_name}__{item['name']}__{frappe.scrub(selective[selective_key])}", 
+						{ 'label': value, 
+							'fieldname': f"{group_name}__{item['name']}__{frappe.scrub(value)}", 
 							'fieldtype': 'Data'})
 				for calculated in template.get(calculated_field) or []:
 					final_columns.append(
@@ -102,9 +106,6 @@ def get_data(filters):
 			filters={'patient_appointment': pa_dr.get('pa'), 'template': 'MCU', 'status': 'Completed'}, 
 			limit=1)
 		questionnaire = frappe.get_doc('Questionnaire', q[0].name) if q else None
-		frappe.log_error('Questionnaire', pa_dr.get('pa'))
-		if q:
-			frappe.log_error(q[0].name, questionnaire)
 		complain = ''
 		life_style = ''
 		past_history = ''
@@ -178,8 +179,6 @@ def get_data(filters):
 					f'{questionnaire.detail[37].question}: {questionnaire.detail[37].answer}' 
 					if questionnaire.detail[37].answer else '')
 				family_history = '\n'.join([x for x in fh if x])
-				frappe.log_error('past_history', past_history)
-				frappe.log_error('life_style', life_style)
 		row = {
 			'patient_name': doc.patient_name,
 			'patient_sex': doc.patient_sex,
