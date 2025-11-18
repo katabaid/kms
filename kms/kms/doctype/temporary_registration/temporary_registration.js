@@ -25,7 +25,7 @@ frappe.ui.form.on('Temporary Registration', {
 				frm, "name", null, "questionnaire"
 			);
 		}
-	}
+	},
 });
 
 
@@ -73,38 +73,46 @@ const add_create_patient_button = (frm) => {
 	frm.add_custom_button(
 		'Create Patient',
 		() => {
-			frappe.db.insert({
-				doctype:'Patient',
-				first_name: frm.doc.first_name,
-				middle_name: frm.doc.middle_name,
-				last_name: frm.doc.last_name,
-				sex: frm.doc.gender,
-				dob: frm.doc.date_of_birth,
-				status: 'Active',
-				uid: frm.doc.id_number,
-				mobile: frm.doc.phone_number,
-				customer_group: 'Individual',
-				custom_company: frm.doc.company
-			}).then(doc=> {
-				frappe.db.set_value('Temporary Registration', frm.doc.name, 'patient', doc.name);
-				frm.refresh_field('patient');
-				frappe.db.insert({
-					doctype: 'Address',
-					address_title: doc.patient_name,
-					address_type: 'Billing',
-					address_line1: frm.doc.address_line_1,
-					address_line2: frm.doc.address_line_2,
-					city: frm.doc.city,
-					state: frm.doc.province,
-					pincode: frm.doc.postal_code,
-					links: [{
-						link_doctype: 'Patient',
-						link_name: doc.name,
-					}]
-				}).then(addr=>{
-					frappe.msgprint(`Patient ${doc.patient_name} successfully created.`)
-				})
-			})
+			frappe.confirm(
+				__('Are you sure you want to create a new patient with this data?'),
+				() => {
+					frappe.db.insert({
+						doctype:'Patient',
+						first_name: frm.doc.first_name,
+						middle_name: frm.doc.middle_name,
+						last_name: frm.doc.last_name,
+						sex: frm.doc.gender,
+						dob: frm.doc.date_of_birth,
+						status: 'Active',
+						uid: frm.doc.id_number,
+						mobile: frm.doc.phone_number,
+						customer_group: 'Individual',
+						custom_company: frm.doc.company
+					}).then(doc=> {
+						frappe.db.set_value('Temporary Registration', frm.doc.name, 'patient', doc.name);
+						frm.refresh_field('patient');
+						frappe.db.insert({
+							doctype: 'Address',
+							address_title: doc.patient_name,
+							address_type: 'Billing',
+							address_line1: frm.doc.address_line_1,
+							address_line2: frm.doc.address_line_2,
+							city: frm.doc.city,
+							state: frm.doc.province,
+							pincode: frm.doc.postal_code,
+							links: [{
+								link_doctype: 'Patient',
+								link_name: doc.name,
+							}]
+						}).then(addr=>{
+							frappe.msgprint(`Patient ${doc.patient_name} successfully created.`)
+						})
+					})
+				},
+				() => {
+					frappe.show_alert(__('Patient creation cancelled.'));
+				}
+			);
 		},
 		'Process'
 	);
