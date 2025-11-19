@@ -7,7 +7,7 @@ from frappe.model.document import Document
 class Questionnaire(Document):
 	def after_insert(self):
 		if self.patient_appointment:
-			#self._update_patient_appointment()
+			self._update_patient_appointment()
 			self._update_examinations('Doctor Examination', 'Completed')
 			self._update_examinations('Nurse Examination', 'Completed')
 
@@ -23,21 +23,22 @@ class Questionnaire(Document):
 				if self.status == 'Rejected':
 					self._update_dispatcher()
 
-#	def _update_patient_appointment(self):
-#		"""Update the Patient Appointment with questionnaire details."""
-#		pa_doc = frappe.get_doc("Patient Appointment", self.patient_appointment)
-#		for detail in self.detail:
-#			detail_dict = self._get_clean_detail_dict(detail)
-#			pa_doc.append('custom_questionnaire_detail', detail_dict)
-#		for pa_q in pa_doc.custom_completed_questionnaire:
-#			if pa_q.template == self.template:
-#				pa_q.questionnaire = self.name
-#				pa_q.status = 'Completed'
-#		try:
-#			pa_doc.save(ignore_permissions=True)
-#		except Exception as e:
-#			frappe.msgprint(f"Error saving Patient Appointment: {e}")
-#
+	def _update_patient_appointment(self):
+		"""Update the Patient Appointment with questionnaire details."""
+		name = frappe.db.get_value(
+			"Questionnaire Completed",
+			{
+				'parent': self.patient_appointment,
+				'parenttype': 'Patient Appointment',
+				'template': self.template
+			},
+			"name"
+		)
+		qc_doc = frappe.get_doc("Questionnaire Completed", name)
+		qc_doc.questionnaire = self.name
+		qc_doc.status = self.status
+		qc_doc.save(ignore_permissions=True)
+
 #	def _get_clean_detail_dict(self, detail):
 #		"""Return a dictionary of detail fields excluding metadata."""
 #		exclude_fields = {'name', 'parent', 'parenttype', 'parentfield', 'idx'}
