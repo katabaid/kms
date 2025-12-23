@@ -1,6 +1,7 @@
 import frappe
 from kms.utils import calculate_patient_age
-from frappe.utils import getdate, today, nowdate, nowtime, now, add_days
+from datetime import datetime, timedelta
+from frappe.utils import getdate, add_days, today, nowdate, nowtime, now, days_diff
 
 def patient_appointment_after_insert(doc, method=None):
 	################Doctype: Patient Appointment################
@@ -442,6 +443,9 @@ def _validate_mcu_templates(doc):
 		)
 
 def _reset_questionnaire_status(doc):
-	for q in doc.get('custom_completed_questionnaire', []):
-		if getdate(q.modified) >= add_days(today(), -7) and q.status != 'Started':
+	# Get the questionnaire list
+	questionnaire_list = doc.get('custom_completed_questionnaire', [])
+	for q in questionnaire_list:
+		diff = days_diff(nowdate(), q.modified)
+		if diff <= 7 and q.status != 'Started':
 			frappe.db.set_value('Questionnaire Completed', q.name, 'status', 'Started')
