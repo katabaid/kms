@@ -15,6 +15,8 @@ frappe.ui.form.on('Nurse Result', {
 		render_attachment(frm);
 		set_result_properties(frm);
 		applyStyling(frm);
+		setupQuestionnaire(frm);
+		addSidebarActions(frm);
 		frm.add_custom_button('Test Print', ()=>{
 			frappe.call('kms.kms.doctype.nurse_result.nurse_result.test_print', {
 				dt: 'Nurse Result',
@@ -229,3 +231,31 @@ const apply_cell_styling = (frm, row) =>{
 		}
 	}
 }
+
+const setupQuestionnaire = (frm) => {
+	const {questionnaire} = frm.fields_dict;
+	const {utils} = kms;
+	if (questionnaire && utils && utils.fetch_questionnaire_for_doctype) {
+		utils.fetch_questionnaire_for_doctype(frm, "appointment", null, "questionnaire");
+	} else {
+		if (!questionnaire) {
+			console.warn("Nurse Result form is missing 'questionnaire'. Questionnaire cannot be displayed.");
+		}
+		if (!utils || !utils.fetch_questionnaire_for_doctype) {
+			console.warn(
+				"kms.utils.fetch_questionnaire_for_doctype is not available. Ensure questionnaire_helper.js is loaded."
+			);
+		}
+	}
+}
+
+const addSidebarActions = (frm) => {
+	if (!frm.doc.questionnaire) return;
+	frm.refresh_field('questionnaire');
+	frm.doc.questionnaire.forEach(value => {
+		if (!value.is_completed) {
+			const link = `https://kyomedic.vercel.app/questionnaire?template=${value.template}&appt=${frm.doc.appointment}`;
+			frm.sidebar.add_user_action(__(value.template)).attr('href', link).attr('target', '_blank');
+		}
+	});
+};

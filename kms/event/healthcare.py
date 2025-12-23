@@ -1,6 +1,6 @@
 import frappe
 from kms.utils import calculate_patient_age
-from frappe.utils import getdate, today, nowdate, nowtime, now
+from frappe.utils import getdate, today, nowdate, nowtime, now, add_days
 
 def patient_appointment_after_insert(doc, method=None):
 	################Doctype: Patient Appointment################
@@ -37,6 +37,7 @@ def patient_appointment_on_update(doc, method=None):
 		return
 	if previous_doc and previous_doc.status in ['Open','Rescheduled'] and doc.status == 'Checked In':
 		if doc.appointment_type == 'MCU':
+			_reset_questionnaire_status(doc)
 			_validate_mcu_templates(doc)
 			if dispatcher_user:
 				_create_dispatcher(doc.name, doc.custom_branch)
@@ -439,3 +440,8 @@ def _validate_mcu_templates(doc):
 		frappe.throw(title='Missing Templates',
 			msg=f"The following MCU examination items do not have a corresponding template: {err_str}"
 		)
+
+def _reset_questionnaire_status(doc):
+	for q in doc.get('custom_completed_questionnaire', []):
+		if getdate(q.modified) >= add_days(today(), -7) and q.status != 'Started':
+			frappe.db.set_value('Questionnaire Completed', q.name, 'status', 'Started')

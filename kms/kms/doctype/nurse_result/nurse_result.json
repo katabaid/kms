@@ -50,7 +50,9 @@
   "amended_from",
   "has_attachment",
   "consumables_section",
-  "items"
+  "items",
+  "questionnaire_tab",
+  "questionnaire"
  ],
  "fields": [
   {
@@ -352,13 +354,23 @@
    "in_standard_filter": 1,
    "label": "Exam Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "questionnaire_tab",
+   "fieldtype": "Tab Break",
+   "label": "Questionnaire"
+  },
+  {
+   "fieldname": "questionnaire",
+   "fieldtype": "HTML",
+   "label": "Questionnaire"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-18 10:10:15.077590",
+ "modified": "2025-12-23 08:22:23.892774",
  "modified_by": "Administrator",
  "module": "KMS",
  "name": "Nurse Result",

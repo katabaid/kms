@@ -10,8 +10,23 @@ frappe.ui.form.on('Temporary Registration', {
 	}, */
 	refresh: function(frm) {
 		if (!frm.doc.patient) {
-			add_create_patient_button(frm);
-			add_existing_patient_button(frm);
+			// Check if there are negative answers in questionnaires
+			frappe.call({
+				method: 'kms.kms.doctype.questionnaire.questionnaire.has_negative_answer',
+				args: {
+					temporary_registration: frm.doc.name
+				},
+				callback: function(r) {
+					if (r.message) {
+						// If has negative answers, only show existing patient button
+						add_existing_patient_button(frm);
+					} else {
+						// If no negative answers, show both buttons
+						add_create_patient_button(frm);
+						add_existing_patient_button(frm);
+					}
+				}
+			});
 		} else {
 			if (frm.doc.status === 'Draft') {
 				add_create_appointment_button(frm);

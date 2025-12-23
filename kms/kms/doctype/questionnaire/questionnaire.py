@@ -123,3 +123,44 @@ def fetch_questionnaire(name):
 				'answer': d.answer,
 			})
 	return list_to_return
+
+@frappe.whitelist()
+def has_negative_answer(temporary_registration):
+	"""
+	Check if any questionnaire for the given temporary_registration has negative answers.
+	Negative answers are defined as answers starting with 'Ya' or 'Pernyataan'.
+	
+	Args:
+		temporary_registration (str): The temporary registration ID to check
+		
+	Returns:
+		bool: True if negative answers are found, False otherwise
+	"""
+	# Fetch all questionnaires with the given temporary_registration
+	questionnaires = frappe.get_all(
+		'Questionnaire',
+		filters={'temporary_registration': temporary_registration},
+		pluck='name'
+	)
+	
+	if not questionnaires:
+		return False
+	
+	# Check each questionnaire for negative answers
+	for q_name in questionnaires:
+		# Get all details for this questionnaire
+		details = frappe.get_all(
+			'Questionnaire Detail',
+			filters={'parent': q_name},
+			fields=['answer']
+		)
+		
+		# Check if any answer starts with 'Ya' or 'Pernah'
+		for detail in details:
+			if detail.answer and (
+				detail.answer.startswith('Ya') or
+				detail.answer.startswith('Pernah')
+			):
+				return True
+	
+	return False
