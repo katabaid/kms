@@ -396,6 +396,10 @@ def _create_exam(doctype, name, room, rel):
       filters={'patient_appointment': ori_doc.patient_appointment})
     for qp in qps:
       if qp != ori_doc.name:
+        qp_doc = frappe.get_doc('MCU Queue Pooling', qp)
+        if qp_doc.status == 'Ongoing Examination':
+          frappe.throw(
+            f"""Patient {ori_doc.patient} is already in a queue for {qp_doc.service_unit} room.""")
         frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 1)
     original_field = 'custom_queue_pooling' if target == 'Sample Collection' else 'queue_pooling'
   appt_doc = frappe.get_doc('Patient Appointment', ori_doc.patient_appointment)

@@ -10,23 +10,7 @@ frappe.ui.form.on('Temporary Registration', {
 	}, */
 	refresh: function(frm) {
 		if (!frm.doc.patient) {
-			// Check if there are negative answers in questionnaires
-			frappe.call({
-				method: 'kms.kms.doctype.questionnaire.questionnaire.has_negative_answer',
-				args: {
-					temporary_registration: frm.doc.name
-				},
-				callback: function(r) {
-					if (r.message) {
-						// If has negative answers, only show existing patient button
-						add_existing_patient_button(frm);
-					} else {
-						// If no negative answers, show both buttons
-						add_create_patient_button(frm);
-						add_existing_patient_button(frm);
-					}
-				}
-			});
+			add_questionnaire_dialog_button(frm);
 		} else {
 			if (frm.doc.status === 'Draft') {
 				add_create_appointment_button(frm);
@@ -197,3 +181,49 @@ const add_existing_patient_button = (frm) => {
 		'Process'
 	);
 }
+
+const questionnaire_questions = [
+	{ id: 'q1', label: 'Do you have any known allergies?' },
+	{ id: 'q2', label: 'Are you currently taking any medications?' },
+	{ id: 'q3', label: 'Do you have any chronic medical conditions?' },
+	{ id: 'q4', label: 'Have you had any surgeries in the past?' },
+	{ id: 'q5', label: 'Do you have a family history of hereditary diseases?' }
+];
+
+const add_questionnaire_dialog_button = (frm) => {
+	frm.add_custom_button(
+		'Create Patient',
+		() => show_questionnaire_dialog(frm),
+		'Process'
+	);
+};
+
+const show_questionnaire_dialog = (frm) => {
+	const fields = questionnaire_questions.map(q => ({
+		fieldtype: 'Check',
+		fieldname: q.id,
+		label: q.label
+	}));
+
+	const dialog = new frappe.ui.Dialog({
+		title: 'Patient Verification Questions',
+		fields: fields,
+		primary_action_label: 'Continue',
+		primary_action: () => {
+			const values = dialog.get_values();
+			const checked_count = Object.values(values).filter(v => v).length;
+
+			dialog.hide();
+
+			frm.remove_custom_button('Create Patient', 'Process');
+
+			if (checked_count === 0) {
+				add_existing_patient_button(frm);
+			} else {
+				add_create_patient_button(frm);
+			}
+		}
+	});
+
+	dialog.show();
+};
