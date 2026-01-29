@@ -436,3 +436,51 @@ def _check_all_items_finished(doc):
 		return all(item.status != 'Started' for item in doc.custom_sample_table)
 	else:
 		return all(item.status != 'Started' for item in doc.examination_item)
+
+@frappe.whitelist()
+def has_laboratory_items(sample_collection_name):
+	"""
+	Check if Sample Collection has laboratory items in its Patient Appointment's
+	custom_additional_mcu_items
+	"""
+	if not sample_collection_name:
+		return False
+
+	# Get the Sample Collection document
+	sample = frappe.get_doc('Sample Collection', sample_collection_name)
+
+	if not sample.get('custom_appointment'):
+		return False
+
+	appointment_name = sample.custom_appointment
+
+	# Get the Patient Appointment
+	appointment = frappe.get_doc('Patient Appointment', appointment_name)
+
+	additional_items = appointment.get('custom_additional_mcu_items') if appointment else []
+
+	if not additional_items:
+		return False
+
+	# Get Laboratory item group using nested set model
+	laboratory_group = frappe.db.get_value('Item Group',
+		{'item_group_name': 'Laboratory'},
+		['name', 'lft', 'rgt'], as_dict=True)
+
+	if not laboratory_group:
+		return False
+
+	# Get all descendants of Laboratory using nested set model
+	laboratory_descendants = frappe.get_all('Item Group',
+		filters={'lft': ['>=', laboratory_group.lft],
+			'rgt': ['<=', laboratory_group.rgt]},
+		pluck='name'
+	)
+
+	# Check if any item in custom_additional_mcu_items has a laboratory descendant
+	for item in additional_items:
+		item_group = item.get('item_group') if item else None
+		if item_group and item_group in laboratory_descendants:
+			return True
+
+	return False
