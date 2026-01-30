@@ -389,18 +389,26 @@ def _create_exam(doctype, name, room, rel):
             f"""Patient {ori_doc.patient} is already in a queue for {hsu.healthcare_service_unit} room.""")
   else:
     previous_docname = ori_doc.reference_doc
-    ori_doc.status = 'Waiting to Enter the Room'
-    ori_doc.in_room = 1
-    qps = frappe.get_all(
-      'MCU Queue Pooling', pluck='name',
-      filters={'patient_appointment': ori_doc.patient_appointment})
-    for qp in qps:
-      if qp != ori_doc.name:
-        qp_doc = frappe.get_doc('MCU Queue Pooling', qp)
-        if qp_doc.status == 'Ongoing Examination':
-          frappe.throw(
-            f"""Patient {ori_doc.patient} is already in a queue for {qp_doc.service_unit} room.""")
-        frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 1)
+
+    # PRE-CHECK: Verify patient is not already assigned to any room (race condition prevention)
+    existing_in_room = frappe.db.exists('MCU Queue Pooling', {
+      'patient_appointment': ori_doc.patient_appointment,
+      'in_room': 1,
+      'name': ['!=', ori_doc.name]
+    })
+    if existing_in_room:
+      frappe.throw("Patient is already assigned to another room. Please refresh and try again.")
+
+    # ATOMIC UPDATE: Only set in_room = 1 if still 0 (prevents race condition)
+    updated = frappe.db.sql("""
+      UPDATE `tabMCU Queue Pooling`
+      SET in_room = 1, status = 'Waiting to Enter the Room'
+      WHERE name = %s AND in_room = 0
+    """, (ori_doc.name,))
+
+    if not updated[0]:
+      frappe.throw("Patient is already being processed. Please refresh and try again.")
+
     original_field = 'custom_queue_pooling' if target == 'Sample Collection' else 'queue_pooling'
   appt_doc = frappe.get_doc('Patient Appointment', ori_doc.patient_appointment)
   doc_fields = {
