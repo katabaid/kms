@@ -400,14 +400,20 @@ def _create_exam(doctype, name, room, rel):
       frappe.throw("Patient is already assigned to another room. Please refresh and try again.")
 
     # ATOMIC UPDATE: Only set in_room = 1 if still 0 (prevents race condition)
-    updated = frappe.db.sql("""
+    # First check if record exists and in_room is still 0
+    can_update = frappe.db.exists('MCU Queue Pooling', {
+      'name': ori_doc.name,
+      'in_room': 0
+    })
+    
+    if not can_update:
+      frappe.throw("Patient is already being processed. Please refresh and try again.")
+    
+    frappe.db.sql("""
       UPDATE `tabMCU Queue Pooling`
       SET in_room = 1, status = 'Waiting to Enter the Room'
       WHERE name = %s AND in_room = 0
     """, (ori_doc.name,))
-
-    if not updated[0]:
-      frappe.throw("Patient is already being processed. Please refresh and try again.")
 
     original_field = 'custom_queue_pooling' if target == 'Sample Collection' else 'queue_pooling'
   appt_doc = frappe.get_doc('Patient Appointment', ori_doc.patient_appointment)

@@ -484,3 +484,127 @@ def has_laboratory_items(sample_collection_name):
 			return True
 
 	return False
+
+@frappe.whitelist()
+def get_questionnaire_completion_status(appointment_names):
+	"""
+	Get questionnaire completion status for a list of Patient Appointments.
+	Returns a dict with appointment name as key and completion status as value.
+	
+	An appointment qualifies for marking if:
+	1. Status is 'Open' or 'Checked In'
+	2. Appointment is for MCU
+	3. custom_completed_questionnaire has at least one row AND all rows are 'Completed'
+	
+	@param appointment_names: JSON array of Patient Appointment names
+	@returns: Dict mapping appointment name to questionnaire completion status
+	"""
+	if isinstance(appointment_names, str):
+		appointment_names = frappe.parse_json(appointment_names)
+	
+	if not appointment_names:
+		return {}
+	
+	result = {}
+	
+	for name in appointment_names:
+		# Get the appointment data
+		appointment = frappe.get_doc('Patient Appointment', name)
+		
+		# Condition 1: Check status
+		if appointment.status not in ['Open', 'Checked In']:
+			result[name] = {'qualifies': False, 'reason': 'status'}
+			continue
+		
+		# Condition 2: Check if MCU
+		is_mcu = appointment.appointment_for == 'MCU' or appointment.appointment_type == 'MCU'
+		if not is_mcu:
+			result[name] = {'qualifies': False, 'reason': 'not_mcu'}
+			continue
+		
+		# Condition 3: Check questionnaire completion
+		questionnaires = appointment.get('custom_completed_questionnaire', [])
+		
+		if not questionnaires:
+			result[name] = {'qualifies': False, 'reason': 'no_questionnaires'}
+			continue
+		
+		# Check if all questionnaires are completed
+		all_completed = all(q.status == 'Completed' for q in questionnaires)
+		
+		if all_completed:
+			result[name] = {'qualifies': True, 'reason': 'completed'}
+		else:
+			result[name] = {'qualifies': False, 'reason': 'incomplete_questionnaires'}
+	
+	return result
+
+@frappe.whitelist()
+def get_questionnaire_status_for_listview(appointment_names):
+	"""
+	Lightweight version of get_questionnaire_completion_status optimized for list view.
+	Uses direct DB queries instead of loading full documents.
+	
+	@param appointment_names: JSON array of Patient Appointment names
+	@returns: Dict mapping appointment name to {qualifies: bool}
+	"""
+	if isinstance(appointment_names, str):
+		appointment_names = frappe.parse_json(appointment_names)
+	
+	if not appointment_names:
+		return {}
+	
+	result = {}
+	
+	# Get all appointments with their status and appointment_type
+	appointments = frappe.get_all('Patient Appointment',
+		filters={'name': ['in', appointment_names]},
+		fields=['name', 'status', 'appointment_for', 'appointment_type']
+	)
+	
+	appointment_dict = {a.name: a for a in appointments}
+	
+	# Get questionnaire completion data
+	questionnaire_data = frappe.db.sql("""
+		SELECT parent, 
+			COUNT(*) as total_count,
+			SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_count
+		FROM `tabQuestionnaire Completed`
+		WHERE parent IN %(names)s
+		GROUP BY parent
+	""", {'names': appointment_names}, as_dict=True)
+	
+	questionnaire_dict = {q.parent: q for q in questionnaire_data}
+	
+	for name in appointment_names:
+		if name not in appointment_dict:
+			result[name] = {'qualifies': False}
+			continue
+		
+		appt = appointment_dict[name]
+		
+		# Condition 1: Check status
+		if appt.status not in ['Open', 'Checked In']:
+			result[name] = {'qualifies': False}
+			continue
+		
+		# Condition 2: Check if MCU
+		is_mcu = appt.appointment_for == 'MCU' or appt.appointment_type == 'MCU'
+		if not is_mcu:
+			result[name] = {'qualifies': False}
+			continue
+		
+		# Condition 3: Check questionnaire
+		q_data = questionnaire_dict.get(name)
+		
+		if not q_data or q_data.total_count == 0:
+			result[name] = {'qualifies': False}
+			continue
+		
+		# All questionnaires must be completed
+		if q_data.completed_count == q_data.total_count:
+			result[name] = {'qualifies': True}
+		else:
+			result[name] = {'qualifies': False}
+	
+	return result
