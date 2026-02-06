@@ -12,6 +12,9 @@ frappe.listview_settings['Sample Reception'] = {
     // Stop polling after 10 seconds
     setTimeout(() => clearInterval(checkInterval), 10000);
   },
+  refresh: (listview) => {
+    updateDraftStatusWithLabIndicator(listview);
+  },
   // Add formatter for status field to show "+" mark for Draft records with laboratory items
   formatters: {
     status: function (value, df, doc) {
