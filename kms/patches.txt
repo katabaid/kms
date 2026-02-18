@@ -1,1 +1,2 @@
 kms.kms.patches.add_patient_appointment_lock_field
+kms.kms.patches.add_include_previous_mcu_results_field

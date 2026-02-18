@@ -239,6 +239,16 @@ class DoctorResult(Document):
 		}
 
 	def _get_previous_results_map(self, child_table_name, key, value):
+		# Check if we should include previous results
+		include_previous = True
+		if self.appointment:
+			appointment = frappe.get_doc('Patient Appointment', self.appointment)
+			include_previous = appointment.get('custom_include_previous_mcu_results', True)
+		
+		# Return empty map if not including previous results
+		if not include_previous:
+			return {}, {}
+			
 		prev_results = frappe.get_all('Doctor Result',
 			filters={
 				'patient': self.patient,
