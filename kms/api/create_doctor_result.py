@@ -457,16 +457,19 @@ def ____fetch_nurse_result_per_item(appointment, item_code, item_group):
 					NULL)) AS grade
 		FROM (
 			SELECT tner.idx AS idx, test_name AS result_line, min_value, 
-				max_value, CAST(result_value AS DECIMAL(10,3)) AS result_text, 
+				max_value, CASE WHEN result_value REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN CAST(result_value AS DECIMAL(10,3)) ELSE result_value END AS result_text, 
 				test_uom AS uom, tne.name AS doc, tnerq.status AS status, 
 				CASE 
 					WHEN (min_value != 0 OR max_value != 0) 
+						AND result_value REGEXP '^[0-9]+(\\.[0-9]+)?$' 
 						AND CAST(result_value AS DECIMAL(10,3)) > max_value 
 						THEN 'Increase'
 					WHEN (min_value != 0 OR max_value != 0) 
+						AND result_value REGEXP '^[0-9]+(\\.[0-9]+)?$' 
 						AND CAST(result_value AS DECIMAL(10,3)) < min_value 
 						THEN 'Decrease'
 					WHEN (min_value != 0 OR max_value != 0) 
+						AND result_value REGEXP '^[0-9]+(\\.[0-9]+)?$' 
 						AND CAST(result_value AS DECIMAL(10,3)) BETWEEN min_value AND max_value 
 						THEN '---'
 				END AS incdec,
