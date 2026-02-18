@@ -8,18 +8,38 @@ def create_service(name, room):
       break
   else:
     frappe.throw('Internal Error: Cannot find connected Dispatcher or MCU Queue Pooling.')
-  if not _check_room_tier_completion(doctype, name, room):
-    frappe.throw('Cannot assign to room with higher tier while all lower tier rooms have not finished examination.')
-  rel = _get_exam_template_rel(room)
-  valid_targets = {'Nurse Examination', 'Doctor Examination', 'Radiology', 'Sample Collection'}
-  if rel[0] in valid_targets and _check_room_queue_capacity(rel[0], room):
-    result = _create_exam(doctype, name, room, rel)
-    if result:
-      return result
+  
+  # Get patient_appointment early for lock acquisition
+  patient_appointment = frappe.db.get_value(doctype, name, 'patient_appointment')
+  
+  # ATOMIC: Try to acquire lock on Patient Appointment
+  # This UPDATE only succeeds if custom_is_locked is 0 or NULL
+  locked = frappe.db.sql("""
+    UPDATE `tabPatient Appointment`
+    SET custom_is_locked = 1
+    WHERE name = %s AND (custom_is_locked = 0 OR custom_is_locked IS NULL)
+  """, (patient_appointment,))
+  
+  # Check if we actually acquired the lock
+  if not locked or locked == 0:
+    frappe.throw("Patient is currently being processed by another user. Please refresh and try again.")
+  
+  try:
+    if not _check_room_tier_completion(doctype, name, room):
+      frappe.throw('Cannot assign to room with higher tier while all lower tier rooms have not finished examination.')
+    rel = _get_exam_template_rel(room)
+    valid_targets = {'Nurse Examination', 'Doctor Examination', 'Radiology', 'Sample Collection'}
+    if rel[0] in valid_targets and _check_room_queue_capacity(rel[0], room):
+      result = _create_exam(doctype, name, room, rel)
+      if result:
+        return result
+      else:
+        frappe.throw("Failed to create service.")
     else:
-      frappe.throw("Failed to create service.")
-  else:
-    frappe.throw(f"Unsupported target: {rel(0)}")
+      frappe.throw(f"Unsupported target: {rel(0)}")
+  finally:
+    # Always release lock, even if an exception occurred
+    frappe.db.set_value('Patient Appointment', patient_appointment, 'custom_is_locked', 0)
 
 @frappe.whitelist()
 def remove_from_room(name, room):

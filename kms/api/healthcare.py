@@ -220,6 +220,8 @@ def finish_exam(hsu, status, doctype, docname):
 				frappe.db.set_value('MCU Queue Pooling', qp, 'delay_time', delay_time)
 			else:
 				frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)
+				# Release patient appointment lock
+				frappe.db.set_value('Patient Appointment', exam_id, 'custom_is_locked', 0)
 			#room_count += 1
 			#if frappe.db.get_value('MCU Queue Pooling', qp, 'status') in final_status:
 			#	final_count += 1

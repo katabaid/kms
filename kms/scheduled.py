@@ -67,6 +67,17 @@ def reset_qp_in_room():
       UPDATE `tabMCU Queue Pooling` SET in_room = 0, delay_time = NULL
       WHERE delay_time IS NOT NULL AND delay_time <= %s
     """, (now_datetime(),))
+    
+    # Release patient appointment locks for affected patients
+    frappe.db.sql("""
+      UPDATE `tabPatient Appointment` pa
+      SET pa.custom_is_locked = 0
+      WHERE pa.name IN (
+        SELECT patient_appointment FROM `tabMCU Queue Pooling`
+        WHERE delay_time IS NOT NULL AND delay_time <= %s
+      )
+    """, (now_datetime(),))
+    
     frappe.db.commit()
     frappe.log(f"Reset {affected_rows} rows in MCU Queue Pooling")
   except Exception as e:
