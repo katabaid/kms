@@ -69,14 +69,14 @@ def reset_qp_in_room():
     """, (now_datetime(),))
     
     # Release patient appointment locks for affected patients
-    frappe.db.sql("""
-      UPDATE `tabPatient Appointment` pa
-      SET pa.custom_is_locked = 0
-      WHERE pa.name IN (
-        SELECT patient_appointment FROM `tabMCU Queue Pooling`
-        WHERE delay_time IS NOT NULL AND delay_time <= %s
-      )
-    """, (now_datetime(),))
+    from kms.healthcare import release_patient_lock
+    patient_appointments = frappe.db.sql("""
+      SELECT patient_appointment FROM `tabMCU Queue Pooling`
+      WHERE delay_time IS NOT NULL AND delay_time <= %s
+    """, (now_datetime(),), as_dict=True)
+    for pa in patient_appointments:
+      if pa.patient_appointment:
+        release_patient_lock(pa.patient_appointment)
     
     frappe.db.commit()
     frappe.log(f"Reset {affected_rows} rows in MCU Queue Pooling")

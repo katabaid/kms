@@ -1,46 +1,110 @@
+from contextlib import contextmanager
+from datetime import datetime, timedelta
 import frappe
 from frappe.utils import today
 
-@frappe.whitelist()
-def create_service(name, room):
-  for doctype in ['Dispatcher', 'MCU Queue Pooling']:
-    if frappe.db.exists(doctype, name):
-      break
-  else:
-    frappe.throw('Internal Error: Cannot find connected Dispatcher or MCU Queue Pooling.')
-  
-  # Get patient_appointment early for lock acquisition
-  patient_appointment = frappe.db.get_value(doctype, name, 'patient_appointment')
-  
-  # ATOMIC: Try to acquire lock on Patient Appointment
-  # This UPDATE only succeeds if custom_is_locked is 0 or NULL
-  locked = frappe.db.sql("""
-    UPDATE `tabPatient Appointment`
-    SET custom_is_locked = 1
-    WHERE name = %s AND (custom_is_locked = 0 OR custom_is_locked IS NULL)
-  """, (patient_appointment,))
-  
-  # Check if we actually acquired the lock
-  if not locked or locked == 0:
-    frappe.throw("Patient is currently being processed by another user. Please refresh and try again.")
-  
-  try:
-    if not _check_room_tier_completion(doctype, name, room):
-      frappe.throw('Cannot assign to room with higher tier while all lower tier rooms have not finished examination.')
-    rel = _get_exam_template_rel(room)
-    valid_targets = {'Nurse Examination', 'Doctor Examination', 'Radiology', 'Sample Collection'}
-    if rel[0] in valid_targets and _check_room_queue_capacity(rel[0], room):
-      result = _create_exam(doctype, name, room, rel)
-      if result:
-        return result
-      else:
-        frappe.throw("Failed to create service.")
-    else:
-      frappe.throw(f"Unsupported target: {rel(0)}")
-  finally:
-    # Always release lock, even if an exception occurred
-    frappe.db.set_value('Patient Appointment', patient_appointment, 'custom_is_locked', 0)
+def ensure_patient_lock_table_exists():
+  """
+  Ensure the kms_patient_lock table exists.
+  This is called automatically when needed.
+  """
+  frappe.db.sql("""
+    CREATE TABLE IF NOT EXISTS `kms_patient_lock` (
+      `lock_key` VARCHAR(255) NOT NULL PRIMARY KEY,
+      `locked_by` VARCHAR(255) NOT NULL,
+      `locked_at` DATETIME NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  """)
+  frappe.db.commit()
 
+def release_patient_lock(patient_appointment: str):
+  """
+  Release the lock for a patient appointment.
+  """
+  lock_key = f"kms_patient_{patient_appointment}"
+  frappe.db.sql("""
+    DELETE FROM `kms_patient_lock`
+    WHERE lock_key = %s
+  """, (lock_key,))
+  frappe.db.commit()
+
+@contextmanager
+def patient_appointment_lock(patient_appointment: str):
+  """
+  Lock via unique PRIMARY KEY INSERT.
+  Two sessions cannot both INSERT the same key — one will always fail.
+  """
+  ensure_patient_lock_table_exists()
+  lock_key = f"kms_patient_{patient_appointment}"
+  locked_by = frappe.session.user
+  now = datetime.now()
+
+  # Attempt to acquire — will fail with IntegrityError if already locked
+  try:
+    frappe.db.sql("""
+      INSERT INTO `kms_patient_lock` (lock_key, locked_by, locked_at)
+      VALUES (%s, %s, %s)
+    """, (lock_key, locked_by, now))
+    frappe.db.commit()
+
+  except Exception as e:
+    if "Duplicate entry" in str(e) or "1062" in str(e):
+      # Fetch who holds it
+      row = frappe.db.sql("""
+        SELECT locked_by FROM `kms_patient_lock` WHERE lock_key = %s
+      """, (lock_key,), as_dict=True)
+      holder = row[0]["locked_by"] if row else "another user"
+      frappe.throw(
+        f"Patient is currently being processed by {holder}. "
+        "Please wait and try again.",
+        frappe.ValidationError,
+      )
+    raise  # Re-raise unexpected errors
+
+  try:
+    yield
+  finally:
+    pass
+
+
+@frappe.whitelist()
+def create_service(name: str, room: str):
+  # Resolve source doctype
+  doctype = None
+  for dt in ("Dispatcher", "MCU Queue Pooling"):
+    if frappe.db.exists(dt, name):
+      doctype = dt
+      break
+
+  if not doctype:
+    frappe.throw("Internal Error: Cannot find connected Dispatcher or MCU Queue Pooling.")
+
+  patient_appointment = frappe.db.get_value(doctype, name, "patient_appointment")
+  if not patient_appointment:
+    frappe.throw("Internal Error: No patient appointment linked to this record.")
+
+  with patient_appointment_lock(patient_appointment):
+    if not _check_room_tier_completion(doctype, name, room):
+      frappe.throw(
+        "Cannot assign to a higher-tier room while all lower-tier "
+        "rooms have not finished examination."
+      )
+
+    rel = _get_exam_template_rel(room)
+    valid_targets = {"Nurse Examination", "Doctor Examination", "Radiology", "Sample Collection"}
+
+    if rel[0] not in valid_targets:
+      frappe.throw(f"Unsupported examination target: {rel[0]}")
+
+    if not _check_room_queue_capacity(rel[0], room):
+      frappe.throw(f"Room '{room}' has reached maximum queue capacity.")
+
+    result = _create_exam(doctype, name, room, rel)
+    if not result:
+      frappe.throw("Failed to create service. Please try again.")
+
+    return result
+    
 @frappe.whitelist()
 def remove_from_room(name, room):
   doc = frappe.get_doc('Dispatcher', name)

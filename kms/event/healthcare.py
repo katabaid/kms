@@ -5,8 +5,9 @@ from frappe.utils import getdate, add_days, today, nowdate, nowtime, now, days_d
 
 def patient_appointment_after_insert(doc, method=None):
 	################Doctype: Patient Appointment################
-	# Set custom_is_locked = 0 for new patient appointment
-	frappe.db.set_value('Patient Appointment', doc.name, 'custom_is_locked', 0)
+	# Release lock for new patient appointment (ensure no stale lock exists)
+	from kms.healthcare import release_patient_lock
+	release_patient_lock(doc.name)
 	
 	if doc.custom_temporary_registration:
 		frappe.db.set_value(

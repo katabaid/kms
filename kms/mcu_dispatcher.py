@@ -126,7 +126,8 @@ def _update_related_rooms_status(params):
             for qp in qps:
               frappe.db.set_value(doctype_name, qp, 'in_room', 0)
             # Release patient appointment lock
-            frappe.db.set_value('Patient Appointment', exam_id, 'custom_is_locked', 0)
+            from kms.healthcare import release_patient_lock
+            release_patient_lock(exam_id)
           updates.update({'reference_doc': ''})
         frappe.db.set_value(doctype_name, room.name, updates)
       elif room.get(hsu_field) in related_rooms:
@@ -268,4 +269,5 @@ def set_in_room_flag(exam_id):
   for qp in qps:
     frappe.db.set_value('MCU Queue Pooling', qp, 'in_room', 0)
   # Release patient appointment lock
-  frappe.db.set_value('Patient Appointment', exam_id, 'custom_is_locked', 0)
+  from kms.healthcare import release_patient_lock
+  release_patient_lock(exam_id)
