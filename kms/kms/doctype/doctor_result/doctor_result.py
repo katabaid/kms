@@ -503,7 +503,17 @@ class DoctorResult(Document):
 				logo = frappe.get_value(
 					'File', {'attached_to_doctype': 'Company', 'attached_to_name': self.company}, 'file_url')
 				logo_path = frappe.utils.get_url(logo)
-			c.drawImage(ImageReader(logo_path), x_pos, y_pos, width=width, height=height, preserveAspectRatio=True, mask='auto')
+			# Get file content using Frappe's file handling to avoid authentication issues
+			image_source = logo_path
+			if isinstance(logo_path, str) and logo_path.startswith('http'):
+				# Get the file document and its content
+				file_url = logo_path.replace(frappe.utils.get_url(), '')
+				file_name = frappe.get_value('File', {'file_url': file_url}, 'name')
+				if file_name:
+					file_doc = frappe.get_doc('File', file_name)
+					logo_data = file_doc.get_content()
+					image_source = io.BytesIO(logo_data)
+			c.drawImage(ImageReader(image_source), x_pos, y_pos, width=width, height=height, preserveAspectRatio=True, mask='auto')
 			c.save()
 			packet.seek(0)
 			overlay_pdf = PdfReader(packet)
