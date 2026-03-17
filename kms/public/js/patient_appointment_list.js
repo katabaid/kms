@@ -10,7 +10,9 @@ frappe.provide('frappe.views.listview_settings');
  * Patient Appointment List View Settings
  * Handles custom row marking for MCU appointments with completed questionnaires
  */
-frappe.views.listview_settings['Patient Appointment'] = {
+
+// Use frappe.listview_settings for better compatibility with Frappe
+frappe.listview_settings['Patient Appointment'] = {
 	/**
 	 * Initialize custom styling and configuration when listview loads
 	 * @param {Object} listview - The listview instance
@@ -25,8 +27,9 @@ frappe.views.listview_settings['Patient Appointment'] = {
 		// Cache for questionnaire status
 		this._questionnaire_cache = {};
 		
-		// Fetch questionnaire status when listview loads
-		this.fetch_questionnaire_status(listview);
+		// Note: We cannot fetch data here because listview.data is empty
+		// Data is loaded asynchronously after onload
+		// The fetch will happen in after_render instead
 	},
 
 	/**
@@ -40,31 +43,29 @@ frappe.views.listview_settings['Patient Appointment'] = {
 		}
 
 		const css = `
-			#kms-mcu-questionnaire-styles {
-				.list-row-container.kms-mcu-questionnaire-completed {
-					background-color: #e8f5e9 !important;
-					border-left: 4px solid #4caf50 !important;
-				}
-				.list-row-container.kms-mcu-questionnaire-completed:hover {
-					background-color: #c8e6c9 !important;
-				}
-				.list-row-container.kms-mcu-questionnaire-completed .list-subject {
-					font-weight: 600;
-				}
-				.list-row-container.kms-mcu-questionnaire-completed .list-row {
-					position: relative;
-				}
-				/* Add a small icon indicator */
-				.list-row-container.kms-mcu-questionnaire-completed::after {
-					content: '\\2713';
-					position: absolute;
-					right: 10px;
-					top: 50%;
-					transform: translateY(-50%);
-					color: #4caf50;
-					font-size: 14px;
-					font-weight: bold;
-				}
+			.list-row-container.kms-mcu-questionnaire-completed {
+				background-color: #e8f5e9 !important;
+				border-left: 4px solid #4caf50 !important;
+			}
+			.list-row-container.kms-mcu-questionnaire-completed:hover {
+				background-color: #c8e6c9 !important;
+			}
+			.list-row-container.kms-mcu-questionnaire-completed .list-subject {
+				font-weight: 600;
+			}
+			.list-row-container.kms-mcu-questionnaire-completed .list-row {
+				position: relative;
+			}
+			/* Add a small icon indicator */
+			.list-row-container.kms-mcu-questionnaire-completed::after {
+				content: '\\2713';
+				position: absolute;
+				right: 10px;
+				top: 50%;
+				transform: translateY(-50%);
+				color: #4caf50;
+				font-size: 14px;
+				font-weight: bold;
 			}
 		`;
 
@@ -94,7 +95,6 @@ frappe.views.listview_settings['Patient Appointment'] = {
 			callback: function(r) {
 				if (r.message) {
 					me._questionnaire_cache = r.message;
-					
 					// Mark rows after fetching status
 					me.mark_completed_mcu_rows(listview);
 				}
@@ -112,15 +112,27 @@ frappe.views.listview_settings['Patient Appointment'] = {
 	 */
 	after_render: function(listview) {
 		const me = this;
-		
-		// If we already have the cache, mark rows immediately
-		if (Object.keys(this._questionnaire_cache).length > 0) {
-			this.mark_completed_mcu_rows(listview);
-			return;
+		// Check if data is available
+		if (listview.data && listview.data.length > 0) {
+			// Data is available, fetch questionnaire status
+			this.fetch_questionnaire_status(listview);
+		} else {
+			// Data not loaded yet, wait for refresh event
+			// This handles the case when onload runs before data is fetched
+			listview.on('refresh', function() {
+				if (listview.data && listview.data.length > 0) {
+					me.fetch_questionnaire_status(listview);
+				}
+			});
+			
+			// Also try after a short delay in case refresh already fired
+			setTimeout(function() {
+				if (listview.data && listview.data.length > 0 && 
+				    Object.keys(me._questionnaire_cache).length === 0) {
+					me.fetch_questionnaire_status(listview);
+				}
+			}, 1000);
 		}
-		
-		// Otherwise, wait for the API call to complete
-		// The API callback will call mark_completed_mcu_rows
 	},
 
 	/**
@@ -140,10 +152,8 @@ frappe.views.listview_settings['Patient Appointment'] = {
 							   $row.find('.filterable').first().attr('data-value');
 				doc_name = dataId;
 			}
-			
 			if (doc_name && me._questionnaire_cache[doc_name]) {
 				const status = me._questionnaire_cache[doc_name];
-				
 				if (status.qualifies) {
 					$row.addClass('kms-mcu-questionnaire-completed');
 					
@@ -270,8 +280,8 @@ frappe.views.listview_settings['Patient Appointment'] = {
 			__('Refresh MCU Markings'),
 			function() {
 				// Clear cache and re-fetch
-				frappe.views.listview_settings['Patient Appointment']._questionnaire_cache = {};
-				frappe.views.listview_settings['Patient Appointment'].fetch_questionnaire_status(listview);
+				frappe.listview_settings['Patient Appointment']._questionnaire_cache = {};
+				frappe.listview_settings['Patient Appointment'].fetch_questionnaire_status(listview);
 				listview.refresh();
 			},
 			true
@@ -281,6 +291,6 @@ frappe.views.listview_settings['Patient Appointment'] = {
 
 // Also provide a global function for checking questionnaire completion
 // that can be used by other modules if needed
-frappe.views.listview_settings['Patient Appointment'].checkQuestionnaireCompletion = function(doc) {
+frappe.listview_settings['Patient Appointment'].checkQuestionnaireCompletion = function(doc) {
 	return this.has_completed_questionnaires(doc);
 };

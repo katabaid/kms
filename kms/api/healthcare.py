@@ -562,7 +562,8 @@ def get_questionnaire_status_for_listview(appointment_names):
 	# Get all appointments with their status and appointment_type
 	appointments = frappe.get_all('Patient Appointment',
 		filters={'name': ['in', appointment_names]},
-		fields=['name', 'status', 'appointment_for', 'appointment_type']
+		fields=['name', 'status', 'appointment_for', 'appointment_type', 
+		        'mcu']
 	)
 	
 	appointment_dict = {a.name: a for a in appointments}
@@ -591,8 +592,10 @@ def get_questionnaire_status_for_listview(appointment_names):
 			result[name] = {'qualifies': False}
 			continue
 		
-		# Condition 2: Check if MCU
-		is_mcu = appt.appointment_for == 'MCU' or appt.appointment_type == 'MCU'
+		# Condition 2: Check if MCU (including custom fields)
+		is_mcu = (appt.appointment_for == 'MCU' or 
+		          appt.appointment_type == 'MCU' or
+		          appt.mcu)
 		if not is_mcu:
 			result[name] = {'qualifies': False}
 			continue
