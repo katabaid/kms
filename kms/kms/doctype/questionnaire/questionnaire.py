@@ -34,16 +34,13 @@ class Questionnaire(Document):
 			},
 			"name"
 		)
-		frappe.db.set_value(
-			"Questionnaire Completed",
-			name,
-			{
+		if name:
+			doc = frappe.get_doc("Questionnaire Completed", name)
+			doc.flags.ignore_permissions = True
+			doc.db_set({
 				'questionnaire': self.name,
 				'status': self.status
-			},
-			update_modified=False,
-			ignore_permissions=True
-		)
+			})
 
 #	def _get_clean_detail_dict(self, detail):
 #		"""Return a dictionary of detail fields excluding metadata."""

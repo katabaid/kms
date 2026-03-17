@@ -12,6 +12,7 @@ class MCUQueuePooling(Document):
 		self.current_tier = 1
 
 	def before_save(self):
+		frappe.publish_realtime("msgprint", {"message": f"[DEBUG] MCU Queue Pooling before_save: name={self.name}, current_tier={self.current_tier}, tier field value={frappe.db.get_value('MCU Queue Pooling', self.name, 'tier')}"})
 		finished = ['Refused', 'Finished', 'Rescheduled', 'Partial Finished', 'Finished Collection', 
 			'Ineligible for Testing']
 		if self.is_new() and self.current_tier == 3:
@@ -20,6 +21,7 @@ class MCUQueuePooling(Document):
 			{'patient_appointment': self.patient_appointment, 
 				'tier': self.current_tier, 
 				'status': ['in', finished]}) or 1
+		frappe.publish_realtime("msgprint", {"message": f"[DEBUG] Querying with 'tier' field (not 'current_tier'): current_tier result={current_tier}"})
 		if not current_tier:
 			mqps = frappe.db.get_all('MCU Queue Pooling', 
 				filters={'patient_appointment': self.patient_appointment, 'name': ['!=', self.name]})

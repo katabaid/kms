@@ -1,3 +1,4 @@
 kms.kms.patches.add_patient_appointment_lock_field
 kms.kms.patches.add_include_previous_mcu_results_field
 kms.kms.patches.create_patient_lock_table
+kms.kms.patches.increase_content_column_length

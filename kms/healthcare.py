@@ -22,11 +22,25 @@ def release_patient_lock(patient_appointment: str):
   Release the lock for a patient appointment.
   """
   lock_key = f"kms_patient_{patient_appointment}"
-  frappe.db.sql("""
-    DELETE FROM `kms_patient_lock`
-    WHERE lock_key = %s
-  """, (lock_key,))
-  frappe.db.commit()
+  #frappe.log_error(f"release_patient_lock called with key: {lock_key}", "Patient Lock Debug")
+  
+  # Check if lock exists - use direct SQL query for debugging
+  lock_check = frappe.db.sql("""
+    SELECT lock_key, locked_by FROM `kms_patient_lock` WHERE lock_key = %s
+  """, (lock_key,), as_dict=True)
+  
+  #frappe.log_error(f"Lock check result: {lock_check}", "Patient Lock Debug")
+  
+  if lock_check:
+    frappe.db.sql("""
+      DELETE FROM `kms_patient_lock`
+      WHERE lock_key = %s
+    """, (lock_key,))
+    frappe.db.commit()
+    #frappe.log_error(f"Lock deleted for key: {lock_key}", "Patient Lock Debug")
+  else:
+    #frappe.log_error(f"No lock found for key: {lock_key}", "Patient Lock Debug")
+    pass
 
 @contextmanager
 def patient_appointment_lock(patient_appointment: str):
@@ -84,7 +98,11 @@ def create_service(name: str, room: str):
     frappe.throw("Internal Error: No patient appointment linked to this record.")
 
   with patient_appointment_lock(patient_appointment):
+    frappe.log_error(f"Lock acquired for {patient_appointment}", "Patient Lock Debug")
     if not _check_room_tier_completion(doctype, name, room):
+      frappe.log_error(f"Tier check failed for {patient_appointment}", "Patient Lock Debug")
+      release_patient_lock(patient_appointment)  # Ensure lock is released before throwing
+      frappe.log_error(f"Lock released after tier check failure for {patient_appointment}", "Patient Lock Debug")
       frappe.throw(
         "Cannot assign to a higher-tier room while all lower-tier "
         "rooms have not finished examination."
@@ -94,13 +112,16 @@ def create_service(name: str, room: str):
     valid_targets = {"Nurse Examination", "Doctor Examination", "Radiology", "Sample Collection"}
 
     if rel[0] not in valid_targets:
+      release_patient_lock(patient_appointment)  # Ensure lock is released before throwing
       frappe.throw(f"Unsupported examination target: {rel[0]}")
 
     if not _check_room_queue_capacity(rel[0], room):
+      release_patient_lock(patient_appointment)  # Ensure lock is released before throwing
       frappe.throw(f"Room '{room}' has reached maximum queue capacity.")
 
     result = _create_exam(doctype, name, room, rel)
     if not result:
+      release_patient_lock(patient_appointment)  # Ensure lock is released before throwing
       frappe.throw("Failed to create service. Please try again.")
 
     return result
@@ -201,25 +222,31 @@ def _check_room_queue_capacity(doctype, room):
 
 def _check_room_tier_completion(doctype, docname, room):
   tier = int(frappe.db.get_value('Healthcare Service Unit', room, 'custom_tier') or 0)
+  frappe.publish_realtime("msgprint", {"message": f"[DEBUG] _check_room_tier_completion called: doctype={doctype}, docname={docname}, room={room}, tier={tier}"})
   if not tier or tier <= 1:
     return True
   if tier == 3:
+    frappe.publish_realtime("msgprint", {"message": f"[DEBUG] Tier 3 path: checking questionnaire completion, SKIPPING tier 2 check!"})
     return _questionnaire_completed(doctype, docname)
   if doctype == 'Dispatcher':
     return not _has_unfinished_lower_tier('Dispatcher Room', 'parent', docname, tier)
   else:
     exam_id = frappe.db.get_value('MCU Queue Pooling', docname, 'patient_appointment')
+    frappe.publish_realtime("msgprint", {"message": f"[DEBUG] MCU Queue Pooling path: checking tier {tier} for exam_id={exam_id}"})
     return not _has_unfinished_lower_tier('MCU Queue Pooling', 'patient_appointment', exam_id, tier)
 
 def _has_unfinished_lower_tier(doctype, field, value, tier):
   rooms_list = frappe.get_all('Healthcare Service Unit', {'custom_tier': tier-1}, pluck='name')
+  frappe.publish_realtime("msgprint", {"message": f"[DEBUG] _has_unfinished_lower_tier: doctype={doctype}, field={field}, value={value}, tier={tier}, lower_tier_rooms={rooms_list}"})
   unfinished_status = [
     'Wait for Room Assignment', 'Waiting to Enter the Room',
     'Ongoing Examination', 'Additional or Retest Request'
   ]
-  return frappe.db.exists(
+  result = frappe.db.exists(
     doctype, {field: value, 'status': ['in', unfinished_status], 'service_unit': ['in', rooms_list]}
   )
+  frappe.publish_realtime("msgprint", {"message": f"[DEBUG] _has_unfinished_lower_tier result: {result}"})
+  return result
 
 def _questionnaire_completed(doctype, docname):
   exam_id = frappe.db.get_value(doctype, docname, 'patient_appointment')
