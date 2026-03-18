@@ -29,7 +29,9 @@
   "column_break_yaro",
   "appointment",
   "branch",
-  "amended_from"
+  "amended_from",
+  "mcu_section_break",
+  "custom_mcu_items_html"
  ],
  "fields": [
   {
@@ -180,6 +182,16 @@
    "link_filters": "[[\"Healthcare Service Unit\",\"service_unit_type\",\"=\",\"Sample Reception\"]]",
    "options": "Healthcare Service Unit",
    "read_only": 1
+  },
+  {
+   "fieldname": "mcu_section_break",
+   "fieldtype": "Section Break",
+   "label": "MCU Items"
+  },
+  {
+   "fieldname": "custom_mcu_items_html",
+   "fieldtype": "HTML",
+   "label": "MCU Items"
   }
  ],
  "grid_page_length": 50,
